@@ -56,11 +56,5 @@ namespace Nop.Core.Infrastructure
         /// <returns>Resolved service</returns>
         object ResolveUnregistered(Type type);
 
-        /// <summary>
-        /// Register dependencies
-        /// </summary>
-        /// <param name="services">Collection of service descriptors</param>
-        /// <param name="appSettings">App settings</param>
-        void RegisterDependencies(IServiceCollection services, AppSettings appSettings);
     }
 }

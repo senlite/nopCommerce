@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure;
+using Nop.Core.Infrastructure.DependencyManagement;
 
 namespace Nop.Web.Framework.Infrastructure
 {
     /// <summary>
     /// Represents object for the configuring Authorization middleware on application startup
     /// </summary>
-    public class AuthorizationStartup : INopStartup
+    public class AuthorizationStartup : IDependencyRegistrar
     {
         /// <summary>
         /// Add and configure any of the middleware

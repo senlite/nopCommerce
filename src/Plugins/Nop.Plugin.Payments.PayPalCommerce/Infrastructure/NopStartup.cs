@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure;
+using Nop.Core.Infrastructure.DependencyManagement;
 using Nop.Plugin.Payments.PayPalCommerce.Services;
 using Nop.Web.Framework.Infrastructure.Extensions;
 
@@ -10,7 +10,7 @@ namespace Nop.Plugin.Payments.PayPalCommerce.Infrastructure
     /// <summary>
     /// Represents object for the configuring services on application startup
     /// </summary>
-    public class NopStartup : INopStartup
+    public class NopStartup : IDependencyRegistrar
     {
         /// <summary>
         /// Add and configure any of the middleware

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Configuration;
 using Nop.Core.Infrastructure.DependencyManagement;
 using Nop.Core.Infrastructure.Mapper;
 
@@ -54,37 +53,6 @@ namespace Nop.Core.Infrastructure
             //execute tasks
             foreach (var task in instances)
                 task.ExecuteAsync().Wait();
-        }
-
-        /// <summary>
-        /// Register dependencies
-        /// </summary>
-        /// <param name="services">Collection of service descriptors</param>
-        /// <param name="appSettings">App settings</param>
-        public virtual void RegisterDependencies(IServiceCollection services, AppSettings appSettings)
-        {
-            var typeFinder = new WebAppTypeFinder();
-
-            //register engine
-            services.AddSingleton<IEngine>(this);
-
-            //register type finder
-            services.AddSingleton<ITypeFinder>(typeFinder);
-            Singleton<ITypeFinder>.Instance = typeFinder;
-
-            //find dependency registrars provided by other assemblies
-            var dependencyRegistrars = typeFinder.FindClassesOfType<IDependencyRegistrar>();
-
-            //create and sort instances of dependency registrars
-            var instances = dependencyRegistrars
-                .Select(dependencyRegistrar => (IDependencyRegistrar)Activator.CreateInstance(dependencyRegistrar))
-                .OrderBy(dependencyRegistrar => dependencyRegistrar.Order);
-
-            //register all provided dependencies
-            foreach (var dependencyRegistrar in instances)
-                dependencyRegistrar.Register(services, typeFinder, appSettings);
-
-            services.AddSingleton(services);
         }
 
         /// <summary>
@@ -139,13 +107,21 @@ namespace Nop.Core.Infrastructure
         /// <param name="configuration">Configuration of the application</param>
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            //find startup configurations provided by other assemblies
             var typeFinder = new WebAppTypeFinder();
-            var startupConfigurations = typeFinder.FindClassesOfType<INopStartup>();
+
+            //register engine
+            services.AddSingleton<IEngine>(this);
+
+            //register type finder
+            services.AddSingleton<ITypeFinder>(typeFinder);
+            Singleton<ITypeFinder>.Instance = typeFinder;
+
+            //find startup configurations provided by other assemblies
+            var startupConfigurations = typeFinder.FindClassesOfType<IDependencyRegistrar>();
 
             //create and sort instances of startup configurations
             var instances = startupConfigurations
-                .Select(startup => (INopStartup)Activator.CreateInstance(startup))
+                .Select(startup => (IDependencyRegistrar)Activator.CreateInstance(startup))
                 .OrderBy(startup => startup.Order);
 
             //configure services
@@ -154,6 +130,8 @@ namespace Nop.Core.Infrastructure
 
             //register mapper configurations
             AddAutoMapper(services, typeFinder);
+
+            services.AddSingleton(services);
 
             //run startup tasks
             RunStartupTasks(typeFinder);
@@ -172,11 +150,11 @@ namespace Nop.Core.Infrastructure
 
             //find startup configurations provided by other assemblies
             var typeFinder = Singleton<ITypeFinder>.Instance;
-            var startupConfigurations = typeFinder.FindClassesOfType<INopStartup>();
+            var startupConfigurations = typeFinder.FindClassesOfType<IDependencyRegistrar>();
 
             //create and sort instances of startup configurations
             var instances = startupConfigurations
-                .Select(startup => (INopStartup)Activator.CreateInstance(startup))
+                .Select(startup => (IDependencyRegistrar)Activator.CreateInstance(startup))
                 .OrderBy(startup => startup.Order);
 
             //configure request pipeline
