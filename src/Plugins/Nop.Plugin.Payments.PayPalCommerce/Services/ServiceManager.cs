@@ -287,7 +287,7 @@ namespace Nop.Plugin.Payments.PayPalCommerce.Services
                     ["commit"] = (settings.PaymentType == Domain.PaymentType.Capture).ToString().ToLowerInvariant(),
                     ["vault"] = false.ToString().ToLowerInvariant(),
                     ["debug"] = false.ToString().ToLowerInvariant(),
-                    ["components"] = "buttons",
+                    ["components"] = "messages,buttons",
                     //["buyer-country"] = null, //available in the sandbox only
                     //["locale"] = null, //PayPal auto detects this
                 };
@@ -296,7 +296,7 @@ namespace Nop.Plugin.Payments.PayPalCommerce.Services
                 if (!string.IsNullOrEmpty(settings.EnabledFunding))
                     parameters["enable-funding"] = settings.EnabledFunding;
                 if (widgetZone.Equals(PublicWidgetZones.OrderSummaryContentBefore) || widgetZone.Equals(PublicWidgetZones.ProductDetailsTop))
-                    parameters["components"] = "buttons,funding-eligibility";
+                    parameters["components"] = "messages,buttons,funding-eligibility";
                 var scriptUrl = QueryHelpers.AddQueryString(PayPalCommerceDefaults.ServiceScriptUrl, parameters);
 
                 var pageType = widgetZone.Equals(PublicWidgetZones.OrderSummaryContentBefore)
