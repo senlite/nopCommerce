@@ -4,9 +4,9 @@
     Layout = "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(Model.Name);
+    pageHeadBuilder.AddTitleParts(Model.Name);
     //page class
-    Html.AppendPageCssClassParts("html-forum-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-forum-page");
 }
 <div class="page forum-page">
     @await Component.InvokeAsync("ForumBreadcrumb", new { forumId = Model.Id })

@@ -7,7 +7,7 @@
     //tour step
     ViewBag.TourStep = TourStep.Store;
     //active menu item (system name)
-    Html.SetActiveMenuItemSystemName("Stores");
+    pageHeadBuilder.SetActiveMenuItemSystemName("Stores");
 }
 
 @await Html.PartialAsync("_AdminTour")

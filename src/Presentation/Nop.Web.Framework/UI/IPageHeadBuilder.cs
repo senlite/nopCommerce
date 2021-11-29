@@ -1,4 +1,6 @@
-﻿namespace Nop.Web.Framework.UI
+﻿using Microsoft.AspNetCore.Html;
+
+namespace Nop.Web.Framework.UI
 {
     /// <summary>
     /// Page head builder
@@ -21,8 +23,9 @@
         /// Generate all title parts
         /// </summary>
         /// <param name="addDefaultTitle">A value indicating whether to insert a default title</param>
+        /// <param name="part">Title part</param>
         /// <returns>Generated string</returns>
-        string GenerateTitle(bool addDefaultTitle);
+        string GenerateTitle(bool addDefaultTitle = true, string part = "");
 
         /// <summary>
         /// Add meta description element to the <![CDATA[<head>]]>
@@ -39,8 +42,9 @@
         /// <summary>
         /// Generate all description parts
         /// </summary>
+        /// <param name="part">Meta description part</param>
         /// <returns>Generated string</returns>
-        string GenerateMetaDescription();
+        string GenerateMetaDescription(string part = "");
 
         /// <summary>
         /// Add meta keyword element to the <![CDATA[<head>]]>
@@ -57,8 +61,9 @@
         /// <summary>
         /// Generate all keyword parts
         /// </summary>
+        /// <param name="part">Meta keyword part</param>
         /// <returns>Generated string</returns>
-        string GenerateMetaKeywords();
+        string GenerateMetaKeywords(string part = "");
 
         /// <summary>
         /// Add script element
@@ -67,7 +72,7 @@
         /// <param name="src">Script path (minified version)</param>
         /// <param name="debugSrc">Script path (full debug version). If empty, then minified version will be used</param>
         /// <param name="isAsync">A value indicating whether to add an attribute "async" or not for js files</param>
-        void AddScriptParts(ResourceLocation location, string src, string debugSrc, bool isAsync);
+        void AddScriptParts(ResourceLocation location, string src, string debugSrc = "", bool isAsync = false);
 
         /// <summary>
         /// Append script element
@@ -76,14 +81,14 @@
         /// <param name="src">Script path (minified version)</param>
         /// <param name="debugSrc">Script path (full debug version). If empty, then minified version will be used</param>
         /// <param name="isAsync">A value indicating whether to add an attribute "async" or not for js files</param>
-        void AppendScriptParts(ResourceLocation location, string src, string debugSrc, bool isAsync);
+        void AppendScriptParts(ResourceLocation location, string src, string debugSrc = "", bool isAsync = false);
 
         /// <summary>
         /// Generate all script parts
         /// </summary>
         /// <param name="location">A location of the script element</param>
         /// <returns>Generated string</returns>
-        string GenerateScripts(ResourceLocation location);
+        IHtmlContent GenerateScripts(ResourceLocation location);
 
         /// <summary>
         /// Add inline script element
@@ -104,7 +109,7 @@
         /// </summary>
         /// <param name="location">A location of the script element</param>
         /// <returns>Generated string</returns>
-        string GenerateInlineScripts(ResourceLocation location);
+        IHtmlContent GenerateInlineScripts(ResourceLocation location);
 
         /// <summary>
         /// Add CSS element
@@ -126,14 +131,15 @@
         /// Generate all CSS parts
         /// </summary>
         /// <param name="location">A location of the script element</param>
-        /// <returns>Generated string</returns>
-        string GenerateCssFiles(ResourceLocation location);
+        /// <returns>Generated HTML</returns>
+        IHtmlContent GenerateCssFiles(ResourceLocation location);
 
         /// <summary>
         /// Add canonical URL element to the <![CDATA[<head>]]>
         /// </summary>
         /// <param name="part">Canonical URL part</param>
-        void AddCanonicalUrlParts(string part);
+        /// <param name="withQueryString">Whether to use canonical URLs with query string parameters</param>
+        void AddCanonicalUrlParts(string part, bool withQueryString = false);
 
         /// <summary>
         /// Append canonical URL element to the <![CDATA[<head>]]>
@@ -145,7 +151,7 @@
         /// Generate all canonical URL parts
         /// </summary>
         /// <returns>Generated string</returns>
-        string GenerateCanonicalUrls();
+        IHtmlContent GenerateCanonicalUrls();
 
         /// <summary>
         /// Add any custom element to the <![CDATA[<head>]]> element
@@ -163,7 +169,7 @@
         /// Generate all custom elements
         /// </summary>
         /// <returns>Generated string</returns>
-        string GenerateHeadCustom();
+        IHtmlContent GenerateHeadCustom();
 
         /// <summary>
         /// Add CSS class to the <![CDATA[<head>]]> element
@@ -180,8 +186,9 @@
         /// <summary>
         /// Generate all title parts
         /// </summary>
+        /// <param name="part">CSS class</param>
         /// <returns>Generated string</returns>
-        string GeneratePageCssClasses();
+        string GeneratePageCssClasses(string part = "");
 
         /// <summary>
         /// Specify "edit page" URL

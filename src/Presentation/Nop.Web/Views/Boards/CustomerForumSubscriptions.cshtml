@@ -3,10 +3,10 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.ForumSubscriptions").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.ForumSubscriptions").Text);
     //page class
-    Html.AppendPageCssClassParts("html-account-page");
-    Html.AppendPageCssClassParts("html-forum-subscriptions-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-account-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-forum-subscriptions-page");
 }
 @section left
 {

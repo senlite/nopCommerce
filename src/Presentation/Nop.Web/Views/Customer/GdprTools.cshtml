@@ -2,10 +2,10 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.Account").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.Account").Text);
     //page class
-    Html.AppendPageCssClassParts("html-account-page");
-    Html.AppendPageCssClassParts("html-gdpt-tools-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-account-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-gdpt-tools-page");
 }
 @section left
     {

@@ -3,9 +3,9 @@
     Layout = "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(T("PageTitle.ContactVendor", Model.VendorName).Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.ContactVendor", Model.VendorName).Text);
     //page class
-    Html.AppendPageCssClassParts("html-contact-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-contact-page");
 }
 <div class="page contact-page">
     <div class="page-title">

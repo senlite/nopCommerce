@@ -11,9 +11,9 @@
     Layout = isRegisterCustomer ? "_ColumnsTwo" : "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(T("PageTitle.CheckGiftCardBalance").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.CheckGiftCardBalance").Text);
     //page class
-    Html.AppendPageCssClassParts("html-account-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-account-page");
 }
 
 @if (isRegisterCustomer)

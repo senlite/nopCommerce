@@ -48,5 +48,5 @@
 
 @if (orderSettings.OnePageCheckoutEnabled)
 {
-    @Html.NopInlineScripts(ResourceLocation.Footer)
+    @pageHeadBuilder.GenerateInlineScripts(ResourceLocation.Footer)
 }

@@ -3,10 +3,10 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.Account").Text);
-    Html.AppendPageCssClassParts("html-account-page");
+    pageHeadBuilder.AddTitleParts(T("PageTitle.Account").Text);
+    pageHeadBuilder.AppendPageCssClassParts("html-account-page");
     //page class
-    Html.AppendPageCssClassParts("html-address-edit-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-address-edit-page");
 }
 @section left
 {

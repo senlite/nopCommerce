@@ -3,9 +3,9 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.AllProductTags").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.AllProductTags").Text);
     //page class
-    Html.AppendPageCssClassParts("html-product-tags-all-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-product-tags-all-page");
 }
 <div class="page product-tags-all-page">
     <div class="page-title">

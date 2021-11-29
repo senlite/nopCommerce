@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Hosting;
 using Nop.Core;
 using Nop.Core.Domain.Seo;
-using WebOptimizer;
 
 namespace Nop.Web.Framework.UI
 {
@@ -19,19 +21,20 @@ namespace Nop.Web.Framework.UI
     {
         #region Fields
 
+        private readonly Dictionary<ResourceLocation, List<ScriptReferenceMeta>> _scriptParts = new();
+        private readonly Dictionary<ResourceLocation, List<string>> _inlineScriptParts = new();
+        private readonly Dictionary<ResourceLocation, List<CssReferenceMeta>> _cssParts = new();
+        private readonly HtmlEncoder _htmlEncoder;
         private readonly IActionContextAccessor _actionContextAccessor;
         private readonly IUrlHelperFactory _urlHelperFactory;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly List<string> _canonicalUrlParts = new();
+        private readonly List<string> _headCustomParts = new();
+        private readonly List<string> _metaDescriptionParts = new();
+        private readonly List<string> _metaKeywordParts = new();
+        private readonly List<string> _pageCssClassParts = new();
+        private readonly List<string> _titleParts = new();
         private readonly SeoSettings _seoSettings;
-        private readonly List<string> _titleParts;
-        private readonly List<string> _metaDescriptionParts;
-        private readonly List<string> _metaKeywordParts;
-        private readonly Dictionary<ResourceLocation, List<ScriptReferenceMeta>> _scriptParts;
-        private readonly Dictionary<ResourceLocation, List<string>> _inlineScriptParts;
-        private readonly Dictionary<ResourceLocation, List<CssReferenceMeta>> _cssParts;
-        private readonly List<string> _canonicalUrlParts;
-        private readonly List<string> _headCustomParts;
-        private readonly List<string> _pageCssClassParts;
         private string _activeAdminMenuSystemName;
         private string _editPageUrl;
 
@@ -39,25 +42,17 @@ namespace Nop.Web.Framework.UI
 
         #region Ctor
 
-        public PageHeadBuilder(IActionContextAccessor actionContextAccessor,
+        public PageHeadBuilder(HtmlEncoder htmlEncoder,
+            IActionContextAccessor actionContextAccessor,
             IUrlHelperFactory urlHelperFactory,
             IWebHostEnvironment webHostEnvironment,
             SeoSettings seoSettings)
         {
+            _htmlEncoder = htmlEncoder;
             _actionContextAccessor = actionContextAccessor;
             _urlHelperFactory = urlHelperFactory;
             _webHostEnvironment = webHostEnvironment;
             _seoSettings = seoSettings;
-
-            _titleParts = new List<string>();
-            _metaDescriptionParts = new List<string>();
-            _metaKeywordParts = new List<string>();
-            _scriptParts = new Dictionary<ResourceLocation, List<ScriptReferenceMeta>>();
-            _inlineScriptParts = new Dictionary<ResourceLocation, List<string>>();
-            _cssParts = new Dictionary<ResourceLocation, List<CssReferenceMeta>>();
-            _canonicalUrlParts = new List<string>();
-            _headCustomParts = new List<string>();
-            _pageCssClassParts = new List<string>();
         }
 
         #endregion
@@ -90,9 +85,12 @@ namespace Nop.Web.Framework.UI
         /// Generate all title parts
         /// </summary>
         /// <param name="addDefaultTitle">A value indicating whether to insert a default title</param>
+        /// <param name="part">Title part</param>
         /// <returns>Generated string</returns>
-        public virtual string GenerateTitle(bool addDefaultTitle)
+        public virtual string GenerateTitle(bool addDefaultTitle = true, string part = "")
         {
+            AppendTitleParts(part);
+
             var specificTitle = string.Join(_seoSettings.PageTitleSeparator, _titleParts.AsEnumerable().Reverse().ToArray());
             string result;
             if (!string.IsNullOrEmpty(specificTitle))
@@ -113,7 +111,6 @@ namespace Nop.Web.Framework.UI
                                 result = string.Join(_seoSettings.PageTitleSeparator, specificTitle, _seoSettings.DefaultTitle);
                             }
                             break;
-
                     }
                 }
                 else
@@ -127,7 +124,7 @@ namespace Nop.Web.Framework.UI
                 //store name only
                 result = _seoSettings.DefaultTitle;
             }
-            return result;
+            return _htmlEncoder.Encode(result);
         }
 
         /// <summary>
@@ -155,12 +152,16 @@ namespace Nop.Web.Framework.UI
         /// <summary>
         /// Generate all description parts
         /// </summary>
+        /// <param name="part">Meta description part</param>
         /// <returns>Generated string</returns>
-        public virtual string GenerateMetaDescription()
+        public virtual string GenerateMetaDescription(string part = "")
         {
+            AppendMetaDescriptionParts(part);
+
             var metaDescription = string.Join(", ", _metaDescriptionParts.AsEnumerable().Reverse().ToArray());
             var result = !string.IsNullOrEmpty(metaDescription) ? metaDescription : _seoSettings.DefaultMetaDescription;
-            return result;
+
+            return _htmlEncoder.Encode(result);
         }
 
         /// <summary>
@@ -188,12 +189,16 @@ namespace Nop.Web.Framework.UI
         /// <summary>
         /// Generate all keyword parts
         /// </summary>
+        /// <param name="part">Meta keyword part</param>
         /// <returns>Generated string</returns>
-        public virtual string GenerateMetaKeywords()
+        public virtual string GenerateMetaKeywords(string part = "")
         {
+            AppendMetaKeywordParts(part);
+
             var metaKeyword = string.Join(", ", _metaKeywordParts.AsEnumerable().Reverse().ToArray());
             var result = !string.IsNullOrEmpty(metaKeyword) ? metaKeyword : _seoSettings.DefaultMetaKeywords;
-            return result;
+
+            return _htmlEncoder.Encode(result);
         }
 
         /// <summary>
@@ -203,7 +208,7 @@ namespace Nop.Web.Framework.UI
         /// <param name="src">Script path (minified version)</param>
         /// <param name="debugSrc">Script path (full debug version). If empty, then minified version will be used</param>
         /// <param name="isAsync">A value indicating whether to add an attribute "async" or not for js files</param>
-        public virtual void AddScriptParts(ResourceLocation location, string src, string debugSrc, bool isAsync)
+        public virtual void AddScriptParts(ResourceLocation location, string src, string debugSrc = "", bool isAsync = false)
         {
             if (!_scriptParts.ContainsKey(location))
                 _scriptParts.Add(location, new List<ScriptReferenceMeta>());
@@ -228,7 +233,7 @@ namespace Nop.Web.Framework.UI
         /// <param name="src">Script path (minified version)</param>
         /// <param name="debugSrc">Script path (full debug version). If empty, then minified version will be used</param>
         /// <param name="isAsync">A value indicating whether to add an attribute "async" or not for js files</param>
-        public virtual void AppendScriptParts(ResourceLocation location, string src, string debugSrc, bool isAsync)
+        public virtual void AppendScriptParts(ResourceLocation location, string src, string debugSrc = "", bool isAsync = false)
         {
             if (!_scriptParts.ContainsKey(location))
                 _scriptParts.Add(location, new List<ScriptReferenceMeta>());
@@ -252,13 +257,13 @@ namespace Nop.Web.Framework.UI
         /// </summary>
         /// <param name="location">A location of the script element</param>
         /// <returns>Generated string</returns>
-        public virtual string GenerateScripts(ResourceLocation location)
+        public virtual IHtmlContent GenerateScripts(ResourceLocation location)
         {
             if (!_scriptParts.ContainsKey(location) || _scriptParts[location] == null)
-                return "";
+                return HtmlString.Empty;
 
             if (!_scriptParts.Any())
-                return "";
+                return HtmlString.Empty;
 
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
@@ -272,7 +277,7 @@ namespace Nop.Web.Framework.UI
                 result.Append(Environment.NewLine);
             }
 
-            return result.ToString();
+            return new HtmlString(result.ToString());
         }
 
         /// <summary>
@@ -283,7 +288,7 @@ namespace Nop.Web.Framework.UI
         public virtual void AddInlineScriptParts(ResourceLocation location, string script)
         {
             if (!_inlineScriptParts.ContainsKey(location))
-                _inlineScriptParts.Add(location, new List<string>());
+                _inlineScriptParts.Add(location, new());
 
             if (string.IsNullOrEmpty(script))
                 return;
@@ -302,7 +307,7 @@ namespace Nop.Web.Framework.UI
         public virtual void AppendInlineScriptParts(ResourceLocation location, string script)
         {
             if (!_inlineScriptParts.ContainsKey(location))
-                _inlineScriptParts.Add(location, new List<string>());
+                _inlineScriptParts.Add(location, new());
 
             if (string.IsNullOrEmpty(script))
                 return;
@@ -317,13 +322,13 @@ namespace Nop.Web.Framework.UI
         /// </summary>
         /// <param name="location">A location of the script element</param>
         /// <returns>Generated string</returns>
-        public virtual string GenerateInlineScripts(ResourceLocation location)
+        public virtual IHtmlContent GenerateInlineScripts(ResourceLocation location)
         {
             if (!_inlineScriptParts.ContainsKey(location) || _inlineScriptParts[location] == null)
-                return "";
+                return HtmlString.Empty;
 
             if (!_inlineScriptParts.Any())
-                return "";
+                return HtmlString.Empty;
 
             var result = new StringBuilder();
             foreach (var item in _inlineScriptParts[location])
@@ -331,7 +336,7 @@ namespace Nop.Web.Framework.UI
                 result.Append(item);
                 result.Append(Environment.NewLine);
             }
-            return result.ToString();
+            return new HtmlString(result.ToString());
         }
 
         /// <summary>
@@ -385,14 +390,14 @@ namespace Nop.Web.Framework.UI
         /// Generate all CSS parts
         /// </summary>
         /// <param name="location">A location of the script element</param>
-        /// <returns>Generated string</returns>
-        public virtual string GenerateCssFiles(ResourceLocation location)
+        /// <returns>Generated HTML</returns>
+        public virtual IHtmlContent GenerateCssFiles(ResourceLocation location)
         {
             if (!_cssParts.ContainsKey(location) || _cssParts[location] == null)
-                return "";
+                return HtmlString.Empty;
 
             if (!_cssParts.Any())
-                return "";
+                return HtmlString.Empty;
 
             var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
 
@@ -405,17 +410,26 @@ namespace Nop.Web.Framework.UI
                 result.AppendFormat("<link href=\"{0}\" rel=\"stylesheet\" type=\"{1}\" />", urlHelper.Content(src), MimeTypes.TextCss);
                 result.AppendLine();
             }
-            return result.ToString();
+            return new HtmlString(result.ToString());
         }
 
         /// <summary>
         /// Add canonical URL element to the <![CDATA[<head>]]>
         /// </summary>
         /// <param name="part">Canonical URL part</param>
-        public virtual void AddCanonicalUrlParts(string part)
+        /// <param name="withQueryString">Whether to use canonical URLs with query string parameters</param>
+        public virtual void AddCanonicalUrlParts(string part, bool withQueryString = false)
         {
             if (string.IsNullOrEmpty(part))
                 return;
+
+            if (withQueryString)
+            {
+                //add ordered query string parameters
+                var queryParameters = _actionContextAccessor.ActionContext.HttpContext.Request.Query.OrderBy(parameter => parameter.Key)
+                    .ToDictionary(parameter => parameter.Key, parameter => parameter.Value.ToString());
+                part = QueryHelpers.AddQueryString(part, queryParameters);
+            }
 
             _canonicalUrlParts.Add(part);
         }
@@ -434,7 +448,7 @@ namespace Nop.Web.Framework.UI
         /// Generate all canonical URL parts
         /// </summary>
         /// <returns>Generated string</returns>
-        public virtual string GenerateCanonicalUrls()
+        public virtual IHtmlContent GenerateCanonicalUrls()
         {
             var result = new StringBuilder();
             foreach (var canonicalUrl in _canonicalUrlParts)
@@ -442,7 +456,7 @@ namespace Nop.Web.Framework.UI
                 result.AppendFormat("<link rel=\"canonical\" href=\"{0}\" />", canonicalUrl);
                 result.Append(Environment.NewLine);
             }
-            return result.ToString();
+            return new HtmlString(result.ToString());
         }
 
         /// <summary>
@@ -471,12 +485,12 @@ namespace Nop.Web.Framework.UI
         /// Generate all custom elements
         /// </summary>
         /// <returns>Generated string</returns>
-        public virtual string GenerateHeadCustom()
+        public virtual IHtmlContent GenerateHeadCustom()
         {
             //use only distinct rows
             var distinctParts = _headCustomParts.Distinct().ToList();
             if (!distinctParts.Any())
-                return "";
+                return HtmlString.Empty;
 
             var result = new StringBuilder();
             foreach (var path in distinctParts)
@@ -484,7 +498,7 @@ namespace Nop.Web.Framework.UI
                 result.Append(path);
                 result.Append(Environment.NewLine);
             }
-            return result.ToString();
+            return new HtmlString(result.ToString());
         }
 
         /// <summary>
@@ -509,14 +523,22 @@ namespace Nop.Web.Framework.UI
 
             _pageCssClassParts.Insert(0, part);
         }
+
         /// <summary>
         /// Generate all title parts
         /// </summary>
+        /// <param name="part">CSS class</param>
         /// <returns>Generated string</returns>
-        public virtual string GeneratePageCssClasses()
+        public virtual string GeneratePageCssClasses(string part = "")
         {
+            AppendPageCssClassParts(part);
+
             var result = string.Join(" ", _pageCssClassParts.AsEnumerable().Reverse().ToArray());
-            return result;
+
+            if (string.IsNullOrEmpty(result))
+                return string.Empty;
+
+            return _htmlEncoder.Encode(result);
         }
 
         /// <summary>

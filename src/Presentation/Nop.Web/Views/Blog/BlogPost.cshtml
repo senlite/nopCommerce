@@ -3,12 +3,12 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(!string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Title);
+    pageHeadBuilder.AddTitleParts(!string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Title);
     //meta
-    Html.AddMetaDescriptionParts(Model.MetaDescription);
-    Html.AddMetaKeywordParts(Model.MetaKeywords);
+    pageHeadBuilder.AddMetaDescriptionParts(Model.MetaDescription);
+    pageHeadBuilder.AddMetaKeywordParts(Model.MetaKeywords);
     //page class
-    Html.AppendPageCssClassParts("html-blogpost-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-blogpost-page");
 }
 @section left {
     @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.LeftSideColumnBlogBefore, additionalData = Model })

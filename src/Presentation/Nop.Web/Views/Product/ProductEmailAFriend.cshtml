@@ -3,10 +3,10 @@
     Layout = "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(Model.ProductName);
+    pageHeadBuilder.AddTitleParts(Model.ProductName);
     //page class
-    Html.AddTitleParts(T("PageTitle.ProductEmailAFriend").Text);
-    Html.AppendPageCssClassParts("html-email-a-friend-page");
+    pageHeadBuilder.AddTitleParts(T("PageTitle.ProductEmailAFriend").Text);
+    pageHeadBuilder.AppendPageCssClassParts("html-email-a-friend-page");
 }
 <div class="page email-a-friend-page">
     <div class="page-title">

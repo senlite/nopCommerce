@@ -3,9 +3,9 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.Manufacturers").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.Manufacturers").Text);
     //page class
-    Html.AppendPageCssClassParts("html-manufacturer-list-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-manufacturer-list-page");
 }
 <div class="page manufacturer-list-page">
     <div class="page-title">

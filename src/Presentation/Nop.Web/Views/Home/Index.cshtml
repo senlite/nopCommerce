@@ -7,17 +7,17 @@
     //title
     if (!string.IsNullOrEmpty(seoSettings.HomepageTitle))
     {
-        Html.AddTitleParts(seoSettings.HomepageTitle);
+        pageHeadBuilder.AddTitleParts(seoSettings.HomepageTitle);
     }
 
     //meta
     if (!string.IsNullOrEmpty(seoSettings.HomepageDescription))
     {
-        Html.AddMetaDescriptionParts(seoSettings.HomepageDescription);
+        pageHeadBuilder.AddMetaDescriptionParts(seoSettings.HomepageDescription);
     }
 
     //page class
-    Html.AppendPageCssClassParts("html-home-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-home-page");
 }
 <div class="page home-page">
     <div class="page-body">

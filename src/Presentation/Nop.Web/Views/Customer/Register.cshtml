@@ -3,9 +3,9 @@
     Layout = "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(T("PageTitle.Register").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.Register").Text);
     //page class
-    Html.AppendPageCssClassParts("html-registration-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-registration-page");
 }
 
 <div class="page registration-page">

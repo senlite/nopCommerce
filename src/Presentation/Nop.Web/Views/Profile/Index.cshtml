@@ -3,9 +3,9 @@
     Layout = "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(T("PageTitle.Profile").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.Profile").Text);
     //page class
-    Html.AppendPageCssClassParts("html-profile-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-profile-page");
 }
 <div class="page profile-page">
     <div class="page-title">

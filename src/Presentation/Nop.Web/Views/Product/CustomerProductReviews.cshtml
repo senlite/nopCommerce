@@ -3,10 +3,10 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.CustomerProductReviews").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.CustomerProductReviews").Text);
     //page class
-    Html.AppendPageCssClassParts("html-account-page");
-    Html.AppendPageCssClassParts("html-my-product-reviews-list-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-account-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-my-product-reviews-list-page");
 }
 @section left
 {

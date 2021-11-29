@@ -58,6 +58,8 @@ namespace Nop.Web.Framework.Infrastructure.Extensions
             //create default file provider
             CommonHelper.DefaultFileProvider = new NopFileProvider(builder.Environment);
 
+            services.AddWebEncoders();
+
             //add accessor to HttpContext
             services.AddHttpContextAccessor();
 

@@ -8,17 +8,17 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(!string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Name);
+    pageHeadBuilder.AddTitleParts(!string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Name);
     //meta
-    Html.AddMetaDescriptionParts(Model.MetaDescription);
-    Html.AddMetaKeywordParts(Model.MetaKeywords);
+    pageHeadBuilder.AddMetaDescriptionParts(Model.MetaDescription);
+    pageHeadBuilder.AddMetaKeywordParts(Model.MetaKeywords);
     //page class
-    Html.AppendPageCssClassParts("html-category-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-category-page");
 
     if (seoSettings.CanonicalUrlsEnabled)
     {
         var categoryUrl = Url.RouteUrl("Category", new { SeName = Model.SeName }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
-        Html.AddCanonicalUrlParts(categoryUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
+        pageHeadBuilder.AddCanonicalUrlParts(categoryUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
     }
 
     var breadcrumbDelimiter = commonSettings.BreadcrumbDelimiter;

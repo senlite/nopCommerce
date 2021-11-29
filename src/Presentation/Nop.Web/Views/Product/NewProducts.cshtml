@@ -3,9 +3,9 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.NewProducts").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.NewProducts").Text);
     //page class
-    Html.AppendPageCssClassParts("html-recently-added-products-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-recently-added-products-page");
 }
 <div class="page recently-added-products-page">
     <div class="page-title">

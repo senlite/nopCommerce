@@ -3,9 +3,9 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.Search").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.Search").Text);
     //page class
-    Html.AppendPageCssClassParts("html-search-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-search-page");
 }
 <script asp-location="Footer">
     $(document).ready(function () {

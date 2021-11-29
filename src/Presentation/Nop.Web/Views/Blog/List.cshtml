@@ -3,9 +3,9 @@
     Layout = "_ColumnsTwo";
 
     //title
-    Html.AddTitleParts(T("PageTitle.Blog").Text);
+    pageHeadBuilder.AddTitleParts(T("PageTitle.Blog").Text);
     //page class
-    Html.AppendPageCssClassParts("html-blog-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-blog-page");
 }
 @section left {
     @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.LeftSideColumnBlogBefore, additionalData = Model })

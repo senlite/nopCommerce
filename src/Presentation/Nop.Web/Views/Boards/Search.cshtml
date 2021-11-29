@@ -4,9 +4,9 @@
     Layout = "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(T("Forum.PageTitle.Search").Text);
+    pageHeadBuilder.AddTitleParts(T("Forum.PageTitle.Search").Text);
     //page class
-    Html.AppendPageCssClassParts("html-forum-search-page");
+    pageHeadBuilder.AppendPageCssClassParts("html-forum-search-page");
 }
 <script asp-location="Footer">
     $(document).ready(function () {

@@ -4,7 +4,7 @@
     //page title
     ViewBag.PageTitle = T("Admin.Configuration.Currencies").Text;
     //active menu item (system name)
-    Html.SetActiveMenuItemSystemName("Currencies");
+    pageHeadBuilder.SetActiveMenuItemSystemName("Currencies");
 }
 
 <form asp-controller="Currency" asp-action="List" method="post">
