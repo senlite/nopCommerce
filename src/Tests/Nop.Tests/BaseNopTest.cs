@@ -170,6 +170,8 @@ namespace Nop.Tests
             webHostEnvironment.Setup(p => p.ApplicationName).Returns("nopCommerce");
             services.AddSingleton(webHostEnvironment.Object);
 
+            services.AddWebEncoders();
+
             var httpContext = new DefaultHttpContext
             {
                 Request = { Headers = { { HeaderNames.Host, NopTestsDefaults.HostIpAddress } } }
