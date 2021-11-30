@@ -4,12 +4,12 @@
 {
     <div>
         <div class="add-to-cart-panel" id="paypal-button-container@($"-{Model.ProductId}")"></div>
-    </div>
-    <div
-      data-pp-message
-      data-pp-layout="text"
-      data-pp-placement="product"
-      data-pp-amount="@Model.ProductCost">
+         <div
+            data-pp-message
+            data-pp-layout="text"
+            data-pp-placement="product"
+            data-pp-amount="@Model.ProductCost">
+        </div>
     </div>
 }
 else
@@ -18,6 +18,8 @@ else
         $(document).ready(function () {
             $('#checkout').after('<div id="paypal-button-container"></div>');
             $('#checkout').hide();
+
+            $('#paypal-button-container').after('<div data-pp-message data-pp-layout="text" data-pp-placement="cart"></div>');
         });
     </script>
 }
@@ -35,15 +37,6 @@ else
                 }
                 return false;
             },
-            createOrder: function(data, actions) {
-                return actions.order.create({
-                  purchase_units: [{
-                    amount: {
-                      value: '@Model.ProductCost'
-                    }
-                  }]
-                });
-              },
             style: {
                 layout: '@settings.StyleLayout',
                 color: '@settings.StyleColor',

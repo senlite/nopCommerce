@@ -32,15 +32,9 @@
                     tagline: '@settings.StyleTagline'
                 },
 
-                createOrder: function(data, actions) {
-                return actions.order.create({
-                  purchase_units: [{
-                    amount: {
-                      value: '@Model.OrderTotal'
-                    }
-                  }]
-                });
-              },
+                createOrder: function (data, actions) {
+                    return '@Model.OrderId';
+                },
 
                 onApprove: function(data, actions) {
                     $('button.payment-info-next-step-button').trigger("click");
