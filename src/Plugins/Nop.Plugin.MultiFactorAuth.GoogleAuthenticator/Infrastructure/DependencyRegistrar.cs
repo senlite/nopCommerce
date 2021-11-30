@@ -10,7 +10,7 @@ namespace Nop.Plugin.MultiFactorAuth.GoogleAuthenticator.Infrastructure
     /// <summary>
     /// Represents a plugin dependency registrar
     /// </summary>
-    public class DependencyRegistrar : INopStartup
+    public class NopStartup : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

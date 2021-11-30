@@ -9,7 +9,7 @@ namespace Nop.Plugin.Shipping.ShipStation.Infrastructure
     /// <summary>
     /// Dependency registrar
     /// </summary>
-    public class DependencyRegistrar : INopStartup
+    public class NopStartup : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

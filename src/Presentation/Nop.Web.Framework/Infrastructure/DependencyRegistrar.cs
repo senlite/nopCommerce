@@ -61,7 +61,7 @@ namespace Nop.Web.Framework.Infrastructure
     /// <summary>
     /// Represents the registering services on application startup
     /// </summary>
-    public class DependencyRegistrar : INopStartup
+    public class NopStartup : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware
