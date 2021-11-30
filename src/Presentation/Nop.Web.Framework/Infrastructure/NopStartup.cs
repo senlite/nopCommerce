@@ -234,7 +234,7 @@ namespace Nop.Web.Framework.Infrastructure
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
             //register all settings
-            var typeFinder = new WebAppTypeFinder();
+            var typeFinder = Singleton<ITypeFinder>.Instance;
 
             var settings = typeFinder.FindClassesOfType(typeof(ISettings), false).ToList();
             foreach (var setting in settings)
