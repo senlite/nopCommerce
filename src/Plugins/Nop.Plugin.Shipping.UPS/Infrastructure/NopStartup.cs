@@ -7,7 +7,7 @@ using Nop.Plugin.Shipping.UPS.Services;
 namespace Nop.Plugin.Shipping.UPS.Infrastructure
 {
     /// <summary>
-    /// Dependency registrar
+    /// Represents object for the configuring services on application startup
     /// </summary>
     public class NopStartup : INopStartup
     {
@@ -31,7 +31,7 @@ namespace Nop.Plugin.Shipping.UPS.Infrastructure
         }
 
         /// <summary>
-        /// Order of this dependency registrar implementation
+        /// Gets order of this startup configuration implementation
         /// </summary>
         public int Order => 3000;
     }

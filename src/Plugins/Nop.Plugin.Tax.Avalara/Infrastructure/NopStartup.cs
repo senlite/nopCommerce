@@ -7,7 +7,7 @@ using Nop.Plugin.Tax.Avalara.Services;
 namespace Nop.Plugin.Tax.Avalara.Infrastructure
 {
     /// <summary>
-    /// Represents a plugin dependency registrar
+    /// Represents object for the configuring services on application startup
     /// </summary>
     public class NopStartup : INopStartup
     {
@@ -31,7 +31,7 @@ namespace Nop.Plugin.Tax.Avalara.Infrastructure
         }
 
         /// <summary>
-        /// Order of this dependency registrar implementation
+        /// Gets order of this startup configuration implementation
         /// </summary>
         public int Order => 3000;
     }

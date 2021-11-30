@@ -301,7 +301,7 @@ namespace Nop.Web.Framework.Infrastructure
         }
 
         /// <summary>
-        /// Gets order of this dependency registrar implementation
+        /// Gets order of this startup configuration implementation
         /// </summary>
         public int Order => 2000;
     }

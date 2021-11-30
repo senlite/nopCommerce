@@ -10,7 +10,7 @@ using Nop.Web.Infrastructure.Installation;
 namespace Nop.Web.Infrastructure
 {
     /// <summary>
-    /// Dependency registrar
+    /// Represents the registering services on application startup
     /// </summary>
     public class NopStartup : INopStartup
     {
@@ -122,7 +122,7 @@ namespace Nop.Web.Infrastructure
         }
 
         /// <summary>
-        /// Gets order of this dependency registrar implementation
+        /// Gets order of this startup configuration implementation
         /// </summary>
         public int Order => 2002;
     }
