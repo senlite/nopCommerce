@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure.DependencyManagement;
 using Nop.Core.Infrastructure.Mapper;
 
 namespace Nop.Core.Infrastructure
@@ -117,11 +116,11 @@ namespace Nop.Core.Infrastructure
             Singleton<ITypeFinder>.Instance = typeFinder;
 
             //find startup configurations provided by other assemblies
-            var startupConfigurations = typeFinder.FindClassesOfType<IDependencyRegistrar>();
+            var startupConfigurations = typeFinder.FindClassesOfType<INopStartup>();
 
             //create and sort instances of startup configurations
             var instances = startupConfigurations
-                .Select(startup => (IDependencyRegistrar)Activator.CreateInstance(startup))
+                .Select(startup => (INopStartup)Activator.CreateInstance(startup))
                 .OrderBy(startup => startup.Order);
 
             //configure services
@@ -150,11 +149,11 @@ namespace Nop.Core.Infrastructure
 
             //find startup configurations provided by other assemblies
             var typeFinder = Singleton<ITypeFinder>.Instance;
-            var startupConfigurations = typeFinder.FindClassesOfType<IDependencyRegistrar>();
+            var startupConfigurations = typeFinder.FindClassesOfType<INopStartup>();
 
             //create and sort instances of startup configurations
             var instances = startupConfigurations
-                .Select(startup => (IDependencyRegistrar)Activator.CreateInstance(startup))
+                .Select(startup => (INopStartup)Activator.CreateInstance(startup))
                 .OrderBy(startup => startup.Order);
 
             //configure request pipeline

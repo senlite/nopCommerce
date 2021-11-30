@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure.DependencyManagement;
+using Nop.Core.Infrastructure;
 using Nop.Plugin.MultiFactorAuth.GoogleAuthenticator.Factories;
 using Nop.Plugin.MultiFactorAuth.GoogleAuthenticator.Services;
 
@@ -10,7 +10,7 @@ namespace Nop.Plugin.MultiFactorAuth.GoogleAuthenticator.Infrastructure
     /// <summary>
     /// Represents a plugin dependency registrar
     /// </summary>
-    public class DependencyRegistrar : IDependencyRegistrar
+    public class DependencyRegistrar : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

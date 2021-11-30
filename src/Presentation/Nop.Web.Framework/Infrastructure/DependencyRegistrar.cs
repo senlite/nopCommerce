@@ -9,7 +9,6 @@ using Nop.Core.Caching;
 using Nop.Core.Configuration;
 using Nop.Core.Events;
 using Nop.Core.Infrastructure;
-using Nop.Core.Infrastructure.DependencyManagement;
 using Nop.Data;
 using Nop.Services.Affiliates;
 using Nop.Services.Authentication;
@@ -60,9 +59,9 @@ using Nop.Web.Framework.UI;
 namespace Nop.Web.Framework.Infrastructure
 {
     /// <summary>
-    /// Dependency registrar
+    /// Represents the registering services on application startup
     /// </summary>
-    public class DependencyRegistrar : IDependencyRegistrar
+    public class DependencyRegistrar : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware
@@ -93,7 +92,8 @@ namespace Nop.Web.Framework.Infrastructure
             services.AddScoped<OfficialFeedManager>();
 
             //static cache manager
-            if (configuration.Get<DistributedCacheConfig>().Enabled)
+            var appSettings = Singleton<AppSettings>.Instance;
+            if (appSettings.Get<DistributedCacheConfig>().Enabled)
             {
                 services.AddScoped<ILocker, DistributedCacheManager>();
                 services.AddScoped<IStaticCacheManager, DistributedCacheManager>();
@@ -250,7 +250,7 @@ namespace Nop.Web.Framework.Infrastructure
             }
 
             //picture service
-            if (configuration.Get<AzureBlobConfig>().Enabled)
+            if (appSettings.Get<AzureBlobConfig>().Enabled)
                 services.AddScoped<IPictureService, AzurePictureService>();
             else
                 services.AddScoped<IPictureService, PictureService>();

@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure.DependencyManagement;
+using Nop.Core.Infrastructure;
 
 namespace Nop.Web.Framework.Infrastructure
 {
     /// <summary>
     /// Represents object for the configuring routing on application startup
     /// </summary>
-    public class NopRoutingStartup : IDependencyRegistrar
+    public class NopRoutingStartup : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

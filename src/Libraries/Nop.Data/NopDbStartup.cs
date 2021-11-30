@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
-using Nop.Core.Infrastructure.DependencyManagement;
 using Nop.Data.Mapping;
 using Nop.Data.Migrations;
 
@@ -17,7 +16,7 @@ namespace Nop.Data
     /// <summary>
     /// Represents object for the configuring DB context on application startup
     /// </summary>
-    public class NopDbStartup : IDependencyRegistrar
+    public class NopDbStartup : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

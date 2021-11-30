@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure.DependencyManagement;
+using Nop.Core.Infrastructure;
 using Nop.Plugin.Shipping.UPS.Services;
 
 namespace Nop.Plugin.Shipping.UPS.Infrastructure
@@ -9,7 +9,7 @@ namespace Nop.Plugin.Shipping.UPS.Infrastructure
     /// <summary>
     /// Dependency registrar
     /// </summary>
-    public class DependencyRegistrar : IDependencyRegistrar
+    public class DependencyRegistrar : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

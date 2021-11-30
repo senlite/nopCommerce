@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure.DependencyManagement;
+using Nop.Core.Infrastructure;
 using Nop.Plugin.Misc.Sendinblue.Services;
 using Nop.Services.Messages;
 
@@ -10,7 +10,7 @@ namespace Nop.Plugin.Misc.Sendinblue.Infrastructure
     /// <summary>
     /// Represents a plugin dependency registrar
     /// </summary>
-    public class DependencyRegistrar : IDependencyRegistrar
+    public class DependencyRegistrar : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

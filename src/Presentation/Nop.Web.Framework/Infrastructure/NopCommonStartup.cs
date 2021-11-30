@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure.DependencyManagement;
+using Nop.Core.Infrastructure;
 using Nop.Web.Framework.Infrastructure.Extensions;
 using Nop.Web.Framework.Mvc.Routing;
 
@@ -10,7 +10,7 @@ namespace Nop.Web.Framework.Infrastructure
     /// <summary>
     /// Represents object for the configuring common features and middleware on application startup
     /// </summary>
-    public class NopCommonStartup : IDependencyRegistrar
+    public class NopCommonStartup : INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware

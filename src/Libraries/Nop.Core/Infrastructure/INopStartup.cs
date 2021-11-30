@@ -1,37 +1,30 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Nop.Core.Infrastructure.DependencyManagement;
-using Nop.Plugin.Payments.PayPalCommerce.Services;
 
-namespace Nop.Plugin.Payments.PayPalCommerce.Infrastructure
+namespace Nop.Core.Infrastructure
 {
     /// <summary>
-    /// Represents a plugin dependency registrar
+    /// Represents object for the configuring services and middleware on application startup
     /// </summary>
-    public class DependencyRegistrar : IDependencyRegistrar
+    public interface INopStartup
     {
         /// <summary>
         /// Add and configure any of the middleware
         /// </summary>
         /// <param name="services">Collection of service descriptors</param>
         /// <param name="configuration">Configuration of the application</param>
-        public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddScoped<ServiceManager>();
-        }
+        void ConfigureServices(IServiceCollection services, IConfiguration configuration);
 
         /// <summary>
         /// Configure the using of added middleware
         /// </summary>
         /// <param name="application">Builder for configuring an application's request pipeline</param>
-        public void Configure(IApplicationBuilder application)
-        {
-        }
+        void Configure(IApplicationBuilder application);
 
         /// <summary>
-        /// Order of this dependency registrar implementation
+        /// Gets order of this startup configuration implementation
         /// </summary>
-        public int Order => 3000;
+        int Order { get; }
     }
 }
