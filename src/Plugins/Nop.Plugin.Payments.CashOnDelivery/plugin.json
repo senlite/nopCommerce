@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Payment methods",
+  "FriendlyName": "Cash On Delivery",
+  "SystemName": "Payments.CashOnDelivery",
+  "Version": "4.70.2",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "senlite",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Payments.CashOnDelivery.dll",
+  "Description": "This plugin enables cash on delivery payments"
+}
