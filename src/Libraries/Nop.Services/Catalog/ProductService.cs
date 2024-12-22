@@ -17,6 +17,7 @@ using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Services.Shipping.Date;
 using Nop.Services.Stores;
+using Nop.Services.Vendors;
 
 namespace Nop.Services.Catalog;
 
@@ -62,6 +63,7 @@ public partial class ProductService : IProductService
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreMappingService _storeMappingService;
     protected readonly IStoreService _storeService;
+    protected readonly IVendorService _vendorService;
     protected readonly IWorkContext _workContext;
     protected readonly LocalizationSettings _localizationSettings;
     private static readonly char[] _separator = [','];
@@ -104,6 +106,7 @@ public partial class ProductService : IProductService
         ISearchPluginManager searchPluginManager,
         IStaticCacheManager staticCacheManager,
         IStoreService storeService,
+        IVendorService vendorService,
         IStoreMappingService storeMappingService,
         IWorkContext workContext,
         LocalizationSettings localizationSettings)
@@ -143,6 +146,7 @@ public partial class ProductService : IProductService
         _staticCacheManager = staticCacheManager;
         _storeMappingService = storeMappingService;
         _storeService = storeService;
+        _vendorService = vendorService;
         _workContext = workContext;
         _localizationSettings = localizationSettings;
     }
@@ -617,6 +621,16 @@ public partial class ProductService : IProductService
     }
 
     /// <summary>
+    /// Inserts products
+    /// </summary>
+    /// <param name="products">Products to insert</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task InsertProductsAsync(IList<Product> products)
+    {
+        await _productRepository.InsertAsync(products);
+    }
+
+    /// <summary>
     /// Updates the product
     /// </summary>
     /// <param name="product">Product</param>
@@ -624,6 +638,16 @@ public partial class ProductService : IProductService
     public virtual async Task UpdateProductAsync(Product product)
     {
         await _productRepository.UpdateAsync(product);
+    }
+
+    /// <summary>
+    /// Update products
+    /// </summary>
+    /// <param name="products">Products to update</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task UpdateProductsAsync(IList<Product> products)
+    {
+        await _productRepository.UpdateAsync(products);
     }
 
     /// <summary>
@@ -662,7 +686,7 @@ public partial class ProductService : IProductService
             //apply ACL constraints
             query = await _aclService.ApplyAcl(query, customerRoleIds);
 
-            featuredProducts = query.ToList();
+            featuredProducts = await query.ToListAsync();
 
             return featuredProducts.Select(p => p.Id).ToList();
         });
@@ -709,7 +733,7 @@ public partial class ProductService : IProductService
             //apply ACL constraints
             query = await _aclService.ApplyAcl(query, customerRoleIds);
 
-            return query.Select(p => p.Id).ToList();
+            return await query.Select(p => p.Id).ToListAsync();
         });
 
         if (!featuredProducts.Any() && featuredProductIds.Any())
@@ -786,7 +810,7 @@ public partial class ProductService : IProductService
             .PrepareKeyForDefaultCache(NopCatalogDefaults.CategoryProductsNumberCacheKey, customerRoleIds, storeId, categoryIds);
 
         //only distinct products
-        return await _staticCacheManager.GetAsync(cacheKey, () => query.Select(p => p.Id).Count());
+        return await _staticCacheManager.GetAsync(cacheKey, () => query.Select(p => p.Id).CountAsync());
     }
 
     /// <summary>
@@ -1822,6 +1846,12 @@ public partial class ProductService : IProductService
                 //do not inject IWorkflowMessageService via constructor because it'll cause circular references
                 var workflowMessageService = EngineContext.Current.Resolve<IWorkflowMessageService>();
                 await workflowMessageService.SendQuantityBelowStoreOwnerNotificationAsync(product, _localizationSettings.DefaultAdminLanguageId);
+
+                if (product.VendorId != 0)
+                {
+                    var vendor = await _vendorService.GetVendorByIdAsync(product.VendorId);
+                    await workflowMessageService.SendQuantityBelowVendorNotificationAsync(product, vendor, _localizationSettings.DefaultAdminLanguageId);
+                }
             }
         }
 
@@ -1851,6 +1881,12 @@ public partial class ProductService : IProductService
                     //do not inject IWorkflowMessageService via constructor because it'll cause circular references
                     var workflowMessageService = EngineContext.Current.Resolve<IWorkflowMessageService>();
                     await workflowMessageService.SendQuantityBelowStoreOwnerNotificationAsync(combination, _localizationSettings.DefaultAdminLanguageId);
+
+                    if (product.VendorId != 0)
+                    {
+                        var vendor = await _vendorService.GetVendorByIdAsync(product.VendorId);
+                        await workflowMessageService.SendQuantityBelowVendorNotificationAsync(combination, vendor, _localizationSettings.DefaultAdminLanguageId);
+                    }
                 }
             }
         }
@@ -2545,8 +2581,8 @@ public partial class ProductService : IProductService
         ArgumentNullException.ThrowIfNull(productReview);
 
         var customer = await _workContext.GetCurrentCustomerAsync();
-        var prh = _productReviewHelpfulnessRepository.Table
-            .SingleOrDefault(h => h.ProductReviewId == productReview.Id && h.CustomerId == customer.Id);
+        var prh = await _productReviewHelpfulnessRepository.Table
+            .SingleOrDefaultAsync(h => h.ProductReviewId == productReview.Id && h.CustomerId == customer.Id);
 
         if (prh is null)
         {

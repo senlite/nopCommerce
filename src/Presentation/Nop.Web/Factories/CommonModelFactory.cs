@@ -157,23 +157,17 @@ public partial class CommonModelFactory : ICommonModelFactory
 
     #region Utilities
 
-    private async Task DisallowAjaxRoutesAsync(StringBuilder stringBuilder)
+    private async Task<bool> IsHomePageAsync()
     {
-        var routes = new[] { "/category/products", "/manufacturer/products", "/tag/products", "/product/search", "/vendor/products", "/newproducts/products" };
-        foreach (var route in routes)
-        {
-            stringBuilder.AppendLine($"Disallow: {route}");
-        }
+        var storeLocationUri = new Uri(_webHelper.GetStoreLocation().TrimEnd('/'));
+        var currentPageUri = new Uri(_webHelper.GetThisPageUrl(false).TrimEnd('/'));
 
-        if (_localizationSettings.SeoFriendlyUrlsForLanguagesEnabled)
-        {
-            var store = await _storeContext.GetCurrentStoreAsync();
-            foreach (var language in await _languageService.GetAllLanguagesAsync(storeId: store.Id))
-            {
-                foreach (var route in routes)
-                    stringBuilder.AppendLine($"Disallow: /{language.UniqueSeoCode}{route}");
-            }
-        }
+        if (!_localizationSettings.SeoFriendlyUrlsForLanguagesEnabled)
+            return storeLocationUri.Equals(currentPageUri);
+
+        var currentLanguage = await _workContext.GetWorkingLanguageAsync();
+
+        return Uri.TryCreate(storeLocationUri, currentLanguage.UniqueSeoCode, out var result) && result.Equals(currentPageUri);
     }
 
     /// <summary>
@@ -466,7 +460,7 @@ public partial class CommonModelFactory : ICommonModelFactory
             NewProductsEnabled = _catalogSettings.NewProductsEnabled,
             DisplayTaxShippingInfoFooter = _catalogSettings.DisplayTaxShippingInfoFooter,
             HidePoweredByNopCommerce = _storeInformationSettings.HidePoweredByNopCommerce,
-            IsHomePage = _webHelper.GetStoreLocation().Equals(_webHelper.GetThisPageUrl(false), StringComparison.InvariantCultureIgnoreCase),
+            IsHomePage = await IsHomePageAsync(),
             AllowCustomersToApplyForVendorAccount = _vendorSettings.AllowCustomersToApplyForVendorAccount,
             AllowCustomersToCheckGiftCardBalance = _customerSettings.AllowCustomersToCheckGiftCardBalance && _captchaSettings.Enabled,
             Topics = topicModels,
@@ -655,12 +649,6 @@ public partial class CommonModelFactory : ICommonModelFactory
                 sb.Append(robotsFileContent);
             }
         }
-
-        #region Issue 7286 Version 4.70 (bug fixes)
-
-        await DisallowAjaxRoutesAsync(sb);
-
-        #endregion
 
         return sb.ToString();
     }
