@@ -1,0 +1,127 @@
+/* Shopify Look Overrides */
+
+:root {
+    --font-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --color-text: #333333;
+    --color-headings: #000000;
+    --color-background: #ffffff;
+    --color-border: #e1e3e5;
+    --header-height: auto;
+}
+
+body {
+    font-family: var(--font-base);
+    color: var(--color-text);
+    background-color: var(--color-background);
+    line-height: 1.5;
+}
+
+/* Header Cleanup */
+.header {
+    background-color: #fff;
+    border-bottom: 1px solid var(--color-border);
+    padding: 5px 0;
+}
+
+.header-upper,
+.header-lower {
+    max-width: 1400px;
+    /* Shopify-like width */
+    margin: 0 auto;
+    padding: 0 5px;
+}
+
+/* Logo Constraints - Requested Feature */
+.header-logo {
+    display: flex;
+    align-items: center;
+}
+
+.header-logo img {
+    height: 40px;
+    /* Fixed height suitable for most logos */
+    width: auto;
+    /* Maintain aspect ratio */
+    object-fit: contain;
+    max-height: 40px;
+    /* Ensure never exceeds */
+}
+
+/* Navigation / Menu Clean up */
+.header-menu {
+    background: #fff;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.top-menu>li>a {
+    color: var(--color-headings);
+    font-weight: 500;
+    text-transform: none;
+    /* Shopify often uses sentence case or normal caps, not all caps */
+    padding: 15px 20px;
+}
+
+.top-menu>li>a:hover {
+    color: #555;
+    background: none;
+    text-decoration: underline;
+}
+
+/* Product Box - Minimalist */
+.product-item {
+    background: #fff;
+    border: none;
+    box-shadow: none;
+}
+
+.product-item .picture {
+    border-radius: 0;
+}
+
+.product-item .details {
+    text-align: left;
+}
+
+.product-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.product-title a {
+    color: var(--color-headings);
+}
+
+.prices .price {
+    color: #444;
+    font-weight: 400;
+}
+
+/* Buttons */
+.button-1,
+.button-2 {
+    background-color: #000;
+    color: #fff;
+    border-radius: 4px;
+    /* Slight roundness or 0 for sharp */
+    border: 1px solid #000;
+    padding: 10px 20px;
+    font-size: 14px;
+    text-transform: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.button-1:hover,
+.button-2:hover {
+    background-color: #333;
+    opacity: 0.9;
+}
+
+/* Footer clean up */
+.footer {
+    background-color: #f8f8f8;
+    color: #333;
+    padding-top: 40px;
+    border-top: 1px solid var(--color-border);
+}

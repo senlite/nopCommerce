@@ -1,0 +1,30 @@
+@using Nop.Core.Domain.Common
+@using Nop.Core.Domain.Seo
+@using Nop.Core.Events
+@using Nop.Services.Events
+@using Nop.Services.Security
+@using Nop.Web.Framework.Events
+@using Nop.Core
+@using Nop.Web.Framework.Themes
+@using Nop.Web.Framework.UI
+@inject IThemeContext themeContext
+@inject IEventPublisher eventPublisher
+@inject IPermissionService permissionService
+@inject SeoSettings seoSettings
+@inject CommonSettings commonSettings
+@inject IWorkContext workContext
+@{
+    var themeName = await themeContext.GetWorkingThemeNameAsync();
+    
+    //add browser compatibility meta element
+    //NopHtml.AddHeadCustomParts("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"/>"); 
+
+    //browsers don't have to use standard (safe) web fonts
+    //NopHtml.AddHeadCustomParts("<meta charset=\"UTF-8\"/>");
+    //NopHtml.AddHeadCustomParts("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>");
+
+    //add main CSS file
+    NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/styles.css");
+    NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/shopify.css");
+    //NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/print.css", excludeFromBundle: true);
+}

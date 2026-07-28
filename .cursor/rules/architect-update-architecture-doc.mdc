@@ -1,0 +1,26 @@
+---
+description: Architect must keep the System Architecture Specification document up to date when architecture or behavior changes
+alwaysApply: true
+---
+
+# Update Architecture Document When Needed
+
+When acting as architect, tech lead, or when making or reviewing **architectural** changes, keep the System Architecture Specification in sync.
+
+**Document:** `docs/SYSTEM_ARCHITECTURE_SPECIFICATION.md`
+
+**Update the doc when:**
+- Adding or removing runtime components (APIs, workers, schedulers, new entry points)
+- Changing technical stack (frameworks, DB, cache, auth, messaging, build/deploy)
+- Restructuring modules, layers, or dependencies (folder/solution/project changes)
+- Changing domain model, data layer, or major execution flows
+- Changing configuration, deployment, or environment handling in a way that affects the spec
+
+**How to update:**
+- Edit the relevant section(s) only; keep the same structure and factual, discovery-only style
+- Do not add opinions, risks, or recommendations—only what the system **is** and **how it works**
+- If a new flow is significant, add it under "Execution flows"; if an existing flow changes, update that bullet
+
+**When not to update:**
+- Bug fixes, refactors, or feature work that do not change architecture, topology, or documented behavior
+- Cosmetic or copy edits that don’t affect accuracy
