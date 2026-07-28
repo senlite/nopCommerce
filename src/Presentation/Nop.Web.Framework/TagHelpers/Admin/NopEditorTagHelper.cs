@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Nop.Web.Framework.Models;
 
 namespace Nop.Web.Framework.TagHelpers.Admin;
 
@@ -63,9 +62,7 @@ public partial class NopEditorTagHelper : TagHelper
         if (htmlAttributesDictionary?.Count > 0)
         {
             foreach (var (key, value) in htmlAttributesDictionary)
-            {
                 htmlAttributes.Add(key, value);
-            }
         }
 
         //required asterisk

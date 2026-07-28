@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Nop.Core;
 using Nop.Data;
+using Nop.Services.Helpers;
 
 namespace Nop.Services.Installation;
 
@@ -32,7 +32,7 @@ public partial class InstallUrlMiddleware
     /// <param name="context">HTTP context</param>
     /// <param name="webHelper">Web helper</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public async Task InvokeAsync(HttpContext context, IWebHelper webHelper)
+    public virtual async Task InvokeAsync(HttpContext context, IWebHelper webHelper)
     {
         //whether database is installed
         if (!DataSettingsManager.IsDatabaseInstalled())

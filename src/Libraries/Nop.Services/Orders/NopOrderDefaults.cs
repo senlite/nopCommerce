@@ -1,5 +1,4 @@
 ﻿using Nop.Core.Caching;
-using Nop.Core.Domain.Orders;
 
 namespace Nop.Services.Orders;
 
@@ -19,7 +18,7 @@ public static partial class NopOrderDefaults
     /// {0} : store ID
     /// {1} : A value indicating whether we should exclude shippable attributes
     /// </remarks>
-    public static CacheKey CheckoutAttributesAllCacheKey => new("Nop.checkoutattribute.all.{0}-{1}", NopEntityCacheDefaults<CheckoutAttribute>.AllPrefix);
+    public static CacheKey CheckoutAttributesAllCacheKey => new("Nop.checkoutattribute.all.{0}-{1}");
 
     #endregion
 
@@ -35,8 +34,9 @@ public static partial class NopOrderDefaults
     /// {3} : product ID
     /// {4} : created from date
     /// {5} : created to date
+    /// {6} : custom wishlist ID
     /// </remarks>
-    public static CacheKey ShoppingCartItemsAllCacheKey => new("Nop.shoppingcartitem.all.{0}-{1}-{2}-{3}-{4}-{5}", ShoppingCartItemsByCustomerPrefix, NopEntityCacheDefaults<ShoppingCartItem>.AllPrefix);
+    public static CacheKey ShoppingCartItemsAllCacheKey => new("Nop.shoppingcartitem.all.{0}-{1}-{2}-{3}-{4}-{5}-{6}");
 
     /// <summary>
     /// Gets a key pattern to clear cache
@@ -46,6 +46,17 @@ public static partial class NopOrderDefaults
     /// </remarks>
     public static string ShoppingCartItemsByCustomerPrefix => "Nop.shoppingcartitem.all.{0}";
 
+    #endregion
+
+    #region Wishlist
+
+    /// <summary>
+    /// Gets a key for caching
+    /// </summary>
+    /// <remarks>
+    /// {0} : customer ID
+    /// </remarks>
+    public static CacheKey CustomWishlistCacheKey => new("Nop.customwishlist.{0}");
 
     #endregion
 
@@ -60,6 +71,20 @@ public static partial class NopOrderDefaults
     public static CacheKey OrderWithLockCacheKey => new("Nop.Order.With.Lock.{0}");
 
     #endregion
+
+    #endregion
+
+    #region Return requests
+
+    /// <summary>
+    /// Gets a name of generic attribute to store the value of 'WithdrawalToken'
+    /// </summary>
+    public static string WithdrawalTokenAttribute => "WithdrawalToken";
+
+    /// <summary>
+    /// Gets a name of generic attribute to store the value of 'WithdrawalTokenDateGenerated'
+    /// </summary>
+    public static string WithdrawalTokenDateGeneratedAttribute => "WithdrawalTokenDateGenerated";
 
     #endregion
 }

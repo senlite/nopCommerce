@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 using Nop.Core.Infrastructure;
 using NUnit.Framework;
 
@@ -16,11 +16,7 @@ public class TypeFinderTests : BaseNopTest
         typeof(ISomeInterface).IsAssignableFrom(type.FirstOrDefault()).Should().BeTrue();
     }
 
-    public interface ISomeInterface
-    {
-    }
+    public interface ISomeInterface;
 
-    public class SomeClass : ISomeInterface
-    {
-    }
+    public class SomeClass : ISomeInterface;
 }

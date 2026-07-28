@@ -6,11 +6,13 @@ using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
+using Nop.Core.Domain.FilterLevels;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Media;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
+using Nop.Core.Domain.PriceLists;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Stores;
@@ -24,11 +26,13 @@ using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.ExportImport.Help;
+using Nop.Services.FilterLevels;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
+using Nop.Services.PriceLists;
 using Nop.Services.Seo;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Date;
@@ -55,6 +59,7 @@ public partial class ImportManager : IImportManager
     protected readonly ICustomNumberFormatter _customNumberFormatter;
     protected readonly INopDataProvider _dataProvider;
     protected readonly IDateRangeService _dateRangeService;
+    protected readonly IFilterLevelValueService _filterLevelValueService;
     protected readonly IGenericAttributeService _genericAttributeService;
     protected readonly IHttpClientFactory _httpClientFactory;
     protected readonly ILanguageService _languageService;
@@ -64,15 +69,16 @@ public partial class ImportManager : IImportManager
     protected readonly IManufacturerService _manufacturerService;
     protected readonly IMeasureService _measureService;
     protected readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
+    protected readonly INewsLetterSubscriptionTypeService _newsLetterSubscriptionTypeService;
     protected readonly INopFileProvider _fileProvider;
     protected readonly IOrderService _orderService;
     protected readonly IPictureService _pictureService;
+    protected readonly IPriceListService _priceListService;
     protected readonly IProductAttributeService _productAttributeService;
     protected readonly IProductService _productService;
     protected readonly IProductTagService _productTagService;
     protected readonly IProductTemplateService _productTemplateService;
     protected readonly IServiceScopeFactory _serviceScopeFactory;
-    protected readonly IShippingService _shippingService;
     protected readonly ISpecificationAttributeService _specificationAttributeService;
     protected readonly IStateProvinceService _stateProvinceService;
     protected readonly IStoreContext _storeContext;
@@ -81,6 +87,7 @@ public partial class ImportManager : IImportManager
     protected readonly ITaxCategoryService _taxCategoryService;
     protected readonly IUrlRecordService _urlRecordService;
     protected readonly IVendorService _vendorService;
+    protected readonly IWarehouseService _warehouseService;
     protected readonly IWorkContext _workContext;
     protected readonly MediaSettings _mediaSettings;
     protected readonly SecuritySettings _securitySettings;
@@ -102,6 +109,7 @@ public partial class ImportManager : IImportManager
         ICustomNumberFormatter customNumberFormatter,
         INopDataProvider dataProvider,
         IDateRangeService dateRangeService,
+        IFilterLevelValueService filterLevelValueService,
         IGenericAttributeService genericAttributeService,
         IHttpClientFactory httpClientFactory,
         ILanguageService languageService,
@@ -111,15 +119,16 @@ public partial class ImportManager : IImportManager
         IManufacturerService manufacturerService,
         IMeasureService measureService,
         INewsLetterSubscriptionService newsLetterSubscriptionService,
+        INewsLetterSubscriptionTypeService newsLetterSubscriptionTypeService,
         INopFileProvider fileProvider,
         IOrderService orderService,
         IPictureService pictureService,
+        IPriceListService priceListService,
         IProductAttributeService productAttributeService,
         IProductService productService,
         IProductTagService productTagService,
         IProductTemplateService productTemplateService,
         IServiceScopeFactory serviceScopeFactory,
-        IShippingService shippingService,
         ISpecificationAttributeService specificationAttributeService,
         IStateProvinceService stateProvinceService,
         IStoreContext storeContext,
@@ -128,6 +137,7 @@ public partial class ImportManager : IImportManager
         ITaxCategoryService taxCategoryService,
         IUrlRecordService urlRecordService,
         IVendorService vendorService,
+        IWarehouseService warehouseService,
         IWorkContext workContext,
         MediaSettings mediaSettings,
         SecuritySettings securitySettings,
@@ -144,6 +154,7 @@ public partial class ImportManager : IImportManager
         _customNumberFormatter = customNumberFormatter;
         _dataProvider = dataProvider;
         _dateRangeService = dateRangeService;
+        _filterLevelValueService = filterLevelValueService;
         _genericAttributeService = genericAttributeService;
         _httpClientFactory = httpClientFactory;
         _fileProvider = fileProvider;
@@ -154,14 +165,15 @@ public partial class ImportManager : IImportManager
         _manufacturerService = manufacturerService;
         _measureService = measureService;
         _newsLetterSubscriptionService = newsLetterSubscriptionService;
+        _newsLetterSubscriptionTypeService = newsLetterSubscriptionTypeService;
         _orderService = orderService;
         _pictureService = pictureService;
+        _priceListService = priceListService;
         _productAttributeService = productAttributeService;
         _productService = productService;
         _productTagService = productTagService;
         _productTemplateService = productTemplateService;
         _serviceScopeFactory = serviceScopeFactory;
-        _shippingService = shippingService;
         _specificationAttributeService = specificationAttributeService;
         _stateProvinceService = stateProvinceService;
         _storeContext = storeContext;
@@ -170,6 +182,7 @@ public partial class ImportManager : IImportManager
         _taxCategoryService = taxCategoryService;
         _urlRecordService = urlRecordService;
         _vendorService = vendorService;
+        _warehouseService = warehouseService;
         _workContext = workContext;
         _mediaSettings = mediaSettings;
         _securitySettings = securitySettings;
@@ -181,7 +194,7 @@ public partial class ImportManager : IImportManager
 
     #region Utilities
 
-    protected virtual ExportedAdditionalProductInfoType GetTypeOfExportedAdditionalProductInfo(IXLWorksheet defaultWorksheet, List<IXLWorksheet> localizedWorksheets, PropertyManager<ExportProductAttribute, Language> productAttributeManager, PropertyManager<ExportSpecificationAttribute, Language> specificationAttributeManager, PropertyManager<ExportTierPrice, Language> tierPriceManager, int iRow)
+    protected virtual ExportedAdditionalProductInfoType GetTypeOfExportedAdditionalProductInfo(IXLWorksheet defaultWorksheet, List<IXLWorksheet> localizedWorksheets, PropertyManager<ExportProductAttribute> productAttributeManager, PropertyManager<ExportSpecificationAttribute> specificationAttributeManager, PropertyManager<ExportTierPrice> tierPriceManager, int iRow)
     {
         productAttributeManager.ReadDefaultFromXlsx(defaultWorksheet, iRow, ExportImportDefaults.ProductAdditionalInfoCellOffset);
 
@@ -205,7 +218,7 @@ public partial class ImportManager : IImportManager
 
         tierPriceManager.ReadDefaultFromXlsx(defaultWorksheet, iRow, ExportImportDefaults.ProductAdditionalInfoCellOffset);
 
-        if (tierPriceManager.IsCaption) 
+        if (tierPriceManager.IsCaption)
             return ExportedAdditionalProductInfoType.TierPrices;
 
         return ExportedAdditionalProductInfoType.NotSpecified;
@@ -257,8 +270,11 @@ public partial class ImportManager : IImportManager
         ArgumentNullException.ThrowIfNull(columnName);
 
         for (var i = 0; i < properties.Length; i++)
+        {
             if (properties[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase))
                 return i + 1; //excel indexes start from 1
+        }
+
         return 0;
     }
 
@@ -312,6 +328,7 @@ public partial class ImportManager : IImportManager
             return null;
 
         var newPicture = await _pictureService.InsertPictureAsync(newPictureBinary, mimeType, await _pictureService.GetPictureSeNameAsync(name));
+
         return newPicture;
     }
 
@@ -332,7 +349,7 @@ public partial class ImportManager : IImportManager
     {
         foreach (var product in productPictureMetadata)
         {
-            foreach (var picturePath in new[] { product.Picture1Path, product.Picture2Path, product.Picture3Path })
+            foreach (var picturePath in product.PicturePaths)
             {
                 if (string.IsNullOrEmpty(picturePath))
                     continue;
@@ -401,7 +418,7 @@ public partial class ImportManager : IImportManager
 
         foreach (var product in productPictureMetadata)
         {
-            foreach (var picturePath in new[] { product.Picture1Path, product.Picture2Path, product.Picture3Path })
+            foreach (var picturePath in product.PicturePaths)
             {
                 if (string.IsNullOrEmpty(picturePath))
                     continue;
@@ -462,7 +479,7 @@ public partial class ImportManager : IImportManager
     }
 
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task<(string seName, bool isParentCategoryExists)> UpdateCategoryByXlsxAsync(Category category, PropertyManager<Category, Language> manager, Dictionary<string, ValueTask<Category>> allCategories, bool isNew)
+    protected virtual async Task<(string seName, bool isParentCategoryExists)> UpdateCategoryByXlsxAsync(Category category, PropertyManager<Category> manager, Dictionary<string, Category> allCategories, IList<Store> allStores, bool isNew)
     {
         var seName = string.Empty;
         var isParentCategoryExists = true;
@@ -493,7 +510,7 @@ public partial class ImportManager : IImportManager
                 case "ParentCategoryId":
                     if (!isParentCategorySet)
                     {
-                        var parentCategory = await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).Id == property.IntValue);
+                        var parentCategory = allCategories.Values.FirstOrDefault(c => c.Id == property.IntValue);
                         isParentCategorySet = parentCategory != null;
 
                         isParentCategoryExists = isParentCategorySet || property.IntValue == 0;
@@ -510,9 +527,9 @@ public partial class ImportManager : IImportManager
                         {
                             var parentCategory = allCategories.TryGetValue(categoryName, out var value)
                                 //try find category by full name with all parent category names
-                                ? await value
+                                ? value
                                 //try find category by name
-                                : await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).Name.Equals(categoryName, StringComparison.InvariantCulture));
+                                : allCategories.Values.FirstOrDefault(c => c.Name.Equals(categoryName, StringComparison.InvariantCulture));
 
                             if (parentCategory != null)
                             {
@@ -556,8 +573,8 @@ public partial class ImportManager : IImportManager
                 case "AutomaticallyCalculatePriceRange":
                     category.ManuallyPriceRange = property.BooleanValue;
                     break;
-                case "IncludeInTopMenu":
-                    category.IncludeInTopMenu = property.BooleanValue;
+                case "IsLimitedToStores":
+                    category.LimitedToStores = property.BooleanValue;
                     break;
                 case "Published":
                     category.Published = property.BooleanValue;
@@ -571,17 +588,28 @@ public partial class ImportManager : IImportManager
             }
         }
 
+        var tempProperty = manager.GetDefaultProperty("LimitedToStores");
+        if (tempProperty != null)
+        {
+            var limitedToStoresList = tempProperty.StringValue;
+
+            var importedStores = category.LimitedToStores ? limitedToStoresList.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => allStores.FirstOrDefault(store => store.Name == x.Trim())?.Id ?? int.Parse(x.Trim())).ToList() : new List<int>();
+
+            await _storeMappingService.SaveStoreMappingsAsync(category, importedStores);
+        }
+
         category.UpdatedOnUtc = DateTime.UtcNow;
         return (seName, isParentCategoryExists);
     }
 
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task<(Category category, bool isNew, string curentCategoryBreadCrumb)> GetCategoryFromXlsxAsync(PropertyManager<Category, Language> manager, IXLWorksheet worksheet, int iRow, Dictionary<string, ValueTask<Category>> allCategories)
+    protected virtual async Task<(Category category, bool isNew, string curentCategoryBreadCrumb)> GetCategoryFromXlsxAsync(PropertyManager<Category> manager, IXLWorksheet worksheet, int iRow, Dictionary<string, Category> allCategories)
     {
         manager.ReadDefaultFromXlsx(worksheet, iRow);
 
         //try get category from database by ID
-        var category = await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).Id == manager.GetDefaultProperty("Id")?.IntValue);
+        var category = allCategories.Values.FirstOrDefault(c => c.Id == manager.GetDefaultProperty("Id")?.IntValue);
 
         if (_catalogSettings.ExportImportCategoriesUsingCategoryName && category == null)
         {
@@ -590,9 +618,9 @@ public partial class ImportManager : IImportManager
             {
                 category = allCategories.TryGetValue(categoryName, out var value)
                     //try find category by full name with all parent category names
-                    ? await value
+                    ? value
                     //try find category by name
-                    : await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).Name.Equals(categoryName, StringComparison.InvariantCulture));
+                    : allCategories.Values.FirstOrDefault(c => c.Name.Equals(categoryName, StringComparison.InvariantCulture));
             }
         }
 
@@ -609,7 +637,6 @@ public partial class ImportManager : IImportManager
             category.PageSize = _catalogSettings.DefaultCategoryPageSize;
             category.PageSizeOptions = _catalogSettings.DefaultCategoryPageSizeOptions;
             category.Published = true;
-            category.IncludeInTopMenu = true;
             category.AllowCustomersToSelectPageSize = true;
         }
         else
@@ -619,7 +646,7 @@ public partial class ImportManager : IImportManager
     }
 
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task SaveCategoryAsync(bool isNew, Category category, Dictionary<string, ValueTask<Category>> allCategories, string curentCategoryBreadCrumb, bool setSeName, string seName)
+    protected virtual async Task SaveCategoryAsync(bool isNew, Category category, Dictionary<string, Category> allCategories, string curentCategoryBreadCrumb, bool setSeName, string seName)
     {
         if (isNew)
             await _categoryService.InsertCategoryAsync(category);
@@ -627,8 +654,8 @@ public partial class ImportManager : IImportManager
             await _categoryService.UpdateCategoryAsync(category);
 
         var categoryBreadCrumb = await _categoryService.GetFormattedBreadCrumbAsync(category);
-        if (!allCategories.ContainsKey(categoryBreadCrumb))
-            allCategories.Add(categoryBreadCrumb, new ValueTask<Category>(category));
+        allCategories.TryAdd(categoryBreadCrumb, category);
+
         if (!string.IsNullOrEmpty(curentCategoryBreadCrumb) && allCategories.ContainsKey(curentCategoryBreadCrumb) &&
             categoryBreadCrumb != curentCategoryBreadCrumb)
             allCategories.Remove(curentCategoryBreadCrumb);
@@ -639,7 +666,7 @@ public partial class ImportManager : IImportManager
     }
 
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task ImportCategoryLocalizedAsync(Category category, WorkbookMetadata<Category> metadata, PropertyManager<Category, Language> manager, int iRow, IList<Language> languages)
+    protected virtual async Task ImportCategoryLocalizedAsync(Category category, WorkbookMetadata<Category> metadata, PropertyManager<Category> manager, int iRow, IList<Language> languages)
     {
         if (!metadata.LocalizedWorksheets.Any())
             return;
@@ -690,7 +717,7 @@ public partial class ImportManager : IImportManager
     }
 
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task ImportManufaturerLocalizedAsync(Manufacturer manufacturer, WorkbookMetadata<Manufacturer> metadata, PropertyManager<Manufacturer, Language> manager, int iRow, IList<Language> languages)
+    protected virtual async Task ImportManufaturerLocalizedAsync(Manufacturer manufacturer, WorkbookMetadata<Manufacturer> metadata, PropertyManager<Manufacturer> manager, int iRow, IList<Language> languages)
     {
         if (!metadata.LocalizedWorksheets.Any())
             return;
@@ -831,13 +858,13 @@ public partial class ImportManager : IImportManager
             var productPictureIds = (await _pictureService.GetPicturesByProductIdAsync(product.Id))
                 .Select(p => p.Id).ToList();
 
-            //delete manufacturers
-            foreach (var existingValuePicture in existingValuePictures)
-                if (pictureIds.Contains(existingValuePicture.PictureId) ||
-                    !productPictureIds.Contains(existingValuePicture.PictureId))
-                    await _productAttributeService.DeleteProductAttributeValuePictureAsync(existingValuePicture);
+            //delete attribute value pictures
+            var picturesToDelete = existingValuePictures
+                .Where(p => pictureIds.Contains(p.PictureId) || !productPictureIds.Contains(p.PictureId))
+                .ToList();
+            await _productAttributeService.DeleteProductAttributeValuePicturesAsync(picturesToDelete);
 
-            //add manufacturers
+            //add attribute value pictures
             foreach (var pictureId in pictureIds)
             {
                 if (!productPictureIds.Contains(pictureId))
@@ -1038,7 +1065,7 @@ public partial class ImportManager : IImportManager
     protected virtual async Task ImportTierPriceAsync(ImportProductMetadata metadata, Product lastLoadedProduct, IList<Language> languages, int iRow)
     {
         var tierPriceManager = metadata.TierPriceManager;
-        
+
         if (!_catalogSettings.ExportImportTierPrices || lastLoadedProduct == null || tierPriceManager.IsCaption)
             return;
 
@@ -1129,77 +1156,77 @@ public partial class ImportManager : IImportManager
         var defaultProperties = metadata.DefaultProperties;
         var localizedProperties = metadata.LocalizedProperties;
 
-        var manager = new PropertyManager<Product, Language>(defaultProperties, _catalogSettings, localizedProperties, languages);
+        var manager = new PropertyManager<Product>(defaultProperties, _catalogSettings, localizedProperties, languages);
 
         var productAttributeProperties = new[]
         {
-            new PropertyByName<ExportProductAttribute, Language>("AttributeId"),
-            new PropertyByName<ExportProductAttribute, Language>("AttributeName"),
-            new PropertyByName<ExportProductAttribute, Language>("DefaultValue"),
-            new PropertyByName<ExportProductAttribute, Language>("ValidationMinLength"),
-            new PropertyByName<ExportProductAttribute, Language>("ValidationMaxLength"),
-            new PropertyByName<ExportProductAttribute, Language>("ValidationFileAllowedExtensions"),
-            new PropertyByName<ExportProductAttribute, Language>("ValidationFileMaximumSize"),
-            new PropertyByName<ExportProductAttribute, Language>("AttributeTextPrompt"),
-            new PropertyByName<ExportProductAttribute, Language>("AttributeIsRequired"),
-            new PropertyByName<ExportProductAttribute, Language>("AttributeControlType"),
-            new PropertyByName<ExportProductAttribute, Language>("AttributeDisplayOrder"),
-            new PropertyByName<ExportProductAttribute, Language>("ProductAttributeValueId"),
-            new PropertyByName<ExportProductAttribute, Language>("ValueName"),
-            new PropertyByName<ExportProductAttribute, Language>("AttributeValueType"),
-            new PropertyByName<ExportProductAttribute, Language>("AssociatedProductId"),
-            new PropertyByName<ExportProductAttribute, Language>("ColorSquaresRgb"),
-            new PropertyByName<ExportProductAttribute, Language>("ImageSquaresPictureId"),
-            new PropertyByName<ExportProductAttribute, Language>("PriceAdjustment"),
-            new PropertyByName<ExportProductAttribute, Language>("PriceAdjustmentUsePercentage"),
-            new PropertyByName<ExportProductAttribute, Language>("WeightAdjustment"),
-            new PropertyByName<ExportProductAttribute, Language>("Cost"),
-            new PropertyByName<ExportProductAttribute, Language>("CustomerEntersQty"),
-            new PropertyByName<ExportProductAttribute, Language>("Quantity"),
-            new PropertyByName<ExportProductAttribute, Language>("IsPreSelected"),
-            new PropertyByName<ExportProductAttribute, Language>("DisplayOrder"),
-            new PropertyByName<ExportProductAttribute, Language>("PictureIds")
+            new PropertyByName<ExportProductAttribute>("AttributeId"),
+            new PropertyByName<ExportProductAttribute>("AttributeName"),
+            new PropertyByName<ExportProductAttribute>("DefaultValue"),
+            new PropertyByName<ExportProductAttribute>("ValidationMinLength"),
+            new PropertyByName<ExportProductAttribute>("ValidationMaxLength"),
+            new PropertyByName<ExportProductAttribute>("ValidationFileAllowedExtensions"),
+            new PropertyByName<ExportProductAttribute>("ValidationFileMaximumSize"),
+            new PropertyByName<ExportProductAttribute>("AttributeTextPrompt"),
+            new PropertyByName<ExportProductAttribute>("AttributeIsRequired"),
+            new PropertyByName<ExportProductAttribute>("AttributeControlType"),
+            new PropertyByName<ExportProductAttribute>("AttributeDisplayOrder"),
+            new PropertyByName<ExportProductAttribute>("ProductAttributeValueId"),
+            new PropertyByName<ExportProductAttribute>("ValueName"),
+            new PropertyByName<ExportProductAttribute>("AttributeValueType"),
+            new PropertyByName<ExportProductAttribute>("AssociatedProductId"),
+            new PropertyByName<ExportProductAttribute>("ColorSquaresRgb"),
+            new PropertyByName<ExportProductAttribute>("ImageSquaresPictureId"),
+            new PropertyByName<ExportProductAttribute>("PriceAdjustment"),
+            new PropertyByName<ExportProductAttribute>("PriceAdjustmentUsePercentage"),
+            new PropertyByName<ExportProductAttribute>("WeightAdjustment"),
+            new PropertyByName<ExportProductAttribute>("Cost"),
+            new PropertyByName<ExportProductAttribute>("CustomerEntersQty"),
+            new PropertyByName<ExportProductAttribute>("Quantity"),
+            new PropertyByName<ExportProductAttribute>("IsPreSelected"),
+            new PropertyByName<ExportProductAttribute>("DisplayOrder"),
+            new PropertyByName<ExportProductAttribute>("PictureIds")
         };
 
         var productAttributeLocalizedProperties = new[]
         {
-            new PropertyByName<ExportProductAttribute, Language>("DefaultValue"),
-            new PropertyByName<ExportProductAttribute, Language>("AttributeTextPrompt"),
-            new PropertyByName<ExportProductAttribute, Language>("ValueName")
+            new PropertyByName<ExportProductAttribute>("DefaultValue"),
+            new PropertyByName<ExportProductAttribute>("AttributeTextPrompt"),
+            new PropertyByName<ExportProductAttribute>("ValueName")
         };
 
-        var productAttributeManager = new PropertyManager<ExportProductAttribute, Language>(productAttributeProperties, _catalogSettings, productAttributeLocalizedProperties, languages);
+        var productAttributeManager = new PropertyManager<ExportProductAttribute>(productAttributeProperties, _catalogSettings, productAttributeLocalizedProperties, languages);
 
         var specificationAttributeProperties = new[]
         {
-            new PropertyByName<ExportSpecificationAttribute, Language>("AttributeType", (p, l) => p.AttributeTypeId),
-            new PropertyByName<ExportSpecificationAttribute, Language>("SpecificationAttribute", (p, l) => p.SpecificationAttributeId),
-            new PropertyByName<ExportSpecificationAttribute, Language>("CustomValue", (p, l) => p.CustomValue),
-            new PropertyByName<ExportSpecificationAttribute, Language>("SpecificationAttributeOptionId", (p, l) => p.SpecificationAttributeOptionId),
-            new PropertyByName<ExportSpecificationAttribute, Language>("AllowFiltering", (p, l) => p.AllowFiltering),
-            new PropertyByName<ExportSpecificationAttribute, Language>("ShowOnProductPage", (p, l) => p.ShowOnProductPage),
-            new PropertyByName<ExportSpecificationAttribute, Language>("DisplayOrder", (p, l) => p.DisplayOrder)
+            new PropertyByName<ExportSpecificationAttribute>("AttributeType", (p, l) => p.AttributeTypeId),
+            new PropertyByName<ExportSpecificationAttribute>("SpecificationAttribute", (p, l) => p.SpecificationAttributeId),
+            new PropertyByName<ExportSpecificationAttribute>("CustomValue", (p, l) => p.CustomValue),
+            new PropertyByName<ExportSpecificationAttribute>("SpecificationAttributeOptionId", (p, l) => p.SpecificationAttributeOptionId),
+            new PropertyByName<ExportSpecificationAttribute>("AllowFiltering", (p, l) => p.AllowFiltering),
+            new PropertyByName<ExportSpecificationAttribute>("ShowOnProductPage", (p, l) => p.ShowOnProductPage),
+            new PropertyByName<ExportSpecificationAttribute>("DisplayOrder", (p, l) => p.DisplayOrder)
         };
 
         var specificationAttributeLocalizedProperties = new[]
         {
-            new PropertyByName<ExportSpecificationAttribute, Language>("CustomValue")
+            new PropertyByName<ExportSpecificationAttribute>("CustomValue")
         };
 
-        var specificationAttributeManager = new PropertyManager<ExportSpecificationAttribute, Language>(specificationAttributeProperties, _catalogSettings, specificationAttributeLocalizedProperties, languages);
+        var specificationAttributeManager = new PropertyManager<ExportSpecificationAttribute>(specificationAttributeProperties, _catalogSettings, specificationAttributeLocalizedProperties, languages);
 
         var tierPriceProperties = new[]
         {
-            new PropertyByName<ExportTierPrice, Language>("TierPriceId"),
-            new PropertyByName<ExportTierPrice, Language>("Store"),
-            new PropertyByName<ExportTierPrice, Language>("CustomerRole"),
-            new PropertyByName<ExportTierPrice, Language>("Quantity"),
-            new PropertyByName<ExportTierPrice, Language>("Price"),
-            new PropertyByName<ExportTierPrice, Language>("StartDateTimeUtc"),
-            new PropertyByName<ExportTierPrice, Language>("EndDateTimeUtc")
+            new PropertyByName<ExportTierPrice>("TierPriceId"),
+            new PropertyByName<ExportTierPrice>("Store"),
+            new PropertyByName<ExportTierPrice>("CustomerRole"),
+            new PropertyByName<ExportTierPrice>("Quantity"),
+            new PropertyByName<ExportTierPrice>("Price"),
+            new PropertyByName<ExportTierPrice>("StartDateTimeUtc"),
+            new PropertyByName<ExportTierPrice>("EndDateTimeUtc")
         };
 
-        var tierPriceManager = new PropertyManager<ExportTierPrice, Language>(tierPriceProperties, _catalogSettings, languages: languages);
+        var tierPriceManager = new PropertyManager<ExportTierPrice>(tierPriceProperties, _catalogSettings, languages: languages);
 
         var endRow = 2;
         var allCategories = new List<string>();
@@ -1219,6 +1246,14 @@ public partial class ImportManager : IImportManager
         tempProperty = manager.GetDefaultProperty("LimitedToStores");
         var limitedToStoresCellNum = tempProperty?.PropertyOrderPosition ?? -1;
 
+        tempProperty = manager.GetDefaultProperty("RequireOtherProducts");
+        var requireOtherProductsCellNum = tempProperty?.PropertyOrderPosition ?? -1;
+
+        tempProperty = manager.GetDefaultProperty("RequiredProductIds");
+        var requiredProductIdsCellNum = tempProperty?.PropertyOrderPosition ?? -1;
+
+        var requiredProductsData = new Dictionary<string, string>();
+
         if (_catalogSettings.ExportImportUseDropdownlistsForAssociatedEntities)
         {
             tierPriceManager.SetSelectList("Store", (await _storeService.GetAllStoresAsync()).ToSelectList(p => (p as Store)?.Name ?? string.Empty));
@@ -1229,7 +1264,7 @@ public partial class ImportManager : IImportManager
 
             specificationAttributeManager.SetSelectList("AttributeType", await SpecificationAttributeType.Option.ToSelectListAsync(useLocalization: false));
             specificationAttributeManager.SetSelectList("SpecificationAttribute", (await _specificationAttributeService
-                    .GetSpecificationAttributesAsync())
+                    .GetAllSpecificationAttributesAsync())
                 .Select(sa => sa as BaseEntity)
                 .ToSelectList(p => (p as SpecificationAttribute)?.Name ?? string.Empty));
 
@@ -1316,14 +1351,14 @@ public partial class ImportManager : IImportManager
                     case ExportedAdditionalProductInfoType.ProductAttribute:
                         productAttributeManager.ReadDefaultFromXlsx(defaultWorksheet, endRow,
                             ExportImportDefaults.ProductAdditionalInfoCellOffset);
-                        if (int.TryParse(defaultWorksheet.Row(endRow).Cell(attributeIdCellNum).Value.ToString(), out var aid)) 
+                        if (int.TryParse(defaultWorksheet.Row(endRow).Cell(attributeIdCellNum).Value.ToString(), out var aid))
                             allAttributeIds.Add(aid);
 
                         break;
                     case ExportedAdditionalProductInfoType.SpecificationAttribute:
                         specificationAttributeManager.ReadDefaultFromXlsx(defaultWorksheet, endRow, ExportImportDefaults.ProductAdditionalInfoCellOffset);
 
-                        if (int.TryParse(defaultWorksheet.Row(endRow).Cell(specificationAttributeOptionIdCellNum).Value.ToString(), out var saoid)) 
+                        if (int.TryParse(defaultWorksheet.Row(endRow).Cell(specificationAttributeOptionIdCellNum).Value.ToString(), out var saoid))
                             allSpecificationAttributeOptionIds.Add(saoid);
 
                         break;
@@ -1338,14 +1373,18 @@ public partial class ImportManager : IImportManager
                 var categoryIds = defaultWorksheet.Row(endRow).Cell(categoryCellNum).Value.ToString() ?? string.Empty;
 
                 if (!string.IsNullOrEmpty(categoryIds))
+                {
                     allCategories.AddRange(categoryIds
                         .Split(new[] { ";", ">>" }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim())
                         .Distinct());
+                }
             }
+
+            var sku = string.Empty;
 
             if (skuCellNum > 0)
             {
-                var sku = defaultWorksheet.Row(endRow).Cell(skuCellNum).Value.ToString() ?? string.Empty;
+                sku = defaultWorksheet.Row(endRow).Cell(skuCellNum).Value.ToString() ?? string.Empty;
 
                 if (!string.IsNullOrEmpty(sku))
                     allSku.Add(sku);
@@ -1356,8 +1395,10 @@ public partial class ImportManager : IImportManager
                 var manufacturerIds = defaultWorksheet.Row(endRow).Cell(manufacturerCellNum).Value.ToString() ??
                                       string.Empty;
                 if (!string.IsNullOrEmpty(manufacturerIds))
+                {
                     allManufacturers.AddRange(manufacturerIds
                         .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
+                }
             }
 
             if (limitedToStoresCellNum > 0)
@@ -1365,8 +1406,18 @@ public partial class ImportManager : IImportManager
                 var storeIds = defaultWorksheet.Row(endRow).Cell(limitedToStoresCellNum).Value.ToString() ??
                                string.Empty;
                 if (!string.IsNullOrEmpty(storeIds))
+                {
                     allStores.AddRange(storeIds
                         .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sku) && requireOtherProductsCellNum > 0 && requiredProductIdsCellNum > 0)
+            {
+                var requiredProductIds = defaultWorksheet.Row(endRow).Cell(requiredProductIdsCellNum).Value.ToString() ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(requiredProductIds))
+                    requiredProductsData.TryAdd(sku, requiredProductIds);
             }
 
             //counting the number of products
@@ -1378,34 +1429,26 @@ public partial class ImportManager : IImportManager
         //performance optimization, the check for the existence of the categories in one SQL request
         var notExistingCategories = await _categoryService.GetNotExistingCategoriesAsync(allCategories.ToArray());
         if (notExistingCategories.Any())
-        {
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Catalog.Products.Import.CategoriesDontExist"), string.Join(", ", notExistingCategories)));
-        }
 
         //performance optimization, the check for the existence of the manufacturers in one SQL request
         var notExistingManufacturers = await _manufacturerService.GetNotExistingManufacturersAsync(allManufacturers.ToArray());
         if (notExistingManufacturers.Any())
-        {
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Catalog.Products.Import.ManufacturersDontExist"), string.Join(", ", notExistingManufacturers)));
-        }
 
         //performance optimization, the check for the existence of the product attributes in one SQL request
         var notExistingProductAttributes = await _productAttributeService.GetNotExistingAttributesAsync(allAttributeIds.ToArray());
         if (notExistingProductAttributes.Any())
-        {
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Catalog.Products.Import.ProductAttributesDontExist"), string.Join(", ", notExistingProductAttributes)));
-        }
 
         //performance optimization, the check for the existence of the specification attribute options in one SQL request
         var notExistingSpecificationAttributeOptions = await _specificationAttributeService.GetNotExistingSpecificationAttributeOptionsAsync(allSpecificationAttributeOptionIds.Where(saoId => saoId != 0).ToArray());
         if (notExistingSpecificationAttributeOptions.Any())
-        {
             throw new ArgumentException($"The following specification attribute option ID(s) don't exist - {string.Join(", ", notExistingSpecificationAttributeOptions)}");
-        }
 
         //performance optimization, the check for the existence of the stores in one SQL request
         var notExistingStores = await _storeService.GetNotExistingStoresAsync(allStores.ToArray());
-        if (notExistingStores.Any()) 
+        if (notExistingStores.Any())
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Catalog.Products.Import.StoresDontExist"), string.Join(", ", notExistingStores)));
 
         return new ImportProductMetadata
@@ -1420,7 +1463,8 @@ public partial class ImportManager : IImportManager
             SpecificationAttributeManager = specificationAttributeManager,
             TierPriceManager = tierPriceManager,
             SkuCellNum = skuCellNum,
-            AllSku = allSku
+            AllSku = allSku,
+            RequiredProductsData = requiredProductsData
         };
     }
 
@@ -1461,7 +1505,7 @@ public partial class ImportManager : IImportManager
 
             var startRow = metadata.ProductsInFile[(fileIndex - 1) * _catalogSettings.ExportImportProductsCountInOneFile];
 
-            var endRow = metadata.CountProductsInFile > curIndex + 1
+            var endRow = metadata.CountProductsInFile > curIndex
                 ? metadata.ProductsInFile[curIndex - 1]
                 : metadata.EndRow;
 
@@ -1489,23 +1533,23 @@ public partial class ImportManager : IImportManager
         var worksheet = metadata.DefaultWorksheet;
         var defaultProperties = metadata.DefaultProperties;
 
-        var manager = new PropertyManager<Order, Language>(defaultProperties, _catalogSettings);
+        var manager = new PropertyManager<Order>(defaultProperties, _catalogSettings);
 
         var orderItemProperties = new[]
         {
-            new PropertyByName<OrderItem, Language>("OrderItemGuid"),
-            new PropertyByName<OrderItem, Language>("Name"),
-            new PropertyByName<OrderItem, Language>("Sku"),
-            new PropertyByName<OrderItem, Language>("PriceExclTax"),
-            new PropertyByName<OrderItem, Language>("PriceInclTax"),
-            new PropertyByName<OrderItem, Language>("Quantity"),
-            new PropertyByName<OrderItem, Language>("DiscountExclTax"),
-            new PropertyByName<OrderItem, Language>("DiscountInclTax"),
-            new PropertyByName<OrderItem, Language>("TotalExclTax"),
-            new PropertyByName<OrderItem, Language>("TotalInclTax")
+            new PropertyByName<OrderItem>("OrderItemGuid"),
+            new PropertyByName<OrderItem>("Name"),
+            new PropertyByName<OrderItem>("Sku"),
+            new PropertyByName<OrderItem>("PriceExclTax"),
+            new PropertyByName<OrderItem>("PriceInclTax"),
+            new PropertyByName<OrderItem>("Quantity"),
+            new PropertyByName<OrderItem>("DiscountExclTax"),
+            new PropertyByName<OrderItem>("DiscountInclTax"),
+            new PropertyByName<OrderItem>("TotalExclTax"),
+            new PropertyByName<OrderItem>("TotalInclTax")
         };
 
-        var orderItemManager = new PropertyManager<OrderItem, Language>(orderItemProperties, _catalogSettings);
+        var orderItemManager = new PropertyManager<OrderItem>(orderItemProperties, _catalogSettings);
 
         var endRow = 2;
         var allOrderGuids = new List<Guid>();
@@ -1542,9 +1586,7 @@ public partial class ImportManager : IImportManager
 
                 //skip caption row
                 if (!orderItemManager.IsCaption)
-                {
                     allOrderItemSkus.Add(orderItemManager.GetDefaultProperty("Sku").StringValue);
-                }
 
                 endRow++;
                 continue;
@@ -1573,16 +1615,12 @@ public partial class ImportManager : IImportManager
         //performance optimization, the check for the existence of the customers in one SQL request
         var notExistingCustomerGuids = await _customerService.GetNotExistingCustomersAsync(allCustomerGuids.ToArray());
         if (notExistingCustomerGuids.Any())
-        {
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Orders.Import.CustomersDontExist"), string.Join(", ", notExistingCustomerGuids)));
-        }
 
         //performance optimization, the check for the existence of the order items in one SQL request
         var notExistingProductSkus = await _productService.GetNotExistingProductsAsync(allOrderItemSkus.ToArray());
         if (notExistingProductSkus.Any())
-        {
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Orders.Import.ProductsDontExist"), string.Join(", ", notExistingProductSkus)));
-        }
 
         return (new ImportOrderMetadata
         {
@@ -1597,7 +1635,75 @@ public partial class ImportManager : IImportManager
     }
 
     /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task ImportOrderItemAsync(PropertyManager<OrderItem, Language> orderItemManager, Order lastLoadedOrder)
+    protected virtual async Task<(ImportPriceListMetadata, IXLWorksheet)> PrepareImportPriceListDataAsync(IXLWorkbook workbook)
+    {
+        var languages = await _languageService.GetAllLanguagesAsync(showHidden: true);
+
+        //the columns
+        var metadata = GetWorkbookMetadata<PriceList>(workbook, languages);
+        var worksheet = metadata.DefaultWorksheet;
+        var defaultProperties = metadata.DefaultProperties;
+
+        var manager = new PropertyManager<PriceList>(defaultProperties, _catalogSettings);
+
+        var priceListItemProperties = new[]
+        {
+            new PropertyByName<PriceListItem>("Sku"),
+            new PropertyByName<PriceListItem>("ManualPrice")
+        };
+
+        var priceListItemManager = new PropertyManager<PriceListItem>(priceListItemProperties, _catalogSettings);
+
+        var endRow = 2;
+
+        var allPriceListItemSkus = new List<string>();
+        var countPriceListsInFile = 0;
+
+        //find end of data
+        while (true)
+        {
+            var allColumnsAreEmpty = manager.GetDefaultProperties
+                .Select(property => worksheet.Row(endRow).Cell(property.PropertyOrderPosition))
+                .All(cell => string.IsNullOrEmpty(cell?.Value.ToString()));
+
+            if (allColumnsAreEmpty)
+                break;
+
+            if (worksheet.Row(endRow).OutlineLevel != 0)
+            {
+                priceListItemManager.ReadDefaultFromXlsx(worksheet, endRow, 2);
+
+                //skip caption row
+                if (!priceListItemManager.IsCaption)
+                    allPriceListItemSkus.Add(priceListItemManager.GetDefaultProperty("Sku").StringValue);
+
+                endRow++;
+                continue;
+            }
+
+            //counting the number of orders
+            countPriceListsInFile++;
+
+            endRow++;
+        }
+
+        //performance optimization, the check for the existence of the order items in one SQL request
+        var notExistingProductSkus = await _productService.GetNotExistingProductsAsync(allPriceListItemSkus.ToArray());
+        if (notExistingProductSkus.Any())
+            throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.PriceLists.Import.ProductsDontExist"), string.Join(", ", notExistingProductSkus)));
+
+        return (new ImportPriceListMetadata
+        {
+            EndRow = endRow,
+            Manager = manager,
+            Properties = defaultProperties,
+            CountPriceListsInFile = countPriceListsInFile,
+            PriceListItemManager = priceListItemManager
+        }, worksheet);
+    }
+
+    /// <returns>A task that represents the asynchronous operation</returns>
+    protected virtual async Task ImportOrderItemAsync(PropertyManager<OrderItem> orderItemManager, Order lastLoadedOrder)
     {
         if (lastLoadedOrder == null || orderItemManager.IsCaption)
             return;
@@ -1646,6 +1752,38 @@ public partial class ImportManager : IImportManager
             orderItem.UnitPriceExclTax = priceExclTax;
             orderItem.UnitPriceInclTax = priceInclTax;
             await _orderService.UpdateOrderItemAsync(orderItem);
+        }
+    }
+
+    /// <returns>A task that represents the asynchronous operation</returns>
+    protected virtual async Task ImportPriceListItemAsync(PropertyManager<PriceListItem> priceListItemManager, PriceList lastLoadedPriceList)
+    {
+        if (lastLoadedPriceList == null || priceListItemManager.IsCaption)
+            return;
+
+        var sku = priceListItemManager.GetDefaultProperty(nameof(Product.Sku)).StringValue;
+        var manualPrice = priceListItemManager.GetDefaultProperty(nameof(PriceListItem.ManualPrice)).DecimalValue;
+
+        var priceListItemProduct = await _productService.GetProductBySkuAsync(sku);
+        var priceListItem = (await _priceListService.GetPriceListItemsByPriceListIdAsync(lastLoadedPriceList.Id))
+            .FirstOrDefault(pli => pli.ProductId == priceListItemProduct.Id);
+
+        if (priceListItem == null)
+        {
+            //insert price list item
+            priceListItem = new PriceListItem
+            {
+                PriceListId = lastLoadedPriceList.Id,
+                ProductId = priceListItemProduct.Id,
+                ManualPrice = manualPrice
+            };
+            await _priceListService.InsertPriceListItemAsync(priceListItem);
+        }
+        else
+        {
+            //update price list item
+            priceListItem.ManualPrice = manualPrice;
+            await _priceListService.UpdatePriceListItemAsync(priceListItem);
         }
     }
 
@@ -1717,8 +1855,8 @@ public partial class ImportManager : IImportManager
         var worksheet = workbook.Worksheets.FirstOrDefault()
                         ?? throw new NopException("No worksheet found");
 
-        var properties = new List<PropertyByName<T, Language>>();
-        var localizedProperties = new List<PropertyByName<T, Language>>();
+        var properties = new List<PropertyByName<T>>();
+        var localizedProperties = new List<PropertyByName<T>>();
         var localizedWorksheets = new List<IXLWorksheet>();
 
         var poz = 1;
@@ -1732,7 +1870,7 @@ public partial class ImportManager : IImportManager
                     break;
 
                 poz += 1;
-                properties.Add(new PropertyByName<T, Language>(cell.Value.ToString()));
+                properties.Add(new PropertyByName<T>(cell.Value.ToString()));
             }
             catch
             {
@@ -1741,8 +1879,10 @@ public partial class ImportManager : IImportManager
         }
 
         foreach (var ws in workbook.Worksheets.Skip(1))
+        {
             if (languages.Any(l => l.UniqueSeoCode.Equals(ws.Name, StringComparison.InvariantCultureIgnoreCase)))
                 localizedWorksheets.Add(ws);
+        }
 
         if (localizedWorksheets.Any())
         {
@@ -1760,7 +1900,7 @@ public partial class ImportManager : IImportManager
                         break;
 
                     poz += 1;
-                    localizedProperties.Add(new PropertyByName<T, Language>(cell.Value.ToString()));
+                    localizedProperties.Add(new PropertyByName<T>(cell.Value.ToString()));
                 }
                 catch
                 {
@@ -1794,7 +1934,7 @@ public partial class ImportManager : IImportManager
         var defaultWorksheet = metadata.DefaultWorksheet;
         var defaultProperties = metadata.DefaultProperties;
 
-        var manager = new PropertyManager<Customer, Language>(defaultProperties, _catalogSettings);
+        var manager = new PropertyManager<Customer>(defaultProperties, _catalogSettings);
 
         if (_catalogSettings.ExportImportUseDropdownlistsForAssociatedEntities)
         {
@@ -1823,18 +1963,19 @@ public partial class ImportManager : IImportManager
                            await _customerService.GetCustomerByEmailAsync(manager.GetDefaultProperty("Email").StringValue);
 
             int? avatarPictureId = null;
-            string signature = null;
             string password = null;
             string passwordSalt = null;
 
             var isNew = customer == null;
 
             if (isNew)
+            {
                 customer = new Customer
                 {
                     CustomerGuid = Guid.Empty.Equals(customerGuid) ? Guid.NewGuid() : customerGuid,
                     CreatedOnUtc = DateTime.UtcNow
                 };
+            }
 
             var rolesToSave = new List<int>();
 
@@ -1856,6 +1997,7 @@ public partial class ImportManager : IImportManager
                         break;
                     case "Vendor":
                         if (!string.IsNullOrEmpty(property.StringValue))
+                        {
                             if (int.TryParse(property.StringValue, out var vendorId))
                                 customer.VendorId = vendorId;
                             else
@@ -1863,6 +2005,7 @@ public partial class ImportManager : IImportManager
                                 var vendors = await _vendorService.GetAllVendorsAsync(property.StringValue);
                                 customer.VendorId = vendors.FirstOrDefault()?.Id ?? 0;
                             }
+                        }
                         else
                             customer.VendorId = 0;
                         break;
@@ -1873,6 +2016,7 @@ public partial class ImportManager : IImportManager
                         var roles = property.StringValue.Split(", ");
 
                         foreach (var role in roles)
+                        {
                             if (int.TryParse(role, out var roleId))
                                 rolesToSave.Add(roleId);
                             else
@@ -1883,6 +2027,8 @@ public partial class ImportManager : IImportManager
                                 if (currentRole != null)
                                     rolesToSave.Add(currentRole.Id);
                             }
+                        }
+
                         break;
                     case "CreatedOnUtc":
                         if (DateTime.TryParse(property.StringValue, out var date))
@@ -1957,9 +2103,6 @@ public partial class ImportManager : IImportManager
                     case "AvatarPictureId":
                         avatarPictureId = property.IntValueNullable;
                         break;
-                    case "Signature":
-                        signature = property.StringValue;
-                        break;
                     case "CustomCustomerAttributesXML":
                         customer.CustomCustomerAttributesXML = property.StringValue;
                         break;
@@ -1991,23 +2134,24 @@ public partial class ImportManager : IImportManager
             }
 
             if (!isNew && rolesToSave.Any())
-                foreach (var customerRole in customerRoles.Where(cr=>!rolesToSave.Contains(cr.Id)).ToList())
+            {
+                foreach (var customerRole in customerRoles.Where(cr => !rolesToSave.Contains(cr.Id)).ToList())
                     await _customerService.RemoveCustomerRoleMappingAsync(customer, customerRole);
+            }
 
             if (avatarPictureId.HasValue)
+            {
                 await _genericAttributeService.SaveAttributeAsync(customer,
                     NopCustomerDefaults.AvatarPictureIdAttribute, avatarPictureId.Value);
-
-            if (!string.IsNullOrEmpty(signature))
-                await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.SignatureAttribute,
-                    signature);
+            }
 
             if (_securitySettings.AllowStoreOwnerExportImportCustomersWithHashedPassword &&
                 !string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(passwordSalt))
             {
                 var lastPassword = isNew ? null : await _customerService.GetCurrentPasswordAsync(customer.Id);
-                
+
                 if (lastPassword == null || !(lastPassword.Password.Equals(password) && lastPassword.PasswordSalt.Equals(passwordSalt)))
+                {
                     await _customerService.InsertCustomerPasswordAsync(new CustomerPassword
                     {
                         CustomerId = customer.Id,
@@ -2016,6 +2160,7 @@ public partial class ImportManager : IImportManager
                         PasswordFormat = PasswordFormat.Hashed,
                         CreatedOnUtc = DateTime.UtcNow
                     });
+                }
             }
 
             iRow++;
@@ -2060,18 +2205,31 @@ public partial class ImportManager : IImportManager
                 throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Catalog.Products.ExceededMaximumNumber"), _vendorSettings.MaximumProductNumber));
         }
 
+        //validate Circular dependency for required products
+        var circularDependencyProducts = new List<Product>();
+
+        foreach (var data in metadata.RequiredProductsData)
+        {
+            if (isCyclicallyRequired(data, out var product))
+                circularDependencyProducts.Add(product);
+        }
+
+        if (circularDependencyProducts.Any())
+            throw new ArgumentException($"{await _localizationService.GetResourceAsync("Admin.Catalog.Products.RelatedProducts.CyclicallyRelated")} ({string.Join(", ", circularDependencyProducts.Select(p => p.Name).Distinct())})");
+
         //performance optimization, load all categories IDs for products in one SQL request
         var allProductsCategoryIds = await _categoryService.GetProductCategoryIdsAsync(allProductsBySku.Select(p => p.Id).ToArray());
 
         //performance optimization, load all categories in one SQL request
-        Dictionary<CategoryKey, Category> allCategories = new();
+        Dictionary<CategoryKey, Category> allCategories;
         try
         {
             var allCategoryList = await _categoryService.GetAllCategoriesAsync(showHidden: true);
 
             allCategories = await allCategoryList
                 .WhereAwait(async c => await _categoryService.CanVendorAddProductsAsync(c, allCategoryList))
-                .ToDictionaryAwaitAsync(async c => {
+                .ToDictionaryAsync(async (c, _) =>
+                {
                     var keyName = await _categoryService.GetFormattedBreadCrumbAsync(c, allCategoryList);
                     return new CategoryKey(keyName, c, c.LimitedToStores ? (await _storeMappingService.GetStoresIdsWithAccessAsync(c)).ToList() : new List<int>());
                 });
@@ -2426,6 +2584,12 @@ public partial class ImportManager : IImportManager
                     case "DisplayAttributeCombinationImagesOnly":
                         product.DisplayAttributeCombinationImagesOnly = property.BooleanValue;
                         break;
+                    case "AgeVerification":
+                        product.AgeVerification = property.BooleanValue;
+                        break;
+                    case "MinimumAgeToPurchase":
+                        product.MinimumAgeToPurchase = property.IntValue;
+                        break;
                 }
             }
 
@@ -2461,7 +2625,7 @@ public partial class ImportManager : IImportManager
                 var oldWarehouseMessage = string.Empty;
                 if (previousWarehouseId > 0)
                 {
-                    var oldWarehouse = await _shippingService.GetWarehouseByIdAsync(previousWarehouseId);
+                    var oldWarehouse = await _warehouseService.GetWarehouseByIdAsync(previousWarehouseId);
                     if (oldWarehouse != null)
                         oldWarehouseMessage = string.Format(await _localizationService.GetResourceAsync("Admin.StockQuantityHistory.Messages.EditWarehouse.Old"), oldWarehouse.Name);
                 }
@@ -2469,7 +2633,7 @@ public partial class ImportManager : IImportManager
                 var newWarehouseMessage = string.Empty;
                 if (product.WarehouseId > 0)
                 {
-                    var newWarehouse = await _shippingService.GetWarehouseByIdAsync(product.WarehouseId);
+                    var newWarehouse = await _warehouseService.GetWarehouseByIdAsync(product.WarehouseId);
                     if (newWarehouse != null)
                         newWarehouseMessage = string.Format(await _localizationService.GetResourceAsync("Admin.StockQuantityHistory.Messages.EditWarehouse.New"), newWarehouse.Name);
                 }
@@ -2554,8 +2718,7 @@ public partial class ImportManager : IImportManager
                 var deletedProductCategories = await categories.Where(categoryId => !importedCategories.Contains(categoryId))
                     .SelectAwait(async categoryId => (await _categoryService.GetProductCategoriesByProductIdAsync(product.Id, true)).FirstOrDefault(pc => pc.CategoryId == categoryId)).Where(pc => pc != null).ToListAsync();
 
-                foreach (var deletedProductCategory in deletedProductCategories)
-                    await _categoryService.DeleteProductCategoryAsync(deletedProductCategory);
+                await _categoryService.DeleteProductCategoriesAsync(deletedProductCategories);
             }
 
             tempProperty = metadata.Manager.GetDefaultProperty("Manufacturers");
@@ -2603,8 +2766,9 @@ public partial class ImportManager : IImportManager
                 //delete product manufacturers
                 var deletedProductsManufacturers = await manufacturers.Where(manufacturerId => !importedManufacturers.Contains(manufacturerId))
                     .SelectAwait(async manufacturerId => (await _manufacturerService.GetProductManufacturersByProductIdAsync(product.Id)).FirstOrDefault(pc => pc.ManufacturerId == manufacturerId)).ToListAsync();
-                foreach (var deletedProductManufacturer in deletedProductsManufacturers.Where(m => m != null))
-                    await _manufacturerService.DeleteProductManufacturerAsync(deletedProductManufacturer);
+
+                deletedProductsManufacturers = deletedProductsManufacturers.Where(m => m != null).ToList();
+                await _manufacturerService.DeleteProductManufacturersAsync(deletedProductsManufacturers);
             }
 
             tempProperty = metadata.Manager.GetDefaultProperty("ProductTags");
@@ -2632,21 +2796,24 @@ public partial class ImportManager : IImportManager
                 var importedStores = product.LimitedToStores ? limitedToStoresList.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => allStores.FirstOrDefault(store => store.Name == x.Trim())?.Id ?? int.Parse(x.Trim())).ToList() : new List<int>();
 
-                await _productService.UpdateProductStoreMappingsAsync(product, importedStores);
+                await _storeMappingService.SaveStoreMappingsAsync(product, importedStores);
             }
 
-            var picture1 = await DownloadFileAsync(metadata.Manager.GetDefaultProperty("Picture1")?.StringValue, downloadedFiles);
-            var picture2 = await DownloadFileAsync(metadata.Manager.GetDefaultProperty("Picture2")?.StringValue, downloadedFiles);
-            var picture3 = await DownloadFileAsync(metadata.Manager.GetDefaultProperty("Picture3")?.StringValue, downloadedFiles);
-
-            productPictureMetadata.Add(new ProductPictureMetadata
+            var pictureMetaData = new ProductPictureMetadata
             {
                 ProductItem = product,
-                Picture1Path = picture1,
-                Picture2Path = picture2,
-                Picture3Path = picture3,
                 IsNew = isNew
-            });
+            };
+
+            var pictureProperties = new List<string> { "Picture1", "Picture2", "Picture3" };
+
+            if (currentVendor != null)
+                pictureProperties = pictureProperties.Take(_vendorSettings.MaximumProductPicturesNumber).ToList();
+
+            foreach (var propertyName in pictureProperties)
+                pictureMetaData.PicturePaths.Add(await DownloadFileAsync(metadata.Manager.GetDefaultProperty(propertyName)?.StringValue, downloadedFiles));
+
+            productPictureMetadata.Add(pictureMetaData);
 
             lastLoadedProduct = product;
         }
@@ -2673,6 +2840,38 @@ public partial class ImportManager : IImportManager
 
         //activity log
         await _customerActivityService.InsertActivityAsync("ImportProducts", string.Format(await _localizationService.GetResourceAsync("ActivityLog.ImportProducts"), metadata.CountProductsInFile));
+
+        return;
+
+        bool isCyclicallyRequired(KeyValuePair<string, string> data, out Product product)
+        {
+            product = allProductsBySku.FirstOrDefault(p => p.Sku.Equals(data.Key));
+
+            if (product == null)
+                return false;
+
+            var prevRequiredProductIds = product.RequiredProductIds;
+            product.RequiredProductIds = data.Value;
+
+            var requiredProductIds = _productService.ParseRequiredProductIds(product);
+            product.RequiredProductIds = prevRequiredProductIds;
+
+            if (requiredProductIds.Contains(product.Id))
+                return true;
+
+            var skuList = allProductsBySku.Where(p => requiredProductIds.Contains(p.Id)).Select(p => p.Sku);
+
+            foreach (var sku in skuList)
+            {
+                if (!metadata.RequiredProductsData.TryGetValue(sku, out var value))
+                    continue;
+
+                if (isCyclicallyRequired(new KeyValuePair<string, string>(sku, value), out _))
+                    return true;
+            }
+
+            return false;
+        }
     }
 
     /// <summary>
@@ -2683,57 +2882,74 @@ public partial class ImportManager : IImportManager
     /// A task that represents the asynchronous operation
     /// The task result contains the number of imported subscribers
     /// </returns>
-    public virtual async Task<int> ImportNewsletterSubscribersFromTxtAsync(Stream stream)
+    public virtual async Task<int> ImportNewsLetterSubscribersFromTxtAsync(Stream stream)
     {
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var defaultLanguageId = store.DefaultLanguageId > 0 ? store.DefaultLanguageId : (await _workContext.GetWorkingLanguageAsync()).Id;
+        var defaultTypeId = ((await _newsLetterSubscriptionTypeService.GetAllNewsLetterSubscriptionTypesAsync(store.Id)).FirstOrDefault()
+            ?? (await _newsLetterSubscriptionTypeService.GetAllNewsLetterSubscriptionTypesAsync()).FirstOrDefault())
+            .Id;
+        var allSubscriptions = (await _newsLetterSubscriptionService.GetAllNewsLetterSubscriptionsAsync()).ToList();
+
         var count = 0;
         using (var reader = new StreamReader(stream))
-            while (!reader.EndOfStream)
+        {
+            string line;
+            while ((line = await reader.ReadLineAsync()) != null)
             {
-                var line = await reader.ReadLineAsync();
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
+
                 var tmp = line.Split(',');
-
-                if (tmp.Length > 3)
+                if (tmp.Length > 5)
                     throw new NopException("Wrong file format");
-
-                var isActive = true;
-
-                var store = await _storeContext.GetCurrentStoreAsync();
-                var storeId = store.Id;
 
                 //"email" field specified
                 var email = tmp[0].Trim();
-
                 if (!CommonHelper.IsValidEmail(email))
                     continue;
 
                 //"active" field specified
-                if (tmp.Length >= 2)
-                    isActive = bool.Parse(tmp[1].Trim());
+                var isActive = true;
+                if (tmp.Length >= 2 && !bool.TryParse(tmp[1].Trim(), out isActive))
+                    continue;
+
+                //"typeId" field specified
+                var typeId = defaultTypeId;
+                if (tmp.Length >= 3 && !int.TryParse(tmp[2].Trim(), out typeId))
+                    continue;
 
                 //"storeId" field specified
-                if (tmp.Length == 3)
-                    storeId = int.Parse(tmp[2].Trim());
+                var storeId = store.Id;
+                if (tmp.Length >= 4 && !int.TryParse(tmp[3].Trim(), out storeId))
+                    continue;
+
+                //"languageId" field specified
+                var languageId = 0;
+                if (tmp.Length == 5)
+                    _ = int.TryParse(tmp[4].Trim(), out languageId);
 
                 //import
-                var subscription = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(email, storeId);
+                var subscription = allSubscriptions.FirstOrDefault(subscription =>
+                    string.Equals(subscription.Email, email, StringComparison.InvariantCultureIgnoreCase) &&
+                    subscription.StoreId == storeId &&
+                    subscription.TypeId == typeId);
                 if (subscription != null)
                 {
-                    subscription.Email = email;
                     subscription.Active = isActive;
+                    subscription.LanguageId = languageId > 0 ? languageId : defaultLanguageId;
                     await _newsLetterSubscriptionService.UpdateNewsLetterSubscriptionAsync(subscription);
                 }
                 else
                 {
-                    var customer = await _customerService.GetCustomerByEmailAsync(email);
                     subscription = new NewsLetterSubscription
                     {
                         Active = isActive,
                         CreatedOnUtc = DateTime.UtcNow,
                         Email = email,
                         StoreId = storeId,
-                        LanguageId = customer?.LanguageId ?? store.DefaultLanguageId,
+                        LanguageId = languageId > 0 ? languageId : defaultLanguageId,
+                        TypeId = typeId,
                         NewsLetterSubscriptionGuid = Guid.NewGuid()
                     };
                     await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(subscription);
@@ -2741,6 +2957,7 @@ public partial class ImportManager : IImportManager
 
                 count++;
             }
+        }
 
         await _customerActivityService.InsertActivityAsync("ImportNewsLetterSubscriptions",
             string.Format(await _localizationService.GetResourceAsync("ActivityLog.ImportNewsLetterSubscriptions"), count));
@@ -2762,9 +2979,9 @@ public partial class ImportManager : IImportManager
         var count = 0;
         using (var reader = new StreamReader(stream))
         {
-            while (!reader.EndOfStream)
+            string line;
+            while ((line = await reader.ReadLineAsync()) != null)
             {
-                var line = await reader.ReadLineAsync();
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
                 var tmp = line.Split(',');
@@ -2841,7 +3058,7 @@ public partial class ImportManager : IImportManager
         var defaultProperties = metadata.DefaultProperties;
         var localizedProperties = metadata.LocalizedProperties;
 
-        var manager = new PropertyManager<Manufacturer, Language>(defaultProperties, _catalogSettings, localizedProperties, languages);
+        var manager = new PropertyManager<Manufacturer>(defaultProperties, _catalogSettings, localizedProperties, languages);
 
         var iRow = 2;
         var setSeName = defaultProperties.Any(p => p.PropertyName == "SeName");
@@ -2935,6 +3152,21 @@ public partial class ImportManager : IImportManager
                     case "SeName":
                         seName = property.StringValue;
                         break;
+                    case "PhysicalAddress":
+                        manufacturer.PhysicalAddress = property.StringValue;
+                        break;
+                    case "ElectronicAddress":
+                        manufacturer.ElectronicAddress = property.StringValue;
+                        break;
+                    case "ResponsiblePerson":
+                        manufacturer.ResponsiblePerson = property.StringValue;
+                        break;
+                    case "ResponsiblePersonPhysicalAddress":
+                        manufacturer.ResponsiblePersonPhysicalAddress = property.StringValue;
+                        break;
+                    case "ResponsiblePersonElectronicAddress":
+                        manufacturer.ResponsiblePersonElectronicAddress = property.StringValue;
+                        break;
                 }
             }
 
@@ -2977,7 +3209,7 @@ public partial class ImportManager : IImportManager
         var defaultProperties = metadata.DefaultProperties;
         var localizedProperties = metadata.LocalizedProperties;
 
-        var manager = new PropertyManager<Category, Language>(defaultProperties, _catalogSettings, localizedProperties, languages);
+        var manager = new PropertyManager<Category>(defaultProperties, _catalogSettings, localizedProperties, languages);
 
         var iRow = 2;
         var setSeName = defaultProperties.Any(p => p.PropertyName == "SeName");
@@ -2986,9 +3218,12 @@ public partial class ImportManager : IImportManager
         var allCategories = await (await _categoryService
                 .GetAllCategoriesAsync(showHidden: true))
             .GroupByAwait(async c => await _categoryService.GetFormattedBreadCrumbAsync(c))
-            .ToDictionaryAsync(c => c.Key, c => c.FirstAsync());
+            .ToDictionaryAsync(c => c.Key, c => c.First());
 
         var saveNextTime = new List<int>();
+
+        //performance optimization, load all stores in one SQL request
+        var allStores = await _storeService.GetAllStoresAsync();
 
         while (true)
         {
@@ -3003,7 +3238,7 @@ public partial class ImportManager : IImportManager
             var (category, isNew, currentCategoryBreadCrumb) = await GetCategoryFromXlsxAsync(manager, defaultWorksheet, iRow, allCategories);
 
             //update category by data in xlsx file
-            var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, isNew);
+            var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, allStores, isNew);
 
             if (isParentCategoryExists)
             {
@@ -3034,7 +3269,7 @@ public partial class ImportManager : IImportManager
                 //get category by data in xlsx file if it possible, or create new category
                 var (category, isNew, currentCategoryBreadCrumb) = await GetCategoryFromXlsxAsync(manager, defaultWorksheet, rowId, allCategories);
                 //update category by data in xlsx file
-                var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, isNew);
+                var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, allStores, isNew);
 
                 if (!isParentCategoryExists)
                     continue;
@@ -3101,7 +3336,7 @@ public partial class ImportManager : IImportManager
                 metadata.OrderItemManager.ReadDefaultFromXlsx(worksheet, iRow, 2);
 
                 //skip caption row
-                if (!metadata.OrderItemManager.IsCaption) 
+                if (!metadata.OrderItemManager.IsCaption)
                     await ImportOrderItemAsync(metadata.OrderItemManager, lastLoadedOrder);
 
                 continue;
@@ -3135,6 +3370,7 @@ public partial class ImportManager : IImportManager
             var shippingStateProvinceAbbreviation = string.Empty;
 
             foreach (var property in metadata.Manager.GetDefaultProperties)
+            {
                 switch (property.PropertyName)
                 {
                     case "StoreId":
@@ -3259,7 +3495,7 @@ public partial class ImportManager : IImportManager
                         break;
                     case "BillingStateProvinceAbbreviation":
                         billingStateProvinceAbbreviation = property.StringValue;
-                        
+
                         break;
                     case "BillingZipPostalCode":
                         orderBillingAddress.ZipPostalCode = property.StringValue;
@@ -3309,6 +3545,7 @@ public partial class ImportManager : IImportManager
                             orderAddress.CountryId = shippingCountry.Id;
                         break;
                 }
+            }
 
             if (await _stateProvinceService.GetStateProvinceByAbbreviationAsync(billingStateProvinceAbbreviation, orderBillingAddress.CountryId) is { } billingState)
                 orderBillingAddress.StateProvinceId = billingState.Id;
@@ -3360,21 +3597,13 @@ public partial class ImportManager : IImportManager
                 order.CustomerTaxDisplayType = _taxSettings.TaxDisplayType;
 
                 //set other default values
-                order.AllowStoringCreditCardNumber = false;
                 order.AuthorizationTransactionCode = string.Empty;
                 order.AuthorizationTransactionId = string.Empty;
                 order.AuthorizationTransactionResult = string.Empty;
                 order.CaptureTransactionId = string.Empty;
                 order.CaptureTransactionResult = string.Empty;
-                order.CardCvv2 = string.Empty;
-                order.CardExpirationMonth = string.Empty;
-                order.CardExpirationYear = string.Empty;
-                order.CardName = string.Empty;
-                order.CardNumber = string.Empty;
-                order.CardType = string.Empty;
                 order.CustomerIp = string.Empty;
                 order.CustomOrderNumber = string.Empty;
-                order.MaskedCreditCardNumber = string.Empty;
                 order.RefundedAmount = decimal.Zero;
                 order.SubscriptionTransactionId = string.Empty;
 
@@ -3394,6 +3623,244 @@ public partial class ImportManager : IImportManager
         await _customerActivityService.InsertActivityAsync("ImportOrders", string.Format(await _localizationService.GetResourceAsync("ActivityLog.ImportOrders"), metadata.CountOrdersInFile));
     }
 
+    /// <summary>
+    /// Import filter level values from XLSX file
+    /// </summary>
+    /// <param name="stream">Stream</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task ImportFilterLevelValuesFromXlsxAsync(Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        using var workbook = new XLWorkbook(stream);
+
+        var languages = await _languageService.GetAllLanguagesAsync(showHidden: true);
+
+        //the columns
+        var metadata = GetWorkbookMetadata<FilterLevelValue>(workbook, languages);
+        var defaultWorksheet = metadata.DefaultWorksheet;
+        var defaultProperties = metadata.DefaultProperties;
+        var localizedProperties = metadata.LocalizedProperties;
+
+        var manager = new PropertyManager<FilterLevelValue>(defaultProperties, _catalogSettings, localizedProperties, languages);
+        var iRow = 2;
+
+        try
+        {
+            var filterLevelValues = await _filterLevelValueService.GetAllFilterLevelValuesAsync();
+
+            while (true)
+            {
+                var allColumnsAreEmpty = manager.GetDefaultProperties
+                    .Select(property => defaultWorksheet.Row(iRow).Cell(property.PropertyOrderPosition))
+                    .All(cell => cell?.Value == null || string.IsNullOrEmpty(cell.Value.ToString()));
+
+                if (allColumnsAreEmpty)
+                    break;
+
+                manager.ReadDefaultFromXlsx(defaultWorksheet, iRow);
+                var filterLevelValue = filterLevelValues.FirstOrDefault(f => f.Id == manager.GetDefaultProperty("Id").IntValue);
+
+                var isNew = filterLevelValue == null;
+                filterLevelValue ??= new FilterLevelValue
+                {
+                    CreatedOnUtc = DateTime.UtcNow
+                };
+
+                foreach (var property in manager.GetDefaultProperties)
+                {
+                    switch (property.PropertyName)
+                    {
+                        case nameof(FilterLevelValue.FilterLevel1Value):
+                            filterLevelValue.FilterLevel1Value = property.StringValue;
+                            break;
+                        case nameof(FilterLevelValue.FilterLevel2Value):
+                            filterLevelValue.FilterLevel2Value = property.StringValue;
+                            break;
+                        case nameof(FilterLevelValue.FilterLevel3Value):
+                            filterLevelValue.FilterLevel3Value = property.StringValue;
+                            break;
+                    }
+                }
+
+                filterLevelValue.UpdatedOnUtc = DateTime.UtcNow;
+
+                await (isNew
+                    ? _filterLevelValueService.InsertFilterLevelValueAsync(filterLevelValue)
+                    : _filterLevelValueService.UpdateFilterLevelValueAsync(filterLevelValue));
+
+                iRow++;
+            }
+
+            //activity log
+            await _customerActivityService.InsertActivityAsync("ImportFilterLevelValues",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.ImportFilterLevelValues"), iRow - 2));
+        }
+        catch (Exception ex)
+        {
+            await _logger.ErrorAsync("Error while importing filter level values", ex);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Import price lists from XLSX file
+    /// </summary>
+    /// <param name="stream">Stream</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task ImportPriceListsFromXlsxAsync(Stream stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        using var workbook = new XLWorkbook(stream);
+
+        var (metadata, worksheet) = await PrepareImportPriceListDataAsync(workbook);
+        var priceLists = await _priceListService.GetAllPriceListsAsync();
+        var allRoles = await _customerService.GetAllCustomerRolesAsync();
+
+        PriceList lastLoadedPriceList = null;
+
+        for (var iRow = 2; iRow < metadata.EndRow; iRow++)
+        {
+            //imports items 
+            if (worksheet.Row(iRow).OutlineLevel != 0)
+            {
+                if (lastLoadedPriceList == null)
+                    continue;
+
+                metadata.PriceListItemManager.ReadDefaultFromXlsx(worksheet, iRow, 2);
+
+                //skip caption row
+                if (!metadata.PriceListItemManager.IsCaption)
+                    await ImportPriceListItemAsync(metadata.PriceListItemManager, lastLoadedPriceList);
+
+                continue;
+            }
+
+            metadata.Manager.ReadDefaultFromXlsx(worksheet, iRow);
+
+            var priceList = priceLists.FirstOrDefault(f => f.Id == metadata.Manager.GetDefaultProperty("Id").IntValue);
+            var isNew = priceList == null;
+
+            priceList ??= new PriceList();
+
+            var rolesToSave = new List<int>();
+            var customersToSave = new List<int>();
+
+            foreach (var property in metadata.Manager.GetDefaultProperties)
+            {
+                switch (property.PropertyName)
+                {
+                    case nameof(PriceList.Name):
+                        priceList.Name = property.StringValue;
+                        break;
+                    case nameof(PriceList.Description):
+                        priceList.Description = property.StringValue;
+                        break;
+                    case nameof(PriceList.Active):
+                        priceList.Active = property.BooleanValue;
+                        break;
+                    case nameof(PriceList.StartDateUtc):
+                        if (DateTime.TryParse(property.StringValue, out var startDate))
+                            priceList.StartDateUtc = startDate;
+                        break;
+                    case nameof(PriceList.EndDateUtc):
+                        if (DateTime.TryParse(property.StringValue, out var endDate))
+                            priceList.EndDateUtc = endDate;
+                        break;
+                    case nameof(PriceList.PriceCalculationType):
+                        priceList.PriceCalculationTypeId = property.IntValue;
+                        break;
+                    case nameof(PriceList.PriceCalculationValue):
+                        priceList.PriceCalculationValue = property.DecimalValue;
+                        break;
+                    case nameof(PriceList.Priority):
+                        priceList.Priority = property.IntValue;
+                        break;
+                    case "CustomerRoles":
+                        var roles = property.StringValue.Split(", ");
+
+                        foreach (var role in roles)
+                        {
+                            if (int.TryParse(role, out var roleId))
+                                rolesToSave.Add(roleId);
+                            else
+                            {
+                                var currentRole = allRoles.FirstOrDefault(r =>
+                                    r.Name.Equals(role, StringComparison.InvariantCultureIgnoreCase));
+
+                                if (currentRole != null)
+                                    rolesToSave.Add(currentRole.Id);
+                            }
+                        }
+                        break;
+                    case "Customers":
+                        var customers = property.StringValue.Split(", ");
+
+                        foreach (var customer in customers)
+                        {
+                            if (int.TryParse(customer, out var customerId))
+                                customersToSave.Add(customerId);
+                        }
+                        break;
+                }
+            }
+
+            await (isNew
+                    ? _priceListService.InsertPriceListAsync(priceList)
+                    : _priceListService.UpdatePriceListAsync(priceList));
+
+            //customer role mappings
+            if (rolesToSave.Any())
+            {
+                var priceListCustomerRoles = await _priceListService.GetCustomerRolesAsync(priceList);
+
+                foreach (var roleId in rolesToSave)
+                {
+                    var role = allRoles.FirstOrDefault(r => r.Id == roleId);
+
+                    if (role == null || priceListCustomerRoles.Any(cr => cr.Id == roleId))
+                        continue;
+
+                    await _priceListService.AddCustomerRoleMappingAsync(
+                        new PriceListCustomerRole { PriceListId = priceList.Id, CustomerRoleId = roleId });
+                }
+
+                if (!isNew)
+                {
+                    foreach (var customerRole in priceListCustomerRoles.Where(cr => !rolesToSave.Contains(cr.Id)).ToList())
+                        await _priceListService.RemoveCustomerRoleMappingAsync(priceList, customerRole);
+                }
+            }
+
+            // customer mappings
+            if (customersToSave.Any())
+            {
+                var priceListCustomers = (await _priceListService.GetPriceListCustomersByPriceListIdAsync(priceList.Id)).ToList();
+
+                foreach (var customerId in customersToSave)
+                {
+                    var customer = await _customerService.GetCustomerByIdAsync(customerId);
+                    if (customer == null || priceListCustomers.Any(cr => cr.CustomerId == customerId))
+                        continue;
+
+                    await _priceListService.InsertPriceListCustomerAsync(
+                        new PriceListCustomer { PriceListId = priceList.Id, CustomerId = customerId });
+                }
+
+                if (!isNew)
+                {
+                    foreach (var customer in priceListCustomers.Where(cr => !customersToSave.Contains(cr.CustomerId)).ToList())
+                        await _priceListService.DeletePriceListCustomerAsync(customer);
+                }
+            }
+
+            lastLoadedPriceList = priceList;
+        }
+
+        //activity log
+        await _customerActivityService.InsertActivityAsync("ImportPriceLists",
+            string.Format(await _localizationService.GetResourceAsync("ActivityLog.ImportPriceLists"), metadata.CountPriceListsInFile));
+    }
+
     #endregion
 
     #region Nested classes
@@ -3402,11 +3869,7 @@ public partial class ImportManager : IImportManager
     {
         public Product ProductItem { get; set; }
 
-        public string Picture1Path { get; set; }
-
-        public string Picture2Path { get; set; }
-
-        public string Picture3Path { get; set; }
+        public HashSet<string> PicturePaths { get; set; } = new();
 
         public bool IsNew { get; set; }
     }

@@ -1,7 +1,6 @@
 ﻿using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Extensions.Hosting;
 using Nop.Core;
 using Nop.Core.Configuration;
+using Nop.Services.Helpers;
 using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.UI;
 using Nop.Web.Framework.WebOptimizer;
@@ -103,8 +103,7 @@ public partial class NopScriptTagHelper : UrlResolutionTagHelper
         if (string.IsNullOrEmpty(Src))
             return;
 
-        var urlHelper = UrlHelperFactory.GetUrlHelper(ViewContext);
-        if (!urlHelper.IsLocalUrl(Src))
+        if (!_webHelper.CheckIsLocalUrl(Src))
         {
             output.Attributes.SetAttribute(SRC_ATTRIBUTE_NAME, Src);
             return;
@@ -129,8 +128,12 @@ public partial class NopScriptTagHelper : UrlResolutionTagHelper
 
         output.TagMode = TagMode.StartTagAndEndTag;
 
-        if (!output.Attributes.ContainsName("type")) // we don't touch other types e.g. text/template
-            output.Attributes.SetAttribute("type", MimeTypes.TextJavascript);
+        //process only text/javascript scripts
+        if (context.AllAttributes.TryGetAttribute("type", out var attribute)
+             && !string.Equals(attribute.Value?.ToString(), MimeTypes.TextJavascript, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
 
         var woConfig = _appSettings.Get<WebOptimizerConfig>();
 
@@ -142,11 +145,11 @@ public partial class NopScriptTagHelper : UrlResolutionTagHelper
 
         if (Location == ResourceLocation.None)
         {
-            if (!string.IsNullOrEmpty(Src))
-            {
-                ProcessSrcAttribute(context, output);
-                ProcessAsset(output);
-            }
+            if (string.IsNullOrEmpty(Src))
+                return;
+
+            ProcessSrcAttribute(context, output);
+            ProcessAsset(output);
 
             return;
         }

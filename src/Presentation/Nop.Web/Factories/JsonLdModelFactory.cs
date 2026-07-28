@@ -1,8 +1,9 @@
 ﻿using System.Globalization;
 using System.Text.Encodings.Web;
-using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Events;
+using Nop.Services.Customers;
+using Nop.Services.Helpers;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Models.Catalog;
 using Nop.Web.Models.JsonLD;
@@ -16,6 +17,8 @@ public partial class JsonLdModelFactory : IJsonLdModelFactory
 {
     #region Fields
 
+    protected readonly ICustomerService _customerService;
+    protected readonly IDateTimeHelper _dateTimeHelper;
     protected readonly IEventPublisher _eventPublisher;
     protected readonly INopUrlHelper _nopUrlHelper;
     protected readonly IWebHelper _webHelper;
@@ -24,10 +27,14 @@ public partial class JsonLdModelFactory : IJsonLdModelFactory
 
     #region Ctor
 
-    public JsonLdModelFactory(IEventPublisher eventPublisher,
+    public JsonLdModelFactory(ICustomerService customerService,
+        IDateTimeHelper dateTimeHelper,
+        IEventPublisher eventPublisher,
         INopUrlHelper nopUrlHelper,
         IWebHelper webHelper)
     {
+        _customerService = customerService;
+        _dateTimeHelper = dateTimeHelper;
         _eventPublisher = eventPublisher;
         _nopUrlHelper = nopUrlHelper;
         _webHelper = webHelper;
@@ -36,6 +43,16 @@ public partial class JsonLdModelFactory : IJsonLdModelFactory
     #endregion
 
     #region Utilities
+
+    /// <summary>
+    /// Convert datetime to an ISO 8601 string
+    /// </summary>
+    /// <param name="dateTime">Datetime object to convert</param>
+    /// <returns>Datetime string in the ISO 8601 format</returns>
+    protected virtual string ConvertDateTimeToIso8601String(DateTime? dateTime)
+    {
+        return dateTime == null ? null : new DateTimeOffset(dateTime.Value).ToString("O", CultureInfo.InvariantCulture);
+    }
 
     /// <summary>
     /// Prepare JSON-LD category breadcrumb model
@@ -132,7 +149,6 @@ public partial class JsonLdModelFactory : IJsonLdModelFactory
         var product = new JsonLdProductModel
         {
             Name = model.Name,
-            Sku = model.Sku,
             Gtin = model.Gtin,
             Mpn = model.ManufacturerPartNumber,
             Description = model.ShortDescription,
@@ -142,7 +158,7 @@ public partial class JsonLdModelFactory : IJsonLdModelFactory
                 Url = productUrl.ToLowerInvariant(),
                 Price = model.ProductPrice.CallForPrice ? null : productPrice?.ToString("0.00", CultureInfo.InvariantCulture),
                 PriceCurrency = model.ProductPrice.CurrencyCode,
-                PriceValidUntil = model.AvailableEndDate,
+                PriceValidUntil = ConvertDateTimeToIso8601String(model.AvailableEndDate),
                 Availability = @"https://schema.org/" + (model.InStock ? "InStock" : "OutOfStock")
             },
             Brand = model.ProductManufacturers?.Select(manufacturer => new JsonLdBrandModel { Name = manufacturer.Name }).ToList()
@@ -169,7 +185,7 @@ public partial class JsonLdModelFactory : IJsonLdModelFactory
                     RatingValue = review.Rating
                 },
                 Author = new JsonLdPersonModel { Name = JavaScriptEncoder.Default.Encode(review.CustomerName) },
-                DatePublished = review.WrittenOnStr
+                DatePublished = ConvertDateTimeToIso8601String(review.WrittenOn)
             }).ToList();
         }
 
@@ -178,6 +194,11 @@ public partial class JsonLdModelFactory : IJsonLdModelFactory
             var parentUrl = !associatedProduct.VisibleIndividually ? productUrl : null;
             product.HasVariant.Add(await PrepareJsonLdProductAsync(associatedProduct, parentUrl));
         }
+
+        if (product.HasVariant.Any())
+            product.GroupId = model.Sku;
+        else
+            product.Sku = model.Sku;
 
         await _eventPublisher.PublishAsync(new JsonLdCreatedEvent<JsonLdProductModel>(product));
 

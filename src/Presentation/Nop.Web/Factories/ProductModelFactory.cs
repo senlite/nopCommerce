@@ -13,6 +13,8 @@ using Nop.Core.Domain.Seo;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Vendors;
+using Nop.Core.Http;
+using Nop.Core.Infrastructure;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
@@ -31,6 +33,7 @@ using Nop.Web.Infrastructure.Cache;
 using Nop.Web.Models.Catalog;
 using Nop.Web.Models.Common;
 using Nop.Web.Models.Media;
+using Nop.Web.Models.ShoppingCart;
 
 namespace Nop.Web.Factories;
 
@@ -44,13 +47,16 @@ public partial class ProductModelFactory : IProductModelFactory
     protected readonly CaptchaSettings _captchaSettings;
     protected readonly CatalogSettings _catalogSettings;
     protected readonly CustomerSettings _customerSettings;
+    protected readonly GpsrSettings _gpsrSettings;
     protected readonly ICategoryService _categoryService;
     protected readonly ICurrencyService _currencyService;
     protected readonly ICustomerService _customerService;
+    protected readonly ICustomWishlistService _customWishlistService;
     protected readonly IDateRangeService _dateRangeService;
     protected readonly IDateTimeHelper _dateTimeHelper;
     protected readonly IDownloadService _downloadService;
     protected readonly IGenericAttributeService _genericAttributeService;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly IJsonLdModelFactory _jsonLdModelFactory;
     protected readonly ILocalizationService _localizationService;
     protected readonly IManufacturerService _manufacturerService;
@@ -60,6 +66,7 @@ public partial class ProductModelFactory : IProductModelFactory
     protected readonly IPriceFormatter _priceFormatter;
     protected readonly IProductAttributeParser _productAttributeParser;
     protected readonly IProductAttributeService _productAttributeService;
+    protected readonly IProductReviewService _productReviewService;
     protected readonly IProductService _productService;
     protected readonly IProductTagService _productTagService;
     protected readonly IProductTemplateService _productTemplateService;
@@ -90,13 +97,16 @@ public partial class ProductModelFactory : IProductModelFactory
     public ProductModelFactory(CaptchaSettings captchaSettings,
         CatalogSettings catalogSettings,
         CustomerSettings customerSettings,
+        GpsrSettings gpsrSettings,
         ICategoryService categoryService,
         ICurrencyService currencyService,
         ICustomerService customerService,
+        ICustomWishlistService customWishlistService,
         IDateRangeService dateRangeService,
         IDateTimeHelper dateTimeHelper,
         IDownloadService downloadService,
         IGenericAttributeService genericAttributeService,
+        IHttpContextAccessor httpContextAccessor,
         IJsonLdModelFactory jsonLdModelFactory,
         ILocalizationService localizationService,
         IManufacturerService manufacturerService,
@@ -106,6 +116,7 @@ public partial class ProductModelFactory : IProductModelFactory
         IPriceFormatter priceFormatter,
         IProductAttributeParser productAttributeParser,
         IProductAttributeService productAttributeService,
+        IProductReviewService productReviewService,
         IProductService productService,
         IProductTagService productTagService,
         IProductTemplateService productTemplateService,
@@ -131,13 +142,16 @@ public partial class ProductModelFactory : IProductModelFactory
         _captchaSettings = captchaSettings;
         _catalogSettings = catalogSettings;
         _customerSettings = customerSettings;
+        _gpsrSettings = gpsrSettings;
         _categoryService = categoryService;
         _currencyService = currencyService;
         _customerService = customerService;
+        _customWishlistService = customWishlistService;
         _dateRangeService = dateRangeService;
         _dateTimeHelper = dateTimeHelper;
         _downloadService = downloadService;
         _genericAttributeService = genericAttributeService;
+        _httpContextAccessor = httpContextAccessor;
         _jsonLdModelFactory = jsonLdModelFactory;
         _localizationService = localizationService;
         _manufacturerService = manufacturerService;
@@ -147,6 +161,7 @@ public partial class ProductModelFactory : IProductModelFactory
         _priceFormatter = priceFormatter;
         _productAttributeParser = productAttributeParser;
         _productAttributeService = productAttributeService;
+        _productReviewService = productReviewService;
         _productService = productService;
         _productTagService = productTagService;
         _productTemplateService = productTemplateService;
@@ -173,6 +188,53 @@ public partial class ProductModelFactory : IProductModelFactory
     #endregion
 
     #region Utilities
+
+    /// <summary>
+    /// Get base price (PAngV)
+    /// </summary>
+    /// <param name="product">Product</param>
+    /// <param name="productPrice">Product price (in primary currency). Pass null if you want to use a default produce price</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the base price
+    /// </returns>
+    protected virtual async Task<decimal?> GetBaseProductPriceAsync(Product product, decimal? productPrice)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+
+        if (!product.BasepriceEnabled)
+            return null;
+
+        var productAmount = product.BasepriceAmount;
+
+        //amount in product cannot be 0
+        if (productAmount == 0)
+            return null;
+
+        var measureService = EngineContext.Current.Resolve<IMeasureService>();
+
+        var referenceAmount = product.BasepriceBaseAmount;
+        var productUnit = await measureService.GetMeasureWeightByIdAsync(product.BasepriceUnitId);
+
+        //measure weight cannot be loaded
+        if (productUnit == null)
+            return null;
+
+        var referenceUnit = await measureService.GetMeasureWeightByIdAsync(product.BasepriceBaseUnitId);
+
+        //measure weight cannot be loaded
+        if (referenceUnit == null)
+            return null;
+
+        productPrice ??= product.Price;
+
+        var basePrice = productPrice.Value /
+                        //do not round. otherwise, it can cause issues
+                        await measureService.ConvertWeightAsync(productAmount, productUnit, referenceUnit, false) *
+                        referenceAmount;
+
+        return basePrice;
+    }
 
     /// <summary>
     /// Prepare the grouped product overview price model
@@ -235,7 +297,7 @@ public partial class ProductModelFactory : IProductModelFactory
 
             //PAngV default baseprice (used in Germany)
             priceModel.BasePricePAngV = await _priceFormatter.FormatBasePriceAsync(product, finalPriceBase);
-            priceModel.BasePricePAngVValue = finalPriceBase;
+            priceModel.BasePricePAngVValue = await GetBaseProductPriceAsync(product, finalPriceBase);
         }
     }
 
@@ -249,7 +311,7 @@ public partial class ProductModelFactory : IProductModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the minimum possible product price
     /// </returns>
-    protected async Task<(bool hasMultiplePrices, decimal minPossiblePriceWithoutDiscount, decimal minPossiblePriceWithDiscount)> GetFromPriceAsync(Product product, Customer customer, Store store)
+    protected virtual async Task<(bool hasMultiplePrices, decimal minPossiblePriceWithoutDiscount, decimal minPossiblePriceWithDiscount)> GetFromPriceAsync(Product product, Customer customer, Store store)
     {
         var hasMultiplePrices = false;
 
@@ -297,8 +359,11 @@ public partial class ProductModelFactory : IProductModelFactory
 
                     //or check for attribute price adjustment, in this case we should add it to the base product price
                     var attributeValues = await _productAttributeParser.ParseProductAttributeValuesAsync(attributesXml);
-                    var additionalCharge = await attributeValues.SumAwaitAsync(async attributeValue =>
-                        await _priceCalculationService.GetProductAttributeValuePriceAdjustmentAsync(product, attributeValue, customer, store));
+
+                    var additionalCharge = decimal.Zero;
+                    foreach (var attributeValue in attributeValues)
+                        additionalCharge += await _priceCalculationService.GetProductAttributeValuePriceAdjustmentAsync(product, attributeValue, customer, store);
+
                     if (additionalCharge != decimal.Zero)
                     {
                         var (priceWithoutDiscount, priceWithDiscount, _, _) = await _priceCalculationService
@@ -458,18 +523,11 @@ public partial class ProductModelFactory : IProductModelFactory
         var finalPriceWithoutDiscount = await _currencyService.ConvertFromPrimaryStoreCurrencyAsync(finalPriceWithoutDiscountBase, currentCurrency);
         var finalPriceWithDiscount = await _currencyService.ConvertFromPrimaryStoreCurrencyAsync(finalPriceWithDiscountBase, currentCurrency);
 
-        var strikeThroughPrice = decimal.Zero;
-
+        model.Price = await _priceFormatter.FormatPriceAsync(finalPriceWithoutDiscount);
         if (finalPriceWithoutDiscountBase != oldPriceBase && oldPriceBase > decimal.Zero)
-            strikeThroughPrice = oldPrice;
-
-        if (finalPriceWithoutDiscountBase != finalPriceWithDiscountBase)
-            strikeThroughPrice = finalPriceWithoutDiscount;
-
-        if (strikeThroughPrice > decimal.Zero)
         {
-            model.OldPrice = await _priceFormatter.FormatPriceAsync(strikeThroughPrice);
-            model.OldPriceValue = strikeThroughPrice;
+            model.OldPrice = await _priceFormatter.FormatPriceAsync(oldPrice);
+            model.OldPriceValue = oldPrice;
         }
         else
         {
@@ -477,9 +535,21 @@ public partial class ProductModelFactory : IProductModelFactory
             model.OldPriceValue = null;
         }
 
-        model.Price = await _priceFormatter.FormatPriceAsync(finalPriceWithDiscount);
-        if (hasMultiplePrices)
-            model.Price = string.Format(await _localizationService.GetResourceAsync("Products.PriceRangeFrom"), model.Price);
+        if (addPriceRangeFrom)
+        {
+            var strikeThroughPrice = decimal.Zero;
+
+            if (finalPriceWithoutDiscountBase != finalPriceWithDiscountBase)
+                strikeThroughPrice = finalPriceWithoutDiscount;
+
+            if (strikeThroughPrice > decimal.Zero)
+            {
+                model.OldPrice = await _priceFormatter.FormatPriceAsync(strikeThroughPrice);
+                model.OldPriceValue = strikeThroughPrice;
+            }
+
+            model.Price = await _priceFormatter.FormatPriceAsync(finalPriceWithDiscount);
+        }
 
         if (finalPriceWithoutDiscountBase != finalPriceWithDiscountBase)
         {
@@ -488,6 +558,9 @@ public partial class ProductModelFactory : IProductModelFactory
         }
 
         model.PriceValue = finalPriceWithDiscount;
+
+        if (hasMultiplePrices)
+            model.Price = string.Format(await _localizationService.GetResourceAsync("Products.PriceRangeFrom"), model.Price);
 
         //property for German market
         //we display tax/shipping info only with "shipping enabled" for this product
@@ -508,7 +581,7 @@ public partial class ProductModelFactory : IProductModelFactory
 
         //PAngV default base price (used in Germany)
         model.BasePricePAngV = await _priceFormatter.FormatBasePriceAsync(product, finalPriceWithDiscountBase);
-        model.BasePricePAngVValue = finalPriceWithDiscountBase;
+        model.BasePricePAngVValue = await GetBaseProductPriceAsync(product, finalPriceWithDiscountBase);
 
         return model;
     }
@@ -586,7 +659,7 @@ public partial class ProductModelFactory : IProductModelFactory
 
             productReview = await _staticCacheManager.GetAsync(cacheKey, async () =>
             {
-                var productReviews = await _productService.GetAllProductReviewsAsync(productId: product.Id, approved: true, storeId: currentStore.Id);
+                var productReviews = await _productReviewService.GetAllProductReviewsAsync(productId: product.Id, approved: true, storeId: currentStore.Id);
 
                 return new ProductReviewOverviewModel
                 {
@@ -609,7 +682,7 @@ public partial class ProductModelFactory : IProductModelFactory
             productReview.ProductId = product.Id;
             productReview.AllowCustomerReviews = product.AllowCustomerReviews;
             productReview.CanCurrentCustomerLeaveReview = _catalogSettings.AllowAnonymousUsersToReviewProduct || !await _customerService.IsGuestAsync(await _workContext.GetCurrentCustomerAsync());
-            productReview.CanAddNewReview = await _productService.CanAddReviewAsync(product.Id, _catalogSettings.ShowProductReviewsPerStore ? currentStore.Id : 0);
+            productReview.CanAddNewReview = await _productReviewService.CanAddReviewAsync(product.Id, _catalogSettings.ShowProductReviewsPerStore ? currentStore.Id : 0);
         }
 
         return productReview;
@@ -710,7 +783,6 @@ public partial class ProductModelFactory : IProductModelFactory
                 Id = catBr.Id,
                 Name = await _localizationService.GetLocalizedAsync(catBr, x => x.Name),
                 SeName = await _urlRecordService.GetSeNameAsync(catBr),
-                IncludeInTopMenu = catBr.IncludeInTopMenu
             });
         }
 
@@ -742,7 +814,7 @@ public partial class ProductModelFactory : IProductModelFactory
         var model = await productsTags
             //filter by store
             .WhereAwait(async x => await _productTagService.GetProductCountByProductTagIdAsync(x.Id, store.Id) > 0)
-            .SelectAwait(async x => new ProductTagModel
+            .Select(async (ProductTag x, CancellationToken _) => new ProductTagModel
             {
                 Id = x.Id,
                 Name = await _localizationService.GetLocalizedAsync(x, y => y.Name),
@@ -753,6 +825,44 @@ public partial class ProductModelFactory : IProductModelFactory
         return model;
     }
 
+    /// <summary>
+    /// Prepare the product to wishlist model
+    /// </summary>
+    /// <param name="product">Product</param>
+    /// <param name="currentWishlists">The current customer's custom wishlists; set to null to load them automatically</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the product add to wishlist model
+    /// </returns>
+    protected virtual async Task<ProductToWishlistModel> PrepareProductToWishlistModelAsync(Product product, IList<CustomWishlist> currentWishlists = null)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+
+        //load current customer's custom wishlists if not passed
+        if (currentWishlists == null)
+        {
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            currentWishlists = await _customWishlistService.GetAllCustomWishlistsAsync(currentCustomer.Id);
+        }
+
+        var model = new ProductToWishlistModel
+        {
+            ProductId = product.Id
+        };
+
+        foreach (var wishlist in currentWishlists)
+        {
+            var customWishlistModel = new CustomWishlistModel
+            {
+                Id = wishlist.Id,
+                Name = wishlist.Name
+            };
+            model.CustomWishlistItems.Add(customWishlistModel);
+        }
+
+        return model;
+    }
+    
     /// <summary>
     /// Prepare the product add to cart model
     /// </summary>
@@ -792,9 +902,7 @@ public partial class ProductModelFactory : IProductModelFactory
         }
         //minimum quantity notification
         if (product.OrderMinimumQuantity > 1)
-        {
             model.MinimumQuantityNotification = string.Format(await _localizationService.GetResourceAsync("Products.MinimumQuantityNotification"), product.OrderMinimumQuantity);
-        }
 
         //'add to cart', 'add to wishlist' buttons
         model.DisableBuyButton = product.DisableBuyButton || !await _permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_SHOPPING_CART);
@@ -804,6 +912,10 @@ public partial class ProductModelFactory : IProductModelFactory
             model.DisableBuyButton = true;
             model.DisableWishlistButton = true;
         }
+
+        //custom wishlist items
+        model.ProductToWishlist = await PrepareProductToWishlistModelAsync(product);
+
         //pre-order
         if (product.AvailableForPreOrder)
         {
@@ -978,7 +1090,9 @@ public partial class ProductModelFactory : IProductModelFactory
                             //select new values
                             var selectedValues = await _productAttributeParser.ParseProductAttributeValuesAsync(updatecartitem.AttributesXml);
                             foreach (var attributeValue in selectedValues)
+                            {
                                 foreach (var item in attributeModel.Values)
+                                {
                                     if (attributeValue.Id == item.Id)
                                     {
                                         item.IsPreSelected = true;
@@ -987,10 +1101,12 @@ public partial class ProductModelFactory : IProductModelFactory
                                         if (attributeValue.CustomerEntersQty)
                                             item.Quantity = attributeValue.Quantity;
                                     }
+                                }
+                            }
                         }
                     }
 
-                        break;
+                    break;
                     case AttributeControlType.ReadonlyCheckboxes:
                     {
                         //values are already pre-set
@@ -1008,7 +1124,7 @@ public partial class ProductModelFactory : IProductModelFactory
                         }
                     }
 
-                        break;
+                    break;
                     case AttributeControlType.TextBox:
                     case AttributeControlType.MultilineTextbox:
                     {
@@ -1020,7 +1136,7 @@ public partial class ProductModelFactory : IProductModelFactory
                         }
                     }
 
-                        break;
+                    break;
                     case AttributeControlType.Datepicker:
                     {
                         //keep in mind my that the code below works only in the current culture
@@ -1037,7 +1153,7 @@ public partial class ProductModelFactory : IProductModelFactory
                         }
                     }
 
-                        break;
+                    break;
                     case AttributeControlType.FileUpload:
                     {
                         if (!string.IsNullOrEmpty(updatecartitem.AttributesXml))
@@ -1050,7 +1166,7 @@ public partial class ProductModelFactory : IProductModelFactory
                         }
                     }
 
-                        break;
+                    break;
                     default:
                         break;
                 }
@@ -1118,6 +1234,15 @@ public partial class ProductModelFactory : IProductModelFactory
                     Name = await _localizationService.GetLocalizedAsync(manufacturer, x => x.Name),
                     SeName = await _urlRecordService.GetSeNameAsync(manufacturer)
                 };
+
+                if (_gpsrSettings.Enabled)
+                {
+                    modelMan.PhysicalAddress = string.IsNullOrEmpty(manufacturer.PhysicalAddress) ? string.Empty : string.Format(await _localizationService.GetResourceAsync("Products.Manufacturers.PhysicalAddress"), manufacturer.PhysicalAddress);
+                    modelMan.ElectronicAddress = string.IsNullOrEmpty(manufacturer.ElectronicAddress) ? string.Empty : string.Format(await _localizationService.GetResourceAsync("Products.Manufacturers.ElectronicAddress"), manufacturer.ElectronicAddress);
+                    modelMan.ResponsiblePerson = string.IsNullOrEmpty(manufacturer.ResponsiblePerson) ? string.Empty : string.Format(await _localizationService.GetResourceAsync("Products.Manufacturers.ResponsiblePerson"), manufacturer.ResponsiblePerson);
+                    modelMan.ResponsiblePersonPhysicalAddress = string.IsNullOrEmpty(manufacturer.ResponsiblePersonPhysicalAddress) ? string.Empty : string.Format(await _localizationService.GetResourceAsync("Products.Manufacturers.ResponsiblePersonPhysicalAddress"), manufacturer.ResponsiblePersonPhysicalAddress);
+                    modelMan.ResponsiblePersonElectronicAddress = string.IsNullOrEmpty(manufacturer.ResponsiblePersonElectronicAddress) ? string.Empty : string.Format(await _localizationService.GetResourceAsync("Products.Manufacturers.ResponsiblePersonElectronicAddress"), manufacturer.ResponsiblePersonElectronicAddress);
+                }
 
                 return modelMan;
             }).ToListAsync();
@@ -1225,6 +1350,50 @@ public partial class ProductModelFactory : IProductModelFactory
         return (cachedPictures.DefaultPictureModel, allPictureModels, allvideoModels);
     }
 
+    /// <summary>
+    /// Prepare product 3D object model
+    /// </summary>
+    /// <param name="product">Product</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the product 3D object model
+    /// </returns>
+    protected virtual async Task<Product3dObjectModel> PrepareProduct3dObjectModelAsync(Product product)
+    {
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopModelCacheDefaults.Product3dObjectModelKey,
+            product, _mediaSettings.ProductDetailsPictureSize, _mediaSettings.ProductThumbPictureSizeOnProductDetailsPage);
+
+        return await _staticCacheManager.GetAsync(cacheKey, async () =>
+        {
+            var product3dObject = await _productService.GetProduct3dObjectAsync(product);
+            if (product3dObject is null)
+                return new Product3dObjectModel();
+
+            var picture3dPreview = await _pictureService.GetPictureByIdAsync(product3dObject.PreviewPictureId ?? 0);
+
+            (var imageUrl, _) = await _pictureService.GetPictureUrlAsync(picture3dPreview, _mediaSettings.ProductDetailsPictureSize, true);
+            (var thumbImageUrl, _) = await _pictureService.GetPictureUrlAsync(picture3dPreview, _mediaSettings.ProductThumbPictureSizeOnProductDetailsPage, true, defaultPictureType: PictureType.Object3d);
+
+            var path = _mediaSettings.UseAbsoluteImagePath
+                ? _webHelper.GetStoreLocation()
+                : $"{_httpContextAccessor.HttpContext?.Request.PathBase.Value}/";
+            var url = $"{path}{NopMediaDefaults.DefaultImagesPath}/{NopMediaDefaults.Default3dObjectsDirectoryName}/{product3dObject.FileName}";
+
+            return new Product3dObjectModel
+            {
+                Id = product3dObject.Id,
+                AlternateText = product3dObject.AltAttribute,
+                ObjectUrl = url,
+                PosterImageUrl = imageUrl,
+                ThumbImageUrl = thumbImageUrl,
+                AutoRotateEnabled = _mediaSettings.Object3dAutoRotateEnabled,
+                ZoomEnabled = _mediaSettings.Object3dZoomEnabled,
+                CameraControlEnabled = _mediaSettings.Object3dCameraControlEnabled,
+                LazyLoadEnabled = _mediaSettings.Object3dLazyLoadingEnabled
+            };
+        });
+    }
+
     #endregion
 
     #region Methods
@@ -1268,6 +1437,11 @@ public partial class ProductModelFactory : IProductModelFactory
         ArgumentNullException.ThrowIfNull(products);
 
         var models = new List<ProductOverviewModel>();
+
+        //load the current customer's wishlists once; the list is the same for every product on the page
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+        var currentWishlists = await _customWishlistService.GetAllCustomWishlistsAsync(currentCustomer.Id);
+
         foreach (var product in products)
         {
             var model = new ProductOverviewModel
@@ -1286,24 +1460,21 @@ public partial class ProductModelFactory : IProductModelFactory
 
             //price
             if (preparePriceModel)
-            {
                 model.ProductPrice = await PrepareProductPriceModelAsync(product, true, forceRedirectionAfterAddingToCart);
-            }
 
             //picture
             if (preparePictureModel)
-            {
                 model.PictureModels = await PrepareProductOverviewPicturesModelAsync(product, productThumbPictureSize);
-            }
 
             //specs
             if (prepareSpecificationAttributes)
-            {
                 model.ProductSpecificationModel = await PrepareProductSpecificationModelAsync(product);
-            }
 
             //reviews
             model.ReviewOverviewModel = await PrepareProductReviewOverviewModelAsync(product);
+
+            //custom wishlist items
+            model.ProductToWishlist = await PrepareProductToWishlistModelAsync(product, currentWishlists);
 
             models.Add(model);
         }
@@ -1425,9 +1596,7 @@ public partial class ProductModelFactory : IProductModelFactory
             //delivery date
             var deliveryDate = await _dateRangeService.GetDeliveryDateByIdAsync(product.DeliveryDateId);
             if (deliveryDate != null)
-            {
                 model.DeliveryDate = await _localizationService.GetLocalizedAsync(deliveryDate, dd => dd.Name);
-            }
         }
 
         var store = await _storeContext.GetCurrentStoreAsync();
@@ -1491,16 +1660,12 @@ public partial class ProductModelFactory : IProductModelFactory
         //breadcrumb
         //do not prepare this model for the associated products. anyway it's not used
         if (_catalogSettings.CategoryBreadcrumbEnabled && !isAssociatedProduct)
-        {
             model.Breadcrumb = await PrepareProductBreadcrumbModelAsync(product);
-        }
 
         //product tags
         //do not prepare this model for the associated products. anyway it's not used
         if (!isAssociatedProduct)
-        {
             model.ProductTags = await PrepareProductTagModelsAsync(product);
-        }
 
         //pictures and videos
         model.DefaultPictureZoomEnabled = _mediaSettings.DefaultPictureZoomEnabled;
@@ -1509,6 +1674,7 @@ public partial class ProductModelFactory : IProductModelFactory
         (model.DefaultPictureModel, allPictureModels, allVideoModels) = await PrepareProductDetailsPictureModelAsync(product, isAssociatedProduct);
         model.PictureModels = allPictureModels;
         model.VideoModels = allVideoModels;
+        model.Product3dObjectModel = await PrepareProduct3dObjectModelAsync(product);
 
         //price
         model.ProductPrice = await PrepareProductPriceModelAsync(product);
@@ -1547,9 +1713,7 @@ public partial class ProductModelFactory : IProductModelFactory
         //product specifications
         //do not prepare this model for the associated products. anyway it's not used
         if (!isAssociatedProduct)
-        {
             model.ProductSpecificationModel = await PrepareProductSpecificationModelAsync(product);
-        }
 
         //product review overview
         model.ProductReviewOverview = await PrepareProductReviewOverviewModelAsync(product);
@@ -1640,7 +1804,7 @@ public partial class ProductModelFactory : IProductModelFactory
 
         var currentStore = await _storeContext.GetCurrentStoreAsync();
 
-        var productReviews = await _productService.GetAllProductReviewsAsync(
+        var productReviews = await _productReviewService.GetAllProductReviewsAsync(
             approved: true,
             productId: product.Id,
             storeId: _catalogSettings.ShowProductReviewsPerStore ? currentStore.Id : 0);
@@ -1666,6 +1830,8 @@ public partial class ProductModelFactory : IProductModelFactory
         {
             var customer = await _customerService.GetCustomerByIdAsync(pr.CustomerId);
 
+            var writeOn = await _dateTimeHelper.ConvertToUserTimeAsync(pr.CreatedOnUtc, DateTimeKind.Utc);
+
             var productReviewModel = new ProductReviewModel
             {
                 Id = pr.Id,
@@ -1682,7 +1848,8 @@ public partial class ProductModelFactory : IProductModelFactory
                     HelpfulYesTotal = pr.HelpfulYesTotal,
                     HelpfulNoTotal = pr.HelpfulNoTotal,
                 },
-                WrittenOnStr = (await _dateTimeHelper.ConvertToUserTimeAsync(pr.CreatedOnUtc, DateTimeKind.Utc)).ToString("g"),
+                WrittenOnStr = writeOn.ToString("g"),
+                WrittenOn = writeOn
             };
 
             if (_customerSettings.AllowCustomersToUploadAvatars)
@@ -1745,7 +1912,8 @@ public partial class ProductModelFactory : IProductModelFactory
 
         model.AddProductReview.CanCurrentCustomerLeaveReview = _catalogSettings.AllowAnonymousUsersToReviewProduct || !await _customerService.IsGuestAsync(currentCustomer);
         model.AddProductReview.DisplayCaptcha = _captchaSettings.Enabled && _captchaSettings.ShowOnProductReviewPage;
-        model.AddProductReview.CanAddNewReview = await _productService.CanAddReviewAsync(product.Id, _catalogSettings.ShowProductReviewsPerStore ? currentStore.Id : 0);
+        model.AddProductReview.CanAddNewReview = await _productReviewService.CanAddReviewAsync(product.Id, _catalogSettings.ShowProductReviewsPerStore ? currentStore.Id : 0);
+        model.AddProductReview.Rating = _catalogSettings.DefaultProductRatingValue;
 
         return model;
     }
@@ -1764,14 +1932,12 @@ public partial class ProductModelFactory : IProductModelFactory
         var pageIndex = 0;
 
         if (page > 0)
-        {
             pageIndex = page.Value - 1;
-        }
 
         var store = await _storeContext.GetCurrentStoreAsync();
         var customer = await _workContext.GetCurrentCustomerAsync();
 
-        var list = await _productService.GetAllProductReviewsAsync(
+        var list = await _productReviewService.GetAllProductReviewsAsync(
             customerId: customer.Id,
             approved: null,
             storeId: _catalogSettings.ShowProductReviewsPerStore ? store.Id : 0,
@@ -1825,7 +1991,7 @@ public partial class ProductModelFactory : IProductModelFactory
             TotalRecords = list.TotalCount,
             PageIndex = list.PageIndex,
             ShowTotalSummary = false,
-            RouteActionName = "CustomerProductReviewsPaged",
+            RouteActionName = NopRouteNames.Standard.CUSTOMER_PRODUCT_REVIEWS_PAGED,
             UseRouteLinks = true,
             RouteValues = new CustomerProductReviewsModel.CustomerProductReviewsRouteValues { PageNumber = pageIndex }
         };

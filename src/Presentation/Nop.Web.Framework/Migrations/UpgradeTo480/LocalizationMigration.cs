@@ -1,8 +1,6 @@
 ﻿using FluentMigrator;
-using Nop.Core.Infrastructure;
 using Nop.Data;
 using Nop.Data.Migrations;
-using Nop.Services.Localization;
 using Nop.Web.Framework.Extensions;
 
 namespace Nop.Web.Framework.Migrations.UpgradeTo480;
@@ -16,14 +14,9 @@ public class LocalizationMigration : MigrationBase
         if (!DataSettingsManager.IsDatabaseInstalled())
             return;
 
-        //do not use DI, because it produces exception on the installation process
-        var localizationService = EngineContext.Current.Resolve<ILocalizationService>();
-
-        var (languageId, _) = this.GetLanguageData();
-
         #region Delete locales
 
-        localizationService.DeleteLocaleResources(new List<string>
+        this.DeleteLocaleResources(new List<string>
         {
             //#6977
             "Common.FileUploader.Upload",
@@ -106,7 +99,9 @@ public class LocalizationMigration : MigrationBase
             "Permission.SalesSummaryReport",
             "Admin.ConfigurationSteps.PaymentPayPal.SignUp.Title",
             "Admin.ConfigurationSteps.PaymentPayPal.SignUp.Text",
-            "Admin.ConfigurationSteps.PaymentPayPal.Register.Text2"
+            "Admin.ConfigurationSteps.PaymentPayPal.Register.Text2",
+            //#7590
+            "Checkout.RedirectMessage"
         });
 
         #endregion
@@ -117,11 +112,11 @@ public class LocalizationMigration : MigrationBase
 
         #region Add or update locales
 
-        localizationService.AddOrUpdateLocaleResource(new Dictionary<string, string>
+        this.AddOrUpdateLocaleResource(new Dictionary<string, string>
         {
             //#6977
             ["Common.FileUploader.Browse"] = "Browse",
-            ["Common.FileUploader.Processing"] = "Uploading...", 
+            ["Common.FileUploader.Processing"] = "Uploading...",
 
             //#7089
             ["Admin.ContentManagement.MessageTemplates.List.SearchEmailAccount"] = "Email account",
@@ -310,15 +305,18 @@ public class LocalizationMigration : MigrationBase
             ["Vendors.Reviews.All"] = "View all",
             ["Vendors.Reviews.BackTo"] = "Back to {0}",
             ["PageTitle.VendorReviews"] = "Reviews of the vendor's products",
-            
+
             ["Admin.ConfigurationSteps.PaymentMethods.Configure.Title"] = "Configure a payment method",
-    	    ["Admin.ConfigurationSteps.PaymentMethods.Configure.Text"] = "You can configure each payment method by clicking the appropriate <b>Configure</b> button.",
+            ["Admin.ConfigurationSteps.PaymentMethods.Configure.Text"] = "You can configure each payment method by clicking the appropriate <b>Configure</b> button.",
 
             ["Admin.ConfigurationSteps.PaymentMethods.PayPalCommerce.Configure.Text"] = "Now we’ll configure the PayPal Commerce payment method.",
             ["Admin.ConfigurationSteps.PaymentMethods.PayPalCommerce.Configure.Title"] = "Configure PayPal Commerce",
             ["Admin.ConfigurationSteps.PaymentPayPal.Register.Text"] = "Click this button to register an account. You need to go through a few steps to fill in all the required data. The last step will be to verify your email address to activate your account.",
             ["Admin.ConfigurationSteps.PaymentPayPal.Credentials.Text"] = "After you create and set up your application in your <b>PayPal</b> account, you need to copy the <b>Client ID</b>, <b>Secret</b> and <b>Merchant ID</b>, and paste them into these fields.",
-        }, languageId);
+
+            //#7618
+            ["Admin.Orders.Address.CustomAttributes"] = "Custom Attributes",
+        });
 
         #endregion
     }

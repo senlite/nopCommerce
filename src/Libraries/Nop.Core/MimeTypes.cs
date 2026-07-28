@@ -132,4 +132,22 @@ public static class MimeTypes
     public static string TextXlsx => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     #endregion
+
+    #region Multipart
+
+    /// <summary>
+    /// Type
+    /// </summary>
+    public static string MultipartFormData => "multipart/form-data";
+
+    #endregion
+
+    #region model/*
+
+    /// <summary>
+    /// Binary file format for 3D
+    /// </summary>
+    public static string ModelGlb => "model/gltf-binary";
+
+    #endregion
 }

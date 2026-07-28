@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
+using Nop.Core.Domain.Common;
 using Nop.Core.Http.Extensions;
 using Nop.Core.Infrastructure;
 using Nop.Data;
@@ -8,6 +9,7 @@ using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
+using Nop.Services.Media;
 using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Security;
@@ -43,6 +45,7 @@ public partial class CommonController : BaseAdminController
     protected readonly IQueuedEmailService _queuedEmailService;
     protected readonly IShoppingCartService _shoppingCartService;
     protected readonly IStaticCacheManager _staticCacheManager;
+    protected readonly IThumbService _thumbService;
     protected readonly IUrlRecordService _urlRecordService;
     protected readonly IWebHelper _webHelper;
     protected readonly IWorkContext _workContext;
@@ -64,6 +67,7 @@ public partial class CommonController : BaseAdminController
         IQueuedEmailService queuedEmailService,
         IShoppingCartService shoppingCartService,
         IStaticCacheManager staticCacheManager,
+        IThumbService thumbService,
         IUrlRecordService urlRecordService,
         IWebHelper webHelper,
         IWorkContext workContext)
@@ -81,6 +85,7 @@ public partial class CommonController : BaseAdminController
         _queuedEmailService = queuedEmailService;
         _shoppingCartService = shoppingCartService;
         _staticCacheManager = staticCacheManager;
+        _thumbService = thumbService;
         _urlRecordService = urlRecordService;
         _webHelper = webHelper;
         _workContext = workContext;
@@ -130,6 +135,24 @@ public partial class CommonController : BaseAdminController
 
         model.DeleteGuests.NumberOfDeletedCustomers = await _customerService.DeleteGuestCustomersAsync(startDateValue, endDateValue, model.DeleteGuests.OnlyWithoutShoppingCart);
 
+        return View(model);
+    }
+
+    [HttpPost, ActionName("Maintenance")]
+    [FormValueRequired("delete-thumb-files")]
+    [CheckPermission(StandardPermission.System.MANAGE_MAINTENANCE)]
+    public virtual async Task<IActionResult> MaintenanceDeleteThumbFiles(MaintenanceModel model)
+    {
+        if (!model.DeleteThumbsFiles.IsDeleteThumbsSupported || _thumbService is not ThumbService thumbService) 
+            return await Maintenance();
+
+        await thumbService.DeleteAllThumbsAsync();
+        await _staticCacheManager.ClearAsync();
+
+        _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.System.Maintenance.DeleteThumbFiles.Deleted"));
+
+        //prepare model
+        model = await _commonModelFactory.PrepareMaintenanceModelAsync(model);
         return View(model);
     }
 
@@ -258,6 +281,51 @@ public partial class CommonController : BaseAdminController
             await _notificationService.ErrorNotificationAsync(exc);
         }
 
+        //prepare model
+        model = await _commonModelFactory.PrepareMaintenanceModelAsync(model);
+
+        return View(model);
+    }
+
+    [HttpPost, ActionName("Maintenance")]
+    [FormValueRequired("shrink-database")]
+    [CheckPermission(StandardPermission.System.MANAGE_MAINTENANCE)]
+    public virtual async Task<IActionResult> ShrinkDatabase(MaintenanceModel model)
+    {
+        try
+        {
+            await _dataProvider.ShrinkDatabaseAsync();
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.System.Maintenance.ShrinkDatabase.Complete"));
+        }
+        catch (Exception exc)
+        {
+            await _notificationService.ErrorNotificationAsync(exc);
+        }
+
+        //prepare model
+        model = await _commonModelFactory.PrepareMaintenanceModelAsync(model);
+
+        return View(model);
+    }
+
+    [HttpPost, ActionName("Maintenance")]
+    [FormValueRequired("clear-search-history")]
+    [CheckPermission(StandardPermission.System.MANAGE_MAINTENANCE)]
+    public virtual async Task<IActionResult> ClearSearchHistoryData(MaintenanceModel model)
+    {
+        try
+        {
+            model.ClearSearchHistory.NumberOfDeletedItems = await _dataProvider.TruncateAsync<SearchTerm>();
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.System.Maintenance.ClearSearchHistory.Complete"));
+        }
+        catch (Exception exc)
+        {
+            await _notificationService.ErrorNotificationAsync(exc);
+        }
+
+        //prepare model
+        model = await _commonModelFactory.PrepareMaintenanceModelAsync(model);
+
         return View(model);
     }
 
@@ -268,13 +336,16 @@ public partial class CommonController : BaseAdminController
     {
         var action = await Request.GetFormValueAsync("action");
 
-        var fileName = await Request.GetFormValueAsync("backupFileName");
-        fileName = _fileProvider.GetFileName(_fileProvider.GetAbsolutePath(fileName));
-
-        var backupPath = _maintenanceService.GetBackupPath(fileName);
-
         try
         {
+            var fileName = await Request.GetFormValueAsync("backupFileName");
+            fileName = _fileProvider.GetFileName(_fileProvider.GetAbsolutePath(fileName));
+
+            var backupPath = _maintenanceService.GetBackupPath(fileName);
+
+            if (!_fileProvider.FileExists(backupPath) || _maintenanceService.GetAllBackupFiles().All(f => f != backupPath))
+                throw new FileNotFoundException($"Backup file not found: {fileName}");
+
             switch (action)
             {
                 case "delete-backup":

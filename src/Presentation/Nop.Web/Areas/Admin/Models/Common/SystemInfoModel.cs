@@ -20,8 +20,14 @@ public partial record SystemInfoModel : BaseNopModel
     [NopResourceDisplayName("Admin.System.SystemInfo.NopVersion")]
     public string NopVersion { get; set; }
 
+    [NopResourceDisplayName("Admin.System.SystemInfo.NopLatestVersion")]
+    public string NopLatestVersion { get; set; }
+
     [NopResourceDisplayName("Admin.System.SystemInfo.OperatingSystem")]
     public string OperatingSystem { get; set; }
+
+    [NopResourceDisplayName("Admin.System.SystemInfo.UsedMemory")]
+    public double UsedMemory { get; set; }
 
     [NopResourceDisplayName("Admin.System.SystemInfo.ServerLocalTime")]
     public DateTime ServerLocalTime { get; set; }
@@ -47,8 +53,8 @@ public partial record SystemInfoModel : BaseNopModel
     [NopResourceDisplayName("Admin.System.SystemInfo.LoadedAssemblies")]
     public IList<LoadedAssembly> LoadedAssemblies { get; set; }
 
-    [NopResourceDisplayName("Admin.System.SystemInfo.AzureBlobStorageEnabled")]
-    public bool AzureBlobStorageEnabled { get; set; }
+    [NopResourceDisplayName("Admin.System.SystemInfo.DatabaseCollation")]
+    public string DatabaseCollation { get; set; }
 
     public partial record HeaderModel : BaseNopModel
     {

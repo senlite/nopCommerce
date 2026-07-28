@@ -52,6 +52,7 @@ public partial class LanguageService : ILanguageService
 
         //update default admin area language (if required)
         if (_localizationSettings.DefaultAdminLanguageId == language.Id)
+        {
             foreach (var activeLanguage in await GetAllLanguagesAsync())
             {
                 if (activeLanguage.Id == language.Id)
@@ -61,6 +62,7 @@ public partial class LanguageService : ILanguageService
                 await _settingService.SaveSettingAsync(_localizationSettings);
                 break;
             }
+        }
 
         await _languageRepository.DeleteAsync(language);
     }
@@ -76,61 +78,22 @@ public partial class LanguageService : ILanguageService
     /// </returns>
     public virtual async Task<IList<Language>> GetAllLanguagesAsync(bool showHidden = false, int storeId = 0)
     {
-        //cacheable copy
         var key = _staticCacheManager.PrepareKeyForDefaultCache(NopLocalizationDefaults.LanguagesAllCacheKey, storeId, showHidden);
 
         var languages = await _staticCacheManager.GetAsync(key, async () =>
         {
-            var allLanguages = await _languageRepository.GetAllAsync(query =>
+            var allLanguages = await _languageRepository.GetAllAsync(async query =>
             {
                 if (!showHidden)
                     query = query.Where(l => l.Published);
+
+                if (storeId > 0)
+                    query = await _storeMappingService.ApplyStoreMapping(query, storeId);
+
                 query = query.OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id);
 
                 return query;
             });
-
-            //store mapping
-            if (storeId > 0)
-                allLanguages = await allLanguages
-                    .WhereAwait(async l => await _storeMappingService.AuthorizeAsync(l, storeId))
-                    .ToListAsync();
-
-            return allLanguages;
-        });
-
-        return languages;
-    }
-
-    /// <summary>
-    /// Gets all languages
-    /// </summary>
-    /// <param name="storeId">Load records allowed only in a specified store; pass 0 to load all records</param>
-    /// <param name="showHidden">A value indicating whether to show hidden records</param>
-    /// <returns>
-    /// The languages
-    /// </returns>
-    public virtual IList<Language> GetAllLanguages(bool showHidden = false, int storeId = 0)
-    {
-        //cacheable copy
-        var key = _staticCacheManager.PrepareKeyForDefaultCache(NopLocalizationDefaults.LanguagesAllCacheKey, storeId, showHidden);
-
-        var languages = _staticCacheManager.Get(key, () =>
-        {
-            var allLanguages = _languageRepository.GetAll(query =>
-            {
-                if (!showHidden)
-                    query = query.Where(l => l.Published);
-                query = query.OrderBy(l => l.DisplayOrder).ThenBy(l => l.Id);
-
-                return query;
-            });
-
-            //store mapping
-            if (storeId > 0)
-                allLanguages = allLanguages
-                    .Where(l => _storeMappingService.Authorize(l, storeId))
-                    .ToList();
 
             return allLanguages;
         });

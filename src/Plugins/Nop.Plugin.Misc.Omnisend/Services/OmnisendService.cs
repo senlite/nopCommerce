@@ -11,6 +11,7 @@ using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
+using Nop.Services.Helpers;
 using Nop.Services.Orders;
 using Nop.Services.Tax;
 
@@ -371,6 +372,7 @@ public class OmnisendService
         };
 
         if (combinations.Any())
+        {
             dto.Variants.AddRange(await combinations.SelectAwait(async c => new ProductDto.Variant
             {
                 VariantId = c.Id.ToString(),
@@ -379,6 +381,7 @@ public class OmnisendService
                 Status = await getProductStatus(c),
                 Price = (c.OverriddenPrice ?? product.Price).ToCents()
             }).ToListAsync());
+        }
 
         return dto;
     }
@@ -529,6 +532,8 @@ public class OmnisendService
         var subscriptions = (subscriber == null ? _newsLetterSubscriptionRepository.Table : _newsLetterSubscriptionRepository.Table.Where(nlsr => nlsr.Id.Equals(subscriber.Id)))
             .Where(subscription => subscription.StoreId == storeId)
             .OrderBy(subscription => subscription.Id)
+            .Select(subscription => new{ subscription.Email, subscription.Active, subscription.CreatedOnUtc })
+            .Distinct()
             .Skip(pageIndex * pageSize)
             .Take(pageSize);
 
@@ -566,7 +571,7 @@ public class OmnisendService
 
         var subscribers = (await contactsWithState.ToListAsync()).Select(item =>
         {
-            var dto = new CreateContactRequest(item.subscription, inactiveStatus, sendWelcomeMessage)
+            var dto = new CreateContactRequest(item.subscription.Email, item.subscription.Active, item.subscription.CreatedOnUtc, inactiveStatus, sendWelcomeMessage)
             {
                 FirstName = item.FirstName,
                 LastName = item.LastName,
@@ -637,8 +642,10 @@ public class OmnisendService
             }
         }
         else
+        {
             foreach (var newsLetterSubscription in su)
                 await UpdateOrCreateContactAsync(newsLetterSubscription as CreateContactRequest);
+        }
     }
 
     /// <summary>
@@ -668,11 +675,13 @@ public class OmnisendService
             }
         }
         else
+        {
             foreach (var category in categories)
             {
                 var data = JsonConvert.SerializeObject(CategoryToDto(category));
                 await _omnisendHttpClient.PerformRequestAsync(OmnisendDefaults.CategoriesApiUrl, data, HttpMethod.Post);
             }
+        }
     }
 
     /// <summary>
@@ -711,8 +720,10 @@ public class OmnisendService
             }
         }
         else
+        {
             foreach (var product in products)
                 await AddNewProductAsync(product);
+        }
     }
 
     /// <summary>
@@ -750,8 +761,10 @@ public class OmnisendService
             }
         }
         else
+        {
             foreach (var order in orders)
                 await CreateOrderAsync(order);
+        }
     }
 
     /// <summary>
@@ -1143,6 +1156,16 @@ public class OmnisendService
     }
 
     #endregion
-    
+
+    #endregion
+
+    #region Properties
+
+    /// <summary>
+    /// Check whether the plugin is configured
+    /// </summary>
+    /// <returns>Result</returns>
+    public bool IsConfigured => !string.IsNullOrEmpty(_omnisendSettings.ApiKey);
+
     #endregion
 }

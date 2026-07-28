@@ -17,6 +17,8 @@ public partial record CatalogSettingsModel : BaseNopModel, ISettingsModel
         AvailableViewModes = new List<SelectListItem>();
         SortOptionSearchModel = new SortOptionSearchModel();
         ReviewTypeSearchModel = new ReviewTypeSearchModel();
+        ArtificialIntelligenceSettingsModel = new ArtificialIntelligenceSettingsModel();
+        GpsrSettingsModel = new GpsrSettingsModel();
     }
 
     #endregion
@@ -350,6 +352,10 @@ public partial record CatalogSettingsModel : BaseNopModel, ISettingsModel
     public bool ExportImportProductUseLimitedToStores { get; set; }
     public bool ExportImportProductUseLimitedToStores_OverrideForStore { get; set; }
 
+    [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.ExportImportCategoryUseLimitedToStores")]
+    public bool ExportImportCategoryUseLimitedToStores { get; set; }
+    public bool ExportImportCategoryUseLimitedToStores_OverrideForStore { get; set; }
+
     [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.IgnoreDiscounts")]
     public bool IgnoreDiscounts { get; set; }
 
@@ -416,6 +422,22 @@ public partial record CatalogSettingsModel : BaseNopModel, ISettingsModel
     public int ProductUrlStructureTypeId { get; set; }
     public bool ProductUrlStructureTypeId_OverrideForStore { get; set; }
     public SelectList ProductUrlStructureTypes { get; set; }
+
+    [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.ShowSearchTermHistory")]
+    public bool ShowSearchTermHistory { get; set; }
+    public bool ShowSearchTermHistory_OverrideForStore { get; set; }
+
+    [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.NumberOfSearchTermHistoryItems")]
+    public int NumberOfSearchTermHistoryItems { get; set; }
+    public bool NumberOfSearchTermHistoryItems_OverrideForStore { get; set; }
+
+    public ArtificialIntelligenceSettingsModel ArtificialIntelligenceSettingsModel { get; set; }
+    public GpsrSettingsModel GpsrSettingsModel { get; set; }
+
+    [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.PriceListStrategy")]
+    public int PriceListStrategy { get; set; }
+    public bool PriceListStrategy_OverrideForStore { get; set; }
+    public SelectList PriceListStrategyValues { get; set; }
 
     #endregion
 }

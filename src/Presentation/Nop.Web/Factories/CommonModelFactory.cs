@@ -1,32 +1,30 @@
 ﻿using System.Globalization;
 using System.Text;
+using Microsoft.Extensions.Primitives;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain;
-using Nop.Core.Domain.Blogs;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Forums;
+using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Media;
-using Nop.Core.Domain.News;
+using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Infrastructure;
+using Nop.Services.Attributes;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
-using Nop.Services.Forums;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Media;
 using Nop.Services.Orders;
 using Nop.Services.Security;
-using Nop.Services.Seo;
 using Nop.Services.Themes;
-using Nop.Services.Topics;
-using Nop.Web.Framework.Themes;
 using Nop.Web.Framework.UI;
 using Nop.Web.Infrastructure.Cache;
 using Nop.Web.Models.Common;
@@ -40,16 +38,14 @@ public partial class CommonModelFactory : ICommonModelFactory
 {
     #region Fields
 
-    protected readonly BlogSettings _blogSettings;
     protected readonly CaptchaSettings _captchaSettings;
     protected readonly CatalogSettings _catalogSettings;
     protected readonly CommonSettings _commonSettings;
+    protected readonly CurrencySettings _currencySettings;
     protected readonly CustomerSettings _customerSettings;
-    protected readonly DisplayDefaultFooterItemSettings _displayDefaultFooterItemSettings;
-    protected readonly ForumSettings _forumSettings;
+    protected readonly IAttributeService<ContactFormAttribute, ContactFormAttributeValue> _contactFormAttributeService;
     protected readonly ICurrencyService _currencyService;
     protected readonly ICustomerService _customerService;
-    protected readonly IForumService _forumService;
     protected readonly IGenericAttributeService _genericAttributeService;
     protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly ILanguageService _languageService;
@@ -63,33 +59,28 @@ public partial class CommonModelFactory : ICommonModelFactory
     protected readonly IStoreContext _storeContext;
     protected readonly IThemeContext _themeContext;
     protected readonly IThemeProvider _themeProvider;
-    protected readonly ITopicService _topicService;
-    protected readonly IUrlRecordService _urlRecordService;
     protected readonly IWebHelper _webHelper;
     protected readonly IWorkContext _workContext;
     protected readonly LocalizationSettings _localizationSettings;
     protected readonly MediaSettings _mediaSettings;
-    protected readonly NewsSettings _newsSettings;
+    protected readonly MessagesSettings _messagesSettings;
+    protected readonly PrivateMessageSettings _privateMessageSettings;
     protected readonly RobotsTxtSettings _robotsTxtSettings;
-    protected readonly SitemapSettings _sitemapSettings;
     protected readonly SitemapXmlSettings _sitemapXmlSettings;
     protected readonly StoreInformationSettings _storeInformationSettings;
-    protected readonly VendorSettings _vendorSettings;
 
     #endregion
 
     #region Ctor
 
-    public CommonModelFactory(BlogSettings blogSettings,
-        CaptchaSettings captchaSettings,
+    public CommonModelFactory(CaptchaSettings captchaSettings,
         CatalogSettings catalogSettings,
         CommonSettings commonSettings,
+        CurrencySettings currencySettings,
         CustomerSettings customerSettings,
-        DisplayDefaultFooterItemSettings displayDefaultFooterItemSettings,
-        ForumSettings forumSettings,
+        IAttributeService<ContactFormAttribute, ContactFormAttributeValue> contactFormAttributeService,
         ICurrencyService currencyService,
         ICustomerService customerService,
-        IForumService forumService,
         IGenericAttributeService genericAttributeService,
         IHttpContextAccessor httpContextAccessor,
         ILanguageService languageService,
@@ -103,29 +94,24 @@ public partial class CommonModelFactory : ICommonModelFactory
         IStoreContext storeContext,
         IThemeContext themeContext,
         IThemeProvider themeProvider,
-        ITopicService topicService,
-        IUrlRecordService urlRecordService,
         IWebHelper webHelper,
         IWorkContext workContext,
         LocalizationSettings localizationSettings,
         MediaSettings mediaSettings,
-        NewsSettings newsSettings,
+        MessagesSettings messagesSettings,
+        PrivateMessageSettings privateMessageSettings,
         RobotsTxtSettings robotsTxtSettings,
-        SitemapSettings sitemapSettings,
         SitemapXmlSettings sitemapXmlSettings,
-        StoreInformationSettings storeInformationSettings,
-        VendorSettings vendorSettings)
+        StoreInformationSettings storeInformationSettings)
     {
-        _blogSettings = blogSettings;
         _captchaSettings = captchaSettings;
         _catalogSettings = catalogSettings;
         _commonSettings = commonSettings;
+        _currencySettings = currencySettings;
         _customerSettings = customerSettings;
-        _displayDefaultFooterItemSettings = displayDefaultFooterItemSettings;
-        _forumSettings = forumSettings;
+        _contactFormAttributeService = contactFormAttributeService;
         _currencyService = currencyService;
         _customerService = customerService;
-        _forumService = forumService;
         _genericAttributeService = genericAttributeService;
         _httpContextAccessor = httpContextAccessor;
         _languageService = languageService;
@@ -139,18 +125,15 @@ public partial class CommonModelFactory : ICommonModelFactory
         _storeContext = storeContext;
         _themeContext = themeContext;
         _themeProvider = themeProvider;
-        _topicService = topicService;
-        _urlRecordService = urlRecordService;
         _webHelper = webHelper;
         _workContext = workContext;
         _mediaSettings = mediaSettings;
+        _messagesSettings = messagesSettings;
+        _privateMessageSettings = privateMessageSettings;
         _localizationSettings = localizationSettings;
-        _newsSettings = newsSettings;
         _robotsTxtSettings = robotsTxtSettings;
-        _sitemapSettings = sitemapSettings;
         _sitemapXmlSettings = sitemapXmlSettings;
         _storeInformationSettings = storeInformationSettings;
-        _vendorSettings = vendorSettings;
     }
 
     #endregion
@@ -181,16 +164,106 @@ public partial class CommonModelFactory : ICommonModelFactory
     {
         var result = 0;
         var customer = await _workContext.GetCurrentCustomerAsync();
-        if (_forumSettings.AllowPrivateMessages && !await _customerService.IsGuestAsync(customer))
+        if (_privateMessageSettings.AllowPrivateMessages && !await _customerService.IsGuestAsync(customer))
         {
             var store = await _storeContext.GetCurrentStoreAsync();
-            var privateMessages = await _forumService.GetAllPrivateMessagesAsync(store.Id,
+            var privateMessages = await _customerService.GetAllPrivateMessagesAsync(store.Id,
                 0, customer.Id, false, null, false, string.Empty, 0, 1);
 
             if (privateMessages.TotalCount > 0)
-            {
                 result = privateMessages.TotalCount;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Prepare the contact form attribute models
+    /// </summary>
+    /// <param name="form">Form values</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the list of the contact form attribute model
+    /// </returns>
+    protected virtual async Task<IList<ContactFormAttributeModel>> PrepareContactFormAttributesAsync(IFormCollection form = null)
+    {
+        var result = new List<ContactFormAttributeModel>();
+
+        var attributes = await _contactFormAttributeService.GetAllAttributesAsync();
+        foreach (var attribute in attributes)
+        {
+            var attributeModel = new ContactFormAttributeModel
+            {
+                Id = attribute.Id,
+                Name = await _localizationService.GetLocalizedAsync(attribute, x => x.Name),
+                IsRequired = attribute.IsRequired,
+                AttributeControlType = attribute.AttributeControlType,
+            };
+
+            if (attribute.ShouldHaveValues)
+            {
+                //values
+                var attributeValues = await _contactFormAttributeService.GetAttributeValuesAsync(attribute.Id);
+                foreach (var attributeValue in attributeValues)
+                {
+                    var valueModel = new ContactFormAttributeValueModel
+                    {
+                        Id = attributeValue.Id,
+                        Name = await _localizationService.GetLocalizedAsync(attributeValue, x => x.Name),
+                        IsPreSelected = attributeValue.IsPreSelected
+                    };
+
+                    attributeModel.Values.Add(valueModel);
+                }
             }
+
+            if (form is not null)
+            {
+                var controlId = string.Format(NopCommonDefaults.ContactFormAttributeControlName, attributeModel.Id);
+
+                switch (attributeModel.AttributeControlType)
+                {
+                    case AttributeControlType.DropdownList:
+                    case AttributeControlType.RadioList:
+                    case AttributeControlType.Checkboxes:
+                    {
+                        var ctrlAttributes = form[controlId];
+                        if (!StringValues.IsNullOrEmpty(ctrlAttributes))
+                        {
+                            foreach (var attributeId in ctrlAttributes)
+                            {
+                                var selectedAttributeId = int.Parse(attributeId);
+                                if (selectedAttributeId == 0)
+                                    continue;
+
+                                foreach (var item in attributeModel.Values)
+                                {
+                                    if (selectedAttributeId == item.Id)
+                                        item.IsPreSelected = true;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                    case AttributeControlType.TextBox:
+                    case AttributeControlType.MultilineTextbox:
+                    {
+                        var ctrlAttributes = form[controlId];
+                        if (!StringValues.IsNullOrEmpty(ctrlAttributes))
+                            attributeModel.DefaultValue = string.Join(", ", ctrlAttributes.ToString().Trim());
+                    }
+                    break;
+                    //not supported customer attributes
+                    case AttributeControlType.ReadonlyCheckboxes:
+                    case AttributeControlType.Datepicker:
+                    case AttributeControlType.ColorSquares:
+                    case AttributeControlType.ImageSquares:
+                    case AttributeControlType.FileUpload:
+                    default:
+                        break;
+                }
+            }
+            result.Add(attributeModel);
         }
 
         return result;
@@ -301,7 +374,8 @@ public partial class CommonModelFactory : ICommonModelFactory
         var model = new CurrencySelectorModel
         {
             CurrentCurrencyId = (await _workContext.GetWorkingCurrencyAsync()).Id,
-            AvailableCurrencies = availableCurrencies
+            AvailableCurrencies = availableCurrencies,
+            DisplayCurrencySymbol = _currencySettings.DisplayCurrencySymbolInCurrencySelector,
         };
 
         return model;
@@ -344,7 +418,7 @@ public partial class CommonModelFactory : ICommonModelFactory
             unreadMessage = string.Format(await _localizationService.GetResourceAsync("PrivateMessages.TotalUnread"), unreadMessageCount);
 
             //notifications here
-            if (_forumSettings.ShowAlertForPM &&
+            if (_privateMessageSettings.ShowAlertForPM &&
                 !await _genericAttributeService.GetAttributeAsync<bool>(customer, NopCustomerDefaults.NotifiedAboutNewPrivateMessagesAttribute, store.Id))
             {
                 await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.NotifiedAboutNewPrivateMessagesAttribute, true, store.Id);
@@ -358,18 +432,20 @@ public partial class CommonModelFactory : ICommonModelFactory
             IsAuthenticated = await _customerService.IsRegisteredAsync(customer),
             CustomerName = await _customerService.IsRegisteredAsync(customer) ? await _customerService.FormatUsernameAsync(customer) : string.Empty,
             ShoppingCartEnabled = await _permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_SHOPPING_CART),
+            UsePopupNotifications = _messagesSettings.UsePopupNotifications,
             WishlistEnabled = await _permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_WISHLIST),
-            AllowPrivateMessages = await _customerService.IsRegisteredAsync(customer) && _forumSettings.AllowPrivateMessages,
+            AllowPrivateMessages = await _customerService.IsRegisteredAsync(customer) && _privateMessageSettings.AllowPrivateMessages,
             UnreadPrivateMessages = unreadMessage,
             AlertMessage = alertMessage,
         };
+
         //performance optimization (use "HasShoppingCartItems" property)
         if (customer.HasShoppingCartItems)
         {
             model.ShoppingCartItems = (await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id))
                 .Sum(item => item.Quantity);
 
-            model.WishlistItems = (await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.Wishlist, store.Id))
+            model.WishlistItems = (await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.Wishlist, store.Id, customWishlistId: 0))
                 .Sum(item => item.Quantity);
         }
 
@@ -410,11 +486,14 @@ public partial class CommonModelFactory : ICommonModelFactory
         var model = new SocialModel
         {
             FacebookLink = _storeInformationSettings.FacebookLink,
-            TwitterLink = _storeInformationSettings.TwitterLink,
+            XLink = _storeInformationSettings.XLink,
             YoutubeLink = _storeInformationSettings.YoutubeLink,
             InstagramLink = _storeInformationSettings.InstagramLink,
+            TikTokLink = _storeInformationSettings.TikTokLink,
+            SnapchatLink = _storeInformationSettings.SnapchatLink,
+            PinterestLink = _storeInformationSettings.PinterestLink,
+            TumblrLink = _storeInformationSettings.TumblrLink,
             WorkingLanguageId = (await _workContext.GetWorkingLanguageAsync()).Id,
-            NewsEnabled = _newsSettings.Enabled,
         };
 
         return model;
@@ -429,59 +508,13 @@ public partial class CommonModelFactory : ICommonModelFactory
     /// </returns>
     public virtual async Task<FooterModel> PrepareFooterModelAsync()
     {
-        //footer topics
-        var store = await _storeContext.GetCurrentStoreAsync();
-        var topicModels = await (await _topicService.GetAllTopicsAsync(store.Id))
-            .Where(t => t.IncludeInFooterColumn1 || t.IncludeInFooterColumn2 || t.IncludeInFooterColumn3)
-            .SelectAwait(async t => new FooterModel.FooterTopicModel
-            {
-                Id = t.Id,
-                Name = await _localizationService.GetLocalizedAsync(t, x => x.Title),
-                SeName = await _urlRecordService.GetSeNameAsync(t),
-                IncludeInFooterColumn1 = t.IncludeInFooterColumn1,
-                IncludeInFooterColumn2 = t.IncludeInFooterColumn2,
-                IncludeInFooterColumn3 = t.IncludeInFooterColumn3
-            }).ToListAsync();
-
-        //model
-        var model = new FooterModel
+        return new FooterModel
         {
-            StoreName = await _localizationService.GetLocalizedAsync(store, x => x.Name),
-            WishlistEnabled = await _permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_WISHLIST),
-            ShoppingCartEnabled = await _permissionService.AuthorizeAsync(StandardPermission.PublicStore.ENABLE_SHOPPING_CART),
-            SitemapEnabled = _sitemapSettings.SitemapEnabled,
-            SearchEnabled = _catalogSettings.ProductSearchEnabled,
-            WorkingLanguageId = (await _workContext.GetWorkingLanguageAsync()).Id,
-            BlogEnabled = _blogSettings.Enabled,
-            CompareProductsEnabled = _catalogSettings.CompareProductsEnabled,
-            ForumEnabled = _forumSettings.ForumsEnabled,
-            NewsEnabled = _newsSettings.Enabled,
-            RecentlyViewedProductsEnabled = _catalogSettings.RecentlyViewedProductsEnabled,
-            NewProductsEnabled = _catalogSettings.NewProductsEnabled,
-            DisplayTaxShippingInfoFooter = _catalogSettings.DisplayTaxShippingInfoFooter,
+            StoreName = await _localizationService.GetLocalizedAsync(await _storeContext.GetCurrentStoreAsync(), x => x.Name),
             HidePoweredByNopCommerce = _storeInformationSettings.HidePoweredByNopCommerce,
-            IsHomePage = await IsHomePageAsync(),
-            AllowCustomersToApplyForVendorAccount = _vendorSettings.AllowCustomersToApplyForVendorAccount,
-            AllowCustomersToCheckGiftCardBalance = _customerSettings.AllowCustomersToCheckGiftCardBalance && _captchaSettings.Enabled,
-            Topics = topicModels,
-            DisplaySitemapFooterItem = _displayDefaultFooterItemSettings.DisplaySitemapFooterItem,
-            DisplayContactUsFooterItem = _displayDefaultFooterItemSettings.DisplayContactUsFooterItem,
-            DisplayProductSearchFooterItem = _displayDefaultFooterItemSettings.DisplayProductSearchFooterItem,
-            DisplayNewsFooterItem = _displayDefaultFooterItemSettings.DisplayNewsFooterItem,
-            DisplayBlogFooterItem = _displayDefaultFooterItemSettings.DisplayBlogFooterItem,
-            DisplayForumsFooterItem = _displayDefaultFooterItemSettings.DisplayForumsFooterItem,
-            DisplayRecentlyViewedProductsFooterItem = _displayDefaultFooterItemSettings.DisplayRecentlyViewedProductsFooterItem,
-            DisplayCompareProductsFooterItem = _displayDefaultFooterItemSettings.DisplayCompareProductsFooterItem,
-            DisplayNewProductsFooterItem = _displayDefaultFooterItemSettings.DisplayNewProductsFooterItem,
-            DisplayCustomerInfoFooterItem = _displayDefaultFooterItemSettings.DisplayCustomerInfoFooterItem,
-            DisplayCustomerOrdersFooterItem = _displayDefaultFooterItemSettings.DisplayCustomerOrdersFooterItem,
-            DisplayCustomerAddressesFooterItem = _displayDefaultFooterItemSettings.DisplayCustomerAddressesFooterItem,
-            DisplayShoppingCartFooterItem = _displayDefaultFooterItemSettings.DisplayShoppingCartFooterItem,
-            DisplayWishlistFooterItem = _displayDefaultFooterItemSettings.DisplayWishlistFooterItem,
-            DisplayApplyVendorAccountFooterItem = _displayDefaultFooterItemSettings.DisplayApplyVendorAccountFooterItem
+            DisplayTaxShippingInfoFooter = _catalogSettings.DisplayTaxShippingInfoFooter,
+            IsHomePage = await IsHomePageAsync()
         };
-
-        return model;
     }
 
     /// <summary>
@@ -489,11 +522,12 @@ public partial class CommonModelFactory : ICommonModelFactory
     /// </summary>
     /// <param name="model">Contact us model</param>
     /// <param name="excludeProperties">Whether to exclude populating of model properties from the entity</param>
+    /// <param name="form">Form values</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains the contact us model
     /// </returns>
-    public virtual async Task<ContactUsModel> PrepareContactUsModelAsync(ContactUsModel model, bool excludeProperties)
+    public virtual async Task<ContactUsModel> PrepareContactUsModelAsync(ContactUsModel model, bool excludeProperties, IFormCollection form = null)
     {
         ArgumentNullException.ThrowIfNull(model);
 
@@ -506,6 +540,7 @@ public partial class CommonModelFactory : ICommonModelFactory
 
         model.SubjectEnabled = _commonSettings.SubjectFieldOnContactUsForm;
         model.DisplayCaptcha = _captchaSettings.Enabled && _captchaSettings.ShowOnContactUsPage;
+        model.ContactFormAttributes = await PrepareContactFormAttributesAsync(form);
 
         return model;
     }
@@ -630,11 +665,18 @@ public partial class CommonModelFactory : ICommonModelFactory
                 var store = await _storeContext.GetCurrentStoreAsync();
                 //URLs are localizable. Append SEO code
                 foreach (var language in await _languageService.GetAllLanguagesAsync(storeId: store.Id))
+                {
                     if (_robotsTxtSettings.DisallowLanguages.Contains(language.Id))
-                        sb.AppendLine($"Disallow: /{language.UniqueSeoCode}*");
+                    {
+                        sb.AppendLine($"Disallow: /{language.UniqueSeoCode}$");
+                        sb.AppendLine($"Disallow: /{language.UniqueSeoCode}/");
+                    }
                     else
+                    {
                         foreach (var path in _robotsTxtSettings.LocalizableDisallowPaths)
                             sb.AppendLine($"Disallow: /{language.UniqueSeoCode}{path}");
+                    }
+                }
             }
 
             foreach (var additionsRule in _robotsTxtSettings.AdditionsRules)

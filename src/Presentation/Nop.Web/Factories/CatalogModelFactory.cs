@@ -1,16 +1,11 @@
-﻿using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
-using System.Xml.XPath;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Caching;
-using Nop.Core.Domain.Blogs;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Forums;
 using Nop.Core.Domain.Media;
 using Nop.Core.Domain.Seo;
 using Nop.Core.Domain.Vendors;
@@ -19,10 +14,11 @@ using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
+using Nop.Services.FilterLevels;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Media;
 using Nop.Services.Seo;
-using Nop.Services.Topics;
 using Nop.Services.Vendors;
 using Nop.Web.Framework.Events;
 using Nop.Web.Framework.Mvc.Routing;
@@ -36,16 +32,14 @@ public partial class CatalogModelFactory : ICatalogModelFactory
 {
     #region Fields
 
-    protected readonly BlogSettings _blogSettings;
     protected readonly CatalogSettings _catalogSettings;
     protected readonly CustomerSettings _customerSettings;
-    protected readonly DisplayDefaultMenuItemSettings _displayDefaultMenuItemSettings;
-    protected readonly ForumSettings _forumSettings;
     protected readonly ICategoryService _categoryService;
     protected readonly ICategoryTemplateService _categoryTemplateService;
     protected readonly ICurrencyService _currencyService;
     protected readonly ICustomerService _customerService;
     protected readonly IEventPublisher _eventPublisher;
+    protected readonly IFilterLevelValueService _filterLevelValueService;
     protected readonly IGenericAttributeService _genericAttributeService;
     protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly IJsonLdModelFactory _jsonLdModelFactory;
@@ -55,18 +49,19 @@ public partial class CatalogModelFactory : ICatalogModelFactory
     protected readonly INopUrlHelper _nopUrlHelper;
     protected readonly IPictureService _pictureService;
     protected readonly IProductModelFactory _productModelFactory;
+    protected readonly IProductReviewService _productReviewService;
     protected readonly IProductService _productService;
     protected readonly IProductTagService _productTagService;
     protected readonly ISearchTermService _searchTermService;
     protected readonly ISpecificationAttributeService _specificationAttributeService;
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreContext _storeContext;
-    protected readonly ITopicService _topicService;
     protected readonly IUrlRecordService _urlRecordService;
     protected readonly IVendorService _vendorService;
     protected readonly IWebHelper _webHelper;
     protected readonly IWorkContext _workContext;
     protected readonly MediaSettings _mediaSettings;
+    protected readonly PrivateMessageSettings _privateMessageSettings;
     protected readonly SeoSettings _seoSettings;
     protected readonly VendorSettings _vendorSettings;
     private static readonly char[] _separator = [',', ' '];
@@ -75,16 +70,14 @@ public partial class CatalogModelFactory : ICatalogModelFactory
 
     #region Ctor
 
-    public CatalogModelFactory(BlogSettings blogSettings,
-        CatalogSettings catalogSettings,
+    public CatalogModelFactory(CatalogSettings catalogSettings,
         CustomerSettings customerSettings,
-        DisplayDefaultMenuItemSettings displayDefaultMenuItemSettings,
-        ForumSettings forumSettings,
         ICategoryService categoryService,
         ICategoryTemplateService categoryTemplateService,
         ICurrencyService currencyService,
         ICustomerService customerService,
         IEventPublisher eventPublisher,
+        IFilterLevelValueService filterLevelValueService,
         IGenericAttributeService genericAttributeService,
         IHttpContextAccessor httpContextAccessor,
         IJsonLdModelFactory jsonLdModelFactory,
@@ -94,31 +87,30 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         INopUrlHelper nopUrlHelper,
         IPictureService pictureService,
         IProductModelFactory productModelFactory,
+        IProductReviewService productReviewService,
         IProductService productService,
         IProductTagService productTagService,
         ISearchTermService searchTermService,
         ISpecificationAttributeService specificationAttributeService,
         IStaticCacheManager staticCacheManager,
         IStoreContext storeContext,
-        ITopicService topicService,
         IUrlRecordService urlRecordService,
         IVendorService vendorService,
         IWebHelper webHelper,
         IWorkContext workContext,
         MediaSettings mediaSettings,
+        PrivateMessageSettings privateMessageSettings,
         SeoSettings seoSettings,
         VendorSettings vendorSettings)
     {
-        _blogSettings = blogSettings;
         _catalogSettings = catalogSettings;
         _customerSettings = customerSettings;
-        _displayDefaultMenuItemSettings = displayDefaultMenuItemSettings;
-        _forumSettings = forumSettings;
         _categoryService = categoryService;
         _categoryTemplateService = categoryTemplateService;
         _currencyService = currencyService;
         _customerService = customerService;
         _eventPublisher = eventPublisher;
+        _filterLevelValueService = filterLevelValueService;
         _genericAttributeService = genericAttributeService;
         _httpContextAccessor = httpContextAccessor;
         _jsonLdModelFactory = jsonLdModelFactory;
@@ -128,18 +120,19 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         _nopUrlHelper = nopUrlHelper;
         _pictureService = pictureService;
         _productModelFactory = productModelFactory;
+        _productReviewService = productReviewService;
         _productService = productService;
         _productTagService = productTagService;
         _searchTermService = searchTermService;
         _specificationAttributeService = specificationAttributeService;
         _staticCacheManager = staticCacheManager;
         _storeContext = storeContext;
-        _topicService = topicService;
         _urlRecordService = urlRecordService;
         _vendorService = vendorService;
         _webHelper = webHelper;
         _workContext = workContext;
         _mediaSettings = mediaSettings;
+        _privateMessageSettings = privateMessageSettings;
         _seoSettings = seoSettings;
         _vendorSettings = vendorSettings;
     }
@@ -147,31 +140,6 @@ public partial class CatalogModelFactory : ICatalogModelFactory
     #endregion
 
     #region Utilities
-
-    /// <summary>
-    /// Gets the category simple model
-    /// </summary>
-    /// <param name="elem">Category (simple) xml</param>
-    /// <returns>Category simple model</returns>
-    protected virtual CategorySimpleModel GetCategorySimpleModel(XElement elem)
-    {
-        var model = new CategorySimpleModel
-        {
-            Id = int.Parse(elem.XPathSelectElement("Id").Value),
-            Name = elem.XPathSelectElement("Name").Value,
-            SeName = elem.XPathSelectElement("SeName").Value,
-
-            NumberOfProducts = !string.IsNullOrEmpty(elem.XPathSelectElement("NumberOfProducts").Value)
-                ? int.Parse(elem.XPathSelectElement("NumberOfProducts").Value)
-                : (int?)null,
-
-            IncludeInTopMenu = bool.Parse(elem.XPathSelectElement("IncludeInTopMenu").Value),
-            HaveSubCategories = bool.Parse(elem.XPathSelectElement("HaveSubCategories").Value),
-            Route = _nopUrlHelper.RouteGenericUrlAsync<Category>(new { SeName = elem.XPathSelectElement("SeName").Value }).Result
-        };
-
-        return model;
-    }
 
     /// <summary>
     /// Gets the price range converted to primary store currency
@@ -192,11 +160,11 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         if (fromTo.Length == 2)
         {
             var rawFromPrice = fromTo[0]?.Trim();
-            if (!string.IsNullOrEmpty(rawFromPrice) && decimal.TryParse(rawFromPrice, out var from))
+            if (!string.IsNullOrEmpty(rawFromPrice) && decimal.TryParse(rawFromPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var from))
                 result.From = from;
 
             var rawToPrice = fromTo[1]?.Trim();
-            if (!string.IsNullOrEmpty(rawToPrice) && decimal.TryParse(rawToPrice, out var to))
+            if (!string.IsNullOrEmpty(rawToPrice) && decimal.TryParse(rawToPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var to))
                 result.To = to;
 
             if (result.From > result.To)
@@ -484,6 +452,84 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         });
     }
 
+    /// <summary>
+    /// Prepare category (simple) models
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the list of category (simple) models
+    /// </returns>
+    protected virtual async Task<List<CategorySimpleModel>> PrepareCategorySimpleModelsAsync()
+    {
+        //load and cache them
+        var language = await _workContext.GetWorkingLanguageAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var customerRoleIds = await _customerService.GetCustomerRoleIdsAsync(customer);
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopModelCacheDefaults.CategoryAllModelKey,
+            language, customerRoleIds, store);
+
+        return await _staticCacheManager.GetAsync(cacheKey, async () => await PrepareCategorySimpleModelsAsync(0));
+    }
+
+    /// <summary>
+    /// Prepare category (simple) models
+    /// </summary>
+    /// <param name="rootCategoryId">Root category identifier</param>
+    /// <param name="loadSubCategories">A value indicating whether subcategories should be loaded</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the list of category (simple) models
+    /// </returns>
+    protected virtual async Task<List<CategorySimpleModel>> PrepareCategorySimpleModelsAsync(int rootCategoryId, bool loadSubCategories = true)
+    {
+        var result = new List<CategorySimpleModel>();
+
+        //little hack for performance optimization
+        //we know that this method is used to load top and left menu for categories.
+        //it'll load all categories anyway.
+        //so there's no need to invoke "GetAllCategoriesByParentCategoryId" multiple times (extra SQL commands) to load childs
+        //so we load all categories at once (we know they are cached)
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var allCategories = await _categoryService.GetAllCategoriesAsync(storeId: store.Id);
+        var categories = allCategories.Where(c => c.ParentCategoryId == rootCategoryId).OrderBy(c => c.DisplayOrder).ToList();
+        foreach (var category in categories)
+        {
+            var categoryModel = new CategorySimpleModel
+            {
+                Id = category.Id,
+                Name = await _localizationService.GetLocalizedAsync(category, x => x.Name),
+                SeName = await _urlRecordService.GetSeNameAsync(category)
+            };
+
+            //number of products in each category
+            if (_catalogSettings.ShowCategoryProductNumber)
+            {
+                var categoryIds = new List<int> { category.Id };
+                //include subcategories
+                if (_catalogSettings.ShowCategoryProductNumberIncludingSubcategories)
+                {
+                    categoryIds.AddRange(
+                        await _categoryService.GetChildCategoryIdsAsync(category.Id, store.Id));
+                }
+
+                categoryModel.NumberOfProducts =
+                    await _productService.GetNumberOfProductsInCategoryAsync(categoryIds, store.Id);
+            }
+
+            if (loadSubCategories)
+            {
+                var subCategories = await PrepareCategorySimpleModelsAsync(category.Id);
+                categoryModel.SubCategories.AddRange(subCategories);
+            }
+
+            result.Add(categoryModel);
+        }
+
+        return result;
+    }
+
+
     #endregion
 
     #region Categories
@@ -617,51 +663,6 @@ public partial class CatalogModelFactory : ICatalogModelFactory
     }
 
     /// <summary>
-    /// Prepare top menu model
-    /// </summary>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the op menu model
-    /// </returns>
-    public virtual async Task<TopMenuModel> PrepareTopMenuModelAsync()
-    {
-        var cachedCategoriesModel = new List<CategorySimpleModel>();
-        //categories
-        if (!_catalogSettings.UseAjaxLoadMenu)
-            cachedCategoriesModel = await PrepareCategorySimpleModelsAsync();
-
-        var store = await _storeContext.GetCurrentStoreAsync();
-
-        //top menu topics
-        var topicModel = await (await _topicService.GetAllTopicsAsync(store.Id, onlyIncludedInTopMenu: true))
-            .SelectAwait(async t => new TopMenuModel.TopicModel
-            {
-                Id = t.Id,
-                Name = await _localizationService.GetLocalizedAsync(t, x => x.Title),
-                SeName = await _urlRecordService.GetSeNameAsync(t)
-            }).ToListAsync();
-
-        var model = new TopMenuModel
-        {
-            Categories = cachedCategoriesModel,
-            Topics = topicModel,
-            NewProductsEnabled = _catalogSettings.NewProductsEnabled,
-            BlogEnabled = _blogSettings.Enabled,
-            ForumEnabled = _forumSettings.ForumsEnabled,
-            DisplayHomepageMenuItem = _displayDefaultMenuItemSettings.DisplayHomepageMenuItem,
-            DisplayNewProductsMenuItem = _displayDefaultMenuItemSettings.DisplayNewProductsMenuItem,
-            DisplayProductSearchMenuItem = _displayDefaultMenuItemSettings.DisplayProductSearchMenuItem,
-            DisplayCustomerInfoMenuItem = _displayDefaultMenuItemSettings.DisplayCustomerInfoMenuItem,
-            DisplayBlogMenuItem = _displayDefaultMenuItemSettings.DisplayBlogMenuItem,
-            DisplayForumsMenuItem = _displayDefaultMenuItemSettings.DisplayForumsMenuItem,
-            DisplayContactUsMenuItem = _displayDefaultMenuItemSettings.DisplayContactUsMenuItem,
-            UseAjaxMenu = _catalogSettings.UseAjaxLoadMenu
-        };
-
-        return model;
-    }
-
-    /// <summary>
     /// Prepare homepage category models
     /// </summary>
     /// <returns>
@@ -700,45 +701,6 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         });
 
         return model;
-    }
-
-    /// <summary>
-    /// Prepare root categories for menu
-    /// </summary>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the list of category (simple) models
-    /// </returns>
-    public virtual async Task<List<CategorySimpleModel>> PrepareRootCategoriesAsync()
-    {
-        var doc = await PrepareCategoryXmlDocumentAsync();
-
-        var models = from xe in doc.Root.XPathSelectElements("CategorySimpleModel")
-                     select GetCategorySimpleModel(xe);
-
-        return models.ToList();
-    }
-
-    /// <summary>
-    /// Prepare subcategories for menu
-    /// </summary>
-    /// <param name="id">Id of category to get subcategory</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the 
-    /// </returns>
-    public virtual async Task<List<CategorySimpleModel>> PrepareSubCategoriesAsync(int id)
-    {
-        var doc = await PrepareCategoryXmlDocumentAsync();
-
-        var model = from xe in doc.Descendants("CategorySimpleModel")
-                    where xe.XPathSelectElement("Id").Value == id.ToString()
-                    select xe;
-
-        var models = from xe in model.First().XPathSelectElements("SubCategories/CategorySimpleModel")
-                     select GetCategorySimpleModel(xe);
-
-        return models.ToList();
     }
 
     /// <summary>
@@ -821,9 +783,7 @@ public partial class CatalogModelFactory : ICatalogModelFactory
             .GetFiltrableSpecificationAttributeOptionsByCategoryIdAsync(category.Id);
 
         if (_catalogSettings.EnableSpecificationAttributeFiltering)
-        {
             model.SpecificationFilter = await PrepareSpecificationFilterModel(command.Specs, filterableOptions);
-        }
 
         //filterable manufacturers
         if (_catalogSettings.EnableManufacturerFiltering)
@@ -853,122 +813,6 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         await PrepareCatalogProductsAsync(model, products, isFiltering);
 
         return model;
-    }
-
-    /// <summary>
-    /// Prepare category (simple) models
-    /// </summary>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the list of category (simple) models
-    /// </returns>
-    public virtual async Task<List<CategorySimpleModel>> PrepareCategorySimpleModelsAsync()
-    {
-        //load and cache them
-        var language = await _workContext.GetWorkingLanguageAsync();
-        var customer = await _workContext.GetCurrentCustomerAsync();
-        var customerRoleIds = await _customerService.GetCustomerRoleIdsAsync(customer);
-        var store = await _storeContext.GetCurrentStoreAsync();
-        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopModelCacheDefaults.CategoryAllModelKey,
-            language, customerRoleIds, store);
-
-        return await _staticCacheManager.GetAsync(cacheKey, async () => await PrepareCategorySimpleModelsAsync(0));
-    }
-
-    /// <summary>
-    /// Prepare category (simple) models
-    /// </summary>
-    /// <param name="rootCategoryId">Root category identifier</param>
-    /// <param name="loadSubCategories">A value indicating whether subcategories should be loaded</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the list of category (simple) models
-    /// </returns>
-    public virtual async Task<List<CategorySimpleModel>> PrepareCategorySimpleModelsAsync(int rootCategoryId, bool loadSubCategories = true)
-    {
-        var result = new List<CategorySimpleModel>();
-
-        //little hack for performance optimization
-        //we know that this method is used to load top and left menu for categories.
-        //it'll load all categories anyway.
-        //so there's no need to invoke "GetAllCategoriesByParentCategoryId" multiple times (extra SQL commands) to load childs
-        //so we load all categories at once (we know they are cached)
-        var store = await _storeContext.GetCurrentStoreAsync();
-        var allCategories = await _categoryService.GetAllCategoriesAsync(storeId: store.Id);
-        var categories = allCategories.Where(c => c.ParentCategoryId == rootCategoryId).OrderBy(c => c.DisplayOrder).ToList();
-        foreach (var category in categories)
-        {
-            var categoryModel = new CategorySimpleModel
-            {
-                Id = category.Id,
-                Name = await _localizationService.GetLocalizedAsync(category, x => x.Name),
-                SeName = await _urlRecordService.GetSeNameAsync(category),
-                IncludeInTopMenu = category.IncludeInTopMenu
-            };
-
-            //number of products in each category
-            if (_catalogSettings.ShowCategoryProductNumber)
-            {
-                var categoryIds = new List<int> { category.Id };
-                //include subcategories
-                if (_catalogSettings.ShowCategoryProductNumberIncludingSubcategories)
-                    categoryIds.AddRange(
-                        await _categoryService.GetChildCategoryIdsAsync(category.Id, store.Id));
-
-                categoryModel.NumberOfProducts =
-                    await _productService.GetNumberOfProductsInCategoryAsync(categoryIds, store.Id);
-            }
-
-            if (loadSubCategories)
-            {
-                var subCategories = await PrepareCategorySimpleModelsAsync(category.Id);
-                categoryModel.SubCategories.AddRange(subCategories);
-            }
-
-            categoryModel.HaveSubCategories = categoryModel.SubCategories.Count > 0 &
-                                              categoryModel.SubCategories.Any(x => x.IncludeInTopMenu);
-
-            result.Add(categoryModel);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Prepare category (simple) xml document
-    /// </summary>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the xml document of category (simple) models
-    /// </returns>
-    public virtual async Task<XDocument> PrepareCategoryXmlDocumentAsync()
-    {
-        var language = await _workContext.GetWorkingLanguageAsync();
-        var customer = await _workContext.GetCurrentCustomerAsync();
-        var customerRoleIds = await _customerService.GetCustomerRoleIdsAsync(customer);
-        var store = await _storeContext.GetCurrentStoreAsync();
-        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopModelCacheDefaults.CategoryXmlAllModelKey,
-            language, customerRoleIds, store);
-
-        return await _staticCacheManager.GetAsync(cacheKey, async () =>
-        {
-            var categories = await PrepareCategorySimpleModelsAsync();
-
-            var xsSubmit = new XmlSerializer(typeof(List<CategorySimpleModel>));
-
-            var settings = new XmlWriterSettings
-            {
-                Async = true,
-                ConformanceLevel = ConformanceLevel.Auto
-            };
-
-            await using var strWriter = new StringWriter();
-            await using var writer = XmlWriter.Create(strWriter, settings);
-            xsSubmit.Serialize(writer, categories);
-            var xml = strWriter.ToString();
-
-            return XDocument.Parse(xml);
-        });
     }
 
     #endregion
@@ -1091,9 +935,7 @@ public partial class CatalogModelFactory : ICatalogModelFactory
             .GetFiltrableSpecificationAttributeOptionsByManufacturerIdAsync(manufacturer.Id);
 
         if (_catalogSettings.EnableSpecificationAttributeFiltering)
-        {
             model.SpecificationFilter = await PrepareSpecificationFilterModel(command.Specs, filterableOptions);
-        }
 
         var filteredSpecs = command.Specs is null ? null : filterableOptions.Where(fo => command.Specs.Contains(fo.Id)).ToList();
 
@@ -1202,6 +1044,7 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                     SeName = await _urlRecordService.GetSeNameAsync(manufacturer),
                     IsActive = currentManufacturer != null && currentManufacturer.Id == manufacturer.Id,
                 };
+
                 model.Manufacturers.Add(modelMan);
             }
 
@@ -1245,7 +1088,7 @@ public partial class CatalogModelFactory : ICatalogModelFactory
             ProductReviews = await PrepareVendorProductReviewsModelAsync(vendor, new VendorReviewsPagingFilteringModel())
         };
 
-        if (_forumSettings.AllowPrivateMessages)
+        if (_privateMessageSettings.AllowPrivateMessages)
             model.PmCustomerId = vendor.PmCustomerId;
 
         return model;
@@ -1421,17 +1264,18 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         if (pagingModel.PageNumber <= 0)
             pagingModel.PageNumber = 1;
 
-        var model = new VendorProductReviewsListModel { 
+        var model = new VendorProductReviewsListModel
+        {
             VendorId = vendor.Id,
             VendorName = await _localizationService.GetLocalizedAsync(vendor, x => x.Name),
-            VendorUrl = await _nopUrlHelper.RouteGenericUrlAsync<Vendor>(new { SeName = await _urlRecordService.GetSeNameAsync(vendor) })
+            VendorUrl = await _nopUrlHelper.RouteGenericUrlAsync(vendor)
         };
 
         var currentStore = await _storeContext.GetCurrentStoreAsync();
         var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopModelCacheDefaults.VendorReviewsModelKey, vendor, currentStore);
         var vendorReviewModels = await _staticCacheManager.GetAsync(cacheKey, async () =>
         {
-            var vendorReviews = await _productService.GetAllProductReviewsAsync(
+            var vendorReviews = await _productReviewService.GetAllProductReviewsAsync(
                 vendorId: vendor.Id,
                 approved: true,
                 storeId: currentStore.Id);
@@ -1546,6 +1390,9 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         var model = new ProductsByTagModel
         {
             Id = productTag.Id,
+            MetaKeywords = await _localizationService.GetLocalizedAsync(productTag, x => x.MetaKeywords),
+            MetaDescription = await _localizationService.GetLocalizedAsync(productTag, x => x.MetaDescription),
+            MetaTitle = await _localizationService.GetLocalizedAsync(productTag, x => x.MetaTitle),
             TagName = await _localizationService.GetLocalizedAsync(productTag, y => y.Name),
             TagSeName = await _urlRecordService.GetSeNameAsync(productTag),
             CatalogProductsModel = await PrepareTagProductsModelAsync(productTag, command)
@@ -1746,12 +1593,14 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                 Text = await _localizationService.GetResourceAsync("Common.All")
             });
             foreach (var m in manufacturers)
+            {
                 model.AvailableManufacturers.Add(new SelectListItem
                 {
                     Value = m.Id.ToString(),
                     Text = await _localizationService.GetLocalizedAsync(m, x => x.Name),
                     Selected = model.mid == m.Id
                 });
+            }
         }
 
         model.asv = _vendorSettings.AllowSearchByVendor;
@@ -1766,12 +1615,14 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                     Text = await _localizationService.GetResourceAsync("Common.All")
                 });
                 foreach (var vendor in vendors)
+                {
                     model.AvailableVendors.Add(new SelectListItem
                     {
                         Value = vendor.Id.ToString(),
                         Text = await _localizationService.GetLocalizedAsync(vendor, x => x.Name),
                         Selected = model.vid == vendor.Id
                     });
+                }
             }
         }
 
@@ -1813,7 +1664,13 @@ public partial class CatalogModelFactory : ICatalogModelFactory
         IPagedList<Product> products = new PagedList<Product>(new List<Product>(), 0, 1);
         //only search if query string search keyword is set (used to avoid searching or displaying search term min length error message on /search page load)
         //we don't use "!string.IsNullOrEmpty(searchTerms)" in cases of "ProductSearchTermMinimumLength" set to 0 but searching by other parameters (e.g. category or price filter)
-        var isSearchTermSpecified = _httpContextAccessor.HttpContext.Request.Query.ContainsKey("q");
+        var request = _httpContextAccessor.HttpContext.Request;
+
+        var isSearchTermSpecified = request.Query.ContainsKey("q");
+
+        if (!isSearchTermSpecified && request.HasFormContentType)
+            isSearchTermSpecified = request.Form.ContainsKey("q");
+
         if (isSearchTermSpecified)
         {
             var currentStore = await _storeContext.GetCurrentStoreAsync();
@@ -1829,7 +1686,9 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                 var categoryIds = new List<int>();
                 var manufacturerId = 0;
                 var searchInDescriptions = false;
+                var searchInProductTags = false;
                 var vendorId = 0;
+
                 if (searchModel.advs)
                 {
                     //advanced search
@@ -1851,10 +1710,9 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                         vendorId = searchModel.vid;
 
                     searchInDescriptions = searchModel.sid;
+                    searchInProductTags = searchModel.sit;
                 }
 
-                //var searchInProductTags = false;
-                var searchInProductTags = searchInDescriptions;
                 var workingLanguage = await _workContext.GetWorkingLanguageAsync();
 
                 //price range
@@ -1892,11 +1750,13 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                         };
                     }
                     else
+                    {
                         availablePriceRange = new PriceRangeModel
                         {
                             From = await getProductPriceAsync(ProductSortingEnum.PriceAsc),
                             To = await getProductPriceAsync(ProductSortingEnum.PriceDesc)
                         };
+                    }
 
                     model.PriceRangeFilter = await PreparePriceRangeFilterAsync(selectedPriceRange, availablePriceRange);
                 }
@@ -1921,23 +1781,14 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                 //search term statistics
                 if (!string.IsNullOrEmpty(searchTerms))
                 {
-                    var searchTerm =
-                        await _searchTermService.GetSearchTermByKeywordAsync(searchTerms, currentStore.Id);
-                    if (searchTerm != null)
+                    var customer = await _workContext.GetCurrentCustomerAsync();
+                    await _searchTermService.InsertSearchTermAsync(new SearchTerm
                     {
-                        searchTerm.Count++;
-                        await _searchTermService.UpdateSearchTermAsync(searchTerm);
-                    }
-                    else
-                    {
-                        searchTerm = new SearchTerm
-                        {
-                            Keyword = searchTerms,
-                            StoreId = currentStore.Id,
-                            Count = 1
-                        };
-                        await _searchTermService.InsertSearchTermAsync(searchTerm);
-                    }
+                        Keyword = searchTerms,
+                        StoreId = currentStore.Id,
+                        CustomerId = customer.Id,
+                        CreatedOnUtc = DateTime.UtcNow
+                    });
                 }
 
                 //event
@@ -1960,6 +1811,69 @@ public partial class CatalogModelFactory : ICatalogModelFactory
     }
 
     /// <summary>
+    /// Prepares the search products by filter level values model
+    /// </summary>
+    /// <param name="searchModel">Search filter level values model</param>
+    /// <param name="command">Model to get the catalog products</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the search products model
+    /// </returns>
+    public virtual async Task<CatalogProductsModel> PrepareSearchProductsByFilterLevelValuesModelAsync(SearchFilterLevelValueModel searchModel, CatalogProductsCommand command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        var model = new CatalogProductsModel
+        {
+            UseAjaxLoading = _catalogSettings.UseAjaxCatalogProductsLoading
+        };
+
+        //sorting
+        await PrepareSortingOptionsAsync(model, command);
+        //view mode
+        await PrepareViewModesAsync(model, command);
+        //page size
+        await PreparePageSizeOptionsAsync(model, command, _catalogSettings.SearchPageAllowCustomersToSelectPageSize,
+            _catalogSettings.SearchPagePageSizeOptions, _catalogSettings.SearchPageProductsPerPage);
+
+        var flv1 = searchModel.fl1id == "0" || string.IsNullOrEmpty(searchModel.fl1id)
+            ? string.Empty
+            : searchModel.fl1id;
+
+        var flv2 = searchModel.fl2id == "0" || string.IsNullOrEmpty(searchModel.fl2id)
+            ? string.Empty
+            : searchModel.fl2id;
+
+        var flv3 = searchModel.fl3id == "0" || string.IsNullOrEmpty(searchModel.fl3id)
+            ? string.Empty
+            : searchModel.fl3id;
+
+        IPagedList<Product> products = new PagedList<Product>(new List<Product>(), 0, 1);
+
+        var (filterLevel1Disabled, _, _) = _filterLevelValueService.IsFilterLevelDisabled();
+
+        if (!string.IsNullOrEmpty(flv1) && !filterLevel1Disabled)
+        {
+            var filterLevelValue = (await _filterLevelValueService.GetAllFilterLevelValuesAsync(flv1, flv2, flv3)).FirstOrDefault();
+            if (filterLevelValue == null)
+                return model;
+
+            var store = await _storeContext.GetCurrentStoreAsync();
+
+            //products
+            products = await _filterLevelValueService.GetProductsByFilterLevelValueIdAsync(filterLevelValue.Id,
+            pageIndex: command.PageNumber - 1,
+            pageSize: command.PageSize,
+            storeId: store.Id,
+            orderBy: (ProductSortingEnum)command.OrderBy);
+
+            await PrepareCatalogProductsAsync(model, products, true);
+        }
+
+        return model;
+    }
+
+    /// <summary>
     /// Prepare search box model
     /// </summary>
     /// <returns>
@@ -1976,6 +1890,7 @@ public partial class CatalogModelFactory : ICatalogModelFactory
             SearchTermMinimumLength = _catalogSettings.ProductSearchTermMinimumLength,
             ShowSearchBox = _catalogSettings.ProductSearchEnabled,
             ShowSearchBoxCategories = _catalogSettings.ShowSearchBoxCategories,
+            SearchHistoryEnabled = _catalogSettings.ShowSearchTermHistory
         };
 
         if (_catalogSettings.ShowSearchBoxCategories)
@@ -1990,7 +1905,7 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                 var result = new List<SelectListItem>
                 {
                     //empty entry
-                    new() 
+                    new()
                     {
                         Value = "0",
                         Text = await _localizationService.GetResourceAsync("Search.SearchBox.AllCategories")
@@ -2158,9 +2073,7 @@ public partial class CatalogModelFactory : ICatalogModelFactory
 
         //ensure pge size is specified
         if (command.PageSize <= 0)
-        {
             command.PageSize = fixedPageSize;
-        }
 
         return Task.CompletedTask;
     }

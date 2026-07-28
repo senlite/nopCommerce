@@ -113,17 +113,17 @@ public partial record CustomerSettingsModel : BaseNopModel, ISettingsModel
     [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.FailedPasswordLockoutMinutes")]
     public int FailedPasswordLockoutMinutes { get; set; }
 
+    [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.NotifyFailedLoginAttempt")]
+    public bool NotifyFailedLoginAttempt { get; set; }
+
     [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.NewsletterEnabled")]
     public bool NewsletterEnabled { get; set; }
 
-    [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.NewsletterTickedByDefault")]
-    public bool NewsletterTickedByDefault { get; set; }
-
     [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.HideNewsletterBlock")]
-    public bool HideNewsletterBlock { get; set; }
+    public bool HideNewsLetterBlock { get; set; }
 
     [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.NewsletterBlockAllowToUnsubscribe")]
-    public bool NewsletterBlockAllowToUnsubscribe { get; set; }
+    public bool NewsLetterBlockAllowToUnsubscribe { get; set; }
 
     [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.StoreLastVisitedPage")]
     public bool StoreLastVisitedPage { get; set; }
@@ -222,12 +222,6 @@ public partial record CustomerSettingsModel : BaseNopModel, ISettingsModel
 
     [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.PhoneNumberValidationEnabled")]
     public bool PhoneNumberValidationEnabled { get; set; }
-
-    [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.PhoneNumberValidationUseRegex")]
-    public bool PhoneNumberValidationUseRegex { get; set; }
-
-    [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.PhoneNumberValidationRule")]
-    public string PhoneNumberValidationRule { get; set; }
 
     [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.FaxEnabled")]
     public bool FaxEnabled { get; set; }

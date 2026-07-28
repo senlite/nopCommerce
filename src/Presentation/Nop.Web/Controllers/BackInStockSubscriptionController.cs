@@ -2,6 +2,7 @@
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Http;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
@@ -158,15 +159,11 @@ public partial class BackInStockSubscriptionController : BasePublicController
     public virtual async Task<IActionResult> CustomerSubscriptions(int? pageNumber)
     {
         if (_customerSettings.HideBackInStockSubscriptionsTab)
-        {
-            return RedirectToRoute("CustomerInfo");
-        }
+            return RedirectToRoute(NopRouteNames.General.CUSTOMER_INFO);
 
         var pageIndex = 0;
         if (pageNumber > 0)
-        {
             pageIndex = pageNumber.Value - 1;
-        }
         var pageSize = 10;
 
         var customer = await _workContext.GetCurrentCustomerAsync();
@@ -199,7 +196,7 @@ public partial class BackInStockSubscriptionController : BasePublicController
             TotalRecords = list.TotalCount,
             PageIndex = list.PageIndex,
             ShowTotalSummary = false,
-            RouteActionName = "CustomerBackInStockSubscriptions",
+            RouteActionName = NopRouteNames.Standard.CUSTOMER_BACK_IN_STOCK_SUBSCRIPTIONS,
             UseRouteLinks = true,
             RouteValues = new BackInStockSubscriptionsRouteValues { PageNumber = pageIndex }
         };
@@ -222,14 +219,12 @@ public partial class BackInStockSubscriptionController : BasePublicController
                     var subscription = await _backInStockSubscriptionService.GetSubscriptionByIdAsync(subscriptionId);
                     var customer = await _workContext.GetCurrentCustomerAsync();
                     if (subscription != null && subscription.CustomerId == customer.Id)
-                    {
                         await _backInStockSubscriptionService.DeleteSubscriptionAsync(subscription);
-                    }
                 }
             }
         }
 
-        return RedirectToRoute("CustomerBackInStockSubscriptions");
+        return RedirectToRoute(NopRouteNames.Standard.CUSTOMER_BACK_IN_STOCK_SUBSCRIPTIONS);
     }
 
     #endregion
@@ -239,9 +234,7 @@ public partial class BackInStockSubscriptionController : BasePublicController
     /// <summary>
     /// record that has only page for route value. Used for (My Account) Back in stock subscriptions pagination
     /// </summary>
-    public partial record BackInStockSubscriptionsRouteValues : BaseRouteValues
-    {
-    }
+    public partial record BackInStockSubscriptionsRouteValues : BaseRouteValues;
 
     #endregion
 }

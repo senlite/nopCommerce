@@ -1,9 +1,6 @@
 ﻿using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Nop.Core;
@@ -15,7 +12,8 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Stores;
-using Nop.Core.Http.Extensions;
+using Nop.Core.Domain.Tax;
+using Nop.Core.Http;
 using Nop.Plugin.Payments.PayPalCommerce.Domain;
 using Nop.Plugin.Payments.PayPalCommerce.Services.Api;
 using Nop.Plugin.Payments.PayPalCommerce.Services.Api.Authentication;
@@ -32,12 +30,12 @@ using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
-using Nop.Services.Seo;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Pickup;
 using Nop.Services.Stores;
@@ -61,7 +59,6 @@ public class PayPalCommerceServiceManager
 
     private readonly CurrencySettings _currencySettings;
     private readonly CustomerSettings _customerSettings;
-    private readonly IActionContextAccessor _actionContextAccessor;
     private readonly IAddressService _addressService;
     private readonly IAttributeParser<CheckoutAttribute, CheckoutAttributeValue> _checkoutAttributeParser;
     private readonly ICountryService _countryService;
@@ -88,14 +85,13 @@ public class PayPalCommerceServiceManager
     private readonly IStoreContext _storeContext;
     private readonly IStoreService _storeService;
     private readonly ITaxService _taxService;
-    private readonly IUrlHelperFactory _urlHelperFactory;
-    private readonly IUrlRecordService _urlRecordService;
     private readonly IWebHelper _webHelper;
     private readonly IWorkContext _workContext;
     private readonly OrderSettings _orderSettings;
     private readonly PayPalCommerceHttpClient _httpClient;
     private readonly PayPalTokenService _tokenService;
     private readonly ShippingSettings _shippingSettings;
+    private readonly TaxSettings _taxSettings;
 
     #endregion
 
@@ -103,7 +99,6 @@ public class PayPalCommerceServiceManager
 
     public PayPalCommerceServiceManager(CurrencySettings currencySettings,
         CustomerSettings customerSettings,
-        IActionContextAccessor actionContextAccessor,
         IAddressService addressService,
         IAttributeParser<CheckoutAttribute, CheckoutAttributeValue> checkoutAttributeParser,
         ICountryService countryService,
@@ -130,18 +125,16 @@ public class PayPalCommerceServiceManager
         IStoreContext storeContext,
         IStoreService storeService,
         ITaxService taxService,
-        IUrlHelperFactory urlHelperFactory,
-        IUrlRecordService urlRecordService,
         IWebHelper webHelper,
         IWorkContext workContext,
         OrderSettings orderSettings,
         PayPalCommerceHttpClient httpClient,
         PayPalTokenService tokenService,
-        ShippingSettings shippingSettings)
+        ShippingSettings shippingSettings,
+        TaxSettings taxSettings)
     {
         _currencySettings = currencySettings;
         _customerSettings = customerSettings;
-        _actionContextAccessor = actionContextAccessor;
         _addressService = addressService;
         _checkoutAttributeParser = checkoutAttributeParser;
         _countryService = countryService;
@@ -168,14 +161,13 @@ public class PayPalCommerceServiceManager
         _storeContext = storeContext;
         _storeService = storeService;
         _taxService = taxService;
-        _urlHelperFactory = urlHelperFactory;
-        _urlRecordService = urlRecordService;
         _webHelper = webHelper;
         _workContext = workContext;
         _orderSettings = orderSettings;
         _httpClient = httpClient;
         _tokenService = tokenService;
         _shippingSettings = shippingSettings;
+        _taxSettings = taxSettings;
     }
 
     #endregion
@@ -250,7 +242,7 @@ public class PayPalCommerceServiceManager
             };
 
             return amount is not null ? PrepareMoney(amount.Value, currencyCode).Value : null;
-        }, new($"{PayPalCommerceDefaults.SystemName}.Messages.Amount"));
+        }, new($"{PayPalCommerceDefaults.SystemName}.Messages.Amount-{productId ?? 0}"));
     }
 
     #endregion
@@ -274,16 +266,92 @@ public class PayPalCommerceServiceManager
     }
 
     /// <summary>
+    /// Convert money object to decimal value
+    /// </summary>
+    /// <param name="value">Amount value</param>
+    /// <returns>Decimal value</returns>
+    private static decimal ConvertMoney(Money amount)
+    {
+        return decimal.TryParse(amount?.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : decimal.Zero;
+    }
+
+    /// <summary>
+    /// Prepare shopping cart details
+    /// </summary>
+    /// <param name="placement">Button placement</param>
+    /// <param name="withShipping">Whether to prepare shipping details</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the cart details
+    /// </returns>
+    private async Task<CartDetails> PrepareCartDetailsAsync(ButtonPlacement placement, bool withShipping = true)
+    {
+        //get the primary store currency
+        var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
+        if (string.IsNullOrEmpty(currencyCode))
+            throw new NopException("Primary store currency not set");
+
+        //get customer shopping cart
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
+        if (!cart.Any())
+            throw new NopException("Shopping cart is empty");
+
+        //get billing address
+        var billingAddress = await _addressService.GetAddressByIdAsync(customer.BillingAddressId ?? 0);
+        if (placement == ButtonPlacement.PaymentMethod && billingAddress is null)
+            throw new NopException("Customer billing address not set");
+
+        var shippingIsRequired = await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart);
+
+        var details = new CartDetails
+        {
+            Placement = placement,
+            CurrencyCode = currencyCode,
+            Customer = customer,
+            Store = store,
+            Cart = cart.ToList(),
+            BillingAddress = billingAddress,
+            ShippingIsRequired = shippingIsRequired,
+        };
+
+        if (!withShipping)
+            return details;
+
+        //get shipping details
+        details.ShippingOption = await _genericAttributeService
+            .GetAttributeAsync<NopShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, store.Id);
+        details.PickupPoint = await _genericAttributeService
+            .GetAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, store.Id);
+        details.IsPickup = _shippingSettings.AllowPickupInStore && details.PickupPoint is not null;
+        details.ShippingAddress = details.IsPickup ? new NopAddress
+        {
+            Address1 = details.PickupPoint.Address,
+            City = details.PickupPoint.City,
+            County = details.PickupPoint.County,
+            CountryId = (await _countryService.GetCountryByTwoLetterIsoCodeAsync(details.PickupPoint.CountryCode))?.Id,
+            StateProvinceId = (await _stateProvinceService.GetStateProvinceByAbbreviationAsync(details.PickupPoint.StateAbbreviation,
+                (await _countryService.GetCountryByTwoLetterIsoCodeAsync(details.PickupPoint.CountryCode))?.Id))?.Id,
+            ZipPostalCode = details.PickupPoint.ZipPostalCode,
+            CreatedOnUtc = DateTime.UtcNow
+        } : await _addressService.GetAddressByIdAsync(customer.ShippingAddressId ?? 0);
+        if (placement == ButtonPlacement.PaymentMethod && shippingIsRequired && details.ShippingAddress is null)
+            throw new NopException("Customer shipping address not set");
+
+        return details;
+    }
+
+    /// <summary>
     /// Prepare order context
     /// </summary>
     /// <param name="settings">Plugin settings</param>
     /// <param name="details">Shopping cart details</param>
     /// <param name="orderGuid">Order internal id</param>
     /// <param name="isApplePay">Apple Pay payment</param>
-    /// <returns>Order context</returns>
+    /// <returns>Experience context</returns>
     private ExperienceContext PrepareOrderContext(PayPalCommerceSettings settings, CartDetails details, string orderGuid, bool isApplePay = false)
     {
-        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
         var protocol = _webHelper.GetCurrentRequestProtocol();
 
         var shippingPreference = ShippingPreferenceType.NO_SHIPPING.ToString().ToUpper();
@@ -304,11 +372,11 @@ public class PayPalCommerceServiceManager
                 : UserActionType.CONTINUE.ToString().ToUpper(),
             CancelUrl = details.Placement switch
             {
-                ButtonPlacement.PaymentMethod => urlHelper.RouteUrl(PayPalCommerceDefaults.Route.PaymentInfo, null, protocol),
-                ButtonPlacement.Cart or ButtonPlacement.Product => urlHelper.RouteUrl(PayPalCommerceDefaults.Route.ShoppingCart, null, protocol),
+                ButtonPlacement.PaymentMethod => _nopUrlHelper.RouteUrl(PayPalCommerceDefaults.Route.PaymentInfo, null, protocol),
+                ButtonPlacement.Cart or ButtonPlacement.Product => _nopUrlHelper.RouteUrl(NopRouteNames.General.CART, null, protocol),
                 _ => null
             },
-            ReturnUrl = urlHelper.RouteUrl(PayPalCommerceDefaults.Route.ConfirmOrder, new { token = orderGuid, approve = true }, protocol),
+            ReturnUrl = _nopUrlHelper.RouteUrl(PayPalCommerceDefaults.Route.ConfirmOrder, new { token = orderGuid, approve = true }, protocol),
             PaymentMethodPreference = settings.ImmediatePaymentRequired
                 ? PaymentMethodPreferenceType.IMMEDIATE_PAYMENT_REQUIRED.ToString().ToUpper()
                 : PaymentMethodPreferenceType.UNRESTRICTED.ToString().ToUpper(),
@@ -317,14 +385,36 @@ public class PayPalCommerceServiceManager
     }
 
     /// <summary>
+    /// Prepare recurring payment context
+    /// </summary>
+    /// <param name="details">Shopping cart details</param>
+    /// <returns>Experience context</returns>
+    private ExperienceContext PrepareRecurringPaymentContext(CartDetails details)
+    {
+        var protocol = _webHelper.GetCurrentRequestProtocol();
+
+        return new()
+        {
+            BrandName = CommonHelper.EnsureMaximumLength(details.Store.Name, 127),
+            CancelUrl = _nopUrlHelper.RouteUrl(PayPalCommerceDefaults.Route.PaymentInfo, null, protocol),
+            ReturnUrl = _nopUrlHelper.RouteUrl(PayPalCommerceDefaults.Route.ApproveToken, null, protocol),
+            PaymentMethodPreference = PaymentMethodPreferenceType.IMMEDIATE_PAYMENT_REQUIRED.ToString().ToUpper(),
+            ShippingPreference = details.ShippingIsRequired
+                ? ShippingPreferenceType.SET_PROVIDED_ADDRESS.ToString().ToUpper()
+                : ShippingPreferenceType.NO_SHIPPING.ToString().ToUpper()
+        };
+    }
+
+    /// <summary>
     /// Prepare order billing details
     /// </summary>
+    /// <param name="settings">Plugin settings</param>
     /// <param name="details">Shopping cart details</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains the payer with the billing details
     /// </returns>
-    private async Task<Payer> PrepareBillingDetailsAsync(CartDetails details)
+    private async Task<Payer> PrepareBillingDetailsAsync(PayPalCommerceSettings settings, CartDetails details)
     {
         var customer = details.Customer;
         var address = details.BillingAddress;
@@ -358,7 +448,18 @@ public class PayPalCommerceServiceManager
         if (string.IsNullOrEmpty(billingAddress.CountryCode))
             billingAddress = null;
 
-        return new() { EmailAddress = email, Name = name, BirthDate = birthDate, Address = billingAddress };
+        //try to get Vault customer id
+        var id = settings.UseVault ? await GetVaultCustomerIdAsync(settings, customer.Id) : null;
+
+        return new()
+        {
+            Id = id,
+            EmailAddress = email,
+            Name = name,
+            BirthDate = birthDate,
+            Address = billingAddress,
+            MerchantCustomerId = string.IsNullOrEmpty(id) ? customer.Id.ToString() : null //we can only use a single identifier
+        };
     }
 
     /// <summary>
@@ -375,17 +476,20 @@ public class PayPalCommerceServiceManager
         var items = await details.Cart.SelectAwait(async item =>
         {
             var product = await _productService.GetProductByIdAsync(item.ProductId);
+            if (product is null)
+                return null;
+
             var sku = await _productService.FormatSkuAsync(product, item.AttributesXml);
-            var seName = await _urlRecordService.GetSeNameAsync(product);
-            var url = await _nopUrlHelper.RouteGenericUrlAsync<Product>(new { SeName = seName }, _webHelper.GetCurrentRequestProtocol());
+            var url = await _nopUrlHelper.RouteGenericUrlAsync(product, _webHelper.GetCurrentRequestProtocol());
+
             var picture = await _pictureService.GetProductPictureAsync(product, item.AttributesXml);
-            var (imageUrl, _) = await _pictureService.GetPictureUrlAsync(picture);
+            //PayPal doesn't currently support WebP images
+            var ext = await _pictureService.GetFileExtensionFromMimeTypeAsync(picture?.MimeType);
+            var (imageUrl, _) = ext != "webp" ? await _pictureService.GetPictureUrlAsync(picture) : default;
 
             var (itemSubTotal, itemDiscount, _, _) = await _shoppingCartService.GetSubTotalAsync(item, true);
             var unitPrice = itemSubTotal / item.Quantity;
             var (unitPriceExclTax, _) = await _taxService.GetProductPriceAsync(product, unitPrice, false, details.Customer);
-            var (unitPriceInclTax, _) = await _taxService.GetProductPriceAsync(product, unitPrice, true, details.Customer);
-            var itemTax = unitPriceInclTax - unitPriceExclTax;
 
             return new Item
             {
@@ -398,10 +502,9 @@ public class PayPalCommerceServiceManager
                     : CategoryType.PHYSICAL_GOODS.ToString().ToUpper(),
                 Url = url,
                 ImageUrl = imageUrl,
-                UnitAmount = PrepareMoney(unitPriceExclTax, details.CurrencyCode),
-                Tax = PrepareMoney(itemTax, details.CurrencyCode)
+                UnitAmount = PrepareMoney(unitPriceExclTax, details.CurrencyCode)
             };
-        }).ToListAsync();
+        }).Where(item => item is not null).ToListAsync();
 
         //and checkout attributes
         var checkoutAttributes = await _genericAttributeService
@@ -411,17 +514,15 @@ public class PayPalCommerceServiceManager
         {
             await foreach (var attributeValue in values)
             {
-                var (attributePriceExclTax, _) = await _taxService.GetCheckoutAttributePriceAsync(attribute, attributeValue, false, details.Customer);
-                var (attributePriceInclTax, _) = await _taxService.GetCheckoutAttributePriceAsync(attribute, attributeValue, true, details.Customer);
-                var attributeTax = attributePriceInclTax - attributePriceExclTax;
+                var (attributePriceExclTax, _) = await _taxService
+                    .GetCheckoutAttributePriceAsync(attribute, attributeValue, false, details.Customer);
 
                 items.Add(new()
                 {
                     Name = CommonHelper.EnsureMaximumLength(attribute.Name, 127),
                     Description = CommonHelper.EnsureMaximumLength($"{attribute.Name} - {attributeValue.Name}", 127),
                     Quantity = 1.ToString(),
-                    UnitAmount = PrepareMoney(attributePriceExclTax, details.CurrencyCode),
-                    Tax = PrepareMoney(attributeTax, details.CurrencyCode)
+                    UnitAmount = PrepareMoney(attributePriceExclTax, details.CurrencyCode)
                 });
             }
         }
@@ -442,6 +543,7 @@ public class PayPalCommerceServiceManager
     {
         //in some rare cases we need an additional item to adjust the order total
         //this can happen due to complex discounts or a large order and related to rounding in calculations
+        //PayPal uses two decimal places, while nopCommerce can use more complex types of rounding (configured for each currency separately) 
         var adjustmentName = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Adjustment.Name");
         var adjustmentDescription = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Adjustment.Description");
         if (items.FirstOrDefault(item => adjustmentName.Equals(item.Name) && adjustmentDescription.Equals(item.Description)) is Item adjustmentItem)
@@ -458,58 +560,53 @@ public class PayPalCommerceServiceManager
             var (_, _, subTotal, _, _) = await _orderTotalCalculationService.GetShoppingCartSubTotalAsync(details.Cart, includingTax: false);
             total = subTotal;
         }
+        var orderTotal = PrepareMoney(total.Value, details.CurrencyCode);
 
-        var (shippingTotal, _, _) = await _orderTotalCalculationService.GetShoppingCartShippingTotalAsync(details.Cart, includingTax: false);
-
-        var itemTotal = items
-            .Sum(item => decimal.Parse(item.UnitAmount?.Value ?? "0", NumberStyles.Any, CultureInfo.InvariantCulture) * int.Parse(item.Quantity));
-        var itemAdjustment = decimal.Zero;
+        var (shippingTotal, _, _) = await _orderTotalCalculationService
+            .GetShoppingCartShippingTotalAsync(details.Cart, includingTax: _taxSettings.ShippingPriceIncludesTax);
+        var orderShippingTotal = PrepareMoney(shippingTotal ?? decimal.Zero, details.CurrencyCode);
 
         var (taxTotal, _) = await _orderTotalCalculationService.GetTaxTotalAsync(details.Cart, usePaymentMethodAdditionalFee: false);
-        var itemTaxTotal = items
-            .Sum(item => decimal.Parse(item.Tax?.Value ?? "0", NumberStyles.Any, CultureInfo.InvariantCulture) * int.Parse(item.Quantity));
-        var taxAdjustment = taxTotal - itemTaxTotal;
-        if (taxAdjustment > decimal.Zero)
-            itemTotal += taxAdjustment;
-        if (taxAdjustment < decimal.Zero)
-        {
-            taxAdjustment = decimal.Zero;
-            foreach (var item in items)
-            {
-                item.Tax = null;
-            }
-        }
+        var orderTaxTotal = PrepareMoney(taxTotal, details.CurrencyCode);
 
-        var discountTotal = itemTotal + taxTotal + (shippingTotal ?? decimal.Zero) - total.Value;
+        var itemAdjustment = decimal.Zero;
+        var itemTotal = items.Sum(item => ConvertMoney(item.UnitAmount) * int.Parse(item.Quantity));
+        var discountTotal = itemTotal + ConvertMoney(orderTaxTotal) + ConvertMoney(orderShippingTotal) - ConvertMoney(orderTotal);
         if (discountTotal < decimal.Zero)
         {
             itemAdjustment = -discountTotal;
             itemTotal += itemAdjustment;
+            discountTotal = decimal.Zero;
         }
+        var orderItemTotal = PrepareMoney(itemTotal, details.CurrencyCode);
+        var orderDiscount = PrepareMoney(discountTotal, details.CurrencyCode);
 
         //set adjustment item if needed
-        if (itemAdjustment > decimal.Zero || taxAdjustment > decimal.Zero)
+        if (itemAdjustment > decimal.Zero)
         {
-            items.Add(new()
+            var unitAmount = PrepareMoney(itemAdjustment, details.CurrencyCode);
+            if (ConvertMoney(unitAmount) > decimal.Zero)
             {
-                Name = adjustmentName,
-                Description = adjustmentDescription,
-                Quantity = 1.ToString(),
-                UnitAmount = PrepareMoney(itemAdjustment + taxAdjustment, details.CurrencyCode),
-                Tax = taxAdjustment > decimal.Zero ? PrepareMoney(taxAdjustment, details.CurrencyCode) : null
-            });
+                items.Add(new()
+                {
+                    Name = adjustmentName,
+                    Description = adjustmentDescription,
+                    Quantity = 1.ToString(),
+                    UnitAmount = unitAmount
+                });
+            }
         }
 
         return new()
         {
             CurrencyCode = details.CurrencyCode,
-            Value = PrepareMoney(total.Value, details.CurrencyCode).Value,
+            Value = orderTotal.Value,
             Breakdown = new()
             {
-                ItemTotal = PrepareMoney(itemTotal, details.CurrencyCode),
-                TaxTotal = PrepareMoney(taxTotal, details.CurrencyCode),
-                Shipping = PrepareMoney(shippingTotal ?? decimal.Zero, details.CurrencyCode),
-                Discount = PrepareMoney(discountTotal, details.CurrencyCode)
+                ItemTotal = orderItemTotal,
+                TaxTotal = orderTaxTotal,
+                Shipping = orderShippingTotal,
+                Discount = orderDiscount
             }
         };
     }
@@ -609,7 +706,9 @@ public class PayPalCommerceServiceManager
         {
             var (adjustedShippingRate, _) = await _orderTotalCalculationService
                 .AdjustShippingRateAsync(option.Rate, details.Cart, option.IsPickupInStore);
-            var (rate, _) = await _taxService.GetShippingPriceAsync(adjustedShippingRate, details.Customer);
+            //var (rate, _) = await _taxService.GetShippingPriceAsync(adjustedShippingRate, details.Customer);
+            //PayPal currently handles taxable shipping incorrectly, so we display shipping rates without tax, but it'll be included to tax total
+            var rate = adjustedShippingRate;
 
             return new ShippingOption
             {
@@ -760,6 +859,48 @@ public class PayPalCommerceServiceManager
         var shipping = await PrepareShippingDetailsAsync(details, selectedOption.Id);
 
         return shipping;
+    }
+
+    /// <summary>
+    /// Prepare the purchase unit details
+    /// </summary>
+    /// <param name="settings">Plugin settings</param>
+    /// <param name="details">Shopping cart details</param>
+    /// <param name="orderGuid">Order guid</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the purchase unit details
+    /// </returns>
+    private async Task<PurchaseUnit> PreparePurchaseUnitAsync(PayPalCommerceSettings settings, CartDetails details, string orderGuid)
+    {
+        var shipping = await PrepareShippingDetailsAsync(details, details.ShippingOption?.Name);
+        var items = await PrepareOrderItemsAsync(details);
+        var orderAmount = await PrepareOrderMoneyAsync(details, items);
+        var cardData = new CardData
+        {
+            Level2 = new() { InvoiceId = CommonHelper.EnsureMaximumLength(orderGuid, 127) },
+            Level3 = new()
+            {
+                LineItems = items,
+                ShippingAmount = orderAmount.Breakdown.Shipping,
+                ShippingAddress = shipping?.Address,
+                ShipsFromPostalCode = CommonHelper.EnsureMaximumLength((await _addressService
+                    .GetAddressByIdAsync(_shippingSettings.ShippingOriginAddressId))?.ZipPostalCode, 60)
+            },
+        };
+
+        return new PurchaseUnit
+        {
+            CustomId = CommonHelper.EnsureMaximumLength(orderGuid, 127),
+            InvoiceId = CommonHelper.EnsureMaximumLength(orderGuid, 127),
+            Description = CommonHelper.EnsureMaximumLength($"Purchase at '{details.Store.Name}'", 127),
+            SoftDescriptor = CommonHelper.EnsureMaximumLength(details.Store.Name, 22),
+            Payee = new() { MerchantId = settings.MerchantId },
+            Items = items,
+            Amount = orderAmount,
+            Shipping = shipping,
+            SupplementaryData = new() { Card = cardData }
+        };
     }
 
     /// <summary>
@@ -941,6 +1082,24 @@ public class PayPalCommerceServiceManager
         }).Where(token => token is not null).ToList();
     }
 
+    /// <summary>
+    /// Get the unique ID for a customer in PayPal Vault
+    /// </summary>
+    /// <param name="settings">Plugin settings</param>
+    /// <param name="customerId">Customer id</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the vault customer id
+    /// </returns>
+    private async Task<string> GetVaultCustomerIdAsync(PayPalCommerceSettings settings, int customerId)
+    {
+        return (await _tokenService.GetAllTokensAsync(settings.ClientId, customerId))
+            .OrderBy(token => token.IsPrimaryMethod ? 0 : 1)
+            .ThenBy(token => token.Id)
+            .FirstOrDefault()
+            ?.VaultCustomerId;
+    }
+
     #endregion
 
     #region Common
@@ -1059,11 +1218,12 @@ public class PayPalCommerceServiceManager
     /// <param name="productId">Product id</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the script details, customer details, messages details; error message if exists
+    /// The task result contains the script details, customer details, messages details; cart details; error message if exists
     /// </returns>
     public async Task<(((string ScriptUrl, string ClientToken, string UserToken),
         (string Email, string Name),
-        (string MessageConfig, string Amount)),
+        (string MessageConfig, string Amount),
+        (bool? IsRecurring, bool IsShippable)),
         string Error)>
         PreparePaymentDetailsAsync(PayPalCommerceSettings settings, ButtonPlacement placement, int? productId)
     {
@@ -1129,12 +1289,7 @@ public class PayPalCommerceServiceManager
             string userToken = null;
             if (settings.UseVault && !isGuest)
             {
-                var tokens = await _tokenService.GetAllTokensAsync(settings.ClientId, customer.Id);
-                var vaultCustomerId = tokens
-                    .OrderBy(token => token.IsPrimaryMethod ? 0 : 1)
-                    .ThenBy(token => token.Id)
-                    .FirstOrDefault()
-                    ?.VaultCustomerId;
+                var vaultCustomerId = await GetVaultCustomerIdAsync(settings, customer.Id);
                 var accessToken = await _httpClient.RequestAsync<GetAccessTokenRequest, GetAccessTokenResponse>(new()
                 {
                     ClientId = settings.ClientId,
@@ -1164,7 +1319,11 @@ public class PayPalCommerceServiceManager
             };
             var messageConfig = !string.IsNullOrEmpty(config?.Status) ? JsonConvert.SerializeObject(config, Formatting.Indented) : "{}";
 
-            return ((scriptUrl, clientToken, userToken), (email, fullName), (messageConfig, amount));
+            //cart details
+            var (isRecurring, _) = await CheckShoppingCartIsRecurringAsync(placement, productId);
+            var (isShippable, _) = await CheckShippingIsRequiredAsync(productId);
+
+            return ((scriptUrl, clientToken, userToken), (email, fullName), (messageConfig, amount), (isRecurring, isShippable));
         });
     }
 
@@ -1312,6 +1471,35 @@ public class PayPalCommerceServiceManager
         }, false);
     }
 
+    /// <summary>
+    /// Check whether the current cart/product is recurring
+    /// </summary>
+    /// <param name="placement">Button placement</param>
+    /// <param name="productId">Product id</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the check result; error message if exists
+    /// </returns>
+    public async Task<(bool? IsRecurring, string Error)> CheckShoppingCartIsRecurringAsync(ButtonPlacement placement, int? productId = null)
+    {
+        return await HandleFunctionAsync(async () =>
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var store = await _storeContext.GetCurrentStoreAsync();
+            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
+            var isRecurring = await _shoppingCartService.ShoppingCartIsRecurringAsync(cart);
+
+            if (!isRecurring && await _productService.GetProductByIdAsync(productId ?? 0) is Product product)
+                isRecurring = product.IsRecurring;
+
+            //we cannot start checkout process from the product or cart page (no way to get shipping details) for recurring items
+            if (isRecurring && (placement == ButtonPlacement.Cart || placement == ButtonPlacement.Product))
+                return (bool?)null;
+
+            return isRecurring;
+        }, false);
+    }
+
     #endregion
 
     #region Orders
@@ -1332,20 +1520,17 @@ public class PayPalCommerceServiceManager
             if (!IsConfigured(settings))
                 throw new NopException("Plugin not configured");
 
-            var paymentRequest = await _actionContextAccessor.ActionContext.HttpContext.Session
-                .GetAsync<ProcessPaymentRequest>(PayPalCommerceDefaults.PaymentRequestSessionKey)
+            var paymentRequest = await _orderProcessingService.GetProcessPaymentRequestAsync()
                 ?? throw new NopException("Order payment info not found");
 
             var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
             if (!paymentRequest.CustomValues.TryGetValue(orderIdKey, out var orderIdValue) ||
-                !string.Equals(orderIdValue.ToString(), orderId, StringComparison.InvariantCultureIgnoreCase))
-            {
+                !string.Equals(orderIdValue.Value, orderId, StringComparison.InvariantCultureIgnoreCase))
                 throw new NopException("Failed to get PayPal order info");
-            }
 
             var placementKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Placement");
             if (!paymentRequest.CustomValues.TryGetValue(placementKey, out var placementValue) ||
-                !Enum.TryParse<ButtonPlacement>(placementValue.ToString(), out var placement))
+                !Enum.TryParse<ButtonPlacement>(placementValue.Value, out var placement))
             {
                 throw new NopException("Failed to get PayPal order info");
             }
@@ -1377,19 +1562,19 @@ public class PayPalCommerceServiceManager
                 return null;
 
             var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
-            if (!paymentRequest.CustomValues.TryGetValue(orderIdKey, out var orderIdValue) || string.IsNullOrEmpty(orderIdValue.ToString()))
+            if (!paymentRequest.CustomValues.TryGetValue(orderIdKey, out var orderIdValue) || string.IsNullOrEmpty(orderIdValue.Value))
                 return null;
 
             var placementKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Placement");
             if (!paymentRequest.CustomValues.TryGetValue(placementKey, out var placementValue) ||
-                !Enum.TryParse<ButtonPlacement>(placementValue.ToString(), out var previousPlacement) ||
+                !Enum.TryParse<ButtonPlacement>(placementValue.Value, out var previousPlacement) ||
                 previousPlacement != placement)
             {
                 return null;
             }
 
             var order = await _httpClient
-                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.ToString() }, settings);
+                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.Value }, settings);
 
             //we cannot use completed order
             if (order.Status?.ToUpper() != OrderStatusType.CREATED.ToString() &&
@@ -1449,127 +1634,56 @@ public class PayPalCommerceServiceManager
             if (string.IsNullOrEmpty(settings.MerchantId))
                 throw new NopException("Merchant PayPal ID not set");
 
-            //get the primary store currency
-            var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
-            if (string.IsNullOrEmpty(currencyCode))
-                throw new NopException("Primary store currency not set");
-
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var store = await _storeContext.GetCurrentStoreAsync();
-            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
-            if (!cart.Any())
-                throw new NopException("Shopping cart is empty");
-
-            var billingAddress = await _addressService.GetAddressByIdAsync(customer.BillingAddressId ?? 0);
-            if (placement == ButtonPlacement.PaymentMethod && billingAddress is null)
-                throw new NopException("Customer billing address not set");
-
-            var shippingIsRequired = await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart);
-            var shippingOption = await _genericAttributeService
-                .GetAttributeAsync<NopShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, store.Id);
-            var pickupPoint = await _genericAttributeService
-                .GetAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, store.Id);
-            var pickupInStore = _shippingSettings.AllowPickupInStore && pickupPoint is not null;
-            var shippingAddress = pickupInStore ? new NopAddress
-            {
-                Address1 = pickupPoint.Address,
-                City = pickupPoint.City,
-                County = pickupPoint.County,
-                CountryId = (await _countryService.GetCountryByTwoLetterIsoCodeAsync(pickupPoint.CountryCode))?.Id,
-                StateProvinceId = (await _stateProvinceService.GetStateProvinceByAbbreviationAsync(pickupPoint.StateAbbreviation,
-                    (await _countryService.GetCountryByTwoLetterIsoCodeAsync(pickupPoint.CountryCode))?.Id))?.Id,
-                ZipPostalCode = pickupPoint.ZipPostalCode,
-                CreatedOnUtc = DateTime.UtcNow
-            } : await _addressService.GetAddressByIdAsync(customer.ShippingAddressId ?? 0);
-            if (placement == ButtonPlacement.PaymentMethod && shippingIsRequired && shippingAddress is null)
-                throw new NopException("Customer shipping address not set");
+            var details = await PrepareCartDetailsAsync(placement);
 
             var savedPaymentToken = await _tokenService.GetByIdAsync(cardId ?? 0);
-            if (savedPaymentToken is not null && savedPaymentToken.CustomerId != customer.Id)
+            if (savedPaymentToken is not null && savedPaymentToken.CustomerId != details.Customer.Id)
                 throw new NopException("Card details not found");
 
-            var paymentRequest = await _actionContextAccessor.ActionContext.HttpContext.Session
-                .GetAsync<ProcessPaymentRequest>(PayPalCommerceDefaults.PaymentRequestSessionKey);
-            var (order, _) = await GetCreatedOrderAsync(settings, paymentRequest, placement, shippingIsRequired, paymentSource);
-            if (paymentRequest is null || order is null)
+            var isGuest = await _customerService.IsGuestAsync(details.Customer);
+            var isRecurring = await _shoppingCartService.ShoppingCartIsRecurringAsync(details.Cart);
+            if (isRecurring)
             {
-                paymentRequest = new();
-                await _paymentService.GenerateOrderGuidAsync(paymentRequest);
-            }
-            var orderGuid = paymentRequest.OrderGuid.ToString();
+                if (!settings.UseVault)
+                    throw new NopException("Vault disabled");
 
-            var details = new CartDetails
-            {
-                Placement = placement,
-                Customer = customer,
-                Store = store,
-                Cart = cart.ToList(),
-                CurrencyCode = currencyCode,
-                BillingAddress = billingAddress,
-                ShippingAddress = shippingAddress,
-                ShippingIsRequired = shippingIsRequired,
-                IsPickup = pickupInStore,
-                ShippingOption = shippingOption,
-                PickupPoint = pickupPoint
-            };
+                if (isGuest)
+                    throw new NopException("Anonymous checkout disabled for recurring items");
+
+                var (error, cycleLength, cyclePeriod, totalCycles) = await _shoppingCartService.GetRecurringCycleInfoAsync(details.Cart);
+                if (!string.IsNullOrEmpty(error))
+                    throw new NopException(error);
+            }
+
+            var paymentRequest = await _orderProcessingService.GetProcessPaymentRequestAsync();
+            var (order, _) = await GetCreatedOrderAsync(settings, paymentRequest, placement, details.ShippingIsRequired, paymentSource);
+            if (paymentRequest is null || order is null)
+                paymentRequest = new();
 
             //prepare purchase unit
-            var shipping = await PrepareShippingDetailsAsync(details, shippingOption?.Name);
-            var items = await PrepareOrderItemsAsync(details);
-            var orderAmount = await PrepareOrderMoneyAsync(details, items);
-            var cardData = new CardData
-            {
-                Level2 = new() { InvoiceId = CommonHelper.EnsureMaximumLength(orderGuid, 127) },
-                Level3 = new()
-                {
-                    LineItems = items,
-                    ShippingAmount = orderAmount.Breakdown.Shipping,
-                    ShippingAddress = shipping?.Address,
-                    ShipsFromPostalCode = CommonHelper.EnsureMaximumLength((await _addressService
-                        .GetAddressByIdAsync(_shippingSettings.ShippingOriginAddressId))?.ZipPostalCode, 60)
-                },
-            };
-            var purchaseUnit = new PurchaseUnit
-            {
-                CustomId = CommonHelper.EnsureMaximumLength(orderGuid, 127),
-                InvoiceId = CommonHelper.EnsureMaximumLength(orderGuid, 127),
-                Description = CommonHelper.EnsureMaximumLength($"Purchase at '{store.Name}'", 127),
-                SoftDescriptor = CommonHelper.EnsureMaximumLength(store.Name, 22),
-                Payee = new() { MerchantId = settings.MerchantId },
-                Items = items,
-                Amount = orderAmount,
-                Shipping = shipping,
-                SupplementaryData = new() { Card = cardData }
-            };
+            var purchaseUnit = await PreparePurchaseUnitAsync(settings, details, paymentRequest.OrderGuid.ToString());
 
             //whether we should create a new order
-            if (order is null)
+            if (order is null || isRecurring)
             {
                 var isCard = string.Equals(paymentSource, nameof(PaymentSource.Card), StringComparison.InvariantCultureIgnoreCase);
                 var isVenmo = string.Equals(paymentSource, nameof(PaymentSource.Venmo), StringComparison.InvariantCultureIgnoreCase);
                 var isApplepay = string.Equals(paymentSource, nameof(PaymentSource.ApplePay), StringComparison.InvariantCultureIgnoreCase);
+                if (isRecurring && (isVenmo || isApplepay))
+                    throw new NopException($"Payment source '{paymentSource.ToUpper()}' not supported");
 
-                var context = PrepareOrderContext(settings, details, orderGuid, isApplepay);
-                var payer = await PrepareBillingDetailsAsync(details);
+                var context = PrepareOrderContext(settings, details, paymentRequest.OrderGuid.ToString(), isApplepay);
+                var payer = await PrepareBillingDetailsAsync(settings, details);
 
                 //only registered customers can save payment tokens
-                var isGuest = await _customerService.IsGuestAsync(customer);
                 var vault = !settings.UseVault || isGuest ? null : new VaultInstruction
                 {
                     UsageType = VaultUsageType.MERCHANT.ToString().ToUpper(),
                     CustomerType = VaultUsageType.CONSUMER.ToString().ToUpper(),
                     StoreInVault = VaultInstructionType.ON_SUCCESS.ToString().ToUpper(),
-                    PermitMultiplePaymentTokens = false
+                    PermitMultiplePaymentTokens = false,
+                    UsagePattern = isRecurring ? UsagePatternType.INSTALLMENT_PREPAID.ToString().ToUpper() : null
                 };
-                if (vault is not null)
-                {
-                    payer.Id = (await _tokenService.GetAllTokensAsync(settings.ClientId, customer.Id))
-                        .OrderBy(token => token.IsPrimaryMethod ? 0 : 1)
-                        .ThenBy(token => token.Type == nameof(PaymentSource.Card) ? 0 : 1)
-                        .ThenBy(token => token.Id)
-                        .FirstOrDefault()
-                        ?.VaultCustomerId;
-                }
 
                 //set payment source
                 var paymentSourceDetails = new PaymentSource();
@@ -1592,10 +1706,13 @@ public class PayPalCommerceServiceManager
                         paymentSourceDetails.Card.StoredCredential = new()
                         {
                             PaymentInitiator = PaymentInitiatorType.CUSTOMER.ToString().ToUpper(),
-                            PaymentType = Api.Models.Enums.PaymentType.ONE_TIME.ToString().ToUpper(),
+                            PaymentType = isRecurring
+                                ? Api.Models.Enums.PaymentType.RECURRING.ToString().ToUpper()
+                                : Api.Models.Enums.PaymentType.ONE_TIME.ToString().ToUpper(),
                             Usage = saveCard
                                 ? StoredPaymentUsageType.FIRST.ToString().ToUpper()
-                                : StoredPaymentUsageType.SUBSEQUENT.ToString().ToUpper()
+                                : StoredPaymentUsageType.SUBSEQUENT.ToString().ToUpper(),
+                            UsagePattern = isRecurring ? UsagePatternType.INSTALLMENT_PREPAID.ToString().ToUpper() : null
                         };
                     }
 
@@ -1660,10 +1777,18 @@ public class PayPalCommerceServiceManager
             //save order details for future using as the payment request
             var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
             paymentRequest.CustomValues[orderIdKey] = order.Id;
+
             var placementKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Placement");
-            paymentRequest.CustomValues[placementKey] = placement.ToString();
-            await _actionContextAccessor.ActionContext.HttpContext.Session
-                .SetAsync(PayPalCommerceDefaults.PaymentRequestSessionKey, paymentRequest);
+            paymentRequest.CustomValues.Remove(placementKey);
+            paymentRequest.CustomValues.Add(new(placementKey, placement.ToString(), displayToCustomer: false));
+
+            if (isRecurring && !string.IsNullOrEmpty(savedPaymentToken?.VaultId))
+            {
+                paymentRequest.CustomValues.Remove(PayPalCommerceDefaults.TokenIdAttributeName);
+                paymentRequest.CustomValues.Add(new(PayPalCommerceDefaults.TokenIdAttributeName, savedPaymentToken.Id.ToString(), displayToCustomer: false));
+            }
+
+            await _orderProcessingService.SetProcessPaymentRequestAsync(paymentRequest, true);
 
             return order;
         });
@@ -1699,23 +1824,18 @@ public class PayPalCommerceServiceManager
             if (!cart.Any())
                 throw new NopException("Shopping cart is empty");
 
-            var paymentRequest = await _actionContextAccessor.ActionContext.HttpContext.Session
-                .GetAsync<ProcessPaymentRequest>(PayPalCommerceDefaults.PaymentRequestSessionKey)
+            var paymentRequest = await _orderProcessingService.GetProcessPaymentRequestAsync()
                 ?? throw new NopException("Order payment info not found");
 
             var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
             if (!paymentRequest.CustomValues.TryGetValue(orderIdKey, out var orderIdValue) ||
-                (!string.IsNullOrEmpty(orderId) && !string.Equals(orderIdValue.ToString(), orderId, StringComparison.InvariantCultureIgnoreCase)))
-            {
+                (!string.IsNullOrEmpty(orderId) && !string.Equals(orderIdValue.Value, orderId, StringComparison.InvariantCultureIgnoreCase)))
                 throw new NopException("Failed to get PayPal order info");
-            }
 
             var placementKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Placement");
             if (!paymentRequest.CustomValues.TryGetValue(placementKey, out var placementValue) ||
-                !Enum.TryParse<ButtonPlacement>(placementValue.ToString(), out var placement))
-            {
+                !Enum.TryParse<ButtonPlacement>(placementValue.Value, out var placement))
                 throw new NopException("Failed to get PayPal order info");
-            }
 
             //changing shipping address or option on the payment method page is not available
             if (placement == ButtonPlacement.PaymentMethod)
@@ -1723,7 +1843,7 @@ public class PayPalCommerceServiceManager
 
             //check the order status
             var order = await _httpClient
-                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.ToString() }, settings);
+                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.Value }, settings);
             if (order.Status?.ToUpper() != OrderStatusType.CREATED.ToString() &&
                 order.Status?.ToUpper() != OrderStatusType.PAYER_ACTION_REQUIRED.ToString() &&
                 order.Status?.ToUpper() != OrderStatusType.APPROVED.ToString())
@@ -1756,7 +1876,7 @@ public class PayPalCommerceServiceManager
                 return false;
 
             //recalculate the total and update the items, since the shipping price may have changed
-            var items = unit.Items;
+            var items = await PrepareOrderItemsAsync(details);
             var orderAmount = await PrepareOrderMoneyAsync(details, items);
             var cardData = new CardData
             {
@@ -1814,8 +1934,7 @@ public class PayPalCommerceServiceManager
             if (!cart.Any())
                 throw new NopException("Shopping cart is empty");
 
-            var paymentRequest = await _actionContextAccessor.ActionContext.HttpContext.Session
-                .GetAsync<ProcessPaymentRequest>(PayPalCommerceDefaults.PaymentRequestSessionKey)
+            var paymentRequest = await _orderProcessingService.GetProcessPaymentRequestAsync()
                 ?? throw new NopException("Order payment info not found");
 
             if (!string.IsNullOrEmpty(orderGuid) &&
@@ -1826,21 +1945,19 @@ public class PayPalCommerceServiceManager
 
             var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
             if (!paymentRequest.CustomValues.TryGetValue(orderIdKey, out var orderIdValue) ||
-                (!string.IsNullOrEmpty(orderId) && !string.Equals(orderIdValue.ToString(), orderId, StringComparison.InvariantCultureIgnoreCase)))
-            {
+                (!string.IsNullOrEmpty(orderId) && !string.Equals(orderIdValue.Value, orderId, StringComparison.InvariantCultureIgnoreCase)))
                 throw new NopException("Failed to get PayPal order info");
-            }
 
             var placementKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Placement");
             if (!paymentRequest.CustomValues.TryGetValue(placementKey, out var placementValue) ||
-                !Enum.TryParse<ButtonPlacement>(placementValue.ToString(), out var placement))
+                !Enum.TryParse<ButtonPlacement>(placementValue.Value, out var placement))
             {
                 throw new NopException("Failed to get PayPal order info");
             }
 
             //check the order status
             var order = await _httpClient
-                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.ToString() }, settings);
+                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.Value }, settings);
             if (order.Status?.ToUpper() != OrderStatusType.APPROVED.ToString() && order.Status?.ToUpper() != OrderStatusType.COMPLETED.ToString())
             {
                 if (order.Status?.ToUpper() == OrderStatusType.CREATED.ToString())
@@ -1852,7 +1969,9 @@ public class PayPalCommerceServiceManager
                         throw new NopException($"The authentication system isn't available, please retry later");
                 }
                 else
+                {
                     throw new NopException($"Order is in '{order.Status}' status");
+                }
             }
 
             if (order.PurchaseUnits.FirstOrDefault() is not PurchaseUnit unit ||
@@ -1883,7 +2002,7 @@ public class PayPalCommerceServiceManager
             };
 
             //recalculate the total and update the items, since the amounts may have changed
-            var items = unit.Items;
+            var items = await PrepareOrderItemsAsync(details);
             var orderAmount = await PrepareOrderMoneyAsync(details, items);
             var cardData = new CardData
             {
@@ -1991,12 +2110,11 @@ public class PayPalCommerceServiceManager
             if (!cart.Any())
                 throw new NopException("Shopping cart is empty");
 
-            var paymentRequest = await _actionContextAccessor.ActionContext.HttpContext.Session
-                .GetAsync<ProcessPaymentRequest>(PayPalCommerceDefaults.PaymentRequestSessionKey);
+            var paymentRequest = await _orderProcessingService.GetProcessPaymentRequestAsync();
             var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
             if (paymentRequest is null ||
                 !paymentRequest.CustomValues.TryGetValue(orderIdKey, out var orderIdValue) ||
-                !string.Equals(orderIdValue.ToString(), orderId, StringComparison.InvariantCultureIgnoreCase))
+                !string.Equals(orderIdValue.Value, orderId, StringComparison.InvariantCultureIgnoreCase))
             {
                 throw new NopException("Failed to get the PayPal order ID");
             }
@@ -2027,8 +2145,7 @@ public class PayPalCommerceServiceManager
             //totals must match
             var (cartTotal, _, _, _, _, _) = await _orderTotalCalculationService
                 .GetShoppingCartTotalAsync(cart, usePaymentMethodAdditionalFee: false);
-            decimal.TryParse(unit.Amount?.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var orderAmount);
-            var difference = Math.Abs(orderAmount - Math.Round(cartTotal ?? decimal.Zero, 2));
+            var difference = Math.Abs(ConvertMoney(unit.Amount) - Math.Round(cartTotal ?? decimal.Zero, 2));
             if (difference > decimal.Zero)
                 throw new NopException($"Shopping cart total and approved order amount differ by {difference}");
 
@@ -2040,21 +2157,27 @@ public class PayPalCommerceServiceManager
                     throw new NopException(await _localizationService.GetResourceAsync("Checkout.MinOrderPlacementInterval"));
             }
 
+            var tokenId = paymentRequest.CustomValues
+                .TryGetValue(PayPalCommerceDefaults.TokenIdAttributeName, out var tokenIdValue) && int.TryParse(tokenIdValue.Value, out var id)
+                ? id : 0;
+
             paymentRequest.StoreId = store.Id;
             paymentRequest.CustomerId = customer.Id;
             paymentRequest.PaymentMethodSystemName = PayPalCommerceDefaults.SystemName;
-            paymentRequest.CustomValues.Remove(await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Placement"));
+            paymentRequest.CustomValues.Remove(PayPalCommerceDefaults.TokenIdAttributeName);
 
             //try to place an order
             var placeOrderResult = await _orderProcessingService.PlaceOrderAsync(paymentRequest);
-            if (placeOrderResult?.Success != true || placeOrderResult.PlacedOrder is null)
+            if (placeOrderResult?.PlacedOrder is not NopOrder nopOrder || placeOrderResult?.Success != true)
                 throw new NopException(string.Join(',', placeOrderResult?.Errors ?? new List<string>()));
 
-            //clear payment request
-            await _actionContextAccessor.ActionContext.HttpContext.Session
-                .SetAsync<ProcessPaymentRequest>(PayPalCommerceDefaults.PaymentRequestSessionKey, null);
+            if (await _tokenService.GetByIdAsync(tokenId) is PayPalToken token && token.CustomerId == customer.Id)
+                await _genericAttributeService.SaveAttributeAsync(nopOrder, PayPalCommerceDefaults.TokenIdAttributeName, tokenId);
 
-            return (placeOrderResult.PlacedOrder, order);
+            //clear payment request
+            await _orderProcessingService.SetProcessPaymentRequestAsync(null);
+
+            return (nopOrder, order);
         });
     }
 
@@ -2101,69 +2224,84 @@ public class PayPalCommerceServiceManager
             //check the authorization object or the capture object
             var purchaseUnit = order.PurchaseUnits.FirstOrDefault();
             var authorization = purchaseUnit.Payments?.Authorizations?.FirstOrDefault();
-            if (authorization is not null)
+            var capture = purchaseUnit.Payments?.Captures?.FirstOrDefault();
+            try
             {
-                if (authorization.Status?.ToUpper() == AuthorizationStatusType.DENIED.ToString())
-                    throw new NopException("Cannot authorize funds for this authorized payment");
-
-                if (authorization.Status?.ToUpper() == AuthorizationStatusType.PENDING.ToString())
+                if (authorization is not null)
                 {
-                    await _orderService.InsertOrderNoteAsync(new()
-                    {
-                        OrderId = nopOrder.Id,
-                        Note = $"Authorization is in {authorization.Status} status due to {authorization.StatusDetails?.Reason}",
-                        DisplayToCustomer = true,
-                        CreatedOnUtc = DateTime.UtcNow
-                    });
+                    if (authorization.Status?.ToUpper() == AuthorizationStatusType.DENIED.ToString())
+                        throw new NopException("Cannot authorize funds for this authorized payment");
 
-                    if (settings.PaymentType == Domain.PaymentType.Authorize && settings.ImmediatePaymentRequired)
-                        throw new NopException($"Immediate payment required but authorization is {authorization.Status}");
+                    if (authorization.Status?.ToUpper() == AuthorizationStatusType.PENDING.ToString())
+                    {
+                        await _orderService.InsertOrderNoteAsync(new()
+                        {
+                            OrderId = nopOrder.Id,
+                            Note = $"Authorization is in {authorization.Status} status due to {authorization.StatusDetails?.Reason}",
+                            DisplayToCustomer = true,
+                            CreatedOnUtc = DateTime.UtcNow
+                        });
+
+                        if (settings.PaymentType == Domain.PaymentType.Authorize && settings.ImmediatePaymentRequired)
+                            throw new NopException($"Immediate payment required but authorization is {authorization.Status}");
+                    }
+
+                    if (authorization.Status?.ToUpper() == AuthorizationStatusType.CREATED.ToString())
+                    {
+                        if (_orderProcessingService.CanMarkOrderAsAuthorized(nopOrder))
+                        {
+                            nopOrder.AuthorizationTransactionId = authorization.Id;
+                            nopOrder.AuthorizationTransactionResult = authorization.Status;
+                            nopOrder.AuthorizationTransactionCode = authorization.ProcessorResponse?.ResponseCode;
+                            await _orderProcessingService.MarkAsAuthorizedAsync(nopOrder);
+                        }
+                    }
                 }
 
-                if (authorization.Status?.ToUpper() == AuthorizationStatusType.CREATED.ToString())
+                if (capture is not null)
                 {
-                    if (_orderProcessingService.CanMarkOrderAsAuthorized(nopOrder))
+                    if (capture.Status?.ToUpper() == CaptureStatusType.DECLINED.ToString())
+                        throw new NopException("The funds could not be captured");
+
+                    if (capture.Status?.ToUpper() == CaptureStatusType.FAILED.ToString())
+                        throw new NopException("There was an error while capturing payment");
+
+                    if (capture.Status?.ToUpper() == CaptureStatusType.PENDING.ToString())
                     {
-                        nopOrder.AuthorizationTransactionId = authorization.Id;
-                        nopOrder.AuthorizationTransactionResult = authorization.Status;
-                        nopOrder.AuthorizationTransactionCode = authorization.ProcessorResponse?.ResponseCode;
-                        await _orderProcessingService.MarkAsAuthorizedAsync(nopOrder);
+                        await _orderService.InsertOrderNoteAsync(new()
+                        {
+                            OrderId = nopOrder.Id,
+                            Note = $"Capture is in {capture.Status} status due to {capture.StatusDetails?.Reason}",
+                            DisplayToCustomer = true,
+                            CreatedOnUtc = DateTime.UtcNow
+                        });
+
+                        if (settings.ImmediatePaymentRequired)
+                            throw new NopException($"Immediate payment required but capture is {capture.Status}");
+                    }
+
+                    if (capture.Status?.ToUpper() == CaptureStatusType.COMPLETED.ToString())
+                    {
+                        if (_orderProcessingService.CanMarkOrderAsPaid(nopOrder))
+                        {
+                            nopOrder.CaptureTransactionId = capture.Id;
+                            nopOrder.CaptureTransactionResult = capture.Status;
+                            await _orderProcessingService.MarkOrderAsPaidAsync(nopOrder);
+                        }
                     }
                 }
             }
-
-            var capture = purchaseUnit.Payments?.Captures?.FirstOrDefault();
-            if (capture is not null)
+            catch (NopException exception)
             {
-                if (capture.Status?.ToUpper() == CaptureStatusType.DECLINED.ToString())
-                    throw new NopException("The funds could not be captured");
-
-                if (capture.Status?.ToUpper() == CaptureStatusType.FAILED.ToString())
-                    throw new NopException("There was an error while capturing payment");
-
-                if (capture.Status?.ToUpper() == CaptureStatusType.PENDING.ToString())
+                await _orderService.InsertOrderNoteAsync(new()
                 {
-                    await _orderService.InsertOrderNoteAsync(new()
-                    {
-                        OrderId = nopOrder.Id,
-                        Note = $"Capture is in {capture.Status} status due to {capture.StatusDetails?.Reason}",
-                        DisplayToCustomer = true,
-                        CreatedOnUtc = DateTime.UtcNow
-                    });
+                    OrderId = nopOrder.Id,
+                    Note = $"Error: {exception.Message}",
+                    DisplayToCustomer = true,
+                    CreatedOnUtc = DateTime.UtcNow
+                });
 
-                    if (settings.ImmediatePaymentRequired)
-                        throw new NopException($"Immediate payment required but capture is {capture.Status}");
-                }
-
-                if (capture.Status?.ToUpper() == CaptureStatusType.COMPLETED.ToString())
-                {
-                    if (_orderProcessingService.CanMarkOrderAsPaid(nopOrder))
-                    {
-                        nopOrder.CaptureTransactionId = capture.Id;
-                        nopOrder.CaptureTransactionResult = capture.Status;
-                        await _orderProcessingService.MarkOrderAsPaidAsync(nopOrder);
-                    }
-                }
+                throw;
             }
 
             //try to get saved in vault payment token
@@ -2186,6 +2324,9 @@ public class PayPalCommerceServiceManager
                         ? nameof(order.PaymentSource.PayPal)
                         : null))
                 });
+
+                if (await _tokenService.GetTokenAsync(settings.ClientId, nopOrder.CustomerId, vaultedPaymentMethod.Id) is PayPalToken token)
+                    await _genericAttributeService.SaveAttributeAsync(nopOrder, PayPalCommerceDefaults.TokenIdAttributeName, token.Id);
             }
 
             return order;
@@ -2197,66 +2338,19 @@ public class PayPalCommerceServiceManager
     /// <summary>
     /// Get Apple Pay transaction info
     /// </summary>
+    /// <param name="settings">Plugin settings</param>
     /// <param name="placement">Button placement</param>
-    /// <param name="withShipping">Whether to prepare shipping details</param>
     /// <returns>
     /// A task that represents the asynchronous operation
     /// The task result contains the Apple Pay transaction info; error message if exists
     /// </returns>
     public async Task<((OrderMoney Amount, Contact BillingAddress, Contact ShippingAddress, Shipping Shipping, string StoreName), string Error)>
-        GetAppleTransactionInfoAsync(ButtonPlacement placement, bool withShipping)
+        GetAppleTransactionInfoAsync(PayPalCommerceSettings settings, ButtonPlacement placement)
     {
         return await HandleFunctionAsync(async () =>
         {
-            var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
-            if (string.IsNullOrEmpty(currencyCode))
-                throw new NopException("Primary store currency not set");
-
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var store = await _storeContext.GetCurrentStoreAsync();
-            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
-            if (!cart.Any())
-                throw new NopException("Shopping cart is empty");
-
-            var billingAddress = await _customerService.GetCustomerBillingAddressAsync(customer);
-            if (placement == ButtonPlacement.PaymentMethod && billingAddress is null)
-                throw new NopException("Customer billing address not set");
-
-            var shippingIsRequired = await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart);
-            var shippingOption = await _genericAttributeService
-                .GetAttributeAsync<NopShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, store.Id);
-            var pickupPoint = await _genericAttributeService
-                .GetAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, store.Id);
-            var pickupInStore = _shippingSettings.AllowPickupInStore && pickupPoint is not null;
-            var shippingAddress = pickupInStore ? new NopAddress
-            {
-                Address1 = pickupPoint.Address,
-                City = pickupPoint.City,
-                County = pickupPoint.County,
-                CountryId = (await _countryService.GetCountryByTwoLetterIsoCodeAsync(pickupPoint.CountryCode))?.Id,
-                StateProvinceId = (await _stateProvinceService.GetStateProvinceByAbbreviationAsync(pickupPoint.StateAbbreviation,
-                    (await _countryService.GetCountryByTwoLetterIsoCodeAsync(pickupPoint.CountryCode))?.Id))?.Id,
-                ZipPostalCode = pickupPoint.ZipPostalCode,
-                CreatedOnUtc = DateTime.UtcNow
-            } : await _addressService.GetAddressByIdAsync(customer.ShippingAddressId ?? 0);
-            if (placement == ButtonPlacement.PaymentMethod && shippingIsRequired && shippingAddress is null)
-                throw new NopException("Customer shipping address not set");
-
-            var details = new CartDetails
-            {
-                Placement = placement,
-                Customer = customer,
-                Store = store,
-                CurrencyCode = currencyCode,
-                BillingAddress = billingAddress,
-                Cart = cart.ToList(),
-                ShippingAddress = shippingAddress,
-                ShippingIsRequired = shippingIsRequired,
-                IsPickup = pickupInStore,
-                PickupPoint = pickupPoint,
-                ShippingOption = shippingOption
-            };
-            var payer = await PrepareBillingDetailsAsync(details);
+            var details = await PrepareCartDetailsAsync(placement);
+            var payer = await PrepareBillingDetailsAsync(settings, details);
             var billingContact = new Contact
             {
                 Email = payer.EmailAddress,
@@ -2272,20 +2366,24 @@ public class PayPalCommerceServiceManager
             var items = await PrepareOrderItemsAsync(details);
             var orderAmount = await PrepareOrderMoneyAsync(details, items);
 
-            var shipping = await PrepareShippingDetailsAsync(details, shippingOption?.Name, true);
+            var shipping = await PrepareShippingDetailsAsync(details, details.ShippingOption?.Name, true);
             var shippingContact = new Contact
             {
-                FirstName = shippingAddress is not null && !pickupInStore ? shippingAddress.FirstName : customer.FirstName,
-                LastName = shippingAddress is not null && !pickupInStore ? shippingAddress.LastName : customer.LastName,
+                FirstName = details.ShippingAddress is not null && !details.IsPickup
+                    ? details.ShippingAddress.FirstName
+                    : details.Customer.FirstName,
+                LastName = details.ShippingAddress is not null && !details.IsPickup
+                    ? details.ShippingAddress.LastName
+                    : details.Customer.LastName,
                 AddressLines = [shipping.Address?.AddressLine1, shipping.Address?.AddressLine2],
                 City = shipping.Address?.AdminArea2,
                 State = shipping.Address?.AdminArea1,
                 Country = shipping.Address?.CountryCode,
                 PostalCode = shipping.Address?.PostalCode,
-                PickupInStore = pickupInStore
+                PickupInStore = details.IsPickup
             };
 
-            return (orderAmount, billingContact, shippingContact, shipping, store.Name);
+            return (orderAmount, billingContact, shippingContact, shipping, details.Store.Name);
         });
     }
 
@@ -2304,38 +2402,18 @@ public class PayPalCommerceServiceManager
     {
         return await HandleFunctionAsync(async () =>
         {
-            var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
-            if (string.IsNullOrEmpty(currencyCode))
-                throw new NopException("Primary store currency not set");
-
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var store = await _storeContext.GetCurrentStoreAsync();
-            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
-            if (!cart.Any())
-                throw new NopException("Shopping cart is empty");
-
             //changing shipping address or option on the payment method page is not available
             if (placement == ButtonPlacement.PaymentMethod)
                 return null;
 
-            var shippingIsRequired = await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart);
-            if (!shippingIsRequired)
+            var details = await PrepareCartDetailsAsync(placement, false);
+            if (!details.ShippingIsRequired)
                 return null;
 
             //get option id
             var optionValues = selectedOption?.Split('|', StringSplitOptions.RemoveEmptyEntries)?.ToList() ?? new();
             var option = (optionValues.FirstOrDefault(), optionValues.LastOrDefault());
-
-            var details = new CartDetails
-            {
-                Placement = placement,
-                Customer = customer,
-                Store = store,
-                Cart = cart.ToList(),
-                CurrencyCode = currencyCode,
-                ShippingIsRequired = shippingIsRequired
-            };
-            var shipping = await PrepareUpdatedShippingAsync(details, customer.Email, selectedAddress, option);
+            var shipping = await PrepareUpdatedShippingAsync(details, details.Customer.Email, selectedAddress, option);
 
             return shipping;
         });
@@ -2354,35 +2432,13 @@ public class PayPalCommerceServiceManager
     {
         return await HandleFunctionAsync(async () =>
         {
-            var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
-            if (string.IsNullOrEmpty(currencyCode))
-                throw new NopException("Primary store currency not set");
-
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var store = await _storeContext.GetCurrentStoreAsync();
-            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
-            if (!cart.Any())
-                throw new NopException("Shopping cart is empty");
-
-            var billingAddress = await _customerService.GetCustomerBillingAddressAsync(customer);
-            if (placement == ButtonPlacement.PaymentMethod && billingAddress is null)
-                throw new NopException("Customer billing address not set");
-
-            var details = new CartDetails
-            {
-                Placement = placement,
-                Customer = customer,
-                Store = store,
-                Cart = cart.ToList(),
-                CurrencyCode = currencyCode
-            };
+            var details = await PrepareCartDetailsAsync(placement);
             var items = await PrepareOrderItemsAsync(details);
             var orderAmount = await PrepareOrderMoneyAsync(details, items);
 
-            var country = await _countryService.GetCountryByIdAsync(billingAddress?.CountryId ?? customer.CountryId);
-            var shippingIsRequired = await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart);
+            var country = await _countryService.GetCountryByIdAsync(details.BillingAddress?.CountryId ?? details.Customer.CountryId);
 
-            return (orderAmount, country?.TwoLetterIsoCode ?? "US", shippingIsRequired);
+            return (orderAmount, country?.TwoLetterIsoCode ?? "US", details.ShippingIsRequired);
         });
     }
 
@@ -2401,38 +2457,18 @@ public class PayPalCommerceServiceManager
     {
         return await HandleFunctionAsync(async () =>
         {
-            var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
-            if (string.IsNullOrEmpty(currencyCode))
-                throw new NopException("Primary store currency not set");
-
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var store = await _storeContext.GetCurrentStoreAsync();
-            var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
-            if (!cart.Any())
-                throw new NopException("Shopping cart is empty");
-
             //changing shipping address or option on the payment method page is not available
             if (placement == ButtonPlacement.PaymentMethod)
                 return null;
 
-            var shippingIsRequired = await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart);
-            if (!shippingIsRequired)
+            var details = await PrepareCartDetailsAsync(placement, false);
+            if (!details.ShippingIsRequired)
                 return null;
 
             //get option id
             var optionValues = selectedOption?.Split('|', StringSplitOptions.RemoveEmptyEntries)?.ToList() ?? new();
             var option = (optionValues.FirstOrDefault(), optionValues.LastOrDefault());
-
-            var details = new CartDetails
-            {
-                Placement = placement,
-                Customer = customer,
-                Store = store,
-                Cart = cart.ToList(),
-                CurrencyCode = currencyCode,
-                ShippingIsRequired = shippingIsRequired
-            };
-            var shipping = await PrepareUpdatedShippingAsync(details, customer.Email, selectedAddress, option);
+            var shipping = await PrepareUpdatedShippingAsync(details, details.Customer.Email, selectedAddress, option);
 
             return shipping;
         });
@@ -2559,6 +2595,301 @@ public class PayPalCommerceServiceManager
 
     #endregion
 
+    #region Recurring payments
+
+    /// <summary>
+    /// Create setup token to allow the payer authenticate and approve the creation of a billing agreement
+    /// </summary>
+    /// <param name="settings">Plugin settings</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the setup token; error message if exists
+    /// </returns>
+    public async Task<(PaymentToken PaymentToken, string Error)> CreateSetupTokenAsync(PayPalCommerceSettings settings)
+    {
+        return await HandleFunctionAsync(async () =>
+        {
+            if (!IsConfigured(settings))
+                throw new NopException("Plugin not configured");
+
+            if (!settings.UseVault)
+                throw new NopException("Vault disabled");
+
+            var details = await PrepareCartDetailsAsync(ButtonPlacement.PaymentMethod);
+
+            if (!await _shoppingCartService.ShoppingCartIsRecurringAsync(details.Cart))
+                throw new NopException("Shopping cart has no recurring items");
+
+            if (await _customerService.IsGuestAsync(details.Customer))
+                throw new NopException("Anonymous checkout disabled for recurring items");
+
+            var (error, cycleLength, cyclePeriod, totalCycles) = await _shoppingCartService.GetRecurringCycleInfoAsync(details.Cart);
+            if (!string.IsNullOrEmpty(error))
+                throw new NopException(error);
+
+            var orderGuid = Guid.NewGuid().ToString();
+            var items = await PrepareOrderItemsAsync(details);
+            var orderAmount = await PrepareOrderMoneyAsync(details, items);
+            var shipping = await PrepareShippingDetailsAsync(details, details.ShippingOption?.Name);
+
+            var context = PrepareRecurringPaymentContext(details);
+            var payer = await PrepareBillingDetailsAsync(settings, details);
+
+            //prepare subscription (billing plan) details
+            var billingCycle = new BillingCycle
+            {
+                Sequence = 1,
+                TenureType = TenureType.REGULAR.ToString().ToUpper(),
+                TotalCycles = totalCycles,
+                PricingScheme = new()
+                {
+                    PricingModel = PricingModelType.FIXED.ToString().ToUpper(),
+                    Price = orderAmount
+                },
+                Frequency = new()
+                {
+                    IntervalCount = cycleLength,
+                    IntervalUnit = cyclePeriod switch
+                    {
+                        RecurringProductCyclePeriod.Days => IntervalUnitType.DAY.ToString().ToUpper(),
+                        RecurringProductCyclePeriod.Weeks => IntervalUnitType.WEEK.ToString().ToUpper(),
+                        RecurringProductCyclePeriod.Months => IntervalUnitType.MONTH.ToString().ToUpper(),
+                        RecurringProductCyclePeriod.Years => IntervalUnitType.YEAR.ToString().ToUpper(),
+                        _ => null,
+                    }
+                }
+            };
+
+            var request = new CreateSetupTokenRequest
+            {
+                Customer = payer,
+                PaymentSource = new()
+                {
+                    PayPal = new()
+                    {
+                        Description = CommonHelper.EnsureMaximumLength($"Purchase at '{details.Store.Name}'", 127),
+                        PermitMultiplePaymentTokens = false,
+                        CustomerType = VaultUsageType.CONSUMER.ToString().ToUpper(),
+                        UsageType = VaultUsageType.MERCHANT.ToString().ToUpper(),
+                        UsagePattern = UsagePatternType.INSTALLMENT_PREPAID.ToString().ToUpper(),
+                        BillingPlan = new()
+                        {
+                            BillingCycles = new() { billingCycle },
+                            OneTimeCharges = new() { TotalAmount = orderAmount }
+                        },
+                        Shipping = shipping,
+                        ExperienceContext = context
+                    }
+                }
+            };
+
+            return await _httpClient.RequestAsync<CreateSetupTokenRequest, CreateSetupTokenResponse>(request, settings);
+        });
+    }
+
+    /// <summary>
+    /// Create a recurring order
+    /// </summary>
+    /// <param name="settings">Plugin settings</param>
+    /// <param name="setupTokenId">Setup token id</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the created order; error message if exists
+    /// </returns>
+    public async Task<(Order Order, string Error)> CreateRecurringOrderAsync(PayPalCommerceSettings settings, string setupTokenId)
+    {
+        return await HandleFunctionAsync(async () =>
+        {
+            if (!IsConfigured(settings))
+                throw new NopException("Plugin not configured");
+
+            if (string.IsNullOrEmpty(settings.MerchantId))
+                throw new NopException("Merchant PayPal ID not set");
+
+            if (!settings.UseVault)
+                throw new NopException("Vault disabled");
+
+            if (string.IsNullOrEmpty(setupTokenId))
+                throw new NopException("Setup token not set");
+
+            var details = await PrepareCartDetailsAsync(ButtonPlacement.PaymentMethod);
+
+            if (!await _shoppingCartService.ShoppingCartIsRecurringAsync(details.Cart))
+                throw new NopException("Shopping cart has no recurring items");
+
+            if (await _customerService.IsGuestAsync(details.Customer))
+                throw new NopException("Anonymous checkout disabled for recurring items");
+
+            //try to create payment token by the approved setup token
+            var payer = await PrepareBillingDetailsAsync(settings, details);
+            var paymentTokenRequest = new CreatePaymentTokenRequest
+            {
+                Customer = payer,
+                PaymentSource = new()
+                {
+                    Token = new()
+                    {
+                        Id = setupTokenId,
+                        Type = PaymentTokenType.SETUP_TOKEN.ToString().ToUpper()
+                    }
+                }
+            };
+
+            var paymentToken = await _httpClient.RequestAsync<CreatePaymentTokenRequest, CreatePaymentTokenResponse>(paymentTokenRequest, settings);
+            if (string.IsNullOrEmpty(paymentToken?.Id))
+                throw new NopException("Payment token not created");
+
+            await _tokenService.InsertAsync(new()
+            {
+                ClientId = settings.ClientId,
+                CustomerId = details.Customer.Id,
+                IsPrimaryMethod = false,
+                VaultId = paymentToken.Id,
+                VaultCustomerId = paymentToken.Customer?.Id,
+                TransactionId = paymentToken.Metadata?.OrderId,
+                Type = paymentToken.PaymentSource?.Card is not null
+                    ? nameof(paymentToken.PaymentSource.Card)
+                    : (paymentToken.PaymentSource?.PayPal is not null
+                    ? nameof(paymentToken.PaymentSource.PayPal)
+                    : null)
+            });
+
+            var paymentRequest = new ProcessPaymentRequest();
+
+            //prepare purchase unit
+            var purchaseUnit = await PreparePurchaseUnitAsync(settings, details, paymentRequest.OrderGuid.ToString());
+
+            //set payment source
+            var paymentSourceDetails = new PaymentSource();
+            if (paymentToken.PaymentSource?.PayPal is not null)
+            {
+                paymentSourceDetails.PayPal = new()
+                {
+                    EmailAddress = payer.EmailAddress,
+                    VaultId = paymentToken.Id,
+                    StoredCredential = new()
+                    {
+                        PaymentInitiator = PaymentInitiatorType.CUSTOMER.ToString().ToUpper(),
+                        Usage = StoredPaymentUsageType.SUBSEQUENT.ToString().ToUpper(),
+                        UsagePattern = UsagePatternType.INSTALLMENT_PREPAID.ToString().ToUpper(),
+                    }
+                };
+            }
+
+            var order = await _httpClient.RequestAsync<CreateOrderRequest, CreateOrderResponse>(new CreateOrderRequest
+            {
+                Intent = settings.PaymentType.ToString().ToUpper(),
+                PaymentSource = paymentSourceDetails,
+                PurchaseUnits = [purchaseUnit]
+            }, settings);
+
+            //save order details for future using as the payment request
+            var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
+            paymentRequest.CustomValues[orderIdKey] = order.Id;
+
+            var placementKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Placement");
+            paymentRequest.CustomValues.Remove(placementKey);
+            paymentRequest.CustomValues.Add(new(placementKey, ButtonPlacement.PaymentMethod.ToString(), displayToCustomer: false));
+
+            if (await _tokenService.GetTokenAsync(settings.ClientId, details.Customer.Id, paymentToken.Id) is PayPalToken token)
+            {
+                paymentRequest.CustomValues.Remove(PayPalCommerceDefaults.TokenIdAttributeName);
+                paymentRequest.CustomValues.Add(new(PayPalCommerceDefaults.TokenIdAttributeName, token.Id.ToString(), displayToCustomer: false));
+            }
+
+            await _orderProcessingService.SetProcessPaymentRequestAsync(paymentRequest, true);
+
+            return order;
+        });
+    }
+
+    /// <summary>
+    /// Process next recurring payment
+    /// </summary>
+    /// <param name="settings">Plugin settings</param>
+    /// <param name="paymentRequest">Payment request</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the created order; error message if exists
+    /// </returns>
+    public async Task<(Order Order, string Error)> ProcessNextRecurringPaymentAsync(PayPalCommerceSettings settings,
+        ProcessPaymentRequest paymentRequest)
+    {
+        return await HandleFunctionAsync(async () =>
+        {
+            if (!IsConfigured(settings))
+                throw new NopException("Plugin not configured");
+
+            var tokenId = await _genericAttributeService
+                .GetAttributeAsync<int>(paymentRequest.InitialOrder, PayPalCommerceDefaults.TokenIdAttributeName);
+            if (await _tokenService.GetByIdAsync(tokenId) is not PayPalToken token || token.CustomerId != paymentRequest.CustomerId)
+                throw new NopException("Payment token not found");
+
+            var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
+            if (string.IsNullOrEmpty(currencyCode))
+                throw new NopException("Primary store currency not set");
+
+            //prepare purchase unit
+            var store = await _storeService.GetStoreByIdAsync(paymentRequest.StoreId);
+            var orderGuid = paymentRequest.OrderGuid.ToString();
+            var money = PrepareMoney(paymentRequest.OrderTotal, currencyCode);
+            var purchaseUnit = new PurchaseUnit
+            {
+                CustomId = CommonHelper.EnsureMaximumLength(orderGuid, 127),
+                InvoiceId = CommonHelper.EnsureMaximumLength(orderGuid, 127),
+                Description = CommonHelper.EnsureMaximumLength($"Purchase at '{store.Name}'", 127),
+                SoftDescriptor = CommonHelper.EnsureMaximumLength(store.Name, 22),
+                Payee = new() { MerchantId = settings.MerchantId },
+                Amount = new() { Value = money.Value, CurrencyCode = money.CurrencyCode }
+            };
+
+            //set payment source
+            var paymentSourceDetails = new PaymentSource();
+            var storedCredential = new StoredCredential
+            {
+                PaymentInitiator = PaymentInitiatorType.MERCHANT.ToString().ToUpper(),
+                Usage = StoredPaymentUsageType.SUBSEQUENT.ToString().ToUpper(),
+                UsagePattern = UsagePatternType.INSTALLMENT_PREPAID.ToString().ToUpper(),
+                PaymentType = Api.Models.Enums.PaymentType.RECURRING.ToString().ToUpper()
+            };
+            if (string.Equals(token.Type, nameof(PaymentSource.Card), StringComparison.InvariantCultureIgnoreCase))
+                paymentSourceDetails.Card = new() { VaultId = token.VaultId, StoredCredential = storedCredential };
+            else if (string.Equals(token.Type, nameof(PaymentSource.PayPal), StringComparison.InvariantCultureIgnoreCase))
+                paymentSourceDetails.PayPal = new() { VaultId = token.VaultId, StoredCredential = storedCredential };
+
+            var order = await _httpClient.RequestAsync<CreateOrderRequest, CreateOrderResponse>(new CreateOrderRequest
+            {
+                Intent = settings.PaymentType.ToString().ToUpper(),
+                PaymentSource = paymentSourceDetails,
+                PurchaseUnits = [purchaseUnit]
+            }, settings);
+
+            return order;
+        });
+    }
+
+    /// <summary>
+    /// Cancel recurring payment
+    /// </summary>
+    /// <param name="settings">Plugin settings</param>
+    /// <param name="initialOrder">Order</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the cancel result; error message if exists
+    /// </returns>
+    public async Task<(bool Result, string Error)> CancelRecurringPaymentAsync(PayPalCommerceSettings settings, NopOrder initialOrder)
+    {
+        return await HandleFunctionAsync(() =>
+        {
+            //no special action required
+            //we don't delete the payment token because the customer can use it for other orders
+
+            return Task.FromResult(true);
+        });
+    }
+
+    #endregion
+
     #region Shipping
 
     /// <summary>
@@ -2587,13 +2918,14 @@ public class PayPalCommerceServiceManager
             if (!string.Equals(nopOrder.PaymentMethodSystemName, PayPalCommerceDefaults.SystemName, StringComparison.InvariantCultureIgnoreCase))
                 return false;
 
-            var customValues = _paymentService.DeserializeCustomValues(nopOrder);
+            var customValues = new CustomValues();
+            customValues.FillByXml(nopOrder.CustomValuesXml);
             var orderIdKey = await _localizationService.GetResourceAsync("Plugins.Payments.PayPalCommerce.Order.Id");
             if (!customValues.TryGetValue(orderIdKey, out var orderIdValue))
                 throw new NopException("Failed to get PayPal order info");
 
             var order = await _httpClient
-                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.ToString() }, settings) as Order;
+                .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = orderIdValue.Value }, settings) as Order;
             if (order.Status?.ToUpper() != OrderStatusType.COMPLETED.ToString())
                 throw new NopException($"Unable to assign tracking information to orders in {order.Status} status");
 
@@ -2614,8 +2946,7 @@ public class PayPalCommerceServiceManager
                 var orderItem = await _orderService.GetOrderItemByIdAsync(shipmentItem.OrderItemId);
                 var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
                 var sku = await _productService.FormatSkuAsync(product, orderItem.AttributesXml);
-                var seName = await _urlRecordService.GetSeNameAsync(product);
-                var url = await _nopUrlHelper.RouteGenericUrlAsync<Product>(new { SeName = seName }, _webHelper.GetCurrentRequestProtocol());
+                var url = await _nopUrlHelper.RouteGenericUrlAsync(product, _webHelper.GetCurrentRequestProtocol());
                 var picture = await _pictureService.GetProductPictureAsync(product, orderItem.AttributesXml);
                 var (imageUrl, _) = await _pictureService.GetPictureUrlAsync(picture);
 
@@ -2690,11 +3021,10 @@ public class PayPalCommerceServiceManager
                 throw new NopException("Plugin not configured");
 
             //prepare webhook URL
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
             var store = storeId > 0
                 ? await _storeService.GetStoreByIdAsync(storeId)
                 : await _storeContext.GetCurrentStoreAsync();
-            var webhookUrl = $"{store.Url.TrimEnd('/')}{urlHelper.RouteUrl(PayPalCommerceDefaults.Route.Webhook)}".ToLowerInvariant();
+            var webhookUrl = $"{store.Url.TrimEnd('/')}{_nopUrlHelper.RouteUrl(PayPalCommerceDefaults.Route.Webhook)}".ToLowerInvariant();
 
             //check whether the webhook already exists
             var (webhook, _) = await GetWebhookAsync(settings, webhookUrl);
@@ -2807,12 +3137,39 @@ public class PayPalCommerceServiceManager
 
                 if (paymentTokenCreated)
                 {
-                    if (string.IsNullOrEmpty(paymentToken.Metadata?.OrderId))
-                        throw new NopException("Webhook error", new NopException("No transaction associated with the payment token"));
+                    var customerId = int.TryParse(paymentToken.Customer?.MerchantCustomerId, out var id) ? id : (int?)null;
 
-                    var paymentTokenOrder = await _httpClient
-                        .RequestAsync<GetOrderRequest, GetOrderResponse>(new GetOrderRequest { OrderId = paymentToken.Metadata.OrderId }, settings);
-                    paymentToken.CustomId = paymentTokenOrder.CustomId;
+                    //try to get associated transaction
+                    if (!string.IsNullOrEmpty(paymentToken.Metadata?.OrderId))
+                    {
+                        try
+                        {
+                            var orderRequest = new GetOrderRequest { OrderId = paymentToken.Metadata.OrderId };
+                            var paymentTokenOrder = await _httpClient.RequestAsync<GetOrderRequest, GetOrderResponse>(orderRequest, settings);
+                            if (Guid.TryParse(paymentTokenOrder.CustomId, out var guid))
+                                customerId = (await _orderService.GetOrderByGuidAsync(guid))?.CustomerId;
+                        }
+                        catch { }
+                    }
+
+                    await _tokenService.InsertAsync(new()
+                    {
+                        ClientId = settings.ClientId,
+                        CustomerId = customerId ?? 0,
+                        IsPrimaryMethod = false,
+                        VaultId = paymentToken.Id,
+                        VaultCustomerId = paymentToken.Customer?.Id,
+                        TransactionId = paymentToken.Metadata?.OrderId,
+                        Type = paymentToken.PaymentSource?.Card is not null
+                            ? nameof(paymentToken.PaymentSource.Card)
+                            : (paymentToken.PaymentSource?.Venmo is not null
+                            ? nameof(paymentToken.PaymentSource.Venmo)
+                            : (paymentToken.PaymentSource?.PayPal is not null
+                            ? nameof(paymentToken.PaymentSource.PayPal)
+                            : null))
+                    });
+
+                    return true;
                 }
 
                 if (paymentTokenDeleted)
@@ -2829,29 +3186,6 @@ public class PayPalCommerceServiceManager
                 await _orderService.GetOrderByGuidAsync(orderGuid) is not NopOrder nopOrder)
             {
                 throw new NopException("Webhook error", new NopException($"Could not find an order '{orderGuid}'"));
-            }
-
-            if (paymentToken is not null)
-            {
-                //payment token actions (continuation)
-                await _tokenService.InsertAsync(new()
-                {
-                    ClientId = settings.ClientId,
-                    CustomerId = nopOrder.CustomerId,
-                    IsPrimaryMethod = false,
-                    VaultId = paymentToken.Id,
-                    VaultCustomerId = paymentToken.Customer?.Id,
-                    TransactionId = paymentToken.Metadata.OrderId,
-                    Type = paymentToken.PaymentSource?.Card is not null
-                        ? nameof(paymentToken.PaymentSource.Card)
-                        : (paymentToken.PaymentSource?.Venmo is not null
-                        ? nameof(paymentToken.PaymentSource.Venmo)
-                        : (paymentToken.PaymentSource?.PayPal is not null
-                        ? nameof(paymentToken.PaymentSource.PayPal)
-                        : null))
-                });
-
-                return true;
             }
 
             await _orderService.InsertOrderNoteAsync(new()
@@ -2887,8 +3221,7 @@ public class PayPalCommerceServiceManager
                         if (!_orderProcessingService.CanMarkOrderAsAuthorized(nopOrder))
                             break;
 
-                        decimal.TryParse(authorization.Amount?.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var authorizationAmount);
-                        if (authorizationAmount >= Math.Round(nopOrder.OrderTotal, 2))
+                        if (ConvertMoney(authorization.Amount) >= Math.Round(nopOrder.OrderTotal, 2))
                             await _orderProcessingService.MarkAsAuthorizedAsync(nopOrder);
 
                         break;
@@ -2932,8 +3265,7 @@ public class PayPalCommerceServiceManager
                         if (!_orderProcessingService.CanMarkOrderAsPaid(nopOrder))
                             break;
 
-                        decimal.TryParse(capture.Amount?.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var captureAmount);
-                        if (captureAmount >= Math.Round(nopOrder.OrderTotal, 2))
+                        if (ConvertMoney(capture.Amount) >= Math.Round(nopOrder.OrderTotal, 2))
                             await _orderProcessingService.MarkOrderAsPaidAsync(nopOrder);
 
                         break;
@@ -3024,8 +3356,7 @@ public class PayPalCommerceServiceManager
                         nopOrder.CaptureTransactionId = orderCapture.Id;
                         nopOrder.CaptureTransactionResult = orderCapture.Status;
 
-                        decimal.TryParse(orderCapture.Amount?.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var captureAmount);
-                        if (captureAmount >= Math.Round(nopOrder.OrderTotal, 2))
+                        if (ConvertMoney(orderCapture.Amount) >= Math.Round(nopOrder.OrderTotal, 2))
                             await _orderProcessingService.MarkOrderAsPaidAsync(nopOrder);
 
                         break;
@@ -3061,9 +3392,8 @@ public class PayPalCommerceServiceManager
             var store = storeId > 0
                 ? await _storeService.GetStoreByIdAsync(storeId)
                 : await _storeContext.GetCurrentStoreAsync();
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
             var returnUrl = $"{store.Url.TrimEnd('/')}" +
-                $"{urlHelper.RouteUrl(PayPalCommerceDefaults.Route.OnboardingCallback, new { storeId = storeId })}";
+                $"{_nopUrlHelper.RouteUrl(PayPalCommerceDefaults.Route.OnboardingCallback, new { storeId = storeId })}";
 
             //sandbox URL
             var onboarding = new Onboarding
@@ -3304,7 +3634,9 @@ public class PayPalCommerceServiceManager
             foreach (var token in tokens)
             {
                 try
-                { await _httpClient.RequestAsync<DeletePaymentTokenRequest, EmptyResponse>(new() { Id = token.VaultId }, settings); }
+                {
+                    await _httpClient.RequestAsync<DeletePaymentTokenRequest, EmptyResponse>(new() { Id = token.VaultId }, settings);
+                }
                 catch { }
             }
 

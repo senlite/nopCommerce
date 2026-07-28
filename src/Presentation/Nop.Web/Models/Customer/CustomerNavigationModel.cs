@@ -33,10 +33,10 @@ public enum CustomerNavigationEnum
     RewardPoints = 60,
     ChangePassword = 70,
     Avatar = 80,
-    ForumSubscriptions = 90,
     ProductReviews = 100,
     VendorInfo = 110,
     GdprTools = 120,
     CheckGiftCardBalance = 130,
-    MultiFactorAuthentication = 140
+    MultiFactorAuthentication = 140,
+    RecurringPayments = 150,
 }

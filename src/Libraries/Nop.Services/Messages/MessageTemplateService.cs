@@ -106,16 +106,13 @@ public partial class MessageTemplateService : IMessageTemplateService
         return await _staticCacheManager.GetAsync(key, async () =>
         {
             //get message templates with the passed name
-            var templates = await _messageTemplateRepository.Table
-                .Where(messageTemplate => messageTemplate.Name.Equals(messageTemplateName))
-                .OrderBy(messageTemplate => messageTemplate.Id)
-                .ToListAsync();
+            var templatesQuery = _messageTemplateRepository.Table
+                .Where(messageTemplate => messageTemplate.Name.Equals(messageTemplateName));
 
-            //filter by the store
             if (storeId.HasValue && storeId.Value > 0)
-                templates = await templates.WhereAwait(async messageTemplate => await _storeMappingService.AuthorizeAsync(messageTemplate, storeId.Value)).ToListAsync();
+                templatesQuery = await _storeMappingService.ApplyStoreMapping(templatesQuery, storeId.Value);
 
-            return templates;
+            return await templatesQuery.OrderBy(messageTemplate => messageTemplate.Id).ToListAsync();
         });
     }
 
@@ -147,9 +144,11 @@ public partial class MessageTemplateService : IMessageTemplateService
             messageTemplates = messageTemplates.Where(mt => mt.EmailAccountId == emailAccountId).ToList();
 
         if (!string.IsNullOrWhiteSpace(keywords))
+        {
             messageTemplates = messageTemplates.Where(x => (x.Subject?.Contains(keywords, StringComparison.InvariantCultureIgnoreCase) ?? false)
                 || (x.Body?.Contains(keywords, StringComparison.InvariantCultureIgnoreCase) ?? false)
                 || (x.Name?.Contains(keywords, StringComparison.InvariantCultureIgnoreCase) ?? false)).ToList();
+        }
 
         return messageTemplates;
     }

@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Transactions;
 using LinqToDB.Data;
 using Nop.Core;
 
@@ -14,9 +15,8 @@ public partial interface INopDataProvider
     /// <summary>
     /// Create the database
     /// </summary>
-    /// <param name="collation">Collation</param>
     /// <param name="triesToConnect">Count of tries to connect to the database after creating; set 0 if no need to connect after creating</param>
-    void CreateDatabase(string collation, int triesToConnect = 10);
+    void CreateDatabase(int triesToConnect = 10);
 
     /// <summary>
     /// Creates a new temporary storage and populate it using data from provided query
@@ -228,6 +228,21 @@ public partial interface INopDataProvider
     Task ReIndexTablesAsync();
 
     /// <summary>
+    /// Shrinks database
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    Task ShrinkDatabaseAsync();
+
+    /// <summary>
+    /// Gets the database size in Kb
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the database size
+    /// </returns>
+    Task<long> GetDatabaseSizeAsync();
+
+    /// <summary>
     /// Build the connection string
     /// </summary>
     /// <param name="nopConnectionString">Connection string info</param>
@@ -294,7 +309,26 @@ public partial interface INopDataProvider
     /// Truncates database table
     /// </summary>
     /// <param name="resetIdentity">Performs reset identity column</param>
-    Task TruncateAsync<TEntity>(bool resetIdentity = false) where TEntity : BaseEntity;
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the number of records, affected by command execution.
+    /// </returns>
+    Task<int> TruncateAsync<TEntity>(bool resetIdentity = false) where TEntity : BaseEntity;
+
+    /// <summary>
+    /// Gets the name of the database collation
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the collation name
+    /// </returns>
+    Task<string> GetDataBaseCollationAsync();
+
+    /// <summary>
+    /// Creates a new <see cref="TransactionScope"/> with appropriate options for bulk database operations
+    /// </summary>
+    /// <returns>The created transaction scope</returns>
+    TransactionScope CreateTransactionScope();
 
     #endregion
 
@@ -314,6 +348,6 @@ public partial interface INopDataProvider
     /// Gets a value indicating whether this data provider supports backup
     /// </summary>
     bool BackupSupported { get; }
-
+    
     #endregion
 }

@@ -68,22 +68,12 @@ public static partial class NopPluginDefaults
     public static string UploadedItemsFileName => "uploadedItems.json";
 
     /// <summary>
-    /// Gets the path to themes folder
-    /// </summary>
-    public static string ThemesPath => "~/Themes";
-
-    /// <summary>
-    /// Gets the name of the theme description file
-    /// </summary>
-    public static string ThemeDescriptionFileName => "theme.json";
-
-    /// <summary>
     /// Gets a key for caching plugins for admin navigation
     /// </summary>
     /// <remarks>
     /// {0} : customer identifier
     /// </remarks>
-    public static CacheKey AdminNavigationPluginsCacheKey => new("Nop.plugins.adminnavigation.{0}", AdminNavigationPluginsPrefix);
+    public static CacheKey AdminNavigationPluginsCacheKey => new("Nop.plugins.adminnavigation.{0}");
 
     /// <summary>
     /// Gets a key pattern to clear cache

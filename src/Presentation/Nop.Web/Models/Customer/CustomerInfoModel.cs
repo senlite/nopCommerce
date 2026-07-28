@@ -16,6 +16,7 @@ public partial record CustomerInfoModel : BaseNopModel
         AssociatedExternalAuthRecords = new List<AssociatedExternalAuthModel>();
         CustomerAttributes = new List<CustomerAttributeModel>();
         GdprConsents = new List<GdprConsentModel>();
+        NewsLetterSubscriptions = new List<NewsLetterSubscriptionModel>();
     }
 
     [DataType(DataType.EmailAddress)]
@@ -106,6 +107,8 @@ public partial record CustomerInfoModel : BaseNopModel
     [DataType(DataType.PhoneNumber)]
     [NopResourceDisplayName("Account.Fields.Phone")]
     public string Phone { get; set; }
+    public bool LoginByPhoneEnabled { get; set; }
+    public bool PhoneSmsVerified { get; set; }
 
     public bool FaxEnabled { get; set; }
     public bool FaxRequired { get; set; }
@@ -114,13 +117,8 @@ public partial record CustomerInfoModel : BaseNopModel
     public string Fax { get; set; }
 
     public bool NewsletterEnabled { get; set; }
-    [NopResourceDisplayName("Account.Fields.Newsletter")]
-    public bool Newsletter { get; set; }
 
-    //preferences
-    public bool SignatureEnabled { get; set; }
-    [NopResourceDisplayName("Account.Fields.Signature")]
-    public string Signature { get; set; }
+    public IList<NewsLetterSubscriptionModel> NewsLetterSubscriptions { get; set; }
 
     //time zone
     [NopResourceDisplayName("Account.Fields.TimeZone")]

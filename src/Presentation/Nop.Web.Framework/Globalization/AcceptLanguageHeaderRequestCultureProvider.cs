@@ -2,10 +2,11 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Nop.Core.Infrastructure;
-using Nop.Services.Localization;
+using Nop.Services.Helpers;
 
 namespace Nop.Web.Framework.Globalization;
-public class NopAcceptLanguageHeaderRequestCultureProvider : RequestCultureProvider
+
+public partial class NopAcceptLanguageHeaderRequestCultureProvider : RequestCultureProvider
 {
     public override Task<ProviderCultureResult> DetermineProviderCultureResult(HttpContext httpContext)
     {
@@ -25,8 +26,8 @@ public class NopAcceptLanguageHeaderRequestCultureProvider : RequestCultureProvi
         {
             var requestedCulture = new CultureInfo(languageHeader.Value.Value);
 
-            var languageService = EngineContext.Current.Resolve<ILanguageService>();
-            var language = languageService
+            var syncCodeHelper = EngineContext.Current.Resolve<ISyncCodeHelper>();
+            var language = syncCodeHelper
                 .GetAllLanguages()
                 .FirstOrDefault(urlLanguage =>
                 {
@@ -43,8 +44,5 @@ public class NopAcceptLanguageHeaderRequestCultureProvider : RequestCultureProvi
         {
             return NullProviderCultureResult;
         }
-
-
-
     }
 }

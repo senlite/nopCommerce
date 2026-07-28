@@ -314,7 +314,7 @@
                             new ColumnProperty(nameof(SyncRecordModel.UpdatedDate))
                             {
                                 Title = T("Plugins.Misc.Zettle.Sync.Fields.UpdatedDate").Text,
-                                Width = "140",
+                                Width = "180",
                                 Render = new RenderDate()
                             },
                             new ColumnProperty(nameof(SyncRecordModel.Id))
@@ -334,7 +334,7 @@
                                 return false;
                             });
 
-                            $('#start-sync-action-confirmation-submit-button').bind('click', function () {
+                            $('#start-sync-action-confirmation-submit-button').on('click', function () {
                                 $.ajax({
                                     cache: false,
                                     type: 'GET',
@@ -350,7 +350,7 @@
                                 return false;
                             });
 
-                            $('#delete-selected-action-confirmation-submit-button').bind('click', function () {
+                            $('#delete-selected-action-confirmation-submit-button').on('click', function () {
                                 var postData = {
                                     selectedIds: selectedIds
                                 };

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
@@ -20,6 +21,7 @@ using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -66,6 +68,7 @@ public partial class OrderProcessingService : IOrderProcessingService
     protected readonly IProductAttributeFormatter _productAttributeFormatter;
     protected readonly IProductAttributeParser _productAttributeParser;
     protected readonly IProductService _productService;
+    protected readonly IQueuedEmailService _queuedEmailService;
     protected readonly IReturnRequestService _returnRequestService;
     protected readonly IRewardPointService _rewardPointService;
     protected readonly IShipmentService _shipmentService;
@@ -73,6 +76,7 @@ public partial class OrderProcessingService : IOrderProcessingService
     protected readonly IShoppingCartService _shoppingCartService;
     protected readonly IStateProvinceService _stateProvinceService;
     protected readonly IStaticCacheManager _staticCacheManager;
+    protected readonly IStoreContext _storeContext;
     protected readonly IStoreMappingService _storeMappingService;
     protected readonly IStoreService _storeService;
     protected readonly ITaxService _taxService;
@@ -83,6 +87,7 @@ public partial class OrderProcessingService : IOrderProcessingService
     protected readonly LocalizationSettings _localizationSettings;
     protected readonly OrderSettings _orderSettings;
     protected readonly PaymentSettings _paymentSettings;
+    protected readonly ReturnRequestSettings _returnRequestSettings;
     protected readonly RewardPointsSettings _rewardPointsSettings;
     protected readonly ShippingSettings _shippingSettings;
     protected readonly TaxSettings _taxSettings;
@@ -118,6 +123,7 @@ public partial class OrderProcessingService : IOrderProcessingService
         IProductAttributeFormatter productAttributeFormatter,
         IProductAttributeParser productAttributeParser,
         IProductService productService,
+        IQueuedEmailService queuedEmailService,
         IReturnRequestService returnRequestService,
         IRewardPointService rewardPointService,
         IShipmentService shipmentService,
@@ -125,6 +131,7 @@ public partial class OrderProcessingService : IOrderProcessingService
         IShoppingCartService shoppingCartService,
         IStateProvinceService stateProvinceService,
         IStaticCacheManager staticCacheManager,
+        IStoreContext storeContext,
         IStoreMappingService storeMappingService,
         IStoreService storeService,
         ITaxService taxService,
@@ -135,6 +142,7 @@ public partial class OrderProcessingService : IOrderProcessingService
         LocalizationSettings localizationSettings,
         OrderSettings orderSettings,
         PaymentSettings paymentSettings,
+        ReturnRequestSettings returnRequestSettings,
         RewardPointsSettings rewardPointsSettings,
         ShippingSettings shippingSettings,
         TaxSettings taxSettings)
@@ -166,6 +174,7 @@ public partial class OrderProcessingService : IOrderProcessingService
         _productAttributeFormatter = productAttributeFormatter;
         _productAttributeParser = productAttributeParser;
         _productService = productService;
+        _queuedEmailService = queuedEmailService;
         _returnRequestService = returnRequestService;
         _rewardPointService = rewardPointService;
         _shipmentService = shipmentService;
@@ -173,6 +182,7 @@ public partial class OrderProcessingService : IOrderProcessingService
         _shoppingCartService = shoppingCartService;
         _stateProvinceService = stateProvinceService;
         _staticCacheManager = staticCacheManager;
+        _storeContext = storeContext;
         _storeMappingService = storeMappingService;
         _storeService = storeService;
         _taxService = taxService;
@@ -183,6 +193,7 @@ public partial class OrderProcessingService : IOrderProcessingService
         _localizationSettings = localizationSettings;
         _orderSettings = orderSettings;
         _paymentSettings = paymentSettings;
+        _returnRequestSettings = returnRequestSettings;
         _rewardPointsSettings = rewardPointsSettings;
         _shippingSettings = shippingSettings;
         _taxSettings = taxSettings;
@@ -343,8 +354,10 @@ public partial class OrderProcessingService : IOrderProcessingService
 
         //discount history
         foreach (var disc in appliedDiscounts)
+        {
             if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
                 details.AppliedDiscounts.Add(disc);
+        }
 
         //sub total (excl tax)
         details.OrderSubTotalExclTax = subTotalWithoutDiscountExclTax;
@@ -360,8 +373,10 @@ public partial class OrderProcessingService : IOrderProcessingService
         details.OrderShippingTotalExclTax = orderShippingTotalExclTax.Value;
 
         foreach (var disc in shippingTotalDiscounts)
+        {
             if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
                 details.AppliedDiscounts.Add(disc);
+        }
 
         //payment total
         var paymentAdditionalFee = await _paymentService.GetAdditionalHandlingFeeAsync(details.Cart, processPaymentRequest.PaymentMethodSystemName);
@@ -393,8 +408,10 @@ public partial class OrderProcessingService : IOrderProcessingService
 
         //discount history
         foreach (var disc in orderAppliedDiscounts)
+        {
             if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
                 details.AppliedDiscounts.Add(disc);
+        }
 
         processPaymentRequest.OrderTotal = details.OrderTotal;
     }
@@ -733,14 +750,6 @@ public partial class OrderProcessingService : IOrderProcessingService
             CurrencyRate = details.CustomerCurrencyRate,
             AffiliateId = details.AffiliateId,
             OrderStatus = OrderStatus.Pending,
-            AllowStoringCreditCardNumber = processPaymentResult.AllowStoringCreditCardNumber,
-            CardType = processPaymentResult.AllowStoringCreditCardNumber ? _encryptionService.EncryptText(processPaymentRequest.CreditCardType) : string.Empty,
-            CardName = processPaymentResult.AllowStoringCreditCardNumber ? _encryptionService.EncryptText(processPaymentRequest.CreditCardName) : string.Empty,
-            CardNumber = processPaymentResult.AllowStoringCreditCardNumber ? _encryptionService.EncryptText(processPaymentRequest.CreditCardNumber) : string.Empty,
-            MaskedCreditCardNumber = _encryptionService.EncryptText(_paymentService.GetMaskedCreditCardNumber(processPaymentRequest.CreditCardNumber)),
-            CardCvv2 = processPaymentResult.AllowStoringCreditCardNumber ? _encryptionService.EncryptText(processPaymentRequest.CreditCardCvv2) : string.Empty,
-            CardExpirationMonth = processPaymentResult.AllowStoringCreditCardNumber ? _encryptionService.EncryptText(processPaymentRequest.CreditCardExpireMonth.ToString()) : string.Empty,
-            CardExpirationYear = processPaymentResult.AllowStoringCreditCardNumber ? _encryptionService.EncryptText(processPaymentRequest.CreditCardExpireYear.ToString()) : string.Empty,
             PaymentMethodSystemName = processPaymentRequest.PaymentMethodSystemName,
             AuthorizationTransactionId = processPaymentResult.AuthorizationTransactionId,
             AuthorizationTransactionCode = processPaymentResult.AuthorizationTransactionCode,
@@ -754,7 +763,7 @@ public partial class OrderProcessingService : IOrderProcessingService
             ShippingStatus = details.ShippingStatus,
             ShippingMethod = details.ShippingMethodName,
             ShippingRateComputationMethodSystemName = details.ShippingRateComputationMethodSystemName,
-            CustomValuesXml = _paymentService.SerializeCustomValues(processPaymentRequest),
+            CustomValuesXml = processPaymentRequest.CustomValues.SerializeToXml(),
             VatNumber = details.VatNumber,
             CreatedOnUtc = DateTime.UtcNow,
             CustomOrderNumber = string.Empty
@@ -776,6 +785,16 @@ public partial class OrderProcessingService : IOrderProcessingService
         {
             await _addressService.InsertAddressAsync(details.ShippingAddress);
             order.ShippingAddressId = details.ShippingAddress.Id;
+        }
+
+        if (_shippingSettings.AllowCustomerToChooseDeliveryDate)
+        {
+            var desiredDate = await _genericAttributeService.GetAttributeAsync<DateTime?>(details.Customer, NopCustomerDefaults.DesiredDeliveryDate, order.StoreId);
+            if (desiredDate.HasValue)
+            {
+                order.DesiredDeliveryDateUtc = desiredDate;
+                await _genericAttributeService.SaveAttributeAsync<DateTime?>(details.Customer, NopCustomerDefaults.DesiredDeliveryDate, null, order.StoreId);
+            }
         }
 
         await _orderService.InsertOrderAsync(order);
@@ -1030,7 +1049,7 @@ public partial class OrderProcessingService : IOrderProcessingService
             os == OrderStatus.Complete
             && notifyCustomer)
         {
-            //notification
+            //notify customer
             var orderCompletedAttachmentFilePath = _orderSettings.AttachPdfInvoiceToOrderCompletedEmail ?
                 await _pdfService.SaveOrderPdfToDiskAsync(order) : null;
             var orderCompletedAttachmentFileName = _orderSettings.AttachPdfInvoiceToOrderCompletedEmail ?
@@ -1040,6 +1059,9 @@ public partial class OrderProcessingService : IOrderProcessingService
                     orderCompletedAttachmentFileName);
             if (orderCompletedCustomerNotificationQueuedEmailIds.Any())
                 await AddOrderNoteAsync(order, $"\"Order completed\" email (to customer) has been queued. Queued email identifiers: {string.Join(", ", orderCompletedCustomerNotificationQueuedEmailIds)}.");
+
+            //notify store owner
+            await _workflowMessageService.SendOrderCompletedStoreOwnerNotificationAsync(order, _localizationSettings.DefaultAdminLanguageId);
         }
 
         if (prevOrderStatus != OrderStatus.Cancelled &&
@@ -1151,8 +1173,10 @@ public partial class OrderProcessingService : IOrderProcessingService
             //bundled (associated) products
             var attributeValues = await _productAttributeParser.ParseProductAttributeValuesAsync(orderItem.AttributesXml);
             foreach (var attributeValue in attributeValues)
+            {
                 if (attributeValue.AttributeValueType == AttributeValueType.AssociatedToProduct)
                     purchasedProductIds.Add(attributeValue.AssociatedProductId);
+            }
         }
 
         //list of customer roles
@@ -1167,6 +1191,7 @@ public partial class OrderProcessingService : IOrderProcessingService
         var customer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
 
         foreach (var customerRole in customerRoles)
+        {
             if (!await _customerService.IsInCustomerRoleAsync(customer, customerRole.SystemName))
             {
                 //not in the list yet
@@ -1181,6 +1206,7 @@ public partial class OrderProcessingService : IOrderProcessingService
                     //remove
                     await _customerService.RemoveCustomerRoleMappingAsync(customer, customerRole);
             }
+        }
     }
 
     /// <summary>
@@ -1206,7 +1232,7 @@ public partial class OrderProcessingService : IOrderProcessingService
     /// <returns>A task that represents the asynchronous operation</returns>
     protected virtual async Task CreateFirstRecurringPaymentAsync(ProcessPaymentRequest processPaymentRequest, Order order)
     {
-        var rp = new RecurringPayment
+        var recurringPayment = new RecurringPayment
         {
             CycleLength = processPaymentRequest.RecurringCycleLength,
             CyclePeriod = processPaymentRequest.RecurringCyclePeriod,
@@ -1216,7 +1242,7 @@ public partial class OrderProcessingService : IOrderProcessingService
             CreatedOnUtc = DateTime.UtcNow,
             InitialOrderId = order.Id
         };
-        await _orderService.InsertRecurringPaymentAsync(rp);
+        await _orderService.InsertRecurringPaymentAsync(recurringPayment);
 
         switch (await _paymentService.GetRecurringPaymentTypeAsync(processPaymentRequest.PaymentMethodSystemName))
         {
@@ -1226,7 +1252,7 @@ public partial class OrderProcessingService : IOrderProcessingService
             case RecurringPaymentType.Manual:
                 await _orderService.InsertRecurringPaymentHistoryAsync(new RecurringPaymentHistory
                 {
-                    RecurringPaymentId = rp.Id,
+                    RecurringPaymentId = recurringPayment.Id,
                     CreatedOnUtc = DateTime.UtcNow,
                     OrderId = order.Id
                 });
@@ -1237,6 +1263,15 @@ public partial class OrderProcessingService : IOrderProcessingService
             default:
                 break;
         }
+
+        var delay = await GetNextRecurringPaymentDelayAsync(recurringPayment);
+
+        if (delay <= 0)
+            return;
+
+        //send notifications about next payment
+        var emails = await _workflowMessageService.SendNextRecurringPaymentNotificationCustomerMessageAsync(recurringPayment, delay, order.CustomerLanguageId);
+        await _genericAttributeService.SaveAttributeAsync(recurringPayment, NopPaymentDefaults.NextRecurringPaymentNotificationEmailsAttribute, emails);
     }
 
     /// <summary>
@@ -1261,8 +1296,10 @@ public partial class OrderProcessingService : IOrderProcessingService
             var discountAmountInclTax = await _taxService.GetProductPriceAsync(product, discountAmount, true, details.Customer);
             var discountAmountExclTax = await _taxService.GetProductPriceAsync(product, discountAmount, false, details.Customer);
             foreach (var disc in scDiscounts)
+            {
                 if (!_discountService.ContainsDiscount(details.AppliedDiscounts, disc))
                     details.AppliedDiscounts.Add(disc);
+            }
 
             //attributes
             var store = await _storeService.GetStoreByIdAsync(sc.StoreId);
@@ -1302,6 +1339,8 @@ public partial class OrderProcessingService : IOrderProcessingService
             //inventory
             await _productService.AdjustInventoryAsync(product, -sc.Quantity, sc.AttributesXml,
                 string.Format(await _localizationService.GetResourceAsync("Admin.StockQuantityHistory.Messages.PlaceOrder"), order.Id));
+
+            await _eventPublisher.PublishAsync(new ShoppingCartItemMovedToOrderItemEvent(sc, orderItem));
         }
 
         await _shoppingCartService.ClearShoppingCartAsync(details.Customer, order.StoreId);
@@ -1402,6 +1441,7 @@ public partial class OrderProcessingService : IOrderProcessingService
             return;
 
         foreach (var agc in details.AppliedGiftCards)
+        {
             await _giftCardService.InsertGiftCardUsageHistoryAsync(new GiftCardUsageHistory
             {
                 GiftCardId = agc.GiftCard.Id,
@@ -1409,6 +1449,7 @@ public partial class OrderProcessingService : IOrderProcessingService
                 UsedValue = agc.AmountCanBeUsed,
                 CreatedOnUtc = DateTime.UtcNow
             });
+        }
     }
 
     /// <summary>
@@ -1464,9 +1505,11 @@ public partial class OrderProcessingService : IOrderProcessingService
                 completed = true;
             else
                 //shipping is required
+            {
                 completed = _orderSettings.CompleteOrderWhenDelivered
                     ? order.ShippingStatus == ShippingStatus.Delivered
                     : order.ShippingStatus == ShippingStatus.Shipped || order.ShippingStatus == ShippingStatus.Delivered;
+            }
         }
 
         switch (order.OrderStatus)
@@ -1504,6 +1547,26 @@ public partial class OrderProcessingService : IOrderProcessingService
 
         if (!isOrderSaved)
             await _orderService.UpdateOrderAsync(order);
+    }
+
+    /// <summary>
+    /// Get next recurring payment delay (in hours)
+    /// </summary>
+    /// <param name="recurringPayment">Recurring payment</param>
+    /// <returns>Delay in hours</returns>
+    protected virtual async Task<int> GetNextRecurringPaymentDelayAsync(RecurringPayment recurringPayment)
+    {
+        if (_orderSettings.NextRecurringPaymentNotificationDays == 0)
+            return 0;
+
+        var nextPaymentDate = await GetNextPaymentDateAsync(recurringPayment);
+
+        if (!nextPaymentDate.HasValue)
+            return 0;
+
+        var delay = (int)Math.Round(((nextPaymentDate.Value - DateTime.UtcNow).TotalDays - _orderSettings.NextRecurringPaymentNotificationDays) * 24);
+
+        return delay;
     }
 
     #endregion
@@ -1587,9 +1650,13 @@ public partial class OrderProcessingService : IOrderProcessingService
                         await ProcessOrderPaidAsync(order);
                 }
                 else
+                {
                     foreach (var paymentError in processPaymentResult.Errors)
+                    {
                         result.AddError(string.Format(
                             await _localizationService.GetResourceAsync("Checkout.PaymentError"), paymentError));
+                    }
+                }
             }
             catch (Exception exc)
             {
@@ -1628,7 +1695,7 @@ public partial class OrderProcessingService : IOrderProcessingService
             var cacheKey = _staticCacheManager.PrepareKey(NopOrderDefaults.OrderWithLockCacheKey, resource);
             cacheKey.CacheTime = _orderSettings.MinimumOrderPlacementInterval;
 
-            var exist = _staticCacheManager.Get(cacheKey, () => false);
+            var exist = _staticCacheManager.GetAsync(cacheKey, () => false).Result;
 
             if (exist)
             {
@@ -1732,12 +1799,14 @@ public partial class OrderProcessingService : IOrderProcessingService
 
             var d = await _discountService.GetDiscountByIdAsync(discount.Id);
             if (d != null)
+            {
                 await _discountService.InsertDiscountUsageHistoryAsync(new DiscountUsageHistory
                 {
                     DiscountId = d.Id,
                     OrderId = updatedOrder.Id,
                     CreatedOnUtc = DateTime.UtcNow
                 });
+            }
         }
 
         async Task<(List<ShoppingCartItem> restoredCart, ShoppingCartItem updatedShoppingCartItem)> restoreShoppingCartAsync(Order order, int updatedOrderItemId)
@@ -1844,9 +1913,10 @@ public partial class OrderProcessingService : IOrderProcessingService
                 InitialOrder = initialOrder,
                 RecurringCycleLength = recurringPayment.CycleLength,
                 RecurringCyclePeriod = recurringPayment.CyclePeriod,
-                RecurringTotalCycles = recurringPayment.TotalCycles,
-                CustomValues = _paymentService.DeserializeCustomValues(initialOrder)
+                RecurringTotalCycles = recurringPayment.TotalCycles
             };
+
+            processPaymentRequest.CustomValues.FillByXml(initialOrder.CustomValuesXml);
 
             //prepare order details
             var details = await PrepareRecurringOrderDetailsAsync(processPaymentRequest);
@@ -1857,29 +1927,12 @@ public partial class OrderProcessingService : IOrderProcessingService
             if (!skipPaymentWorkflow)
             {
                 var paymentMethod = await _paymentPluginManager
-                                        .LoadPluginBySystemNameAsync(processPaymentRequest.PaymentMethodSystemName, customer, initialOrder.StoreId)
-                                    ?? throw new NopException("Payment method couldn't be loaded");
+                        .LoadPluginBySystemNameAsync(processPaymentRequest.PaymentMethodSystemName, customer,
+                            initialOrder.StoreId)
+                    ?? throw new NopException("Payment method couldn't be loaded");
 
                 if (!_paymentPluginManager.IsPluginActive(paymentMethod))
                     throw new NopException("Payment method is not active");
-
-                //Old credit card info
-                if (details.InitialOrder.AllowStoringCreditCardNumber)
-                {
-                    processPaymentRequest.CreditCardType = _encryptionService.DecryptText(details.InitialOrder.CardType);
-                    processPaymentRequest.CreditCardName = _encryptionService.DecryptText(details.InitialOrder.CardName);
-                    processPaymentRequest.CreditCardNumber = _encryptionService.DecryptText(details.InitialOrder.CardNumber);
-                    processPaymentRequest.CreditCardCvv2 = _encryptionService.DecryptText(details.InitialOrder.CardCvv2);
-                    try
-                    {
-                        processPaymentRequest.CreditCardExpireMonth = Convert.ToInt32(_encryptionService.DecryptText(details.InitialOrder.CardExpirationMonth));
-                        processPaymentRequest.CreditCardExpireYear = Convert.ToInt32(_encryptionService.DecryptText(details.InitialOrder.CardExpirationYear));
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
 
                 //payment type
                 processPaymentResult = (await _paymentService.GetRecurringPaymentTypeAsync(processPaymentRequest.PaymentMethodSystemName)) switch
@@ -1892,7 +1945,9 @@ public partial class OrderProcessingService : IOrderProcessingService
                 };
             }
             else
+            {
                 processPaymentResult = paymentResult ?? new ProcessPaymentResult { NewPaymentStatus = PaymentStatus.Paid };
+            }
 
             if (processPaymentResult == null)
                 throw new NopException("processPaymentResult is not available");
@@ -1968,6 +2023,15 @@ public partial class OrderProcessingService : IOrderProcessingService
 
                 await _orderService.UpdateRecurringPaymentAsync(recurringPayment);
 
+                var delay = await GetNextRecurringPaymentDelayAsync(recurringPayment);
+
+                if (delay <= 0)
+                    return new List<string>();
+
+                //send notifications about next payment
+                var emails = await _workflowMessageService.SendNextRecurringPaymentNotificationCustomerMessageAsync(recurringPayment, delay, order.CustomerLanguageId);
+                await _genericAttributeService.SaveAttributeAsync(recurringPayment, NopPaymentDefaults.NextRecurringPaymentNotificationEmailsAttribute, emails);
+
                 return new List<string>();
             }
 
@@ -1988,9 +2052,7 @@ public partial class OrderProcessingService : IOrderProcessingService
                 //cancel recurring payment
                 var errors = (await CancelRecurringPaymentAsync(recurringPayment)).ToList();
                 foreach (var error in errors)
-                {
                     await _logger.ErrorAsync(error);
-                }
 
                 //notify a customer about cancelled payment
                 await _workflowMessageService.SendRecurringPaymentCancelledCustomerNotificationAsync(recurringPayment, initialOrder.CustomerLanguageId);
@@ -2046,6 +2108,15 @@ public partial class OrderProcessingService : IOrderProcessingService
                 await _workflowMessageService
                     .SendRecurringPaymentCancelledStoreOwnerNotificationAsync(recurringPayment,
                         _localizationSettings.DefaultAdminLanguageId);
+
+                //remove next recurring payment notification emails
+                var emailIds = await _genericAttributeService.GetAttributeAsync<List<int>>(recurringPayment, NopPaymentDefaults.NextRecurringPaymentNotificationEmailsAttribute);
+                if (emailIds != null && emailIds.Any())
+                {
+                    var emails = await _queuedEmailService.GetQueuedEmailsByIdsAsync(emailIds.ToArray());
+                    await _queuedEmailService.DeleteQueuedEmailsAsync(emails);
+                    await _genericAttributeService.SaveAttributeAsync<List<int>>(recurringPayment, NopPaymentDefaults.NextRecurringPaymentNotificationEmailsAttribute, null);
+                }
             }
         }
         catch (Exception exc)
@@ -2110,8 +2181,10 @@ public partial class OrderProcessingService : IOrderProcessingService
             return false;
 
         if (!await _customerService.IsAdminAsync(customerToValidate))
+        {
             if (customer.Id != customerToValidate.Id)
                 return false;
+        }
 
         if (await GetNextPaymentDateAsync(recurringPayment) is null)
             return false;
@@ -2322,6 +2395,11 @@ public partial class OrderProcessingService : IOrderProcessingService
 
         //cancel order
         await SetOrderStatusAsync(order, OrderStatus.Cancelled, notifyCustomer);
+
+        //notify store owner
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+        if (order.CustomerId == currentCustomer.Id)
+            await _workflowMessageService.SendOrderCancelledStoreOwnerNotificationAsync(order, _localizationSettings.DefaultAdminLanguageId);
 
         //add a note
         await AddOrderNoteAsync(order, "Order has been cancelled");
@@ -3076,21 +3154,21 @@ public partial class OrderProcessingService : IOrderProcessingService
     /// </returns>
     public virtual async Task<bool> IsReturnRequestAllowedAsync(Order order)
     {
-        if (!_orderSettings.ReturnRequestsEnabled)
+        if (!_returnRequestSettings.ReturnRequestsEnabled)
             return false;
 
         if (order == null || order.Deleted)
             return false;
 
         //status should be complete
-        if (order.OrderStatus != OrderStatus.Complete)
+        if (_returnRequestSettings.ReturnRequestsForCompletedOrdersOnly && order.OrderStatus != OrderStatus.Complete)
             return false;
 
         //validate allowed number of days
-        if (_orderSettings.NumberOfDaysReturnRequestAvailable > 0)
+        if (_returnRequestSettings.NumberOfDaysReturnRequestAvailable > 0)
         {
             var daysPassed = (DateTime.UtcNow - order.CreatedOnUtc).TotalDays;
-            if (daysPassed >= _orderSettings.NumberOfDaysReturnRequestAvailable)
+            if (daysPassed >= _returnRequestSettings.NumberOfDaysReturnRequestAvailable)
                 return false;
         }
 
@@ -3229,6 +3307,63 @@ public partial class OrderProcessingService : IOrderProcessingService
             result = 0;
 
         return result;
+    }
+
+    /// <summary>
+    /// Gets process payment request
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task contains the process payment request
+    /// </returns>
+    public virtual async Task<ProcessPaymentRequest> GetProcessPaymentRequestAsync()
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var json = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.ProcessPaymentRequestAttribute, store.Id);
+
+        return string.IsNullOrEmpty(json) ? null : JsonConvert.DeserializeObject<ProcessPaymentRequest>(json);
+    }
+
+    /// <summary>
+    /// Sets process payment request
+    /// </summary>
+    /// <param name="processPaymentRequest">Process payment request. Pass null for delete</param>
+    /// <param name="useNewOrderGuid">Whether to use new order GUID; pass false to set GUID according to PaymentSettings.RegenerateOrderGuidInterval value</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task SetProcessPaymentRequestAsync(ProcessPaymentRequest processPaymentRequest, bool useNewOrderGuid = false)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var store = await _storeContext.GetCurrentStoreAsync();
+
+        if (processPaymentRequest is null)
+        {
+            await _genericAttributeService.SaveAttributeAsync<string>(customer, NopCustomerDefaults.ProcessPaymentRequestAttribute, null, store.Id);
+
+            return;
+        }
+
+        if (_paymentSettings.RegenerateOrderGuidInterval > 0 && !useNewOrderGuid)
+        {
+            //we should use the same GUID for multiple payment attempts
+            //this way a payment gateway can prevent security issues such as credit card brute-force attacks
+            //in order to avoid any possible limitations by payment gateway we reset GUID periodically
+            var previousPaymentRequest = await GetProcessPaymentRequestAsync();
+
+            //set previous order GUID (if exists)
+            if (previousPaymentRequest is { OrderGuidGeneratedOnUtc: not null })
+            {
+                var interval = DateTime.UtcNow - previousPaymentRequest.OrderGuidGeneratedOnUtc.Value;
+                if (interval.TotalSeconds < _paymentSettings.RegenerateOrderGuidInterval)
+                {
+                    processPaymentRequest.OrderGuid = previousPaymentRequest.OrderGuid;
+                    processPaymentRequest.OrderGuidGeneratedOnUtc = previousPaymentRequest.OrderGuidGeneratedOnUtc;
+                }
+            }
+        }
+
+        var json = JsonConvert.SerializeObject(processPaymentRequest);
+        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.ProcessPaymentRequestAttribute, json, store.Id);
     }
 
     #endregion

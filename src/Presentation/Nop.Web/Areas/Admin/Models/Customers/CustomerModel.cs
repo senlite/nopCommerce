@@ -22,12 +22,13 @@ public partial record CustomerModel : BaseNopEntityModel, IAclSupportedModel
         SelectedCustomerRoleIds = new List<int>();
         AvailableCustomerRoles = new List<SelectListItem>();
 
+        SelectedPriceListIds = new List<int>();
+        AvailablePriceLists = new List<SelectListItem>();
+
         AvailableCountries = new List<SelectListItem>();
         AvailableStates = new List<SelectListItem>();
         AvailableVendors = new List<SelectListItem>();
         CustomerAttributes = new List<CustomerAttributeModel>();
-        AvailableNewsletterSubscriptionStores = new List<SelectListItem>();
-        SelectedNewsletterSubscriptionStoreIds = new List<int>();
         AddRewardPoints = new AddRewardPointsToCustomerModel();
         CustomerRewardPointsSearchModel = new CustomerRewardPointsSearchModel();
         CustomerAddressSearchModel = new CustomerAddressSearchModel();
@@ -135,6 +136,9 @@ public partial record CustomerModel : BaseNopEntityModel, IAclSupportedModel
     [NopResourceDisplayName("Admin.Customers.Customers.Fields.Phone")]
     public string Phone { get; set; }
 
+    [NopResourceDisplayName("Admin.Customers.Customers.Fields.PhoneSmsVerified")]
+    public bool PhoneSmsVerified { get; set; }
+
     public bool FaxEnabled { get; set; }
 
     [DataType(DataType.PhoneNumber)]
@@ -197,24 +201,23 @@ public partial record CustomerModel : BaseNopEntityModel, IAclSupportedModel
     [NopResourceDisplayName("Admin.Customers.Customers.Fields.CustomerRoles")]
     public string CustomerRoleNames { get; set; }
 
-    //binding with multi-factor authentication provider
-    [NopResourceDisplayName("Admin.Customers.Customers.Fields.MultiFactorAuthenticationProvider")]
-    public string MultiFactorAuthenticationProvider { get; set; }
-
-    [NopResourceDisplayName("Admin.Customers.Customers.Fields.MustChangePassword")]
-    public bool MustChangePassword { get; set; }
-
     public IList<SelectListItem> AvailableCustomerRoles { get; set; }
 
     [NopResourceDisplayName("Admin.Customers.Customers.Fields.CustomerRoles")]
     public IList<int> SelectedCustomerRoleIds { get; set; }
 
-    //newsletter subscriptions (per store)
-    [NopResourceDisplayName("Admin.Customers.Customers.Fields.Newsletter")]
-    public IList<SelectListItem> AvailableNewsletterSubscriptionStores { get; set; }
+    //price lists
+    public IList<SelectListItem> AvailablePriceLists { get; set; }
 
-    [NopResourceDisplayName("Admin.Customers.Customers.Fields.Newsletter")]
-    public IList<int> SelectedNewsletterSubscriptionStoreIds { get; set; }
+    [NopResourceDisplayName("Admin.Customers.Customers.Fields.PriceLists")]
+    public IList<int> SelectedPriceListIds { get; set; }
+
+    //binding with multi-factor authentication provider
+    [NopResourceDisplayName("Admin.Customers.Customers.Fields.MultiFactorAuthenticationProvider")]
+    public string MultiFactorAuthenticationProvider { get; set; }
+
+    [NopResourceDisplayName("Admin.Customers.Customers.Fields.MustChangePassword")]
+    public bool MustChangePassword { get; set; }    
 
     //reward points history
     public bool DisplayRewardPointsHistory { get; set; }

@@ -1,4 +1,7 @@
-﻿using Nop.Web.Framework.Models;
+﻿using Nop.Core.Domain.Orders;
+using Nop.Core.Domain.Payments;
+using Nop.Services.Orders;
+using Nop.Web.Framework.Models;
 using Nop.Web.Models.Common;
 using Nop.Web.Models.Media;
 
@@ -18,7 +21,7 @@ public partial record OrderDetailsModel : BaseNopEntityModel
         ShippingAddress = new AddressModel();
         PickupAddress = new AddressModel();
 
-        CustomValues = new Dictionary<string, object>();
+        CustomValues = new CustomValues();
     }
 
     public bool PrintMode { get; set; }
@@ -28,11 +31,13 @@ public partial record OrderDetailsModel : BaseNopEntityModel
 
     public DateTime CreatedOn { get; set; }
 
-    public string OrderStatus { get; set; }
+    public OrderStatus OrderStatus { get; set; }
+    public string OrderStatusText { get; set; }
 
     public bool IsReOrderAllowed { get; set; }
 
     public bool IsReturnRequestAllowed { get; set; }
+    public string ReturnRequestText { get; set; }
 
     public bool IsShippable { get; set; }
     public bool PickupInStore { get; set; }
@@ -40,6 +45,7 @@ public partial record OrderDetailsModel : BaseNopEntityModel
     public string ShippingStatus { get; set; }
     public AddressModel ShippingAddress { get; set; }
     public string ShippingMethod { get; set; }
+    public string DesiredDeliveryDate { get; set; }
     public IList<ShipmentBriefModel> Shipments { get; set; }
 
     public AddressModel BillingAddress { get; set; }
@@ -48,8 +54,9 @@ public partial record OrderDetailsModel : BaseNopEntityModel
 
     public string PaymentMethod { get; set; }
     public string PaymentMethodStatus { get; set; }
+    public PaymentStatus PaymentStatus { get; set; }
     public bool CanRePostProcessPayment { get; set; }
-    public Dictionary<string, object> CustomValues { get; set; }
+    public CustomValues CustomValues { get; set; }
 
     public string OrderSubtotal { get; set; }
     public decimal OrderSubtotalValue { get; set; }
@@ -84,7 +91,7 @@ public partial record OrderDetailsModel : BaseNopEntityModel
 
     public bool ShowVendorName { get; set; }
     public bool ShowProductThumbnail { get; set; }
-
+    public bool CanCancelOrder { get; set; }
 
     #region Nested Classes
 

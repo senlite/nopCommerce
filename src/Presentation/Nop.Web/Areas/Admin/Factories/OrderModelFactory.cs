@@ -1,8 +1,5 @@
 ﻿using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
@@ -51,7 +48,6 @@ public partial class OrderModelFactory : IOrderModelFactory
     protected readonly AddressSettings _addressSettings;
     protected readonly CatalogSettings _catalogSettings;
     protected readonly CurrencySettings _currencySettings;
-    protected readonly IActionContextAccessor _actionContextAccessor;
     protected readonly IAddressModelFactory _addressModelFactory;
     protected readonly IAddressService _addressService;
     protected readonly IAffiliateService _affiliateService;
@@ -64,13 +60,13 @@ public partial class OrderModelFactory : IOrderModelFactory
     protected readonly IDownloadService _downloadService;
     protected readonly IEncryptionService _encryptionService;
     protected readonly IGiftCardService _giftCardService;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly ILocalizationService _localizationService;
     protected readonly IMeasureService _measureService;
     protected readonly IOrderProcessingService _orderProcessingService;
     protected readonly IOrderReportService _orderReportService;
     protected readonly IOrderService _orderService;
     protected readonly IPaymentPluginManager _paymentPluginManager;
-    protected readonly IPaymentService _paymentService;
     protected readonly IPictureService _pictureService;
     protected readonly IPriceCalculationService _priceCalculationService;
     protected readonly IPriceFormatter _priceFormatter;
@@ -80,13 +76,13 @@ public partial class OrderModelFactory : IOrderModelFactory
     protected readonly IRewardPointService _rewardPointService;
     protected readonly ISettingService _settingService;
     protected readonly IShipmentService _shipmentService;
-    protected readonly IShippingService _shippingService;
     protected readonly IStateProvinceService _stateProvinceService;
     protected readonly IStoreService _storeService;
     protected readonly ITaxService _taxService;
-    protected readonly IUrlHelperFactory _urlHelperFactory;
     protected readonly IVendorService _vendorService;
+    protected readonly IWarehouseService _warehouseService;
     protected readonly IWorkContext _workContext;
+    protected readonly LinkGenerator _linkGenerator;
     protected readonly MeasureSettings _measureSettings;
     protected readonly NopHttpClient _nopHttpClient;
     protected readonly OrderSettings _orderSettings;
@@ -102,7 +98,6 @@ public partial class OrderModelFactory : IOrderModelFactory
     public OrderModelFactory(AddressSettings addressSettings,
         CatalogSettings catalogSettings,
         CurrencySettings currencySettings,
-        IActionContextAccessor actionContextAccessor,
         IAddressModelFactory addressModelFactory,
         IAddressService addressService,
         IAffiliateService affiliateService,
@@ -115,13 +110,13 @@ public partial class OrderModelFactory : IOrderModelFactory
         IDownloadService downloadService,
         IEncryptionService encryptionService,
         IGiftCardService giftCardService,
+        IHttpContextAccessor httpContextAccessor,
         ILocalizationService localizationService,
         IMeasureService measureService,
         IOrderProcessingService orderProcessingService,
         IOrderReportService orderReportService,
         IOrderService orderService,
         IPaymentPluginManager paymentPluginManager,
-        IPaymentService paymentService,
         IPictureService pictureService,
         IPriceCalculationService priceCalculationService,
         IPriceFormatter priceFormatter,
@@ -131,13 +126,13 @@ public partial class OrderModelFactory : IOrderModelFactory
         IRewardPointService rewardPointService,
         ISettingService settingService,
         IShipmentService shipmentService,
-        IShippingService shippingService,
         IStateProvinceService stateProvinceService,
         IStoreService storeService,
         ITaxService taxService,
-        IUrlHelperFactory urlHelperFactory,
         IVendorService vendorService,
+        IWarehouseService warehouseService,
         IWorkContext workContext,
+        LinkGenerator linkGenerator,
         MeasureSettings measureSettings,
         NopHttpClient nopHttpClient,
         OrderSettings orderSettings,
@@ -148,7 +143,6 @@ public partial class OrderModelFactory : IOrderModelFactory
         _addressSettings = addressSettings;
         _catalogSettings = catalogSettings;
         _currencySettings = currencySettings;
-        _actionContextAccessor = actionContextAccessor;
         _addressModelFactory = addressModelFactory;
         _addressService = addressService;
         _affiliateService = affiliateService;
@@ -161,13 +155,13 @@ public partial class OrderModelFactory : IOrderModelFactory
         _downloadService = downloadService;
         _encryptionService = encryptionService;
         _giftCardService = giftCardService;
+        _httpContextAccessor = httpContextAccessor;
         _localizationService = localizationService;
         _measureService = measureService;
         _orderProcessingService = orderProcessingService;
         _orderReportService = orderReportService;
         _orderService = orderService;
         _paymentPluginManager = paymentPluginManager;
-        _paymentService = paymentService;
         _pictureService = pictureService;
         _priceCalculationService = priceCalculationService;
         _priceFormatter = priceFormatter;
@@ -177,13 +171,13 @@ public partial class OrderModelFactory : IOrderModelFactory
         _rewardPointService = rewardPointService;
         _settingService = settingService;
         _shipmentService = shipmentService;
-        _shippingService = shippingService;
         _stateProvinceService = stateProvinceService;
         _storeService = storeService;
         _taxService = taxService;
-        _urlHelperFactory = urlHelperFactory;
         _vendorService = vendorService;
+        _warehouseService = warehouseService;
         _workContext = workContext;
+        _linkGenerator = linkGenerator;
         _measureSettings = measureSettings;
         _nopHttpClient = nopHttpClient;
         _orderSettings = orderSettings;
@@ -570,33 +564,6 @@ public partial class OrderModelFactory : IOrderModelFactory
         await _addressModelFactory.PrepareAddressModelAsync(model.BillingAddress, billingAddress);
         SetAddressFieldsAsRequired(model.BillingAddress);
 
-        if (order.AllowStoringCreditCardNumber)
-        {
-            //card type
-            model.CardType = _encryptionService.DecryptText(order.CardType);
-            //cardholder name
-            model.CardName = _encryptionService.DecryptText(order.CardName);
-            //card number
-            model.CardNumber = _encryptionService.DecryptText(order.CardNumber);
-            //cvv
-            model.CardCvv2 = _encryptionService.DecryptText(order.CardCvv2);
-            //expiry date
-            var cardExpirationMonthDecrypted = _encryptionService.DecryptText(order.CardExpirationMonth);
-            if (!string.IsNullOrEmpty(cardExpirationMonthDecrypted) && cardExpirationMonthDecrypted != "0")
-                model.CardExpirationMonth = cardExpirationMonthDecrypted;
-            var cardExpirationYearDecrypted = _encryptionService.DecryptText(order.CardExpirationYear);
-            if (!string.IsNullOrEmpty(cardExpirationYearDecrypted) && cardExpirationYearDecrypted != "0")
-                model.CardExpirationYear = cardExpirationYearDecrypted;
-
-            model.AllowStoringCreditCardNumber = true;
-        }
-        else
-        {
-            var maskedCreditCardNumberDecrypted = _encryptionService.DecryptText(order.MaskedCreditCardNumber);
-            if (!string.IsNullOrEmpty(maskedCreditCardNumberDecrypted))
-                model.CardNumber = maskedCreditCardNumberDecrypted;
-        }
-
         //payment transaction info
         model.AuthorizationTransactionId = order.AuthorizationTransactionId;
         model.CaptureTransactionId = order.CaptureTransactionId;
@@ -640,6 +607,9 @@ public partial class OrderModelFactory : IOrderModelFactory
         model.ShippingStatus = await _localizationService.GetLocalizedEnumAsync(order.ShippingStatus);
         if (order.ShippingStatus == ShippingStatus.ShippingNotRequired)
             return;
+
+        if (order.DesiredDeliveryDateUtc.HasValue)
+            model.DesiredDeliveryDate = (await _dateTimeHelper.ConvertToUserTimeAsync(order.DesiredDeliveryDateUtc.Value, DateTimeKind.Utc)).ToString("d");
 
         model.IsShippable = true;
         model.ShippingMethod = order.ShippingMethod;
@@ -929,9 +899,7 @@ public partial class OrderModelFactory : IOrderModelFactory
                 var ids = searchModel.OrderStatusIds.Select(id => id.ToString());
                 var statusItems = searchModel.AvailableOrderStatuses.Where(statusItem => ids.Contains(statusItem.Value)).ToList();
                 foreach (var statusItem in statusItems)
-                {
                     statusItem.Selected = true;
-                }
             }
             else
                 searchModel.AvailableOrderStatuses.FirstOrDefault().Selected = true;
@@ -945,9 +913,7 @@ public partial class OrderModelFactory : IOrderModelFactory
                 var ids = searchModel.PaymentStatusIds.Select(id => id.ToString());
                 var statusItems = searchModel.AvailablePaymentStatuses.Where(statusItem => ids.Contains(statusItem.Value)).ToList();
                 foreach (var statusItem in statusItems)
-                {
                     statusItem.Selected = true;
-                }
             }
             else
                 searchModel.AvailablePaymentStatuses.FirstOrDefault().Selected = true;
@@ -961,9 +927,7 @@ public partial class OrderModelFactory : IOrderModelFactory
                 var ids = searchModel.ShippingStatusIds.Select(id => id.ToString());
                 var statusItems = searchModel.AvailableShippingStatuses.Where(statusItem => ids.Contains(statusItem.Value)).ToList();
                 foreach (var statusItem in statusItems)
-                {
                     statusItem.Selected = true;
-                }
             }
             else
                 searchModel.AvailableShippingStatuses.FirstOrDefault().Selected = true;
@@ -1193,7 +1157,7 @@ public partial class OrderModelFactory : IOrderModelFactory
             model.StoreName = (await _storeService.GetStoreByIdAsync(order.StoreId))?.Name ?? "Deleted";
             model.CustomerInfo = await _customerService.IsRegisteredAsync(customer) ? customer.Email : await _localizationService.GetResourceAsync("Admin.Customers.Guest");
             model.CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(order.CreatedOnUtc, DateTimeKind.Utc);
-            model.CustomValues = _paymentService.DeserializeCustomValues(order);
+            model.CustomValues.FillByXml(order.CustomValuesXml);
 
             var affiliate = await _affiliateService.GetAffiliateByIdAsync(order.AffiliateId);
             if (affiliate != null)
@@ -1511,7 +1475,7 @@ public partial class OrderModelFactory : IOrderModelFactory
                 {
                     Id = item.Id,
                     QuantityInThisShipment = item.Quantity,
-                    ShippedFromWarehouse = (await _shippingService.GetWarehouseByIdAsync(item.WarehouseId))?.Name
+                    ShippedFromWarehouse = (await _warehouseService.GetWarehouseByIdAsync(item.WarehouseId))?.Name
                 };
 
                 await PrepareShipmentItemModelAsync(shipmentItemModel, orderItem, product);
@@ -1561,7 +1525,7 @@ public partial class OrderModelFactory : IOrderModelFactory
                 shipmentItemModel.AllowToChooseWarehouse = true;
                 foreach (var pwi in (await _productService.GetAllProductWarehouseInventoryRecordsAsync(orderItem.ProductId)).OrderBy(w => w.WarehouseId).ToList())
                 {
-                    if (await _shippingService.GetWarehouseByIdAsync(pwi.WarehouseId) is Warehouse warehouse)
+                    if (await _warehouseService.GetWarehouseByIdAsync(pwi.WarehouseId) is Warehouse warehouse)
                     {
                         shipmentItemModel.AvailableWarehouses.Add(new ShipmentItemModel.WarehouseInfo
                         {
@@ -1578,7 +1542,7 @@ public partial class OrderModelFactory : IOrderModelFactory
             else
             {
                 //multiple warehouses are not supported
-                var warehouse = await _shippingService.GetWarehouseByIdAsync(product.WarehouseId);
+                var warehouse = await _warehouseService.GetWarehouseByIdAsync(product.WarehouseId);
                 if (warehouse != null)
                 {
                     shipmentItemModel.AvailableWarehouses.Add(new ShipmentItemModel.WarehouseInfo
@@ -1674,7 +1638,7 @@ public partial class OrderModelFactory : IOrderModelFactory
                 shipmentItemModel.ProductId = orderItem.ProductId;
                 shipmentItemModel.ProductName = product.Name;
 
-                shipmentItemModel.ShippedFromWarehouse = (await _shippingService.GetWarehouseByIdAsync(item.WarehouseId))?.Name;
+                shipmentItemModel.ShippedFromWarehouse = (await _warehouseService.GetWarehouseByIdAsync(item.WarehouseId))?.Name;
 
                 var baseWeight = (await _measureService.GetMeasureWeightByIdAsync(_measureSettings.BaseWeightId))?.Name;
                 var baseDimension = (await _measureService.GetMeasureDimensionByIdAsync(_measureSettings.BaseDimensionId))?.Name;
@@ -1846,19 +1810,17 @@ public partial class OrderModelFactory : IOrderModelFactory
     {
         var orderIncompleteReportModels = new List<OrderIncompleteReportModel>();
 
-        //get URL helper
-        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-
         //not paid
         var orderStatuses = Enum.GetValues(typeof(OrderStatus)).Cast<int>().Where(os => os != (int)OrderStatus.Cancelled).ToList();
         var paymentStatuses = new List<int> { (int)PaymentStatus.Pending };
         var psPending = await _orderReportService.GetOrderAverageReportLineAsync(psIds: paymentStatuses, osIds: orderStatuses);
+        var httpContext = _httpContextAccessor.HttpContext;
         orderIncompleteReportModels.Add(new OrderIncompleteReportModel
         {
             Item = await _localizationService.GetResourceAsync("Admin.SalesReport.Incomplete.TotalUnpaidOrders"),
             Count = psPending.CountOrders,
             Total = await _priceFormatter.FormatPriceAsync(psPending.SumOrders, true, false),
-            ViewLink = urlHelper.Action("List", "Order", new
+            ViewLink = _linkGenerator.GetPathByAction(httpContext, "List", "Order", new
             {
                 orderStatuses = string.Join(",", orderStatuses),
                 paymentStatuses = string.Join(",", paymentStatuses)
@@ -1873,7 +1835,7 @@ public partial class OrderModelFactory : IOrderModelFactory
             Item = await _localizationService.GetResourceAsync("Admin.SalesReport.Incomplete.TotalNotShippedOrders"),
             Count = ssPending.CountOrders,
             Total = await _priceFormatter.FormatPriceAsync(ssPending.SumOrders, true, false),
-            ViewLink = urlHelper.Action("List", "Order", new
+            ViewLink = _linkGenerator.GetPathByAction(httpContext, "List", "Order", new
             {
                 orderStatuses = string.Join(",", orderStatuses),
                 shippingStatuses = string.Join(",", shippingStatuses)
@@ -1888,7 +1850,7 @@ public partial class OrderModelFactory : IOrderModelFactory
             Item = await _localizationService.GetResourceAsync("Admin.SalesReport.Incomplete.TotalIncompleteOrders"),
             Count = osPending.CountOrders,
             Total = await _priceFormatter.FormatPriceAsync(osPending.SumOrders, true, false),
-            ViewLink = urlHelper.Action("List", "Order", new { orderStatuses = string.Join(",", orderStatuses) })
+            ViewLink = _linkGenerator.GetPathByAction(httpContext, "List", "Order", new { orderStatuses = string.Join(",", orderStatuses) })
         });
 
         var pagedList = new PagedList<OrderIncompleteReportModel>(orderIncompleteReportModels, 0, int.MaxValue);

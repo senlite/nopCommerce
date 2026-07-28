@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -13,14 +14,14 @@ public partial class WebAppTypeFinder : ITypeFinder
     #region Constants
 
     /// <summary>Gets the pattern for DLLs that we know don't need to be investigated.</summary>
-    protected const string ASSEMBLY_SKIP_LOADING_PATTERN = "^System|^mscorlib|^Microsoft|^AjaxControlToolkit|^Antlr3|^Autofac|^AutoMapper|^Castle|^ComponentArt|^CppCodeProvider|^DotNetOpenAuth|^EntityFramework|^EPPlus|^FluentValidation|^ImageResizer|^itextsharp|^log4net|^MaxMind|^MbUnit|^MiniProfiler|^Mono.Math|^MvcContrib|^Newtonsoft|^NHibernate|^nunit|^Org.Mentalis|^PerlRegex|^QuickGraph|^Recaptcha|^Remotion|^RestSharp|^Rhino|^Telerik|^Iesi|^TestDriven|^TestFu|^UserAgentStringLibrary|^VJSharpCodeProvider|^WebActivator|^WebDev|^WebGrease";
+    protected const string ASSEMBLY_SKIP_LOADING_PATTERN = "^System|^mscorlib|^Microsoft|^AjaxControlToolkit|^Antlr3|^Autofac|^Mapster|^Castle|^ComponentArt|^CppCodeProvider|^DotNetOpenAuth|^EntityFramework|^EPPlus|^FluentValidation|^ImageResizer|^itextsharp|^log4net|^MaxMind|^MbUnit|^MiniProfiler|^Mono.Math|^MvcContrib|^Newtonsoft|^NHibernate|^nunit|^Org.Mentalis|^PerlRegex|^QuickGraph|^Recaptcha|^Remotion|^RestSharp|^Rhino|^Telerik|^Iesi|^TestDriven|^TestFu|^UserAgentStringLibrary|^VJSharpCodeProvider|^WebActivator|^WebDev|^WebGrease";
 
     #endregion
 
     #region Fields
 
-    protected static readonly Dictionary<string, Assembly> _assemblies = new(StringComparer.InvariantCultureIgnoreCase);
-        
+    protected static readonly ConcurrentDictionary<string, Assembly> _assemblies = new(StringComparer.InvariantCultureIgnoreCase);
+
     protected static bool _loaded;
     protected static readonly object _locker = new();
 
@@ -145,9 +146,11 @@ public partial class WebAppTypeFinder : ITypeFinder
         {
             var msg = string.Empty;
 
-            if (ex.LoaderExceptions.Any()) 
+            if (ex.LoaderExceptions.Any())
+            {
                 msg = ex.LoaderExceptions.Where(e => e != null)
                     .Aggregate(msg, (current, e) => $"{current}{e.Message + Environment.NewLine}");
+            }
 
             var fail = new Exception(msg, ex);
             Debug.WriteLine(fail.Message, fail);
@@ -182,39 +185,38 @@ public partial class WebAppTypeFinder : ITypeFinder
                 _assemblies.TryAdd(assembly.FullName, assembly);
             }
 
-            foreach (var directoriesToLoadAssembly in DirectoriesToLoadAssemblies)
+            foreach (var dllPath in DirectoriesToLoadAssemblies
+                         .Where(directoriesToLoadAssembly => _fileProvider.DirectoryExists(directoriesToLoadAssembly))
+                         .SelectMany(directoriesToLoadAssembly =>
+                             _fileProvider.GetFiles(directoriesToLoadAssembly, "*.dll")))
             {
-                if (!_fileProvider.DirectoryExists(directoriesToLoadAssembly))
-                    continue;
+                try
+                {
+                    var an = AssemblyName.GetAssemblyName(dllPath);
 
-                foreach (var dllPath in _fileProvider.GetFiles(directoriesToLoadAssembly, "*.dll"))
+                    if (_assemblies.ContainsKey(an.FullName))
+                        continue;
+
+                    if (!Matches(an.FullName))
+                        continue;
+
+                    Assembly assembly;
+
                     try
                     {
-                        var an = AssemblyName.GetAssemblyName(dllPath);
-
-                        if (_assemblies.ContainsKey(an.FullName))
-                            continue;
-
-                        if (!Matches(an.FullName))
-                            continue;
-
-                        Assembly assembly;
-
-                        try
-                        {
-                            assembly = AppDomain.CurrentDomain.Load(an);
-                        }
-                        catch
-                        {
-                            assembly = Assembly.LoadFrom(dllPath);
-                        }
-
-                        _assemblies.TryAdd(assembly.FullName, assembly);
+                        assembly = AppDomain.CurrentDomain.Load(an);
                     }
-                    catch (BadImageFormatException ex)
+                    catch
                     {
-                        Trace.TraceError(ex.ToString());
+                        assembly = Assembly.LoadFrom(dllPath);
                     }
+
+                    _assemblies.TryAdd(assembly.FullName, assembly);
+                }
+                catch (BadImageFormatException ex)
+                {
+                    Trace.TraceError(ex.ToString());
+                }
             }
 
             _loaded = true;
@@ -233,7 +235,7 @@ public partial class WebAppTypeFinder : ITypeFinder
     {
         if (!_loaded)
             InitData();
-            
+
         return _assemblies.Values.ToList();
     }
 
@@ -290,7 +292,7 @@ public partial class WebAppTypeFinder : ITypeFinder
     /// <remarks>
     /// For example, the web application's bin folder should be specifically checked for being loaded on the application load. This is needed in situations where plugins need to be loaded in the AppDomain after the application has been reloaded
     /// </remarks>
-    public virtual List<string> DirectoriesToLoadAssemblies { get; set; } = new ()
+    public virtual List<string> DirectoriesToLoadAssemblies { get; set; } = new()
     {
         AppContext.BaseDirectory
     };

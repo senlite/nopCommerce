@@ -1,10 +1,8 @@
 ﻿using FluentMigrator;
-using FluentMigrator.SqlServer;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
-using Nop.Core.Domain.Forums;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Messages;
@@ -13,6 +11,7 @@ using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Seo;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Topics;
+using Nop.Data.Extensions;
 using Nop.Data.Mapping;
 
 namespace Nop.Data.Migrations.Installation;
@@ -222,26 +221,6 @@ public class Indexes : ForwardOnlyMigration
             .OnColumn(nameof(GenericAttribute.KeyGroup)).Ascending()
             .WithOptions().NonClustered();
 
-        Create.Index("IX_Forums_Subscription_TopicId").OnTable(NameCompatibilityManager.GetTableName(typeof(ForumSubscription)))
-            .OnColumn(nameof(ForumSubscription.TopicId)).Ascending()
-            .WithOptions().NonClustered();
-
-        Create.Index("IX_Forums_Subscription_ForumId").OnTable(NameCompatibilityManager.GetTableName(typeof(ForumSubscription)))
-            .OnColumn(nameof(ForumSubscription.ForumId)).Ascending()
-            .WithOptions().NonClustered();
-
-        Create.Index("IX_Forums_Group_DisplayOrder").OnTable(NameCompatibilityManager.GetTableName(typeof(ForumGroup)))
-            .OnColumn(nameof(ForumGroup.DisplayOrder)).Ascending()
-            .WithOptions().NonClustered();
-
-        Create.Index("IX_Forums_Forum_DisplayOrder").OnTable(NameCompatibilityManager.GetTableName(typeof(Forum)))
-            .OnColumn(nameof(Forum.DisplayOrder)).Ascending()
-            .WithOptions().NonClustered();
-
-        Create.Index("IX_Forums_Topic_Subject").OnTable(NameCompatibilityManager.GetTableName(typeof(ForumTopic)))
-            .OnColumn(nameof(ForumTopic.Subject)).Ascending()
-            .WithOptions().NonClustered();
-
         Create.Index("IX_Customer_Username").OnTable(nameof(Customer))
             .OnColumn(nameof(Customer.Username)).Ascending()
             .WithOptions().NonClustered();
@@ -311,6 +290,61 @@ public class Indexes : ForwardOnlyMigration
         Create.Index("IX_Topic_SystemName")
             .OnTable(nameof(Topic))
             .OnColumn(nameof(Topic.SystemName)).Ascending()
+            .WithOptions().NonClustered();
+
+        Create.Index("IX_Topic_Availability")
+            .OnTable(nameof(Topic))
+            .OnColumn(nameof(Topic.AvailableEndDateTimeUtc)).Descending()
+            .OnColumn(nameof(Topic.AvailableStartDateTimeUtc)).Descending()
+            .WithOptions().NonClustered();
+
+        const string databaseType = "sqlserver";
+
+        IfDatabase(databaseType).Create.Index("IX_Product_Search")
+            .OnTable(nameof(Product))
+            .OnColumn(nameof(Product.Name)).Ascending()
+            .OnColumn(nameof(Product.Sku)).Ascending()
+            .OnColumn(nameof(Product.ManufacturerPartNumber)).Ascending()
+            .OnColumn(nameof(Product.Deleted)).Ascending()
+            .WithOptions().NonClustered()
+            .Include(nameof(Product.Id));
+
+        Create.Index("IX_ProductAttributeCombination_Sku")
+            .OnTable(nameof(ProductAttributeCombination))
+            .OnColumn(nameof(ProductAttributeCombination.Sku)).Ascending()
+            .WithOptions().NonClustered()
+            .Include(nameof(ProductAttributeCombination.ProductId));
+
+        Create.Index("IX_Category_Name_Deleted")
+            .OnTable(nameof(Category))
+            .OnColumn(nameof(Category.Name)).Ascending()
+            .OnColumn(nameof(Category.Deleted)).Ascending()
+            .WithOptions().NonClustered()
+            .Include(nameof(Category.Id));
+
+        Create.Index("IX_Manufacturer_Name_Deleted")
+            .OnTable(nameof(Manufacturer))
+            .OnColumn(nameof(Manufacturer.Name)).Ascending()
+            .OnColumn(nameof(Manufacturer.Deleted)).Ascending()
+            .WithOptions().NonClustered()
+            .Include(nameof(Manufacturer.Id));
+
+        Create.Index("IX_ProductCategoryMapping_CategoryId")
+            .OnTable(NameCompatibilityManager.GetTableName(typeof(ProductCategory)))
+            .OnColumn(nameof(ProductCategory.CategoryId)).Ascending()
+            .WithOptions().NonClustered()
+            .Include(nameof(ProductCategory.ProductId));
+
+        Create.Index("IX_ProductManufacturerMapping_ManufacturerId")
+            .OnTable(NameCompatibilityManager.GetTableName(typeof(ProductManufacturer)))
+            .OnColumn(nameof(ProductManufacturer.ManufacturerId)).Ascending()
+            .WithOptions().NonClustered()
+            .Include(nameof(ProductManufacturer.ProductId));
+
+        Create.Index("IX_GenericAttribute_EntityId_KeyGroup_and_Key").OnTable(nameof(GenericAttribute))
+            .OnColumn(nameof(GenericAttribute.EntityId)).Ascending()
+            .OnColumn(nameof(GenericAttribute.KeyGroup)).Ascending()
+            .OnColumn(nameof(GenericAttribute.Key)).Ascending()
             .WithOptions().NonClustered();
     }
 

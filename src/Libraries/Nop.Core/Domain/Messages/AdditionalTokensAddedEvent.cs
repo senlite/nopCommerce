@@ -14,12 +14,10 @@ public partial class AdditionalTokensAddedEvent
     /// Add tokens
     /// </summary>
     /// <param name="additionalTokens">Additional tokens</param>
-    public void AddTokens(params string[] additionalTokens)
+    public virtual void AddTokens(params string[] additionalTokens)
     {
-        foreach (var additionalToken in additionalTokens)
-        {
+        foreach (var additionalToken in additionalTokens) 
             AdditionalTokens.Add(additionalToken);
-        }
     }
 
     /// <summary>
@@ -32,4 +30,9 @@ public partial class AdditionalTokensAddedEvent
     /// Token groups which can be used to filter the AdditionalTokens
     /// </summary>
     public IEnumerable<string> TokenGroups { get; set; }
+
+    /// <summary>
+    /// Message template for which need to add additional tokens
+    /// </summary>
+    public MessageTemplate MessageTemplate { get; set; }
 }

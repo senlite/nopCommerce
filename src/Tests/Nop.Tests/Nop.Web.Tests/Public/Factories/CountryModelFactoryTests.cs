@@ -1,7 +1,7 @@
-﻿using Nop.Web.Factories;
+﻿using AwesomeAssertions;
 using Nop.Services.Localization;
+using Nop.Web.Factories;
 using NUnit.Framework;
-using FluentAssertions;
 
 namespace Nop.Tests.Nop.Web.Tests.Public.Factories;
 

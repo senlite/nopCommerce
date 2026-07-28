@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Razor;
-using Nop.Core.Infrastructure;
+using Nop.Services.Themes;
 
 namespace Nop.Web.Framework.Themes;
 
@@ -8,21 +8,22 @@ namespace Nop.Web.Framework.Themes;
 /// </summary>
 public partial class ThemeableViewLocationExpander : IViewLocationExpander
 {
-    protected const string THEME_KEY = "nop.themename";
-
     /// <summary>
     /// Invoked by a Microsoft.AspNetCore.Mvc.Razor.RazorViewEngine to determine the
     /// values that would be consumed by this instance of Microsoft.AspNetCore.Mvc.Razor.IViewLocationExpander.
     /// The calculated values are used to determine if the view location has changed since the last time it was located.
     /// </summary>
     /// <param name="context">Context</param>
-    public void PopulateValues(ViewLocationExpanderContext context)
+    public virtual void PopulateValues(ViewLocationExpanderContext context)
     {
         //no need to add the themeable view locations at all as the administration should not be themeable anyway
         if (context.AreaName?.Equals(AreaNames.ADMIN) ?? false)
             return;
 
-        context.Values[THEME_KEY] = EngineContext.Current.Resolve<IThemeContext>().GetWorkingThemeNameAsync().Result;
+        if (!context.ActionContext.HttpContext.Items.TryGetValue(NopThemeDefaults.HttpContextThemeCacheKey, out var cachedThemeName))
+            return;
+
+        context.Values[NopThemeDefaults.ThemeKey] = (string)cachedThemeName;
     }
 
     /// <summary>
@@ -31,9 +32,9 @@ public partial class ThemeableViewLocationExpander : IViewLocationExpander
     /// <param name="context">Context</param>
     /// <param name="viewLocations">View locations</param>
     /// <returns>View locations</returns>
-    public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
+    public virtual IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
     {
-        if (context.Values.TryGetValue(THEME_KEY, out string theme))
+        if (context.Values.TryGetValue(NopThemeDefaults.ThemeKey, out var theme))
         {
             viewLocations = new[] {
                     $"/Themes/{theme}/Views/{{1}}/{{0}}.cshtml",
@@ -41,7 +42,6 @@ public partial class ThemeableViewLocationExpander : IViewLocationExpander
                 }
                 .Concat(viewLocations);
         }
-
 
         return viewLocations;
     }

@@ -2,7 +2,6 @@
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Localization;
@@ -29,7 +28,6 @@ public partial class ProductService : IProductService
     #region Fields
 
     protected readonly CatalogSettings _catalogSettings;
-    protected readonly CommonSettings _commonSettings;
     protected readonly IAclService _aclService;
     protected readonly ICustomerService _customerService;
     protected readonly IDateRangeService _dateRangeService;
@@ -43,14 +41,13 @@ public partial class ProductService : IProductService
     protected readonly IRepository<LocalizedProperty> _localizedPropertyRepository;
     protected readonly IRepository<Manufacturer> _manufacturerRepository;
     protected readonly IRepository<Product> _productRepository;
+    protected readonly IRepository<Product3dObject> _product3dObjectRepository;
     protected readonly IRepository<ProductAttributeCombination> _productAttributeCombinationRepository;
     protected readonly IRepository<ProductAttributeMapping> _productAttributeMappingRepository;
     protected readonly IRepository<ProductCategory> _productCategoryRepository;
     protected readonly IRepository<ProductManufacturer> _productManufacturerRepository;
     protected readonly IRepository<ProductPicture> _productPictureRepository;
     protected readonly IRepository<ProductProductTagMapping> _productTagMappingRepository;
-    protected readonly IRepository<ProductReview> _productReviewRepository;
-    protected readonly IRepository<ProductReviewHelpfulness> _productReviewHelpfulnessRepository;
     protected readonly IRepository<ProductSpecificationAttribute> _productSpecificationAttributeRepository;
     protected readonly IRepository<ProductTag> _productTagRepository;
     protected readonly IRepository<ProductVideo> _productVideoRepository;
@@ -62,7 +59,6 @@ public partial class ProductService : IProductService
     protected readonly ISearchPluginManager _searchPluginManager;
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreMappingService _storeMappingService;
-    protected readonly IStoreService _storeService;
     protected readonly IVendorService _vendorService;
     protected readonly IWorkContext _workContext;
     protected readonly LocalizationSettings _localizationSettings;
@@ -73,7 +69,6 @@ public partial class ProductService : IProductService
     #region Ctor
 
     public ProductService(CatalogSettings catalogSettings,
-        CommonSettings commonSettings,
         IAclService aclService,
         ICustomerService customerService,
         IDateRangeService dateRangeService,
@@ -87,14 +82,13 @@ public partial class ProductService : IProductService
         IRepository<LocalizedProperty> localizedPropertyRepository,
         IRepository<Manufacturer> manufacturerRepository,
         IRepository<Product> productRepository,
+        IRepository<Product3dObject> product3dObjectRepository,
         IRepository<ProductAttributeCombination> productAttributeCombinationRepository,
         IRepository<ProductAttributeMapping> productAttributeMappingRepository,
         IRepository<ProductCategory> productCategoryRepository,
         IRepository<ProductManufacturer> productManufacturerRepository,
         IRepository<ProductPicture> productPictureRepository,
         IRepository<ProductProductTagMapping> productTagMappingRepository,
-        IRepository<ProductReview> productReviewRepository,
-        IRepository<ProductReviewHelpfulness> productReviewHelpfulnessRepository,
         IRepository<ProductSpecificationAttribute> productSpecificationAttributeRepository,
         IRepository<ProductTag> productTagRepository,
         IRepository<ProductVideo> productVideoRepository,
@@ -105,14 +99,12 @@ public partial class ProductService : IProductService
         IRepository<TierPrice> tierPriceRepository,
         ISearchPluginManager searchPluginManager,
         IStaticCacheManager staticCacheManager,
-        IStoreService storeService,
         IVendorService vendorService,
         IStoreMappingService storeMappingService,
         IWorkContext workContext,
         LocalizationSettings localizationSettings)
     {
         _catalogSettings = catalogSettings;
-        _commonSettings = commonSettings;
         _aclService = aclService;
         _customerService = customerService;
         _dateRangeService = dateRangeService;
@@ -126,14 +118,13 @@ public partial class ProductService : IProductService
         _localizedPropertyRepository = localizedPropertyRepository;
         _manufacturerRepository = manufacturerRepository;
         _productRepository = productRepository;
+        _product3dObjectRepository = product3dObjectRepository;
         _productAttributeCombinationRepository = productAttributeCombinationRepository;
         _productAttributeMappingRepository = productAttributeMappingRepository;
         _productCategoryRepository = productCategoryRepository;
         _productManufacturerRepository = productManufacturerRepository;
         _productPictureRepository = productPictureRepository;
         _productTagMappingRepository = productTagMappingRepository;
-        _productReviewRepository = productReviewRepository;
-        _productReviewHelpfulnessRepository = productReviewHelpfulnessRepository;
         _productSpecificationAttributeRepository = productSpecificationAttributeRepository;
         _productTagRepository = productTagRepository;
         _productVideoRepository = productVideoRepository;
@@ -145,7 +136,6 @@ public partial class ProductService : IProductService
         _searchPluginManager = searchPluginManager;
         _staticCacheManager = staticCacheManager;
         _storeMappingService = storeMappingService;
-        _storeService = storeService;
         _vendorService = vendorService;
         _workContext = workContext;
         _localizationSettings = localizationSettings;
@@ -274,9 +264,7 @@ public partial class ProductService : IProductService
             else
             {
                 if (combination.AllowOutOfStockOrders)
-                {
                     stockMessage = await _localizationService.GetResourceAsync("Products.Availability.InStock");
-                }
                 else
                 {
                     var productAvailabilityRange = await
@@ -299,6 +287,7 @@ public partial class ProductService : IProductService
                 var selectedIds = allIds.Intersect(exIds).ToList();
 
                 if (selectedIds.Count != allIds.Count)
+                {
                     if (_catalogSettings.AttributeValueOutOfStockDisplayType == AttributeValueOutOfStockDisplayType.AlwaysDisplay)
                         return await _localizationService.GetResourceAsync("Products.Availability.SelectRequiredAttributes");
                     else
@@ -314,6 +303,7 @@ public partial class ProductService : IProductService
                         if (flag)
                             return await _localizationService.GetResourceAsync("Products.Availability.SelectRequiredAttributes");
                     }
+                }
 
                 var productAvailabilityRange = await
                     _dateRangeService.GetProductAvailabilityRangeByIdAsync(product.ProductAvailabilityRangeId);
@@ -323,9 +313,7 @@ public partial class ProductService : IProductService
                         await _localizationService.GetLocalizedAsync(productAvailabilityRange, range => range.Name));
             }
             else
-            {
                 stockMessage = await _localizationService.GetResourceAsync("Products.Availability.InStock");
-            }
         }
 
         return stockMessage;
@@ -412,9 +400,9 @@ public partial class ProductService : IProductService
 
         var qty = -quantity;
 
-        var productInventory = _productWarehouseInventoryRepository.Table.Where(pwi => pwi.ProductId == product.Id)
+        var productInventory = await _productWarehouseInventoryRepository.Table.Where(pwi => pwi.ProductId == product.Id)
             .OrderByDescending(pwi => pwi.StockQuantity - pwi.ReservedQuantity)
-            .ToList();
+            .ToListAsync();
 
         if (productInventory.Count <= 0)
             return;
@@ -508,34 +496,6 @@ public partial class ProductService : IProductService
         return crossSellProducts;
     }
 
-    /// <summary>
-    /// Gets ratio of useful and not useful product reviews 
-    /// </summary>
-    /// <param name="productReview">Product review</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the result
-    /// </returns>
-    protected virtual async Task<(int usefulCount, int notUsefulCount)> GetHelpfulnessCountsAsync(ProductReview productReview)
-    {
-        ArgumentNullException.ThrowIfNull(productReview);
-
-        var productReviewHelpfulness = _productReviewHelpfulnessRepository.Table.Where(prh => prh.ProductReviewId == productReview.Id);
-
-        return (await productReviewHelpfulness.CountAsync(prh => prh.WasHelpful),
-            await productReviewHelpfulness.CountAsync(prh => !prh.WasHelpful));
-    }
-
-    /// <summary>
-    /// Inserts a product review helpfulness record
-    /// </summary>
-    /// <param name="productReviewHelpfulness">Product review helpfulness record</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task InsertProductReviewHelpfulnessAsync(ProductReviewHelpfulness productReviewHelpfulness)
-    {
-        await _productReviewHelpfulnessRepository.InsertAsync(productReviewHelpfulness);
-    }
-
     #endregion
 
     #region Methods
@@ -585,7 +545,7 @@ public partial class ProductService : IProductService
     }
 
     /// <summary>
-    /// Gets product
+    /// Gets a product
     /// </summary>
     /// <param name="productId">Product identifier</param>
     /// <returns>
@@ -1090,12 +1050,11 @@ public partial class ProductService : IProductService
                     join c in _categoryRepository.Table on pc.CategoryId equals c.Id
                     where (!excludeFeaturedProducts || !pc.IsFeaturedProduct) &&
                           categoryIds.Contains(pc.CategoryId)
-                    orderby c.DisplayOrder
-                    group pc by pc.ProductId into pc
+                    group c.DisplayOrder by pc.ProductId into gr
                     select new
                     {
-                        ProductId = pc.Key,
-                        DisplayOrder = pc.First().DisplayOrder
+                        ProductId = gr.Key,
+                        DisplayOrder = gr.Min()
                     };
 
                 productsQuery =
@@ -1164,20 +1123,19 @@ public partial class ProductService : IProductService
             }
         }
 
-        var products = await productsQuery.OrderBy(_localizedPropertyRepository, await _workContext.GetWorkingLanguageAsync(), orderBy).ToPagedListAsync(pageIndex, pageSize);
-
         if (providerResults.Any() && orderBy == ProductSortingEnum.Position && !showHidden)
         {
-            var sortedProducts = products.OrderBy(p => 
-            {
-                var index = providerResults.IndexOf(p.Id);
-                return index == -1 ? products.TotalCount : index;
-            }).ToList();
+            var sortedProducts = from p in productsQuery
+                                 join pr in providerResults.Select((id, ind) => new { ind, id }) on p.Id equals pr.id into orderSeq
+                                 from os in orderSeq.DefaultIfEmpty()
+                                 orderby os == null ? int.MaxValue : os.ind
+                                 select p;
+                                 
 
-            return new PagedList<Product>(sortedProducts, pageIndex, pageSize, products.TotalCount);
+            return await sortedProducts.ToPagedListAsync(pageIndex, pageSize);
         }
 
-        return products;
+        return await productsQuery.OrderBy(_localizedPropertyRepository, await _workContext.GetWorkingLanguageAsync(), orderBy).ToPagedListAsync(pageIndex, pageSize);
     }
 
     /// <summary>
@@ -1230,61 +1188,24 @@ public partial class ProductService : IProductService
                 (!p.AvailableEndDateTimeUtc.HasValue || p.AvailableEndDateTimeUtc.Value > DateTime.UtcNow));
         }
         //vendor filtering
-        if (vendorId > 0)
-        {
+        if (vendorId > 0) 
             query = query.Where(p => p.VendorId == vendorId);
+
+        //apply store mapping constraints
+        if (!showHidden && storeId > 0)
+            query = await _storeMappingService.ApplyStoreMapping(query, storeId);
+
+        if (!showHidden)
+        {
+            //apply ACL constraints
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            query = await _aclService.ApplyAcl(query, customer);
         }
 
         query = query.Where(x => !x.Deleted);
         query = query.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id);
 
-        var products = await query.ToListAsync();
-
-        //ACL mapping
-        if (!showHidden)
-            products = await products.WhereAwait(async x => await _aclService.AuthorizeAsync(x)).ToListAsync();
-
-        //Store mapping
-        if (!showHidden && storeId > 0)
-            products = await products.WhereAwait(async x => await _storeMappingService.AuthorizeAsync(x, storeId)).ToListAsync();
-
-        return products;
-    }
-
-    /// <summary>
-    /// Update product review totals
-    /// </summary>
-    /// <param name="product">Product</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdateProductReviewTotalsAsync(Product product)
-    {
-        ArgumentNullException.ThrowIfNull(product);
-
-        var approvedRatingSum = 0;
-        var notApprovedRatingSum = 0;
-        var approvedTotalReviews = 0;
-        var notApprovedTotalReviews = 0;
-
-        var reviews = _productReviewRepository.Table
-            .Where(r => r.ProductId == product.Id)
-            .ToAsyncEnumerable();
-        await foreach (var pr in reviews)
-            if (pr.IsApproved)
-            {
-                approvedRatingSum += pr.Rating;
-                approvedTotalReviews++;
-            }
-            else
-            {
-                notApprovedRatingSum += pr.Rating;
-                notApprovedTotalReviews++;
-            }
-
-        product.ApprovedRatingSum = approvedRatingSum;
-        product.NotApprovedRatingSum = notApprovedRatingSum;
-        product.ApprovedTotalReviews = approvedTotalReviews;
-        product.NotApprovedTotalReviews = notApprovedTotalReviews;
-        await UpdateProductAsync(product);
+        return await query.ToListAsync();
     }
 
     /// <summary>
@@ -1401,7 +1322,7 @@ public partial class ProductService : IProductService
     /// A task that represents the asynchronous operation
     /// The task result contains the products
     /// </returns>
-    public async Task<IList<Product>> GetProductsBySkuAsync(string[] skuArray, int vendorId = 0)
+    public virtual async Task<IList<Product>> GetProductsBySkuAsync(string[] skuArray, int vendorId = 0)
     {
         ArgumentNullException.ThrowIfNull(skuArray);
 
@@ -1422,7 +1343,7 @@ public partial class ProductService : IProductService
     /// A task that represents the asynchronous operation
     /// The task result contains the number of products
     /// </returns>
-    public async Task<int> GetNumberOfProductsByVendorIdAsync(int vendorId)
+    public virtual async Task<int> GetNumberOfProductsByVendorIdAsync(int vendorId)
     {
         if (vendorId == 0)
             return 0;
@@ -1447,8 +1368,10 @@ public partial class ProductService : IProductService
         foreach (var idStr in product.RequiredProductIds
                      .Split(_separator, StringSplitOptions.RemoveEmptyEntries)
                      .Select(x => x.Trim()))
+        {
             if (int.TryParse(idStr, out var id))
                 ids.Add(id);
+        }
 
         return ids.ToArray();
     }
@@ -1701,37 +1624,6 @@ public partial class ProductService : IProductService
     }
 
     /// <summary>
-    /// Update product store mappings
-    /// </summary>
-    /// <param name="product">Product</param>
-    /// <param name="limitedToStoresIds">A list of store ids for mapping</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdateProductStoreMappingsAsync(Product product, IList<int> limitedToStoresIds)
-    {
-        product.LimitedToStores = limitedToStoresIds.Any();
-
-        var limitedToStoresIdsSet = limitedToStoresIds.ToHashSet();
-        var existingStoreMappingsByStoreId = (await _storeMappingService.GetStoreMappingsAsync(product))
-            .ToDictionary(sm => sm.StoreId);
-        var allStores = await _storeService.GetAllStoresAsync();
-        foreach (var store in allStores)
-        {
-            if (limitedToStoresIdsSet.Contains(store.Id))
-            {
-                //new store
-                if (!existingStoreMappingsByStoreId.ContainsKey(store.Id))
-                    await _storeMappingService.InsertStoreMappingAsync(product, store.Id);
-            }
-            else
-            {
-                //remove store
-                if (existingStoreMappingsByStoreId.TryGetValue(store.Id, out var storeMappingToDelete))
-                    await _storeMappingService.DeleteStoreMappingAsync(storeMappingToDelete);
-            }
-        }
-    }
-
-    /// <summary>
     /// Gets the value whether the sequence contains downloadable products
     /// </summary>
     /// <param name="productIds">Product identifiers</param>
@@ -1868,9 +1760,8 @@ public partial class ProductService : IProductService
 
                 if (product.AllowAddingOnlyExistingAttributeCombinations)
                 {
-                    var totalStockByAllCombinations = await (await _productAttributeService.GetAllProductAttributeCombinationsAsync(product.Id))
-                        .ToAsyncEnumerable()
-                        .SumAsync(c => c.StockQuantity);
+                    var totalStockByAllCombinations = (await _productAttributeService.GetAllProductAttributeCombinationsAsync(product.Id))
+                        .Sum(c => c.StockQuantity);
 
                     await ApplyLowStockActivityAsync(product, totalStockByAllCombinations);
                 }
@@ -1900,10 +1791,8 @@ public partial class ProductService : IProductService
 
             //associated product (bundle)
             var associatedProduct = await GetProductByIdAsync(attributeValue.AssociatedProductId);
-            if (associatedProduct != null)
-            {
+            if (associatedProduct != null) 
                 await AdjustInventoryAsync(associatedProduct, quantityToChange * attributeValue.Quantity, message);
-            }
         }
     }
 
@@ -2332,7 +2221,7 @@ public partial class ProductService : IProductService
     /// A task that represents the asynchronous operation
     /// The task result contains the all picture identifiers grouped by product ID
     /// </returns>
-    public async Task<IDictionary<int, int[]>> GetProductsImagesIdsAsync(int[] productsIds)
+    public virtual async Task<IDictionary<int, int[]>> GetProductsImagesIdsAsync(int[] productsIds)
     {
         var productPictures = await _productPictureRepository.Table
             .Where(p => productsIds.Contains(p.ProductId))
@@ -2358,10 +2247,12 @@ public partial class ProductService : IProductService
         var products = _productRepository.Table;
 
         if (discountId.HasValue)
+        {
             products = from product in products
                 join dpm in _discountProductMappingRepository.Table on product.Id equals dpm.EntityId
                 where dpm.DiscountId == discountId.Value
                 select product;
+        }
 
         if (!showHidden)
             products = products.Where(product => !product.Deleted);
@@ -2436,219 +2327,6 @@ public partial class ProductService : IProductService
     public virtual async Task UpdateProductVideoAsync(ProductVideo productVideo)
     {
         await _productVideoRepository.UpdateAsync(productVideo);
-    }
-
-    #endregion
-
-    #region Product reviews
-
-    /// <summary>
-    /// Gets all product reviews
-    /// </summary>
-    /// <param name="customerId">Customer identifier (who wrote a review); 0 to load all records</param>
-    /// <param name="approved">A value indicating whether to content is approved; null to load all records</param> 
-    /// <param name="fromUtc">Item creation from; null to load all records</param>
-    /// <param name="toUtc">Item item creation to; null to load all records</param>
-    /// <param name="message">Search title or review text; null to load all records</param>
-    /// <param name="storeId">The store identifier, where a review has been created; pass 0 to load all records</param>
-    /// <param name="productId">The product identifier; pass 0 to load all records</param>
-    /// <param name="vendorId">The vendor identifier (limit to products of this vendor); pass 0 to load all records</param>
-    /// <param name="showHidden">A value indicating whether to show hidden records</param>
-    /// <param name="pageIndex">Page index</param>
-    /// <param name="pageSize">Page size</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the reviews
-    /// </returns>
-    public virtual async Task<IPagedList<ProductReview>> GetAllProductReviewsAsync(int customerId = 0, bool? approved = null,
-        DateTime? fromUtc = null, DateTime? toUtc = null,
-        string message = null, int storeId = 0, int productId = 0, int vendorId = 0, bool showHidden = false,
-        int pageIndex = 0, int pageSize = int.MaxValue)
-    {
-        var productReviews = await _productReviewRepository.GetAllPagedAsync(async query =>
-        {
-            if (!showHidden)
-            {
-                var productsQuery = _productRepository.Table.Where(p => p.Published);
-
-                //apply store mapping constraints
-                productsQuery = await _storeMappingService.ApplyStoreMapping(productsQuery, storeId);
-
-                //apply ACL constraints
-                var customer = await _workContext.GetCurrentCustomerAsync();
-                productsQuery = await _aclService.ApplyAcl(productsQuery, customer);
-
-                query = query.Where(review => productsQuery.Any(product => product.Id == review.ProductId));
-            }
-
-            if (approved.HasValue)
-                query = query.Where(pr => pr.IsApproved == approved);
-            if (customerId > 0)
-                query = query.Where(pr => pr.CustomerId == customerId);
-            if (fromUtc.HasValue)
-                query = query.Where(pr => fromUtc.Value <= pr.CreatedOnUtc);
-            if (toUtc.HasValue)
-                query = query.Where(pr => toUtc.Value >= pr.CreatedOnUtc);
-            if (!string.IsNullOrEmpty(message))
-                query = query.Where(pr => pr.Title.Contains(message) || pr.ReviewText.Contains(message));
-            if (storeId > 0)
-                query = query.Where(pr => pr.StoreId == storeId);
-            if (productId > 0)
-                query = query.Where(pr => pr.ProductId == productId);
-
-            query = from productReview in query
-                join product in _productRepository.Table on productReview.ProductId equals product.Id
-                where
-                    (vendorId == 0 || product.VendorId == vendorId) &&
-                    //ignore deleted products
-                    !product.Deleted
-                select productReview;
-
-            query = _catalogSettings.ProductReviewsSortByCreatedDateAscending
-                ? query.OrderBy(pr => pr.CreatedOnUtc).ThenBy(pr => pr.Id)
-                : query.OrderByDescending(pr => pr.CreatedOnUtc).ThenBy(pr => pr.Id);
-
-            return query;
-        }, pageIndex, pageSize);
-
-        return productReviews;
-    }
-
-    /// <summary>
-    /// Gets product review
-    /// </summary>
-    /// <param name="productReviewId">Product review identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the product review
-    /// </returns>
-    public virtual async Task<ProductReview> GetProductReviewByIdAsync(int productReviewId)
-    {
-        return await _productReviewRepository.GetByIdAsync(productReviewId, cache => default);
-    }
-
-    /// <summary>
-    /// Get product reviews by identifiers
-    /// </summary>
-    /// <param name="productReviewIds">Product review identifiers</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the product reviews
-    /// </returns>
-    public virtual async Task<IList<ProductReview>> GetProductReviewsByIdsAsync(int[] productReviewIds)
-    {
-        return await _productReviewRepository.GetByIdsAsync(productReviewIds);
-    }
-
-    /// <summary>
-    /// Inserts a product review
-    /// </summary>
-    /// <param name="productReview">Product review</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertProductReviewAsync(ProductReview productReview)
-    {
-        await _productReviewRepository.InsertAsync(productReview);
-    }
-
-    /// <summary>
-    /// Deletes a product review
-    /// </summary>
-    /// <param name="productReview">Product review</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeleteProductReviewAsync(ProductReview productReview)
-    {
-        await _productReviewRepository.DeleteAsync(productReview);
-    }
-
-    /// <summary>
-    /// Deletes product reviews
-    /// </summary>
-    /// <param name="productReviews">Product reviews</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeleteProductReviewsAsync(IList<ProductReview> productReviews)
-    {
-        await _productReviewRepository.DeleteAsync(productReviews);
-    }
-
-    /// <summary>
-    /// Sets or create a product review helpfulness record
-    /// </summary>
-    /// <param name="productReview">Product review</param>
-    /// <param name="helpfulness">Value indicating whether a review a helpful</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task SetProductReviewHelpfulnessAsync(ProductReview productReview, bool helpfulness)
-    {
-        ArgumentNullException.ThrowIfNull(productReview);
-
-        var customer = await _workContext.GetCurrentCustomerAsync();
-        var prh = await _productReviewHelpfulnessRepository.Table
-            .SingleOrDefaultAsync(h => h.ProductReviewId == productReview.Id && h.CustomerId == customer.Id);
-
-        if (prh is null)
-        {
-            //insert new helpfulness
-            prh = new ProductReviewHelpfulness
-            {
-                ProductReviewId = productReview.Id,
-                CustomerId = customer.Id,
-                WasHelpful = helpfulness,
-            };
-
-            await InsertProductReviewHelpfulnessAsync(prh);
-        }
-        else
-        {
-            //existing one
-            prh.WasHelpful = helpfulness;
-
-            await _productReviewHelpfulnessRepository.UpdateAsync(prh);
-        }
-    }
-
-    /// <summary>
-    /// Updates a product review
-    /// </summary>
-    /// <param name="productReview">Product review</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdateProductReviewAsync(ProductReview productReview)
-    {
-        await _productReviewRepository.UpdateAsync(productReview);
-    }
-
-    /// <summary>
-    /// Updates a totals helpfulness count for product review
-    /// </summary>
-    /// <param name="productReview">Product review</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the result
-    /// </returns>
-    public virtual async Task UpdateProductReviewHelpfulnessTotalsAsync(ProductReview productReview)
-    {
-        ArgumentNullException.ThrowIfNull(productReview);
-
-        (productReview.HelpfulYesTotal, productReview.HelpfulNoTotal) = await GetHelpfulnessCountsAsync(productReview);
-
-        await _productReviewRepository.UpdateAsync(productReview);
-    }
-
-    /// <summary>
-    /// Check possibility added review for current customer
-    /// </summary>
-    /// <param name="productId">Current product</param>
-    /// <param name="storeId">The store identifier; pass 0 to load all records</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the 
-    /// </returns>
-    public virtual async Task<bool> CanAddReviewAsync(int productId, int storeId = 0)
-    {
-        var customer = await _workContext.GetCurrentCustomerAsync();
-
-        if (_catalogSettings.OneReviewPerProductFromCustomer)
-            return (await GetAllProductReviewsAsync(customerId: customer.Id, productId: productId, storeId: storeId)).TotalCount == 0;
-
-        return true;
     }
 
     #endregion
@@ -2784,18 +2462,11 @@ public partial class ProductService : IProductService
     {
         ArgumentNullException.ThrowIfNull(discount);
 
-        var mappingsWithProducts =
-            from dcm in _discountProductMappingRepository.Table
-            join p in _productRepository.Table on dcm.EntityId equals p.Id
-            where dcm.DiscountId == discount.Id
-            select new { product = p, dcm };
+        var mappingsWithProducts = await _discountProductMappingRepository.Table
+            .Where(dpm => dpm.DiscountId == discount.Id)
+            .ToListAsync();
 
-        var mappingsToDelete = new List<DiscountProductMapping>();
-        await foreach (var pdcm in mappingsWithProducts.ToAsyncEnumerable())
-        {
-            mappingsToDelete.Add(pdcm.dcm);
-        }
-        await _discountProductMappingRepository.DeleteAsync(mappingsToDelete);
+        await _discountProductMappingRepository.DeleteAsync(mappingsWithProducts);
     }
 
     /// <summary>
@@ -2841,6 +2512,52 @@ public partial class ProductService : IProductService
     public virtual async Task DeleteDiscountProductMappingAsync(DiscountProductMapping discountProductMapping)
     {
         await _discountProductMappingRepository.DeleteAsync(discountProductMapping);
+    }
+
+    #endregion
+
+    #region Product 3D objects
+
+    /// <summary>
+    /// Gets the 3D object associated with the product
+    /// </summary>
+    /// <param name="product">Product</param>
+    /// <returns>The task result contains the associated 3D object, or <c>null</c> if the 3D object is not found</returns>
+    public virtual async Task<Product3dObject> GetProduct3dObjectAsync(Product product)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+
+        return await _product3dObjectRepository.Table.FirstOrDefaultAsync(x => x.ProductId == product.Id);
+    }
+
+    /// <summary>
+    /// Deletes the 3D object
+    /// </summary>
+    /// <param name="product3dObject">The 3D object</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task DeleteProduct3dObjectAsync(Product3dObject product3dObject)
+    {
+        await _product3dObjectRepository.DeleteAsync(product3dObject);
+    }
+
+    /// <summary>
+    /// Inserts the 3D object
+    /// </summary>
+    /// <param name="product3dObject">The 3D object</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task InsertProduct3dObjectAsync(Product3dObject product3dObject)
+    {
+        await _product3dObjectRepository.InsertAsync(product3dObject);
+    }
+
+    /// <summary>
+    /// Updates the 3D object
+    /// </summary>
+    /// <param name="product3dObject">The 3D object</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task UpdateProduct3dObjectAsync(Product3dObject product3dObject)
+    {
+        await _product3dObjectRepository.UpdateAsync(product3dObject);
     }
 
     #endregion

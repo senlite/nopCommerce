@@ -405,18 +405,22 @@ public class UPSService
 
         //set negotiated rates details
         if (!string.IsNullOrEmpty(_upsSettings.AccountNumber) && !string.IsNullOrEmpty(stateCodeTo))
+        {
             request.Shipment.ShipmentRatingOptions = new Shipment_ShipmentRatingOptions
             {
                 NegotiatedRatesIndicator = string.Empty,
                 UserLevelDiscountIndicator = string.Empty
             };
+        }
 
         //set Saturday delivery details
         if (saturdayDelivery)
+        {
             request.Shipment.ShipmentServiceOptions = new Shipment_ShipmentServiceOptions
             {
                 SaturdayDeliveryIndicator = string.Empty
             };
+        }
 
         //set packages details
         request.Shipment.Package = _upsSettings.PackingType switch
@@ -433,14 +437,14 @@ public class UPSService
                 Code = _upsSettings.WeightType,
                 Description = _upsSettings.WeightType
             },
-            Weight = request.Shipment.Package.Sum(x => decimal.TryParse(x.PackageWeight.Weight, out var wt) ? wt : 0).ToString()
+            Weight = request.Shipment.Package.Sum(x => decimal.TryParse(x.PackageWeight.Weight, out var wt) ? wt : 0).ToString("F2", CultureInfo.InvariantCulture)
         };
 
         var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
         request.Shipment.InvoiceLineTotal = new Shipment_InvoiceLineTotal
         {
             CurrencyCode = currencyCode,
-            MonetaryValue = shippingOptionRequest.Items.Sum(x => x.Product.Price * x.GetQuantity()).ToString("F2")
+            MonetaryValue = shippingOptionRequest.Items.Sum(x => x.Product.Price * x.GetQuantity()).ToString("F2", CultureInfo.InvariantCulture)
         };
 
         return request;
@@ -489,15 +493,13 @@ public class UPSService
         if (_upsSettings.InsurePackage && insuranceAmount > decimal.Zero)
         {
             var currencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId))?.CurrencyCode;
+            var monetaryValue = insuranceAmount.ToString("0.00", CultureInfo.InvariantCulture);
             package.PackageServiceOptions = new Package_PackageServiceOptions
             {
-                Insurance = new PackageServiceOptions_Insurance
+                DeclaredValue = new PackageServiceOptions_DeclaredValue
                 {
-                    BasicFlexibleParcelIndicator = new Insurance_BasicFlexibleParcelIndicator
-                    {
-                        CurrencyCode = currencyCode,
-                        MonetaryValue = insuranceAmount.ToString("0.00", CultureInfo.InvariantCulture)
-                    }
+                    CurrencyCode = currencyCode,
+                    MonetaryValue = monetaryValue
                 }
             };
         }
@@ -638,12 +640,15 @@ public class UPSService
             var dimension = 0;
 
             //get total volume of the package
-            var totalVolume = await shippingOptionRequest.Items.SumAwaitAsync(async item =>
+            var totalVolume = decimal.Zero;
+            foreach (var item in shippingOptionRequest.Items)
             {
                 //get dimensions and weight of the single item
                 var (itemWidth, itemLength, itemHeight) = await GetDimensionsForSingleItemAsync(item.ShoppingCartItem, item.Product);
-                return item.GetQuantity() * itemWidth * itemLength * itemHeight;
-            });
+
+                totalVolume += item.GetQuantity() * itemWidth * itemLength * itemHeight;
+            }
+            
             if (totalVolume > decimal.Zero)
             {
                 //use default value (in cubic inches) if not specified
@@ -822,7 +827,7 @@ public class UPSService
         catch (API.Rates.ApiException<ErrorResponse> exception)
         {
             //log errors
-            var message = $"Error while getting UPS rates{Environment.NewLine}{string.Join(", ", exception.Result.Response.Errors.Select(p=>$"{p.Code}: {p.Message}"))}";
+            var message = $"Error while getting UPS rates{Environment.NewLine}{string.Join(", ", exception.Result.Response.Errors.Select(p => $"{p.Code}: {p.Message}"))}";
             await _logger.ErrorAsync(message, exception, shippingOptionRequest.Customer);
 
             return (new List<ShippingOption>(), message);
@@ -992,9 +997,7 @@ public class UPSService
         {
             var (saturdayShippingOptions, saturdayError) = await GetShippingOptionsAsync(shippingOptionRequest, true);
             foreach (var shippingOption in saturdayShippingOptions)
-            {
                 response.ShippingOptions.Add(shippingOption);
-            }
             if (!string.IsNullOrEmpty(saturdayError))
                 response.Errors.Add(saturdayError);
         }

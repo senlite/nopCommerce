@@ -32,10 +32,6 @@
                     <i class="far fa-save"></i>
                     @T("Admin.Catalog.Products.BulkEdit.SaveAll")
                 </button>
-
-                <nop-action-confirmation asp-button-id="bulk-edit-save-selected"/>
-                <nop-action-confirmation asp-button-id="bulk-edit-save-all"/>
-
             </div>
         </div>
 
@@ -168,14 +164,16 @@
                                         <td colspan="7" style="text-align: center">@T("Admin.DT.EmptyTable")</td>
                                     </tr>
                                     </tbody>
-                                    <tfoot id="navigation">
+                                    <tfoot>
                                     <tr>
                                         <td colspan="3">
-                                            <button onclick="search('first');return false;" class="btn btn-light" id="move-first">@T("Admin.DT.Paginate.First")</button>
-                                            <button onclick="search('previous');return false;" class="btn btn-light" id="move-previous">@T("Admin.DT.Paginate.Previous")</button>
-                                            <label><span id="loaded-info"></span></label>
-                                            <button onclick="search('next');return false;" class="btn btn-light" id="move-next">@T("Admin.DT.Paginate.Next")</button>
-                                            <button onclick="search('last');return false;" class="btn btn-light" id="move-last">@T("Admin.DT.Paginate.Last")</button>
+                                             <div id="navigation">
+                                                <button onclick="search('first');return false;" class="btn btn-light" id="move-first">@T("Admin.DT.Paginate.First")</button>
+                                                <button onclick="search('previous');return false;" class="btn btn-light" id="move-previous">@T("Admin.DT.Paginate.Previous")</button>
+                                                <label><span id="loaded-info"></span></label>
+                                                <button onclick="search('next');return false;" class="btn btn-light" id="move-next">@T("Admin.DT.Paginate.Next")</button>
+                                                <button onclick="search('last');return false;" class="btn btn-light" id="move-last">@T("Admin.DT.Paginate.Last")</button>
+                                             </div>
                                         </td>
                                         <td colspan="4" style="text-align:right">
                                             <a class="btn btn-success" onclick="addNewRow()">
@@ -228,6 +226,7 @@
         var includeSubCategories = $("#@Html.IdFor(model => model.SearchIncludeSubCategories)")[0].checked;
         var manufacturer = $("#@Html.IdFor(model => model.SearchManufacturerId)").val();
         var vendor = $("#@Html.IdFor(model => model.SearchVendorId)").val();
+        var store = $("#@Html.IdFor(model => model.SearchStoreId)").val();
         var warehouse = $("#@Html.IdFor(model => model.SearchWarehouseId)").val();
         var published = $("#@Html.IdFor(model => model.SearchPublishedId)").val();
         var productType = $("#@Html.IdFor(model => model.SearchProductTypeId)").val();
@@ -256,6 +255,7 @@
             SearchIncludeSubCategories: includeSubCategories,
             SearchManufacturerId: manufacturer,
             SearchVendorId: vendor,
+            SearchStoreId: store,
             SearchWarehouseId: warehouse,
             SearchPublishedId: published,
             SearchProductTypeId: productType,
@@ -349,3 +349,6 @@
         </div>
     </div>
 </div>
+
+<nop-action-confirmation asp-button-id="bulk-edit-save-selected" />
+<nop-action-confirmation asp-button-id="bulk-edit-save-all" />

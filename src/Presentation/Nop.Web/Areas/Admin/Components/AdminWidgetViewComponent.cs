@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Components;
+using Nop.Web.Framework.Factories;
 
 namespace Nop.Web.Areas.Admin.Components;
 
@@ -44,7 +44,7 @@ public partial class AdminWidgetViewComponent : NopViewComponent
         if (!models.Any())
             return Content(string.Empty);
 
-        return View(models);
+        return await ViewAsync(models);
     }
 
     #endregion

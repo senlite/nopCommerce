@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
+using Nop.Core.Http;
 using Nop.Data;
 using Nop.Services.Customers;
+using Nop.Services.Helpers;
 
 namespace Nop.Web.Framework.Mvc.Filters;
 
@@ -104,7 +106,7 @@ public sealed class ValidatePasswordAttribute : TypeFilterAttribute
 
             var returnUrl = _webHelper.GetRawUrl(context.HttpContext.Request);
             //redirect to ChangePassword page if expires
-            context.Result = new RedirectToRouteResult("CustomerChangePassword", new { returnUrl = returnUrl });
+            context.Result = new RedirectToRouteResult(NopRouteNames.Standard.CUSTOMER_CHANGE_PASSWORD, new { returnUrl = returnUrl });
         }
 
         #endregion

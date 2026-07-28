@@ -8,4 +8,8 @@ namespace Nop.Services.Common.Caching;
 /// </summary>
 public partial class SearchTermCacheEventConsumer : CacheEventConsumer<SearchTerm>
 {
+    protected override async Task ClearCacheAsync(SearchTerm entity)
+    {
+        await RemoveAsync(NopCommonDefaults.SearchTermsCacheKey, entity.CustomerId, entity.StoreId);
+    }
 }

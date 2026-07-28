@@ -37,6 +37,16 @@ public static partial class MessageTemplateSystemNames
     /// </summary>
     public const string DELETE_CUSTOMER_REQUEST_STORE_OWNER_NOTIFICATION = "Customer.Gdpr.DeleteRequest";
 
+    /// <summary>
+    /// Represents system name of the failed login attempt notification
+    /// </summary>
+    public const string CUSTOMER_FAILED_LOGIN_ATTEMPT_NOTIFICATION = "Customer.FailedLoginAttempt";
+
+    /// <summary>
+    /// Represents system name of notification about new private message
+    /// </summary>
+    public const string PRIVATE_MESSAGE_NOTIFICATION = "Customer.NewPM";
+
     #endregion
 
     #region Order
@@ -107,9 +117,19 @@ public static partial class MessageTemplateSystemNames
     public const string ORDER_COMPLETED_CUSTOMER_NOTIFICATION = "OrderCompleted.CustomerNotification";
 
     /// <summary>
+    /// Represents system name of notification store owner about completed order
+    /// </summary>
+    public const string ORDER_COMPLETED_STORE_OWNER_NOTIFICATION = "OrderCompleted.StoreOwnerNotification";
+
+    /// <summary>
     /// Represents system name of notification customer about cancelled order
     /// </summary>
     public const string ORDER_CANCELLED_CUSTOMER_NOTIFICATION = "OrderCancelled.CustomerNotification";
+
+    /// <summary>
+    /// Represents system name of notification store owner about cancelled order
+    /// </summary>
+    public const string ORDER_CANCELLED_STORE_OWNER_NOTIFICATION = "OrderCancelled.StoreOwnerNotification";
 
     /// <summary>
     /// Represents system name of notification vendor about cancelled order
@@ -145,6 +165,11 @@ public static partial class MessageTemplateSystemNames
     /// Represents system name of notification customer about failed payment for the recurring payments
     /// </summary>
     public const string RECURRING_PAYMENT_FAILED_CUSTOMER_NOTIFICATION = "RecurringPaymentFailed.CustomerNotification";
+
+    /// <summary>
+    /// Represents system name of notification customer about the next recurring payments
+    /// </summary>
+    public const string NEXT_RECURRING_PAYMENT_CUSTOMER_NOTIFICATION = "NextRecurringPaymentNotification.CustomerNotification";
 
     #endregion
 
@@ -193,24 +218,10 @@ public static partial class MessageTemplateSystemNames
     /// </summary>
     public const string RETURN_REQUEST_STATUS_CHANGED_CUSTOMER_NOTIFICATION = "ReturnRequestStatusChanged.CustomerNotification";
 
-    #endregion
-
-    #region Forum
-
     /// <summary>
-    /// Represents system name of notification about new forum topic
+    /// Represents system name of withdrawal link message
     /// </summary>
-    public const string NEW_FORUM_TOPIC_MESSAGE = "Forums.NewForumTopic";
-
-    /// <summary>
-    /// Represents system name of notification about new forum post
-    /// </summary>
-    public const string NEW_FORUM_POST_MESSAGE = "Forums.NewForumPost";
-
-    /// <summary>
-    /// Represents system name of notification about new private message
-    /// </summary>
-    public const string PRIVATE_MESSAGE_NOTIFICATION = "Customer.NewPM";
+    public const string RETURN_REQUEST_WITHDRAWAL_LINK_MESSAGE = "ReturnRequest.WithdrawalLinkMessage";
 
     #endregion
 
@@ -272,11 +283,6 @@ public static partial class MessageTemplateSystemNames
     public const string BLOG_COMMENT_STORE_OWNER_NOTIFICATION = "Blog.BlogComment";
 
     /// <summary>
-    /// Represents system name of notification store owner about new news comment
-    /// </summary>
-    public const string NEWS_COMMENT_STORE_OWNER_NOTIFICATION = "News.NewsComment";
-
-    /// <summary>
     /// Represents system name of notification customer about product receipt
     /// </summary>
     public const string BACK_IN_STOCK_NOTIFICATION = "Customer.BackInStock";
@@ -290,6 +296,40 @@ public static partial class MessageTemplateSystemNames
     /// Represents system name of 'Contact vendor' message
     /// </summary>
     public const string CONTACT_VENDOR_MESSAGE = "Service.ContactVendor";
+
+    #endregion
+
+    #region Reminder
+
+    /// <summary>
+    /// Represents system name of abandoned cart follow up #1
+    /// </summary>
+    public const string REMINDER_ABANDONED_CART_FOLLOW_UP_1_MESSAGE = "Reminders.AbandonedCartFollowUp1";
+
+    /// <summary>
+    /// Represents system name of abandoned cart follow up #2
+    /// </summary>
+    public const string REMINDER_ABANDONED_CART_FOLLOW_UP_2_MESSAGE = "Reminders.AbandonedCartFollowUp2";
+
+    /// <summary>
+    /// Represents system name of abandoned cart follow up #3
+    /// </summary>
+    public const string REMINDER_ABANDONED_CART_FOLLOW_UP_3_MESSAGE = "Reminders.AbandonedCartFollowUp3";
+
+    /// <summary>
+    /// Represents system name of pending order follow up #1
+    /// </summary>
+    public const string REMINDER_PENDING_ORDER_FOLLOW_UP_1_MESSAGE = "Reminders.PendingOrderFollowUp1";
+
+    /// <summary>
+    /// Represents system name of pending order follow up #2
+    /// </summary>
+    public const string REMINDER_PENDING_ORDER_FOLLOW_UP_2_MESSAGE = "Reminders.PendingOrderFollowUp2";
+
+    /// <summary>
+    /// Represents system name of incomplete registration follow up
+    /// </summary>
+    public const string REMINDER_REGISTRATION_FOLLOW_UP_MESSAGE = "Reminders.RegistrationFollowUp";
 
     #endregion
 }

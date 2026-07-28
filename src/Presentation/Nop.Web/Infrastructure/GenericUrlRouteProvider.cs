@@ -14,7 +14,7 @@ public partial class GenericUrlRouteProvider : BaseRouteProvider, IRouteProvider
     /// Register routes
     /// </summary>
     /// <param name="endpointRouteBuilder">Route builder</param>
-    public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
+    public virtual void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
     {
         var lang = GetLanguageRoutePattern();
 
@@ -81,10 +81,6 @@ public partial class GenericUrlRouteProvider : BaseRouteProvider, IRouteProvider
         endpointRouteBuilder.MapControllerRoute(name: NopRoutingDefaults.RouteName.Generic.Vendor,
             pattern: genericPattern,
             defaults: new { controller = "Catalog", action = "Vendor" });
-
-        endpointRouteBuilder.MapControllerRoute(name: NopRoutingDefaults.RouteName.Generic.NewsItem,
-            pattern: genericPattern,
-            defaults: new { controller = "News", action = "NewsItem" });
 
         endpointRouteBuilder.MapControllerRoute(name: NopRoutingDefaults.RouteName.Generic.BlogPost,
             pattern: genericPattern,

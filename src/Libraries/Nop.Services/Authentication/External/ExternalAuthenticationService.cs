@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Events;
+using Nop.Core.Http;
 using Nop.Core.Http.Extensions;
 using Nop.Data;
 using Nop.Services.Common;
 using Nop.Services.Customers;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
 
@@ -24,7 +24,6 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
 
     protected readonly CustomerSettings _customerSettings;
     protected readonly ExternalAuthenticationSettings _externalAuthenticationSettings;
-    protected readonly IActionContextAccessor _actionContextAccessor;
     protected readonly IAuthenticationPluginManager _authenticationPluginManager;
     protected readonly ICustomerRegistrationService _customerRegistrationService;
     protected readonly ICustomerService _customerService;
@@ -34,7 +33,7 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
     protected readonly ILocalizationService _localizationService;
     protected readonly IRepository<ExternalAuthenticationRecord> _externalAuthenticationRecordRepository;
     protected readonly IStoreContext _storeContext;
-    protected readonly IUrlHelperFactory _urlHelperFactory;
+    protected readonly IWebHelper _webHelper;
     protected readonly IWorkContext _workContext;
     protected readonly IWorkflowMessageService _workflowMessageService;
     protected readonly LocalizationSettings _localizationSettings;
@@ -45,7 +44,6 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
 
     public ExternalAuthenticationService(CustomerSettings customerSettings,
         ExternalAuthenticationSettings externalAuthenticationSettings,
-        IActionContextAccessor actionContextAccessor,
         IAuthenticationPluginManager authenticationPluginManager,
         ICustomerRegistrationService customerRegistrationService,
         ICustomerService customerService,
@@ -55,14 +53,13 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
         ILocalizationService localizationService,
         IRepository<ExternalAuthenticationRecord> externalAuthenticationRecordRepository,
         IStoreContext storeContext,
-        IUrlHelperFactory urlHelperFactory,
+        IWebHelper webHelper,
         IWorkContext workContext,
         IWorkflowMessageService workflowMessageService,
         LocalizationSettings localizationSettings)
     {
         _customerSettings = customerSettings;
         _externalAuthenticationSettings = externalAuthenticationSettings;
-        _actionContextAccessor = actionContextAccessor;
         _authenticationPluginManager = authenticationPluginManager;
         _customerRegistrationService = customerRegistrationService;
         _customerService = customerService;
@@ -72,7 +69,7 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
         _localizationService = localizationService;
         _externalAuthenticationRecordRepository = externalAuthenticationRecordRepository;
         _storeContext = storeContext;
-        _urlHelperFactory = urlHelperFactory;
+        _webHelper = webHelper;
         _workContext = workContext;
         _workflowMessageService = workflowMessageService;
         _localizationSettings = localizationSettings;
@@ -100,10 +97,12 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
 
         //account is already assigned to another user
         if (currentLoggedInUser.Id != associatedUser.Id)
+        {
             return await ErrorAuthenticationAsync(new[]
             {
                 await _localizationService.GetResourceAsync("Account.AssociatedExternalAuth.AccountAlreadyAssigned")
             }, returnUrl);
+        }
 
         //or the user try to log in as himself. bit weird
         return SuccessfulAuthentication(returnUrl);
@@ -207,12 +206,12 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
             await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.AccountActivationTokenAttribute, Guid.NewGuid().ToString());
             await _workflowMessageService.SendCustomerEmailValidationMessageAsync(customer, currentLanguage.Id);
 
-            return new RedirectToRouteResult("RegisterResult", new { resultId = (int)UserRegistrationType.EmailValidation, returnUrl });
+            return new RedirectToRouteResult(NopRouteNames.Standard.REGISTER_RESULT, new { resultId = (int)UserRegistrationType.EmailValidation, returnUrl });
         }
 
         //registration is succeeded but isn't approved by admin
         if (_customerSettings.UserRegistrationType == UserRegistrationType.AdminApproval)
-            return new RedirectToRouteResult("RegisterResult", new { resultId = (int)UserRegistrationType.AdminApproval, returnUrl });
+            return new RedirectToRouteResult(NopRouteNames.Standard.REGISTER_RESULT, new { resultId = (int)UserRegistrationType.AdminApproval, returnUrl });
 
         return await ErrorAuthenticationAsync(new[] { "Error on registration" }, returnUrl);
     }
@@ -246,13 +245,11 @@ public partial class ExternalAuthenticationService : IExternalAuthenticationServ
     /// <returns>Result of an authentication</returns>
     protected virtual IActionResult SuccessfulAuthentication(string returnUrl)
     {
-        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-
         //redirect to the return URL if it's specified
-        if (!string.IsNullOrEmpty(returnUrl) && urlHelper.IsLocalUrl(returnUrl))
+        if (!string.IsNullOrEmpty(returnUrl) && _webHelper.CheckIsLocalUrl(returnUrl))
             return new RedirectResult(returnUrl);
 
-        return new RedirectToRouteResult("Homepage", null);
+        return new RedirectToRouteResult(NopRouteNames.General.HOMEPAGE, null);
     }
 
     #endregion

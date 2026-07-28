@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Routing;
 using Nop.Core;
 using Nop.Core.Infrastructure;
-using Nop.Services.Localization;
+using Nop.Services.Helpers;
 
 namespace Nop.Web.Framework.Mvc.Routing;
 
@@ -14,17 +14,14 @@ public partial class LanguageParameterTransformer : IOutboundParameterTransforme
     #region Fields
 
     protected readonly IHttpContextAccessor _httpContextAccessor;
-    protected readonly ILanguageService _languageService;
 
     #endregion
 
     #region Ctor
 
-    public LanguageParameterTransformer(IHttpContextAccessor httpContextAccessor,
-        ILanguageService languageService)
+    public LanguageParameterTransformer(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
-        _languageService = languageService;
     }
 
     #endregion
@@ -44,11 +41,10 @@ public partial class LanguageParameterTransformer : IOutboundParameterTransforme
         {
             //ensure this language is available
             var code = routeValue?.ToString();
-            var storeContext = EngineContext.Current.Resolve<IStoreContext>();
-            var store = storeContext.GetCurrentStore();
-            var languages = _languageService.GetAllLanguages(storeId: store.Id);
-            var language = languages
-                .FirstOrDefault(lang => lang.Published && lang.UniqueSeoCode.Equals(code, StringComparison.InvariantCultureIgnoreCase));
+            var syncCodeHelper = EngineContext.Current.Resolve<ISyncCodeHelper>();
+            var store = syncCodeHelper.GetCurrentStore();
+            var languages = syncCodeHelper.GetAllLanguages(storeId: store.Id);
+            var language = languages.FirstOrDefault(lang => lang.UniqueSeoCode.Equals(code, StringComparison.InvariantCultureIgnoreCase));
             if (language is not null)
                 return language.UniqueSeoCode.ToLowerInvariant();
         }
@@ -58,7 +54,7 @@ public partial class LanguageParameterTransformer : IOutboundParameterTransforme
             return string.Empty;
 
         //or use the current language code
-        //we don't use the passed value, since it's always either the same as the current one or it's the default value (en)
+        //we don't use the passed value, since it's always either the same as the current one or it's the default value (empty)
         var workContext = EngineContext.Current.Resolve<IWorkContext>();
         var currentLanguage = workContext.GetWorkingLanguageAsync().Result;
         return currentLanguage.UniqueSeoCode.ToLowerInvariant();

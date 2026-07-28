@@ -72,7 +72,7 @@ public partial class AclService : IAclService
             where acl.EntityName == entityName
             select acl;
 
-        return await _staticCacheManager.GetAsync(key, query.Any);
+        return await _staticCacheManager.GetAsync(key, async () => await query.AnyAsync());
     }
 
     #endregion
@@ -273,9 +273,11 @@ public partial class AclService : IAclService
 
         foreach (var role1 in await _customerService.GetCustomerRolesAsync(customer))
             foreach (var role2Id in await GetCustomerRoleIdsWithAccessAsync(entityId, entityTypeName))
-                if (role1.Id == role2Id)
-                    //yes, we have such permission
-                    return true;
+        {
+            if (role1.Id == role2Id)
+                //yes, we have such permission
+                return true;
+        }
 
         //no permission found
         return false;
@@ -316,6 +318,7 @@ public partial class AclService : IAclService
         var existingAclRecords = await GetAclRecordsAsync(entity);
         var allCustomerRoles = await _customerService.GetAllCustomerRolesAsync(true);
         foreach (var customerRole in allCustomerRoles)
+        {
             if (selectedCustomerRoleIds.Contains(customerRole.Id))
             {
                 //new role
@@ -329,6 +332,7 @@ public partial class AclService : IAclService
                 if (aclRecordToDelete != null)
                     await DeleteAclRecordAsync(aclRecordToDelete);
             }
+        }
     }
 
     #endregion

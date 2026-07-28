@@ -3,19 +3,21 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
 using Nop.Web.Framework.Models;
+using Nop.Web.Framework.Models.ArtificialIntelligence;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Models.Media;
 using Nop.Web.Models.ShoppingCart;
 
 namespace Nop.Web.Models.Catalog;
 
-public partial record ProductDetailsModel : BaseNopEntityModel
+public partial record ProductDetailsModel : BaseNopEntityModel, IMetaTagsSupportedModel
 {
     public ProductDetailsModel()
     {
         DefaultPictureModel = new PictureModel();
         PictureModels = new List<PictureModel>();
         VideoModels = new List<VideoModel>();
+        Product3dObjectModel = new Product3dObjectModel();
         GiftCard = new GiftCardModel();
         ProductPrice = new ProductPriceModel();
         AddToCart = new AddToCartModel();
@@ -39,6 +41,9 @@ public partial record ProductDetailsModel : BaseNopEntityModel
 
     //videos
     public IList<VideoModel> VideoModels { get; set; }
+
+    //3D model
+    public Product3dObjectModel Product3dObjectModel { get; set; }
 
     public string Name { get; set; }
     public string ShortDescription { get; set; }
@@ -147,6 +152,7 @@ public partial record ProductDetailsModel : BaseNopEntityModel
         public AddToCartModel()
         {
             AllowedQuantities = new List<SelectListItem>();
+            ProductToWishlist = new ProductToWishlistModel();
         }
         public int ProductId { get; set; }
 
@@ -177,8 +183,9 @@ public partial record ProductDetailsModel : BaseNopEntityModel
         //updating existing shopping cart or wishlist item?
         public int UpdatedShoppingCartItemId { get; set; }
         public ShoppingCartType? UpdateShoppingCartItemType { get; set; }
+        public ProductToWishlistModel ProductToWishlist { get; set; }
     }
-    
+
     public partial record GiftCardModel : BaseNopModel
     {
         public bool IsGiftCard { get; set; }

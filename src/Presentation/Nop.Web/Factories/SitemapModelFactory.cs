@@ -1,26 +1,21 @@
 ﻿using System.Globalization;
 using System.Text;
 using System.Xml;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Blogs;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
-using Nop.Core.Domain.Forums;
 using Nop.Core.Domain.Localization;
-using Nop.Core.Domain.News;
 using Nop.Core.Domain.Seo;
-using Nop.Core.Domain.Topics;
 using Nop.Core.Events;
+using Nop.Core.Http;
 using Nop.Core.Infrastructure;
 using Nop.Services.Blogs;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
-using Nop.Services.News;
 using Nop.Services.Seo;
 using Nop.Services.Topics;
 using Nop.Web.Framework.Mvc.Routing;
@@ -37,17 +32,15 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     #region Fields
 
     protected readonly BlogSettings _blogSettings;
-    protected readonly ForumSettings _forumSettings;
-    protected readonly IActionContextAccessor _actionContextAccessor;
     protected readonly IBlogService _blogService;
     protected readonly ICategoryService _categoryService;
     protected readonly ICustomerService _customerService;
     protected readonly IEventPublisher _eventPublisher;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly ILanguageService _languageService;
     protected readonly ILocalizationService _localizationService;
     protected readonly ILocker _locker;
     protected readonly IManufacturerService _manufacturerService;
-    protected readonly INewsService _newsService;
     protected readonly INopFileProvider _nopFileProvider;
     protected readonly INopUrlHelper _nopUrlHelper;
     protected readonly IProductService _productService;
@@ -55,12 +48,9 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreContext _storeContext;
     protected readonly ITopicService _topicService;
-    protected readonly IUrlHelperFactory _urlHelperFactory;
-    protected readonly IUrlRecordService _urlRecordService;
     protected readonly IWebHelper _webHelper;
     protected readonly IWorkContext _workContext;
     protected readonly LocalizationSettings _localizationSettings;
-    protected readonly NewsSettings _newsSettings;
     protected readonly SitemapSettings _sitemapSettings;
     protected readonly SitemapXmlSettings _sitemapXmlSettings;
 
@@ -69,17 +59,15 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     #region Ctor
 
     public SitemapModelFactory(BlogSettings blogSettings,
-        ForumSettings forumSettings,
-        IActionContextAccessor actionContextAccessor,
         IBlogService blogService,
         ICategoryService categoryService,
         ICustomerService customerService,
         IEventPublisher eventPublisher,
+        IHttpContextAccessor httpContextAccessor,
         ILanguageService languageService,
         ILocalizationService localizationService,
         ILocker locker,
         IManufacturerService manufacturerService,
-        INewsService newsService,
         INopFileProvider nopFileProvider,
         INopUrlHelper nopUrlHelper,
         IProductService productService,
@@ -87,27 +75,22 @@ public partial class SitemapModelFactory : ISitemapModelFactory
         IStaticCacheManager staticCacheManager,
         IStoreContext storeContext,
         ITopicService topicService,
-        IUrlHelperFactory urlHelperFactory,
-        IUrlRecordService urlRecordService,
         IWebHelper webHelper,
         IWorkContext workContext,
         LocalizationSettings localizationSettings,
-        NewsSettings newsSettings,
         SitemapSettings sitemapSettings,
         SitemapXmlSettings sitemapXmlSettings)
     {
         _blogSettings = blogSettings;
-        _forumSettings = forumSettings;
-        _actionContextAccessor = actionContextAccessor;
         _blogService = blogService;
         _categoryService = categoryService;
         _customerService = customerService;
         _eventPublisher = eventPublisher;
+        _httpContextAccessor = httpContextAccessor;
         _languageService = languageService;
         _localizationService = localizationService;
         _locker = locker;
         _manufacturerService = manufacturerService;
-        _newsService = newsService;
         _nopFileProvider = nopFileProvider;
         _nopUrlHelper = nopUrlHelper;
         _productService = productService;
@@ -115,12 +98,9 @@ public partial class SitemapModelFactory : ISitemapModelFactory
         _staticCacheManager = staticCacheManager;
         _storeContext = storeContext;
         _topicService = topicService;
-        _urlHelperFactory = urlHelperFactory;
-        _urlRecordService = urlRecordService;
         _webHelper = webHelper;
         _workContext = workContext;
         _localizationSettings = localizationSettings;
-        _newsSettings = newsSettings;
         _sitemapSettings = sitemapSettings;
         _sitemapXmlSettings = sitemapXmlSettings;
     }
@@ -128,15 +108,6 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     #endregion
 
     #region Utilities
-
-    /// <summary>
-    /// Get UrlHelper
-    /// </summary>
-    /// <returns>UrlHelper</returns>
-    protected virtual IUrlHelper GetUrlHelper()
-    {
-        return _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-    }
 
     /// <summary>
     /// Get HTTP protocol
@@ -164,26 +135,18 @@ public partial class SitemapModelFactory : ISitemapModelFactory
         var sitemapUrls = new List<SitemapUrlModel>
         {
             //home page
-            await PrepareLocalizedSitemapUrlAsync("Homepage"),
+            await PrepareLocalizedSitemapUrlAsync(NopRouteNames.General.HOMEPAGE),
 
             //search products
-            await PrepareLocalizedSitemapUrlAsync("ProductSearch"),
+            await PrepareLocalizedSitemapUrlAsync(NopRouteNames.General.SEARCH),
 
             //contact us
-            await PrepareLocalizedSitemapUrlAsync("ContactUs")
+            await PrepareLocalizedSitemapUrlAsync(NopRouteNames.General.CONTACT_US)
         };
-
-        //news
-        if (_newsSettings.Enabled)
-            sitemapUrls.Add(await PrepareLocalizedSitemapUrlAsync("NewsArchive"));
 
         //blog
         if (_blogSettings.Enabled)
-            sitemapUrls.Add(await PrepareLocalizedSitemapUrlAsync("Blog"));
-
-        //forum
-        if (_forumSettings.ForumsEnabled)
-            sitemapUrls.Add(await PrepareLocalizedSitemapUrlAsync("Boards"));
+            sitemapUrls.Add(await PrepareLocalizedSitemapUrlAsync(NopRouteNames.General.BLOG));
 
         //categories
         if (_sitemapXmlSettings.SitemapXmlIncludeCategories)
@@ -200,10 +163,6 @@ public partial class SitemapModelFactory : ISitemapModelFactory
         //product tags
         if (_sitemapXmlSettings.SitemapXmlIncludeProductTags)
             sitemapUrls.AddRange(await GetProductTagUrlsAsync());
-
-        //news
-        if (_sitemapXmlSettings.SitemapXmlIncludeNews && _newsSettings.Enabled)
-            sitemapUrls.AddRange(await GetNewsItemUrlsAsync());
 
         //blog posts
         if (_sitemapXmlSettings.SitemapXmlIncludeBlogPosts && _blogSettings.Enabled)
@@ -224,23 +183,6 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     }
 
     /// <summary>
-    /// Get news item URLs for the sitemap
-    /// </summary>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the sitemap URLs
-    /// </returns>
-    protected virtual async Task<IEnumerable<SitemapUrlModel>> GetNewsItemUrlsAsync()
-    {
-        var store = await _storeContext.GetCurrentStoreAsync();
-
-        return await (await _newsService.GetAllNewsAsync(storeId: store.Id))
-            .SelectAwait(async news => await PrepareLocalizedSitemapUrlAsync("NewsItem",
-                async lang => new { SeName = await _urlRecordService.GetSeNameAsync(news, news.LanguageId, ensureTwoPublishedLanguages: false) },
-                news.CreatedOnUtc)).ToListAsync();
-    }
-
-    /// <summary>
     /// Get category URLs for the sitemap
     /// </summary>
     /// <returns>
@@ -250,9 +192,11 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     protected virtual async Task<IEnumerable<SitemapUrlModel>> GetCategoryUrlsAsync()
     {
         var store = await _storeContext.GetCurrentStoreAsync();
+        var categories = await _categoryService.GetAllCategoriesAsync(storeId: store.Id);
 
-        return await (await _categoryService.GetAllCategoriesAsync(storeId: store.Id))
-            .SelectAwait(async category => await PrepareLocalizedSitemapUrlAsync("Category", GetSeoRouteParamsAwait(category), category.UpdatedOnUtc)).ToListAsync();
+        return await categories
+            .SelectAwait(async category => await PrepareLocalizedSitemapUrlAsync(category, category.UpdatedOnUtc))
+            .ToListAsync();
     }
 
     /// <summary>
@@ -265,9 +209,11 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     protected virtual async Task<IEnumerable<SitemapUrlModel>> GetManufacturerUrlsAsync()
     {
         var store = await _storeContext.GetCurrentStoreAsync();
+        var manufacturers = await _manufacturerService.GetAllManufacturersAsync(storeId: store.Id);
 
-        return await (await _manufacturerService.GetAllManufacturersAsync(storeId: store.Id))
-            .SelectAwait(async manufacturer => await PrepareLocalizedSitemapUrlAsync("Manufacturer", GetSeoRouteParamsAwait(manufacturer), manufacturer.UpdatedOnUtc)).ToListAsync();
+        return await manufacturers
+            .SelectAwait(async manufacturer => await PrepareLocalizedSitemapUrlAsync(manufacturer, manufacturer.UpdatedOnUtc))
+            .ToListAsync();
     }
 
     /// <summary>
@@ -280,10 +226,12 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     protected virtual async Task<IEnumerable<SitemapUrlModel>> GetProductUrlsAsync()
     {
         var store = await _storeContext.GetCurrentStoreAsync();
+        var products = await _productService
+            .SearchProductsAsync(0, storeId: store.Id, visibleIndividuallyOnly: true, orderBy: ProductSortingEnum.CreatedOn);
 
-        return await (await _productService.SearchProductsAsync(0, storeId: store.Id,
-                visibleIndividuallyOnly: true, orderBy: ProductSortingEnum.CreatedOn))
-            .SelectAwait(async product => await PrepareLocalizedSitemapUrlAsync("Product", GetSeoRouteParamsAwait(product), product.UpdatedOnUtc)).ToListAsync();
+        return await products
+            .SelectAwait(async product => await PrepareLocalizedSitemapUrlAsync(product, product.UpdatedOnUtc))
+            .ToListAsync();
     }
 
     /// <summary>
@@ -295,8 +243,11 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     /// </returns>
     protected virtual async Task<IEnumerable<SitemapUrlModel>> GetProductTagUrlsAsync()
     {
-        return await (await _productTagService.GetAllProductTagsAsync())
-            .SelectAwait(async productTag => await PrepareLocalizedSitemapUrlAsync("ProductsByTag", GetSeoRouteParamsAwait(productTag))).ToListAsync();
+        var productTags = await _productTagService.GetAllProductTagsAsync();
+
+        return await productTags
+            .SelectAwait(async productTag => await PrepareLocalizedSitemapUrlAsync(productTag))
+            .ToListAsync();
     }
 
     /// <summary>
@@ -309,45 +260,12 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     protected virtual async Task<IEnumerable<SitemapUrlModel>> GetTopicUrlsAsync()
     {
         var store = await _storeContext.GetCurrentStoreAsync();
+        var topics = await _topicService.GetAllTopicsAsync(store.Id);
 
-        return await (await _topicService.GetAllTopicsAsync(store.Id)).Where(t => t.IncludeInSitemap)
-            .SelectAwait(async topic => await PrepareLocalizedSitemapUrlAsync("Topic", GetSeoRouteParamsAwait(topic))).ToListAsync();
-    }
-
-    /// <summary>
-    /// Return localized blog post url
-    /// </summary>
-    /// <param name="post">Blog post to generate URL</param>
-    /// <param name="updateFreq">How often to update url</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    protected virtual async Task<SitemapUrlModel> PrepareLocalizedBlogPostUrlModelAsync(BlogPost post, UpdateFrequency updateFreq = UpdateFrequency.Weekly)
-    {
-        //url for current language
-        var url = await _nopUrlHelper.RouteGenericUrlAsync<BlogPost>(new
-        {
-            SeName = await _urlRecordService.GetSeNameAsync(post, null,
-                ensureTwoPublishedLanguages: false)
-        }, await GetHttpProtocolAsync());
-
-        var updatedOn = post.CreatedOnUtc;
-
-        if (!_localizationSettings.SeoFriendlyUrlsForLanguagesEnabled)
-            return new SitemapUrlModel(url, new List<string>(), updateFreq, updatedOn);
-
-        var lang = await _languageService.GetLanguageByIdAsync(post.LanguageId);
-
-        if (lang == null || !lang.Published)
-            return new SitemapUrlModel(url, new List<string>(), updateFreq, updatedOn);
-
-        url = await _nopUrlHelper.RouteGenericUrlAsync<BlogPost>(new
-        {
-            SeName = await _urlRecordService.GetSeNameAsync(post, post.LanguageId,
-                ensureTwoPublishedLanguages: false)
-        }, await GetHttpProtocolAsync());
-
-        url = GetLocalizedUrl(url, lang);
-
-        return new SitemapUrlModel(url, new List<string>(), updateFreq, updatedOn);
+        return await topics
+            .Where(t => t.IncludeInSitemap)
+            .SelectAwait(async topic => await PrepareLocalizedSitemapUrlAsync(topic))
+            .ToListAsync();
     }
 
     /// <summary>
@@ -360,14 +278,12 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     protected virtual async Task<IEnumerable<SitemapUrlModel>> GetBlogPostUrlsAsync()
     {
         var store = await _storeContext.GetCurrentStoreAsync();
+        var blogPosts = await _blogService.GetAllBlogPostsAsync(store.Id);
 
-        var urls = await (await _blogService.GetAllBlogPostsAsync(store.Id))
+        return await blogPosts
             .Where(p => p.IncludeInSitemap)
-            .SelectAwait(async post =>
-                await PrepareLocalizedBlogPostUrlModelAsync(post)
-            ).ToListAsync();
-
-        return urls;
+            .SelectAwait(async post => await PrepareLocalizedSitemapUrlAsync(post, post.CreatedOnUtc, languageId: post.LanguageId))
+            .ToListAsync();
     }
 
     /// <summary>
@@ -380,21 +296,6 @@ public partial class SitemapModelFactory : ISitemapModelFactory
 
         return _sitemapXmlSettings.SitemapCustomUrls.Select(customUrl =>
             new SitemapUrlModel(string.Concat(storeLocation, customUrl), new List<string>(), UpdateFrequency.Weekly, DateTime.UtcNow));
-    }
-
-    /// <summary>
-    /// Get route params for URL localization
-    /// </summary>
-    /// <typeparam name="T">Model type</typeparam>
-    /// <param name="model">Model</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the lambda for route params
-    /// </returns>
-    protected virtual Func<int?, Task<object>> GetSeoRouteParamsAwait<T>(T model)
-        where T : BaseEntity, ISlugSupported
-    {
-        return async lang => new { SeName = await _urlRecordService.GetSeNameAsync(model, lang) };
     }
 
     /// <summary>
@@ -417,11 +318,9 @@ public partial class SitemapModelFactory : ISitemapModelFactory
         await writer.WriteStartElementAsync(prefix: null, localName: "sitemapindex", ns: "http://www.sitemaps.org/schemas/sitemap/0.9");
 
         //write URLs of all available sitemaps
-        var urlHelper = GetUrlHelper();
-
         for (var id = 1; id <= sitemapNumber; id++)
         {
-            var url = urlHelper.RouteUrl("sitemap-indexed.xml", new { Id = id }, await GetHttpProtocolAsync());
+            var url = _nopUrlHelper.RouteUrl(NopRouteNames.Standard.SITEMAP_INDEXED_XML, new { Id = id }, await GetHttpProtocolAsync());
             var location = await XmlHelper.XmlEncodeAsync(url);
 
             await writer.WriteStartElementAsync(null, "sitemap", null);
@@ -465,9 +364,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
             //write all alternate url if exists
             foreach (var alternate in sitemapUrl.AlternateLocations
                          .Where(p => !p.Equals(sitemapUrl.Location, StringComparison.InvariantCultureIgnoreCase)))
-            {
                 await WriteSitemapUrlAsync(writer, new SitemapUrlModel(alternate, sitemapUrl));
-            }
         }
 
         await writer.WriteEndElementAsync();
@@ -498,7 +395,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
             //extract seo code
             var altLoc = await XmlHelper.XmlEncodeAsync(alternate);
             var altLocPath = new Uri(altLoc).PathAndQuery;
-            var (_, lang) = await altLocPath.IsLocalizedUrlAsync(_actionContextAccessor.ActionContext.HttpContext.Request.PathBase, true);
+            var (_, lang) = await altLocPath.IsLocalizedUrlAsync(_httpContextAccessor.HttpContext.Request.PathBase, true);
 
             if (string.IsNullOrEmpty(lang?.UniqueSeoCode))
                 continue;
@@ -581,15 +478,12 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     /// <param name="currentUrl">URL to add SEO code</param>
     /// <param name="lang">Language for localization</param>
     /// <returns>Localized URL with SEO code</returns>
-    protected string GetLocalizedUrl(string currentUrl, Language lang)
+    protected virtual string GetLocalizedUrl(string currentUrl, Language lang)
     {
         if (string.IsNullOrEmpty(currentUrl))
             return null;
 
-        if (_actionContextAccessor.ActionContext == null)
-            return null;
-
-        var pathBase = _actionContextAccessor.ActionContext.HttpContext.Request.PathBase;
+        var pathBase = _httpContextAccessor.HttpContext.Request.PathBase;
 
         //Extract server and path from url
         var scheme = new Uri(currentUrl).GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped);
@@ -628,9 +522,6 @@ public partial class SitemapModelFactory : ISitemapModelFactory
 
         var cachedModel = await _staticCacheManager.GetAsync(cacheKey, async () =>
         {
-            //get URL helper
-            var urlHelper = GetUrlHelper();
-
             var model = new SitemapModel();
 
             //prepare common items
@@ -641,7 +532,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
             {
                 GroupTitle = commonGroupTitle,
                 Name = await _localizationService.GetResourceAsync("Homepage"),
-                Url = urlHelper.RouteUrl("Homepage")
+                Url = _nopUrlHelper.RouteUrl(NopRouteNames.General.HOMEPAGE)
             });
 
             //search
@@ -649,19 +540,8 @@ public partial class SitemapModelFactory : ISitemapModelFactory
             {
                 GroupTitle = commonGroupTitle,
                 Name = await _localizationService.GetResourceAsync("Search"),
-                Url = urlHelper.RouteUrl("ProductSearch")
+                Url = _nopUrlHelper.RouteUrl(NopRouteNames.General.SEARCH)
             });
-
-            //news
-            if (_newsSettings.Enabled)
-            {
-                model.Items.Add(new SitemapModel.SitemapItemModel
-                {
-                    GroupTitle = commonGroupTitle,
-                    Name = await _localizationService.GetResourceAsync("News"),
-                    Url = urlHelper.RouteUrl("NewsArchive")
-                });
-            }
 
             //blog
             if (_blogSettings.Enabled)
@@ -670,18 +550,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
                 {
                     GroupTitle = commonGroupTitle,
                     Name = await _localizationService.GetResourceAsync("Blog"),
-                    Url = urlHelper.RouteUrl("Blog")
-                });
-            }
-
-            //forums
-            if (_forumSettings.ForumsEnabled)
-            {
-                model.Items.Add(new SitemapModel.SitemapItemModel
-                {
-                    GroupTitle = commonGroupTitle,
-                    Name = await _localizationService.GetResourceAsync("Forum.Forums"),
-                    Url = urlHelper.RouteUrl("Boards")
+                    Url = _nopUrlHelper.RouteUrl(NopRouteNames.General.BLOG)
                 });
             }
 
@@ -690,7 +559,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
             {
                 GroupTitle = commonGroupTitle,
                 Name = await _localizationService.GetResourceAsync("ContactUs"),
-                Url = urlHelper.RouteUrl("ContactUs")
+                Url = _nopUrlHelper.RouteUrl(NopRouteNames.General.CONTACT_US)
             });
 
             //customer info
@@ -698,7 +567,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
             {
                 GroupTitle = commonGroupTitle,
                 Name = await _localizationService.GetResourceAsync("Account.MyAccount"),
-                Url = urlHelper.RouteUrl("CustomerInfo")
+                Url = _nopUrlHelper.RouteUrl(NopRouteNames.General.CUSTOMER_INFO)
             });
 
             //at the moment topics are in general category too
@@ -711,7 +580,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
                 {
                     GroupTitle = commonGroupTitle,
                     Name = await _localizationService.GetLocalizedAsync(topic, x => x.Title),
-                    Url = await _nopUrlHelper.RouteGenericUrlAsync<Topic>(new { SeName = await _urlRecordService.GetSeNameAsync(topic) })
+                    Url = await _nopUrlHelper.RouteGenericUrlAsync(topic)
                 }).ToListAsync());
             }
 
@@ -726,22 +595,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
                 {
                     GroupTitle = blogPostsGroupTitle,
                     Name = post.Title,
-                    Url = await _nopUrlHelper
-                        .RouteGenericUrlAsync<BlogPost>(new { SeName = await _urlRecordService.GetSeNameAsync(post, post.LanguageId, ensureTwoPublishedLanguages: false) })
-                }).ToListAsync());
-            }
-
-            //news
-            if (_sitemapSettings.SitemapIncludeNews && _newsSettings.Enabled)
-            {
-                var newsGroupTitle = await _localizationService.GetResourceAsync("Sitemap.News");
-                var news = await _newsService.GetAllNewsAsync(storeId: store.Id);
-                model.Items.AddRange(await news.SelectAwait(async newsItem => new SitemapModel.SitemapItemModel
-                {
-                    GroupTitle = newsGroupTitle,
-                    Name = newsItem.Title,
-                    Url = await _nopUrlHelper
-                        .RouteGenericUrlAsync<NewsItem>(new { SeName = await _urlRecordService.GetSeNameAsync(newsItem, newsItem.LanguageId, ensureTwoPublishedLanguages: false) })
+                    Url = await _nopUrlHelper.RouteGenericUrlAsync(post, languageId: post.LanguageId, ensureTwoPublishedLanguages: false)
                 }).ToListAsync());
             }
 
@@ -754,7 +608,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
                 {
                     GroupTitle = categoriesGroupTitle,
                     Name = await _localizationService.GetLocalizedAsync(category, x => x.Name),
-                    Url = await _nopUrlHelper.RouteGenericUrlAsync<Category>(new { SeName = await _urlRecordService.GetSeNameAsync(category) })
+                    Url = await _nopUrlHelper.RouteGenericUrlAsync(category)
                 }).ToListAsync());
             }
 
@@ -767,7 +621,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
                 {
                     GroupTitle = manufacturersGroupTitle,
                     Name = await _localizationService.GetLocalizedAsync(manufacturer, x => x.Name),
-                    Url = await _nopUrlHelper.RouteGenericUrlAsync<Manufacturer>(new { SeName = await _urlRecordService.GetSeNameAsync(manufacturer) })
+                    Url = await _nopUrlHelper.RouteGenericUrlAsync(manufacturer)
                 }).ToListAsync());
             }
 
@@ -780,7 +634,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
                 {
                     GroupTitle = productsGroupTitle,
                     Name = await _localizationService.GetLocalizedAsync(product, x => x.Name),
-                    Url = await _nopUrlHelper.RouteGenericUrlAsync<Product>(new { SeName = await _urlRecordService.GetSeNameAsync(product) })
+                    Url = await _nopUrlHelper.RouteGenericUrlAsync(product)
                 }).ToListAsync());
             }
 
@@ -793,7 +647,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
                 {
                     GroupTitle = productTagsGroupTitle,
                     Name = await _localizationService.GetLocalizedAsync(productTag, x => x.Name),
-                    Url = await _nopUrlHelper.RouteGenericUrlAsync<ProductTag>(new { SeName = await _urlRecordService.GetSeNameAsync(productTag) })
+                    Url = await _nopUrlHelper.RouteGenericUrlAsync(productTag)
                 }).ToListAsync());
             }
 
@@ -830,9 +684,7 @@ public partial class SitemapModelFactory : ISitemapModelFactory
         var fullPath = _nopFileProvider.GetAbsolutePath(NopSeoDefaults.SitemapXmlDirectory, fileName);
 
         if (_nopFileProvider.FileExists(fullPath) && _nopFileProvider.GetLastWriteTimeUtc(fullPath) > DateTime.UtcNow.AddHours(-_sitemapXmlSettings.RebuildSitemapXmlAfterHours))
-        {
             return new SitemapXmlModel { SitemapXmlPath = fullPath };
-        }
 
         //execute task with lock
         if (!await _locker.PerformActionWithLockAsync(
@@ -847,41 +699,19 @@ public partial class SitemapModelFactory : ISitemapModelFactory
     }
 
     /// <summary>
-    /// Return localized urls
+    /// Return localized sitemap URL models
     /// </summary>
     /// <param name="routeName">Route name</param>
-    /// <param name="getRouteParamsAwait">Lambda for route params object</param>
     /// <param name="dateTimeUpdatedOn">A time when URL was updated last time</param>
-    /// <param name="updateFreq">How often to update url</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
+    /// <param name="updateFreq">How often to update URL</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the localized sitemap URL models
+    /// </returns>
     public virtual async Task<SitemapUrlModel> PrepareLocalizedSitemapUrlAsync(string routeName,
-        Func<int?, Task<object>> getRouteParamsAwait = null,
-        DateTime? dateTimeUpdatedOn = null,
-        UpdateFrequency updateFreq = UpdateFrequency.Weekly)
+        DateTime? dateTimeUpdatedOn = null, UpdateFrequency updateFreq = UpdateFrequency.Weekly)
     {
-        async Task<string> routeUrlAsync(string routeName, object values, string protocol) => routeName switch
-        {
-            var name when name.Equals(nameof(Product), StringComparison.InvariantCultureIgnoreCase)
-                => await _nopUrlHelper.RouteGenericUrlAsync<Product>(values, protocol),
-            var name when name.Equals(nameof(Category), StringComparison.InvariantCultureIgnoreCase)
-                => await _nopUrlHelper.RouteGenericUrlAsync<Category>(values, protocol),
-            var name when name.Equals(nameof(Manufacturer), StringComparison.InvariantCultureIgnoreCase)
-                => await _nopUrlHelper.RouteGenericUrlAsync<Manufacturer>(values, protocol),
-            var name when name.Equals(nameof(BlogPost), StringComparison.InvariantCultureIgnoreCase)
-                => await _nopUrlHelper.RouteGenericUrlAsync<BlogPost>(values, protocol),
-            var name when name.Equals(nameof(NewsItem), StringComparison.InvariantCultureIgnoreCase)
-                => await _nopUrlHelper.RouteGenericUrlAsync<NewsItem>(values, protocol),
-            var name when name.Equals(nameof(Topic), StringComparison.InvariantCultureIgnoreCase)
-                => await _nopUrlHelper.RouteGenericUrlAsync<Topic>(values, protocol),
-            var name when name.Equals(nameof(ProductTag), StringComparison.InvariantCultureIgnoreCase)
-                => await _nopUrlHelper.RouteGenericUrlAsync<ProductTag>(values, protocol),
-            _ => GetUrlHelper().RouteUrl(routeName, values, protocol)
-        };
-
-        //url for current language
-        var url = await routeUrlAsync(routeName,
-            getRouteParamsAwait != null ? await getRouteParamsAwait(null) : null,
-            await GetHttpProtocolAsync());
+        var url = _nopUrlHelper.RouteUrl(routeName, null, await GetHttpProtocolAsync());
 
         var store = await _storeContext.GetCurrentStoreAsync();
 
@@ -895,12 +725,57 @@ public partial class SitemapModelFactory : ISitemapModelFactory
 
         //return list of localized urls
         var localizedUrls = await languages
+            .Select(lang => GetLocalizedUrl(url, lang))
+            .Where(value => !string.IsNullOrEmpty(value))
+            .ToListAsync();
+
+        return new SitemapUrlModel(url, localizedUrls, updateFreq, updatedOn);
+    }
+
+    /// <summary>
+    /// Return localized sitemap URL models
+    /// </summary>
+    /// <param name="entity">An entity which supports slug</param>
+    /// <param name="dateTimeUpdatedOn">A time when URL was updated last time</param>
+    /// <param name="updateFreq">How often to update URL</param>
+    /// <param name="languageId">Language id; pass when URL for this entity should be used in one language</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the localized sitemap URL models
+    /// </returns>
+    public virtual async Task<SitemapUrlModel> PrepareLocalizedSitemapUrlAsync<TEntity>(TEntity entity,
+        DateTime? dateTimeUpdatedOn = null, UpdateFrequency updateFreq = UpdateFrequency.Weekly, int? languageId = null)
+        where TEntity : BaseEntity, ISlugSupported
+    {
+        var url = await _nopUrlHelper
+            .RouteGenericUrlAsync(entity, await GetHttpProtocolAsync(), ensureTwoPublishedLanguages: languageId is null);
+
+        var store = await _storeContext.GetCurrentStoreAsync();
+
+        var updatedOn = dateTimeUpdatedOn ?? DateTime.UtcNow;
+        var languages = _localizationSettings.SeoFriendlyUrlsForLanguagesEnabled
+            ? await _languageService.GetAllLanguagesAsync(storeId: store.Id)
+            : null;
+
+        if (languages == null || languages.Count == 1)
+            return new SitemapUrlModel(url, new List<string>(), updateFreq, updatedOn);
+
+        if (languageId.HasValue)
+        {
+            if (await _languageService.GetLanguageByIdAsync(languageId.Value) is not Language language || !language.Published)
+                return new SitemapUrlModel(url, new List<string>(), updateFreq, updatedOn);
+
+            var localizedUrl = await _nopUrlHelper
+                .RouteGenericUrlAsync(entity, await GetHttpProtocolAsync(), languageId: languageId, ensureTwoPublishedLanguages: false);
+            localizedUrl = GetLocalizedUrl(url, language);
+            return new SitemapUrlModel(localizedUrl, new List<string>(), updateFreq, updatedOn);
+        }
+
+        //return list of localized urls
+        var localizedUrls = await languages
             .SelectAwait(async lang =>
             {
-                var currentUrl = await routeUrlAsync(routeName,
-                    getRouteParamsAwait != null ? await getRouteParamsAwait(lang.Id) : null,
-                    await GetHttpProtocolAsync());
-
+                var currentUrl = await _nopUrlHelper.RouteGenericUrlAsync(entity, await GetHttpProtocolAsync(), languageId: lang.Id);
                 return GetLocalizedUrl(currentUrl, lang);
             })
             .Where(value => !string.IsNullOrEmpty(value))

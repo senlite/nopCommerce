@@ -58,7 +58,7 @@ public partial class MediaSettings : ISettings
     public int OrderThumbPictureSize { get; set; }
 
     /// <summary>
-    /// Picture size of product pictures for minishipping cart box
+    /// Picture size of product pictures for mini shopping cart box
     /// </summary>
     public int MiniCartThumbPictureSize { get; set; }
 
@@ -80,7 +80,7 @@ public partial class MediaSettings : ISettings
     /// <summary>
     /// A value indicating whether to allow uploading of SVG files in admin area
     /// </summary>
-    public bool AllowSVGUploads { get; set; }
+    public bool AllowSvgUploads { get; set; }
 
     /// <summary>
     /// Maximum allowed picture size. If a larger picture is uploaded, then it'll be resized
@@ -93,7 +93,7 @@ public partial class MediaSettings : ISettings
     public int DefaultImageQuality { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether single (/content/images/thumbs/) or multiple (/content/images/thumbs/001/ and /content/images/thumbs/002/) directories will used for picture thumbs
+    /// Gets or sets a value indicating whether single (thumbs/) or multiple (thumbs/001/ and thumbs/002/) directories will be used for picture thumbs
     /// </summary>
     public bool MultipleThumbDirectories { get; set; }
 
@@ -103,22 +103,7 @@ public partial class MediaSettings : ISettings
     public bool ImportProductImagesUsingHash { get; set; }
 
     /// <summary>
-    /// Gets or sets Azure CacheControl header (e.g. "max-age=3600, public")
-    /// </summary>
-    /// <remarks>
-    /// max-age=[seconds]     — specifies the maximum amount of time that a representation will be considered fresh. Similar to Expires, this directive is relative to the time of the request, rather than absolute. [seconds] is the number of seconds from the time of the request you wish the representation to be fresh for.
-    /// s-maxage=[seconds]    — similar to max-age, except that it only applies to shared (e.g., proxy) caches.
-    /// public                — marks authenticated responses as cacheable; normally, if HTTP authentication is required, responses are automatically private.
-    /// private               — allows caches that are specific to one user (e.g., in a browser) to store the response; shared caches (e.g., in a proxy) may not.
-    /// no-cache              — forces caches to submit the request to the origin server for validation before releasing a cached copy, every time. This is useful to assure that authentication is respected (in combination with public), or to maintain rigid freshness, without sacrificing all of the benefits of caching.
-    /// no-store              — instructs caches not to keep a copy of the representation under any conditions.
-    /// must-revalidate       — tells caches that they must obey any freshness information you give them about a representation. HTTP allows caches to serve stale representations under special conditions; by specifying this header, you’re telling the cache that you want it to strictly follow your rules.
-    /// proxy-revalidate      — similar to must-revalidate, except that it only applies to proxy caches.
-    /// </remarks>
-    public string AzureCacheControlHeader { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether need to use absolute pictures path
+    /// Gets or sets a value indicating whether we need to use absolute pictures path
     /// </summary>
     public bool UseAbsoluteImagePath { get; set; }
 
@@ -138,7 +123,42 @@ public partial class MediaSettings : ISettings
     public int VideoIframeHeight { get; set; }
 
     /// <summary>
-    /// Gets or sets the product default image id. If 0, then wwwroot/images/default-image.png will be used
+    /// Gets or sets the product default image id. If 0, then default-image.png will be used
     /// </summary>
     public int ProductDefaultImageId { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether we need to reorient images automatically
+    /// </summary>
+    public bool AutoOrientImage { get; set; }
+
+    /// <summary>
+    /// Gets a path to the picture files
+    /// </summary>
+    public string PicturePath { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether camera controls are enabled for 3D objects
+    /// </summary>
+    public bool Object3dCameraControlEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether zoom is enabled for 3D objects
+    /// </summary>
+    public bool Object3dZoomEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether automatic rotation is enabled for 3D objects
+    /// </summary>
+    public bool Object3dAutoRotateEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether lazy loading is enabled for 3D objects
+    /// </summary>
+    public bool Object3dLazyLoadingEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum allowed upload size for 3D objects files (in megabytes)
+    /// </summary>
+    public int Object3dUploadSizeLimit { get; set; }
 }

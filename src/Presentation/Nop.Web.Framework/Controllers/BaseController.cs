@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc.ViewFeatures.Buffers;
 using Microsoft.Extensions.Primitives;
-using Nop.Core;
 using Nop.Core.Events;
 using Nop.Core.Http.Extensions;
 using Nop.Core.Infrastructure;
+using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Events;
 using Nop.Web.Framework.Models;
@@ -29,6 +29,7 @@ namespace Nop.Web.Framework.Controllers;
 [SaveLastActivity]
 [SaveLastVisitedPage]
 [ForceMultiFactorAuthentication]
+[AutoValidation]
 public abstract partial class BaseController : Controller
 {
     #region Rendering
@@ -84,28 +85,9 @@ public abstract partial class BaseController : Controller
         //partial view are not part of the controller life cycle.
         //hence, we could no use action filters to intercept the Models being returned
         //as we do in the /Nop.Web.Framework/Mvc/Filters/PublishModelEventsAttribute.cs for controllers
-        switch (model)
-        {
-            case BaseNopModel nopModel:
-            {
-                var eventPublisher = EngineContext.Current.Resolve<IEventPublisher>();
-
-                //we publish the ModelPrepared event for all models as the BaseNopModel, 
-                //so you need to implement IConsumer<ModelPrepared<BaseNopModel>> interface to handle this event
-                eventPublisher.ModelPreparedAsync(nopModel).Wait();
-                break;
-            }
-            case IEnumerable<BaseNopModel> modelCollection:
-            {
-                var eventPublisher = EngineContext.Current.Resolve<IEventPublisher>();
-
-                //we publish the ModelPrepared event for collection as the IEnumerable<BaseNopModel>, 
-                //so you need to implement IConsumer<ModelPrepared<IEnumerable<BaseNopModel>>> interface to handle this event
-                eventPublisher.ModelPreparedAsync(modelCollection).Wait();
-                break;
-            }
-        }
-
+        var eventPublisher = EngineContext.Current.Resolve<IEventPublisher>();
+        await eventPublisher.ModelPreparedAsync(model);
+        
         //set model
         ViewData.Model = model;
 
@@ -252,13 +234,9 @@ public abstract partial class BaseController : Controller
 
         const string dataKey = "nop.selected-card-name";
         if (persistForTheNextRequest)
-        {
             TempData[dataKey] = cardName;
-        }
         else
-        {
             ViewData[dataKey] = cardName;
-        }
     }
 
     /// <summary>
@@ -278,8 +256,10 @@ public abstract partial class BaseController : Controller
         var form = await Request.ReadFormAsync();
 
         foreach (var item in form)
+        {
             if (item.Key.StartsWith("selected-tab-name-", StringComparison.InvariantCultureIgnoreCase))
                 SaveSelectedTabName(null, item.Value, item.Key["selected-tab-name-".Length..], persistForTheNextRequest);
+        }
     }
 
     /// <summary>

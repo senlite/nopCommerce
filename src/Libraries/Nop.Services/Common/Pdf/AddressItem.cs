@@ -1,22 +1,13 @@
 ﻿using System.ComponentModel;
+using Nop.Services.Orders;
 
 namespace Nop.Services.Common.Pdf;
 
 /// <summary>
 /// Represents the address
 /// </summary>
-public partial record AddressItem
+public partial class AddressItem
 {
-    #region Ctor
-
-    public AddressItem()
-    {
-        AddressAttributes = new();
-        CustomValues = new();
-    }
-
-    #endregion
-
     #region Properties
 
     /// <summary>
@@ -107,12 +98,12 @@ public partial record AddressItem
     /// <summary>
     /// Gets or sets the custom attributes (see "AddressAttribute" entity for more info)
     /// </summary>
-    public List<string> AddressAttributes { get; set; }
+    public List<string> AddressAttributes { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the deserialized CustomValues (values from ProcessPaymentRequest)
     /// </summary>
-    public Dictionary<string, object> CustomValues { get; set; }
+    public CustomValues CustomValues { get; } = new();
 
     #endregion
 }

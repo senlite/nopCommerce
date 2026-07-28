@@ -4,20 +4,10 @@
 @{
     //page title
     ViewBag.PageTitle = T("Admin.Configuration.Tax.Providers").Text;
-    //tour step
-    ViewBag.TourStep = TourStep.TaxProviders;
+
     //active menu item (system name)
     NopHtml.SetActiveMenuItemSystemName("Tax providers");
-
-    string editQueryString = string.Empty;
-    var showTour = ViewBag.ShowTour ?? false;
-    if (showTour)
-    {
-        editQueryString = "?showtour=true";
-    }
 }
-
-@await Html.PartialAsync("_AdminTour")
 
 <form asp-controller="Tax" asp-action="Providers" method="post">
     <div class="content-header clearfix">
@@ -50,13 +40,11 @@
                                     {
                                         new ColumnProperty(nameof(TaxProviderModel.FriendlyName))
                                         {
-                                            Title = T("Admin.Configuration.Tax.Providers.Fields.FriendlyName").Text,
-                                            Width = "250"
+                                            Title = T("Admin.Configuration.Tax.Providers.Fields.FriendlyName").Text
                                         },
                                         new ColumnProperty(nameof(TaxProviderModel.SystemName))
                                         {
-                                            Title = T("Admin.Configuration.Tax.Providers.Fields.SystemName").Text,
-                                            Width = "250"
+                                            Title = T("Admin.Configuration.Tax.Providers.Fields.SystemName").Text
                                         },
                                         new ColumnProperty(nameof(TaxProviderModel.IsPrimaryTaxProvider))
                                         {
@@ -90,7 +78,7 @@
 
                             function renderColumnConfigure(data, type, row, meta) {
                                 if (row.ConfigurationUrl && row.ConfigurationUrl.length > 0) {
-                                    return '<a class="btn btn-default" href="' + row.ConfigurationUrl + '@(editQueryString)"><i class="fas fa-gear"></i>@T("Admin.Configuration.Tax.Providers.Configure").Text</a>';
+                                    return '<a class="btn btn-default" href="' + row.ConfigurationUrl + '"><i class="fas fa-gear"></i>@T("Admin.Configuration.Tax.Providers.Configure").Text</a>';
                                 } else {
                                     return '';
                                 }
@@ -104,4 +92,7 @@
     </section>
 </form>
 
-
+@if (await Html.IsTourActiveAsync())
+{
+    @await Html.PartialAsync("_Providers.Tour")
+}

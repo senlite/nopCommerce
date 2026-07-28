@@ -1,10 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Configuration;
@@ -15,6 +13,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Seo;
 using Nop.Core.Events;
+using Nop.Core.Http;
 using Nop.Core.Infrastructure;
 using Nop.Data;
 using Nop.Services.Authentication.External;
@@ -28,7 +27,8 @@ using Nop.Services.Directory;
 using Nop.Services.Events;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
-using Nop.Services.News;
+using Nop.Services.Media;
+using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;
@@ -43,12 +43,12 @@ using Nop.Web.Areas.Admin.Models.Blogs;
 using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Areas.Admin.Models.Localization;
-using Nop.Web.Areas.Admin.Models.News;
 using Nop.Web.Areas.Admin.Models.Topics;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Framework.Security;
+using ILogger = Nop.Services.Logging.ILogger;
 
 namespace Nop.Web.Areas.Admin.Factories;
 
@@ -62,7 +62,6 @@ public partial class CommonModelFactory : ICommonModelFactory
     protected readonly AppSettings _appSettings;
     protected readonly CatalogSettings _catalogSettings;
     protected readonly CurrencySettings _currencySettings;
-    protected readonly IActionContextAccessor _actionContextAccessor;
     protected readonly IAuthenticationPluginManager _authenticationPluginManager;
     protected readonly IBaseAdminModelFactory _baseAdminModelFactory;
     protected readonly IBlogService _blogService;
@@ -72,14 +71,15 @@ public partial class CommonModelFactory : ICommonModelFactory
     protected readonly IDateTimeHelper _dateTimeHelper;
     protected readonly IEventPublisher _eventPublisher;
     protected readonly IExchangeRatePluginManager _exchangeRatePluginManager;
+    protected readonly IHttpClientFactory _httpClientFactory;
     protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly ILanguageService _languageService;
     protected readonly ILocalizationService _localizationService;
+    protected readonly ILogger _logger;
     protected readonly IMaintenanceService _maintenanceService;
     protected readonly IManufacturerService _manufacturerService;
     protected readonly IMeasureService _measureService;
     protected readonly IMultiFactorAuthenticationPluginManager _multiFactorAuthenticationPluginManager;
-    protected readonly INewsService _newsService;
     protected readonly INopDataProvider _dataProvider;
     protected readonly INopFileProvider _fileProvider;
     protected readonly INopUrlHelper _nopUrlHelper;
@@ -87,21 +87,23 @@ public partial class CommonModelFactory : ICommonModelFactory
     protected readonly IPaymentPluginManager _paymentPluginManager;
     protected readonly IPickupPluginManager _pickupPluginManager;
     protected readonly IPluginService _pluginService;
-    protected readonly IProductService _productService;
+    protected readonly IProductService _productService;    
     protected readonly IReturnRequestService _returnRequestService;
     protected readonly ISearchTermService _searchTermService;
     protected readonly IServiceCollection _serviceCollection;
     protected readonly IShippingPluginManager _shippingPluginManager;
+    protected readonly ISmsPluginManager _smsPluginManager;
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreContext _storeContext;
     protected readonly IStoreService _storeService;
     protected readonly ITaxPluginManager _taxPluginManager;
+    protected readonly IThumbService _thumbService;
     protected readonly ITopicService _topicService;
-    protected readonly IUrlHelperFactory _urlHelperFactory;
     protected readonly IUrlRecordService _urlRecordService;
     protected readonly IWebHelper _webHelper;
     protected readonly IWidgetPluginManager _widgetPluginManager;
     protected readonly IWorkContext _workContext;
+    protected readonly LinkGenerator _linkGenerator;
     protected readonly MeasureSettings _measureSettings;
     protected readonly NopHttpClient _nopHttpClient;
     protected readonly ProxySettings _proxySettings;
@@ -113,7 +115,6 @@ public partial class CommonModelFactory : ICommonModelFactory
     public CommonModelFactory(AppSettings appSettings,
         CatalogSettings catalogSettings,
         CurrencySettings currencySettings,
-        IActionContextAccessor actionContextAccessor,
         IAuthenticationPluginManager authenticationPluginManager,
         IBaseAdminModelFactory baseAdminModelFactory,
         IBlogService blogService,
@@ -123,14 +124,15 @@ public partial class CommonModelFactory : ICommonModelFactory
         IDateTimeHelper dateTimeHelper,
         IEventPublisher eventPublisher,
         IExchangeRatePluginManager exchangeRatePluginManager,
+        IHttpClientFactory httpClientFactory,
         IHttpContextAccessor httpContextAccessor,
         ILanguageService languageService,
         ILocalizationService localizationService,
+        ILogger logger,
         IMaintenanceService maintenanceService,
         IManufacturerService manufacturerService,
         IMeasureService measureService,
         IMultiFactorAuthenticationPluginManager multiFactorAuthenticationPluginManager,
-        INewsService newsService,
         INopDataProvider dataProvider,
         INopFileProvider fileProvider,
         INopUrlHelper nopUrlHelper,
@@ -143,16 +145,18 @@ public partial class CommonModelFactory : ICommonModelFactory
         ISearchTermService searchTermService,
         IServiceCollection serviceCollection,
         IShippingPluginManager shippingPluginManager,
+        ISmsPluginManager smsPluginManager,
         IStaticCacheManager staticCacheManager,
         IStoreContext storeContext,
         IStoreService storeService,
         ITaxPluginManager taxPluginManager,
+        IThumbService thumbService,
         ITopicService topicService,
-        IUrlHelperFactory urlHelperFactory,
         IUrlRecordService urlRecordService,
         IWebHelper webHelper,
         IWidgetPluginManager widgetPluginManager,
         IWorkContext workContext,
+        LinkGenerator linkGenerator,
         MeasureSettings measureSettings,
         NopHttpClient nopHttpClient,
         ProxySettings proxySettings)
@@ -160,7 +164,6 @@ public partial class CommonModelFactory : ICommonModelFactory
         _appSettings = appSettings;
         _catalogSettings = catalogSettings;
         _currencySettings = currencySettings;
-        _actionContextAccessor = actionContextAccessor;
         _authenticationPluginManager = authenticationPluginManager;
         _baseAdminModelFactory = baseAdminModelFactory;
         _blogService = blogService;
@@ -171,14 +174,15 @@ public partial class CommonModelFactory : ICommonModelFactory
         _dataProvider = dataProvider;
         _dateTimeHelper = dateTimeHelper;
         _exchangeRatePluginManager = exchangeRatePluginManager;
+        _httpClientFactory = httpClientFactory;
         _httpContextAccessor = httpContextAccessor;
         _languageService = languageService;
         _localizationService = localizationService;
+        _logger = logger;
         _maintenanceService = maintenanceService;
         _manufacturerService = manufacturerService;
         _measureService = measureService;
         _multiFactorAuthenticationPluginManager = multiFactorAuthenticationPluginManager;
-        _newsService = newsService;
         _fileProvider = fileProvider;
         _nopUrlHelper = nopUrlHelper;
         _orderService = orderService;
@@ -190,16 +194,18 @@ public partial class CommonModelFactory : ICommonModelFactory
         _searchTermService = searchTermService;
         _serviceCollection = serviceCollection;
         _shippingPluginManager = shippingPluginManager;
+        _smsPluginManager = smsPluginManager;
         _staticCacheManager = staticCacheManager;
         _storeContext = storeContext;
         _storeService = storeService;
         _taxPluginManager = taxPluginManager;
+        _thumbService = thumbService;
         _topicService = topicService;
-        _urlHelperFactory = urlHelperFactory;
         _urlRecordService = urlRecordService;
         _webHelper = webHelper;
         _widgetPluginManager = widgetPluginManager;
         _workContext = workContext;
+        _linkGenerator = linkGenerator;
         _measureSettings = measureSettings;
         _nopHttpClient = nopHttpClient;
         _proxySettings = proxySettings;
@@ -239,6 +245,34 @@ public partial class CommonModelFactory : ICommonModelFactory
             Text = string.Format(await _localizationService.GetResourceAsync("Admin.System.Warnings.URL.NoMatch"),
                 currentStoreUrl, _webHelper.GetStoreLocation(false))
         });
+    }
+
+    /// <summary>
+    /// Prepare recommendations/warnings model
+    /// </summary>
+    /// <param name="models">List of system warning models</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    protected virtual async Task PrepareRecommendationsModelAsync(IList<SystemWarningModel> models)
+    {
+        ArgumentNullException.ThrowIfNull(models);
+
+        var recommendations = new List<string>();
+        try
+        {
+            var text = await _nopHttpClient.GetRecommendationsAsync();
+            recommendations = JsonConvert.DeserializeObject<List<string>>(text);
+        }
+        catch { }
+
+        foreach (var recommendation in recommendations ?? new())
+        {
+            models.Add(new SystemWarningModel
+            {
+                Level = SystemWarningLevel.Recommendation,
+                Text = recommendation,
+                DontEncode = true
+            });
+        }
     }
 
     /// <summary>
@@ -516,6 +550,26 @@ public partial class CommonModelFactory : ICommonModelFactory
     }
 
     /// <summary>
+    /// Prepare delete thumb files model
+    /// </summary>
+    /// <param name="model">Delete thumb files model</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    protected virtual async Task PrepareDeleteThumbFilesModelAsync(MaintenanceModel.DeleteThumbFilesModel model)
+    {
+        if (_thumbService is not ThumbService thumbService)
+        {
+            model.IsDeleteThumbsSupported = false;
+            return;
+        }
+
+        var (filesCount, filesSize) = await thumbService.GetThumbsInfoAsync();
+
+        model.IsDeleteThumbsSupported = true;
+        model.FilesCountText = string.Format(await _localizationService.GetResourceAsync("Admin.System.Maintenance.DeleteThumbFiles.FilesCount"), filesCount);
+        model.FilesSizeText = string.Format(await _localizationService.GetResourceAsync("Admin.System.Maintenance.DeleteThumbFiles.FilesSize"), Math.Round(filesSize / 1024M / 1024M, 2));
+    }
+
+    /// <summary>
     /// Prepare plugins which try to override the same interface warning model
     /// </summary>
     /// <param name="models">List of system warning models</param>
@@ -689,6 +743,10 @@ public partial class CommonModelFactory : ICommonModelFactory
                 case IExchangeRateProvider exchangeRateProvider:
                     isEnabled = _exchangeRatePluginManager.IsPluginActive(exchangeRateProvider);
                     break;
+                
+                case ISmsProvider smsProvider:
+                    isEnabled = _smsPluginManager.IsPluginActive(smsProvider);
+                    break;
             }
 
             if (isEnabled)
@@ -700,49 +758,51 @@ public partial class CommonModelFactory : ICommonModelFactory
 
         if (notEnabled.Any())
         {
-            //get URL helper
-            var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-
             models.Add(new SystemWarningModel
             {
                 Level = SystemWarningLevel.Warning,
                 DontEncode = true,
-
-                Text = $"{await _localizationService.GetResourceAsync("Admin.System.Warnings.PluginNotEnabled")}: {string.Join(", ", notEnabled)} (<a href=\"{urlHelper.Action("UninstallAndDeleteUnusedPlugins", "Plugin", new { names = notEnabledSystemNames.ToArray() })}\">{await _localizationService.GetResourceAsync("Admin.System.Warnings.PluginNotEnabled.AutoFixAndRestart")}</a>)"
+                Text = $"{await _localizationService.GetResourceAsync("Admin.System.Warnings.PluginNotEnabled")}: {string.Join(", ", notEnabled)} (<a id=\"delete-unused-plugins\" href=\"{_linkGenerator.GetPathByAction(_httpContextAccessor.HttpContext, "UninstallAndDeleteUnusedPlugins", "Plugin", new { names = notEnabledSystemNames.ToArray() })}\">{await _localizationService.GetResourceAsync("Admin.System.Warnings.PluginNotEnabled.AutoFixAndRestart")}</a>)"
             });
         }
     }
 
     /// <summary>
-    /// Prepare multistore preview models for an entity
+    /// Retrieves the latest available nopCommerce version identifier from the remote release information source
     /// </summary>
-    /// <typeparam name="TEntity">Entity type</typeparam>
-    /// <param name="entity">Entity</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the list of multistore preview models for an entity
+    /// The task result contains the string containing the latest nopCommerce version identifier if available; otherwise, null.
     /// </returns>
-    protected virtual async Task<IList<MultistorePreviewModel>> PrepareMultistorePreviewModelsForEntityAsync<TEntity>(TEntity entity) where TEntity : BaseEntity, ISlugSupported
+    protected virtual async Task<string> GetNopLatestVersionAsync()
     {
-        var models = new List<MultistorePreviewModel>();
-
-        var seName = await _urlRecordService.GetSeNameAsync(entity, ensureTwoPublishedLanguages: false);
-        var stores = await _storeService.GetAllStoresAsync();
-
-        foreach (var store in stores)
-        {
-            if (!Uri.TryCreate(store.Url, UriKind.Absolute, out var url))
-                continue;
-
-            models.Add(new MultistorePreviewModel
+        var latestReleaseInfo = await _staticCacheManager.GetAsync(NopCommonDefaults.LatestReleaseInfoCacheKey,
+            async () =>
             {
-                StoreName = store.Name,
-                Url = await _nopUrlHelper
-                    .RouteGenericUrlAsync<TEntity>(new { SeName = seName }, url.Scheme, url.IsDefaultPort ? url.Host : $"{url.Host}:{url.Port}"),
-            });
-        }
+                try
+                {
+                    var client = _httpClientFactory.CreateClient(NopHttpDefaults.DefaultHttpClient);
+                    client.BaseAddress = new Uri(NopCommonDefaults.LatestReleaseInfoUrl);
+                    client.DefaultRequestHeaders.Add(HeaderNames.UserAgent,
+                        $"nopCommerce-{NopVersion.CURRENT_VERSION}");
+                    client.Timeout = TimeSpan.FromSeconds(NopCommonDefaults.GitHubRequestTimeout);
 
-        return models;
+                    var response = await client.GetAsync(string.Empty);
+
+                    return response.IsSuccessStatusCode
+                        ? JsonConvert.DeserializeAnonymousType(await response.Content.ReadAsStringAsync(),
+                            new { Name = $"release-{NopVersion.FULL_VERSION}" })
+                        : null;
+                }
+                catch
+                {
+                    //ignore
+                }
+
+                return null;
+            });
+
+        return string.IsNullOrEmpty(latestReleaseInfo?.Name) ? null : latestReleaseInfo.Name.Replace("release-", string.Empty);
     }
 
     #endregion
@@ -766,11 +826,13 @@ public partial class CommonModelFactory : ICommonModelFactory
         model.ServerLocalTime = DateTime.Now;
         model.UtcTime = DateTime.UtcNow;
         model.CurrentUserTime = await _dateTimeHelper.ConvertToUserTimeAsync(DateTime.Now);
+        model.UsedMemory = Math.Round((GC.GetTotalMemory(false) / 1024.0f / 1024.0f), 2);
         model.HttpHost = _httpContextAccessor.HttpContext.Request.Headers[HeaderNames.Host];
 
         //ensure no exception is thrown
         try
         {
+            model.DatabaseCollation = await _dataProvider.GetDataBaseCollationAsync();
             model.OperatingSystem = Environment.OSVersion.VersionString;
             model.AspNetInfo = RuntimeInformation.FrameworkDescription;
             model.IsFullTrust = AppDomain.CurrentDomain.IsFullyTrusted;
@@ -783,11 +845,13 @@ public partial class CommonModelFactory : ICommonModelFactory
         foreach (var header in _httpContextAccessor.HttpContext.Request.Headers)
         {
             if (header.Key != HeaderNames.Cookie)
+            {
                 model.Headers.Add(new SystemInfoModel.HeaderModel
                 {
                     Name = header.Key,
                     Value = header.Value
                 });
+            }
         }
 
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -818,16 +882,31 @@ public partial class CommonModelFactory : ICommonModelFactory
             model.LoadedAssemblies.Add(loadedAssemblyModel);
         }
 
-
         var currentStaticCacheManagerName = _staticCacheManager.GetType().Name;
 
         if (_appSettings.Get<DistributedCacheConfig>().Enabled)
+        {
             currentStaticCacheManagerName +=
                 $"({await _localizationService.GetLocalizedEnumAsync(_appSettings.Get<DistributedCacheConfig>().DistributedCacheType)})";
+        }
 
         model.CurrentStaticCacheManager = currentStaticCacheManagerName;
 
-        model.AzureBlobStorageEnabled = _appSettings.Get<AzureBlobConfig>().Enabled;
+        var nopLatestVersion = await GetNopLatestVersionAsync();
+
+        if (!string.IsNullOrEmpty(nopLatestVersion) && !nopLatestVersion.Equals(NopVersion.FULL_VERSION))
+        {
+            if (int.TryParse(nopLatestVersion.Replace(".", string.Empty),
+                    out var latestReleaseVersion) && int.TryParse(NopVersion.FULL_VERSION.Replace(".", string.Empty),
+                    out var currentVersion) && currentVersion < latestReleaseVersion)
+            {
+                model.NopLatestVersion =
+                    string.Format(
+                        await _localizationService.GetResourceAsync("Admin.System.SystemInfo.NopLatestVersion.Text"),
+                        nopLatestVersion, NopLinksDefaults.OfficialSite.DownloadPage,
+                        NopLinksDefaults.OfficialSite.ReleaseNotesPage);
+            }
+        }
 
         return model;
     }
@@ -906,6 +985,9 @@ public partial class CommonModelFactory : ICommonModelFactory
         //store URL
         await PrepareStoreUrlWarningModelAsync(models);
 
+        //recommendations
+        await PrepareRecommendationsModelAsync(models);
+
         //primary exchange rate currency
         await PrepareExchangeRateCurrencyWarningModelAsync(models);
 
@@ -933,10 +1015,9 @@ public partial class CommonModelFactory : ICommonModelFactory
         //proxy connection
         await PrepareProxyConnectionWarningModelAsync(models);
 
-        //publish event
+        //publish event and add another warnings (for example from plugins) 
         var warningEvent = new SystemWarningCreatedEvent();
         await _eventPublisher.PublishAsync(warningEvent);
-        //add another warnings (for example from plugins) 
         models.AddRange(warningEvent.SystemWarnings);
 
         return models;
@@ -950,7 +1031,7 @@ public partial class CommonModelFactory : ICommonModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the maintenance model
     /// </returns>
-    public virtual Task<MaintenanceModel> PrepareMaintenanceModelAsync(MaintenanceModel model)
+    public virtual async Task<MaintenanceModel> PrepareMaintenanceModelAsync(MaintenanceModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
@@ -962,10 +1043,26 @@ public partial class CommonModelFactory : ICommonModelFactory
 
         model.BackupSupported = _dataProvider.BackupSupported;
 
+        try
+        {
+            model.DatabaseSize =
+                string.Format(
+                    await _localizationService.GetResourceAsync("Admin.System.Maintenance.ShrinkDatabase.DatabaseSize"),
+                    Math.Round(await _dataProvider.GetDatabaseSizeAsync() / 1024.0M, 2));
+        }
+        catch (Exception e)
+        {
+            model.DatabaseSize = e.Message;
+            await _logger.ErrorAsync(e.Message, e);
+        }
+
         //prepare nested search model
         PrepareBackupFileSearchModel(model.BackupFileSearchModel);
 
-        return Task.FromResult(model);
+        //prepare nested DeleteThumbsFiles model
+        await PrepareDeleteThumbFilesModelAsync(model.DeleteThumbsFiles);
+
+        return model;
     }
 
     /// <summary>
@@ -1064,9 +1161,6 @@ public partial class CommonModelFactory : ICommonModelFactory
             languageId: languageId, isActive: isActive,
             pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
 
-        //get URL helper
-        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext);
-
         //prepare list model
         var model = await new UrlRecordListModel().PrepareToGridAsync(searchModel, urlRecords, () =>
         {
@@ -1084,28 +1178,26 @@ public partial class CommonModelFactory : ICommonModelFactory
                 //details URL
                 var detailsUrl = string.Empty;
                 var entityName = urlRecord.EntityName?.ToLowerInvariant() ?? string.Empty;
+                var httpContext = _httpContextAccessor.HttpContext;
                 switch (entityName)
                 {
                     case "blogpost":
-                        detailsUrl = urlHelper.Action("BlogPostEdit", "Blog", new { id = urlRecord.EntityId });
+                        detailsUrl = _linkGenerator.GetPathByAction(httpContext, "BlogPostEdit", "Blog", new { id = urlRecord.EntityId });
                         break;
                     case "category":
-                        detailsUrl = urlHelper.Action("Edit", "Category", new { id = urlRecord.EntityId });
+                        detailsUrl = _linkGenerator.GetPathByAction(httpContext, "Edit", "Category", new { id = urlRecord.EntityId });
                         break;
                     case "manufacturer":
-                        detailsUrl = urlHelper.Action("Edit", "Manufacturer", new { id = urlRecord.EntityId });
+                        detailsUrl = _linkGenerator.GetPathByAction(httpContext, "Edit", "Manufacturer", new { id = urlRecord.EntityId });
                         break;
                     case "product":
-                        detailsUrl = urlHelper.Action("Edit", "Product", new { id = urlRecord.EntityId });
-                        break;
-                    case "newsitem":
-                        detailsUrl = urlHelper.Action("NewsItemEdit", "News", new { id = urlRecord.EntityId });
+                        detailsUrl = _linkGenerator.GetPathByAction(httpContext, "Edit", "Product", new { id = urlRecord.EntityId });
                         break;
                     case "topic":
-                        detailsUrl = urlHelper.Action("Edit", "Topic", new { id = urlRecord.EntityId });
+                        detailsUrl = _linkGenerator.GetPathByAction(httpContext, "Edit", "Topic", new { id = urlRecord.EntityId });
                         break;
                     case "vendor":
-                        detailsUrl = urlHelper.Action("Edit", "Vendor", new { id = urlRecord.EntityId });
+                        detailsUrl = _linkGenerator.GetPathByAction(httpContext, "Edit", "Vendor", new { id = urlRecord.EntityId });
                         break;
                 }
 
@@ -1214,45 +1306,78 @@ public partial class CommonModelFactory : ICommonModelFactory
     }
 
     /// <summary>
-    /// Prepare multistore preview models
+    /// Prepare entity preview model
     /// </summary>
     /// <typeparam name="TModel">Model type</typeparam>
     /// <param name="model">Entity model</param>
     /// <returns>
     /// A task that represents the asynchronous operation
-    /// The task result contains the list of multistore preview models
+    /// The task result contains the entity preview model
     /// </returns>
-    public virtual async Task<IList<MultistorePreviewModel>> PrepareMultistorePreviewModelsAsync<TModel>(TModel model) where TModel : BaseNopEntityModel
+    public virtual async Task<EntityPreviewModel> PrepareEntityPreviewModelAsync<TModel>(TModel model) where TModel : BaseNopEntityModel
     {
+        var entityPreviewModel = new EntityPreviewModel { Id = model.Id, ModelType = model.GetType() };
+
         switch (model)
         {
             case BlogPostModel blogPostModel:
                 var blogPost = await _blogService.GetBlogPostByIdAsync(blogPostModel.Id);
-                return await PrepareMultistorePreviewModelsForEntityAsync(blogPost);
+                entityPreviewModel.PreviewModels = await PrepareMultistorePreviewModelsAsync(blogPost);
+                break;
 
             case CategoryModel categoryModel:
                 var category = await _categoryService.GetCategoryByIdAsync(categoryModel.Id);
-                return await PrepareMultistorePreviewModelsForEntityAsync(category);
+                entityPreviewModel.PreviewModels = await PrepareMultistorePreviewModelsAsync(category);
+                break;
 
             case ManufacturerModel manufacturerModel:
                 var manufacturerEntity = await _manufacturerService.GetManufacturerByIdAsync(manufacturerModel.Id);
-                return await PrepareMultistorePreviewModelsForEntityAsync(manufacturerEntity);
-
-            case NewsItemModel newsItemModel:
-                var newsItem = await _newsService.GetNewsByIdAsync(newsItemModel.Id);
-                return await PrepareMultistorePreviewModelsForEntityAsync(newsItem);
+                entityPreviewModel.PreviewModels = await PrepareMultistorePreviewModelsAsync(manufacturerEntity);
+                break;
 
             case ProductModel productModel:
                 var product = await _productService.GetProductByIdAsync(productModel.Id);
-                return await PrepareMultistorePreviewModelsForEntityAsync(product);
+                entityPreviewModel.PreviewModels = await PrepareMultistorePreviewModelsAsync(product);
+                break;
 
             case TopicModel topicModel:
                 var topic = await _topicService.GetTopicByIdAsync(topicModel.Id);
-                return await PrepareMultistorePreviewModelsForEntityAsync(topic);
-
-            default:
-                throw new NotImplementedException("Unknown entity type");
+                entityPreviewModel.PreviewModels = await PrepareMultistorePreviewModelsAsync(topic);
+                break;
         }
+
+        return entityPreviewModel;
+    }
+
+    /// <summary>
+    /// Prepare multistore preview models for an entity
+    /// </summary>
+    /// <typeparam name="TEntity">Entity type</typeparam>
+    /// <param name="entity">Entity</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the list of multistore preview models for an entity
+    /// </returns>
+    public virtual async Task<IList<MultistorePreviewModel>> PrepareMultistorePreviewModelsAsync<TEntity>(TEntity entity)
+        where TEntity : BaseEntity, ISlugSupported
+    {
+        var models = new List<MultistorePreviewModel>();
+        var stores = await _storeService.GetAllStoresAsync();
+
+        foreach (var store in stores)
+        {
+            if (!Uri.TryCreate(store.Url, UriKind.Absolute, out var url))
+                continue;
+
+            models.Add(new()
+            {
+                StoreName = store.Name,
+                Url = await _nopUrlHelper
+                    .RouteGenericUrlAsync(entity, url.Scheme, url.IsDefaultPort ? url.Host : $"{url.Host}:{url.Port}", null, null, false)
+            });
+        }
+
+        return models;
     }
 
     #endregion

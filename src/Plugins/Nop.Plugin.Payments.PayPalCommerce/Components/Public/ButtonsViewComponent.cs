@@ -5,6 +5,8 @@ using Nop.Plugin.Payments.PayPalCommerce.Domain;
 using Nop.Plugin.Payments.PayPalCommerce.Factories;
 using Nop.Plugin.Payments.PayPalCommerce.Models.Public;
 using Nop.Plugin.Payments.PayPalCommerce.Services;
+using Nop.Core.Http;
+using Nop.Services.Catalog;
 using Nop.Web.Framework.Components;
 using Nop.Web.Framework.Infrastructure;
 using Nop.Web.Models.Catalog;
@@ -18,6 +20,7 @@ public class ButtonsViewComponent : NopViewComponent
 {
     #region Fields
 
+    private readonly IProductService _productService;
     private readonly PayPalCommerceModelFactory _modelFactory;
     private readonly PayPalCommerceServiceManager _serviceManager;
     private readonly PayPalCommerceSettings _settings;
@@ -26,10 +29,12 @@ public class ButtonsViewComponent : NopViewComponent
 
     #region Ctor
 
-    public ButtonsViewComponent(PayPalCommerceModelFactory modelFactory,
+    public ButtonsViewComponent(IProductService productService,
+        PayPalCommerceModelFactory modelFactory,
         PayPalCommerceServiceManager serviceManager,
         PayPalCommerceSettings settings)
     {
+        _productService = productService;
         _modelFactory = modelFactory;
         _serviceManager = serviceManager;
         _settings = settings;
@@ -61,7 +66,8 @@ public class ButtonsViewComponent : NopViewComponent
             if (_settings.DisplayButtonsOnProductDetails)
             {
                 var productId = additionalData is ProductDetailsModel.AddToCartModel product ? (int?)product.ProductId : null;
-                model = await _modelFactory.PreparePaymentInfoModelAsync(ButtonPlacement.Product, productId);
+                if (productId is null || (await _productService.GetProductByIdAsync(productId ?? 0))?.ParentGroupedProductId == 0)
+                    model = await _modelFactory.PreparePaymentInfoModelAsync(ButtonPlacement.Product, productId);
             }
         }
         else if (widgetZone.Equals(PublicWidgetZones.OrderSummaryContentBefore))
@@ -69,7 +75,7 @@ public class ButtonsViewComponent : NopViewComponent
             if (_settings.DisplayButtonsOnShoppingCart)
             {
                 var routeName = HttpContext.GetEndpoint()?.Metadata.GetMetadata<RouteNameMetadata>()?.RouteName;
-                if (routeName == PayPalCommerceDefaults.Route.ShoppingCart)
+                if (routeName == NopRouteNames.General.CART)
                     model = await _modelFactory.PreparePaymentInfoModelAsync(ButtonPlacement.Cart);
             }
         }
@@ -79,10 +85,13 @@ public class ButtonsViewComponent : NopViewComponent
                 model = await _modelFactory.PreparePaymentInfoModelAsync(ButtonPlacement.PaymentMethod);
         }
 
-        if (model is null)
+        if (model?.Cart.IsRecurring is null)
             return Content(string.Empty);
 
-        return View("~/Plugins/Payments.PayPalCommerce/Views/Public/_Buttons.cshtml", model);
+        if (model.Cart.IsRecurring == true)
+            return await ViewAsync("~/Plugins/Payments.PayPalCommerce/Views/Public/_Buttons.Recurring.cshtml", model);
+
+        return await ViewAsync("~/Plugins/Payments.PayPalCommerce/Views/Public/_Buttons.cshtml", model);
     }
 
     #endregion

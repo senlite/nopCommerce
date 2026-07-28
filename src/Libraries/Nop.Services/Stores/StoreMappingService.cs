@@ -14,23 +14,29 @@ public partial class StoreMappingService : IStoreMappingService
     #region Fields
 
     protected readonly CatalogSettings _catalogSettings;
+    protected readonly INopDataProvider _dataProvider;
     protected readonly IRepository<StoreMapping> _storeMappingRepository;
     protected readonly IStaticCacheManager _staticCacheManager;
     protected readonly IStoreContext _storeContext;
+    protected readonly IStoreService _storeService;
 
     #endregion
 
     #region Ctor
 
     public StoreMappingService(CatalogSettings catalogSettings,
+        INopDataProvider dataProvider,
         IRepository<StoreMapping> storeMappingRepository,
         IStaticCacheManager staticCacheManager,
-        IStoreContext storeContext)
+        IStoreContext storeContext,
+        IStoreService storeService)
     {
         _catalogSettings = catalogSettings;
+        _dataProvider = dataProvider;
         _storeMappingRepository = storeMappingRepository;
         _staticCacheManager = staticCacheManager;
         _storeContext = storeContext;
+        _storeService = storeService;
     }
 
     #endregion
@@ -64,7 +70,7 @@ public partial class StoreMappingService : IStoreMappingService
             where sm.EntityName == entityName
             select sm.StoreId;
 
-        return await _staticCacheManager.GetAsync(key, query.Any);
+        return await _staticCacheManager.GetAsync(key, async () => await query.AnyAsync());
     }
 
     #endregion
@@ -187,31 +193,6 @@ public partial class StoreMappingService : IStoreMappingService
     }
 
     /// <summary>
-    /// Find store identifiers with granted access (mapped to the entity)
-    /// </summary>
-    /// <typeparam name="TEntity">Type of entity that supports store mapping</typeparam>
-    /// <param name="entity">Entity</param>
-    /// <returns>
-    /// The store identifiers
-    /// </returns>
-    public virtual int[] GetStoresIdsWithAccess<TEntity>(TEntity entity) where TEntity : BaseEntity, IStoreMappingSupported
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-
-        var entityId = entity.Id;
-        var entityName = entity.GetType().Name;
-
-        var key = _staticCacheManager.PrepareKeyForDefaultCache(NopStoreDefaults.StoreMappingIdsCacheKey, entityId, entityName);
-
-        var query = from sm in _storeMappingRepository.Table
-            where sm.EntityId == entityId &&
-                  sm.EntityName == entityName
-            select sm.StoreId;
-
-        return _staticCacheManager.Get(key, () => query.ToArray());
-    }
-
-    /// <summary>
     /// Authorize whether entity could be accessed in the current store (mapped to this store)
     /// </summary>
     /// <typeparam name="TEntity">Type of entity that supports store mapping</typeparam>
@@ -253,45 +234,57 @@ public partial class StoreMappingService : IStoreMappingService
             return true;
 
         foreach (var storeIdWithAccess in await GetStoresIdsWithAccessAsync(entity))
+        {
             if (storeId == storeIdWithAccess)
                 //yes, we have such permission
                 return true;
+        }
 
         //no permission found
         return false;
     }
 
     /// <summary>
-    /// Authorize whether entity could be accessed in a store (mapped to this store)
+    /// Save store mappings for the passed entity
     /// </summary>
     /// <typeparam name="TEntity">Type of entity that supports store mapping</typeparam>
     /// <param name="entity">Entity</param>
-    /// <param name="storeId">Store identifier</param>
+    /// <param name="storeIds">Store identifiers</param>
     /// <returns>
-    /// True - authorized; otherwise, false
+    /// A task that represents the asynchronous operation
     /// </returns>
-    public virtual bool Authorize<TEntity>(TEntity entity, int storeId) where TEntity : BaseEntity, IStoreMappingSupported
+    public virtual async Task SaveStoreMappingsAsync<TEntity>(TEntity entity, IEnumerable<int> storeIds) where TEntity : BaseEntity, IStoreMappingSupported
     {
-        if (entity == null)
-            return false;
+        ArgumentNullException.ThrowIfNull(entity);
+        ArgumentNullException.ThrowIfNull(storeIds);
 
-        if (storeId == 0)
-            //return true if no store specified/found
-            return true;
+        ArgumentOutOfRangeException.ThrowIfZero(entity.Id);
 
-        if (_catalogSettings.IgnoreStoreLimitations)
-            return true;
+        var allStores = await _storeService.GetAllStoresAsync();
+        var existingStoreMappings = await GetStoreMappingsAsync(entity);
 
-        if (!entity.LimitedToStores)
-            return true;
+        if (entity.LimitedToStores != storeIds.Any())
+        {
+            entity.LimitedToStores = storeIds.Any();
+            await _dataProvider.UpdateEntityAsync(entity);
+        }
 
-        foreach (var storeIdWithAccess in GetStoresIdsWithAccess(entity))
-            if (storeId == storeIdWithAccess)
-                //yes, we have such permission
-                return true;
-
-        //no permission found
-        return false;
+        foreach (var store in allStores)
+        {
+            if (storeIds.Contains(store.Id))
+            {
+                //new store
+                if (!existingStoreMappings.Any(sm => sm.StoreId == store.Id))
+                    await InsertStoreMappingAsync(entity, store.Id);
+            }
+            else
+            {
+                //remove store
+                var storeMappingToDelete = existingStoreMappings.FirstOrDefault(sm => sm.StoreId == store.Id);
+                if (storeMappingToDelete != null)
+                    await DeleteStoreMappingAsync(storeMappingToDelete);
+            }
+        }
     }
 
     #endregion

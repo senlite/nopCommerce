@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Nop.Core;
+using Nop.Core.Domain.FilterLevels;
 using Nop.Core.Events;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
@@ -21,15 +20,16 @@ public partial class AdminMenu : IAdminMenu
     protected AdminMenuItem _baseRootMenuItem;
     protected AdminMenuItem _rootItem;
 
-    protected readonly IActionContextAccessor _actionContextAccessor;
+    protected readonly FilterLevelSettings _filterLevelSettings;
     protected readonly IEventPublisher _eventPublisher;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly ILocalizationService _localizationService;
     protected readonly IPermissionService _permissionService;
 #pragma warning disable CS0618 // Type or member is obsolete
     protected readonly IPluginManager<IAdminMenuPlugin> _adminMenuPluginManager;
 #pragma warning restore CS0618 // Type or member is obsolete
-    protected readonly IUrlHelperFactory _urlHelperFactory;
     protected readonly IWorkContext _workContext;
+    protected readonly LinkGenerator _linkGenerator;
 
     #endregion
 
@@ -38,23 +38,25 @@ public partial class AdminMenu : IAdminMenu
     /// <summary>
     /// Ctor
     /// </summary>
-    public AdminMenu(IActionContextAccessor actionContextAccessor,
+    public AdminMenu(FilterLevelSettings filterLevelSettings,
         IEventPublisher eventPublisher,
+        IHttpContextAccessor httpContextAccessor,
         ILocalizationService localizationService,
         IPermissionService permissionService,
 #pragma warning disable CS0618 // Type or member is obsolete
         IPluginManager<IAdminMenuPlugin> adminMenuPluginManager,
 #pragma warning restore CS0618 // Type or member is obsolete
-        IUrlHelperFactory urlHelperFactory,
-        IWorkContext workContext)
+        IWorkContext workContext,
+        LinkGenerator linkGenerator)
     {
-        _actionContextAccessor = actionContextAccessor;
+        _filterLevelSettings = filterLevelSettings;
         _eventPublisher = eventPublisher;
+        _httpContextAccessor = httpContextAccessor;
         _localizationService = localizationService;
         _permissionService = permissionService;
         _adminMenuPluginManager = adminMenuPluginManager;
-        _urlHelperFactory = urlHelperFactory;
         _workContext = workContext;
+        _linkGenerator = linkGenerator;
     }
 
     #endregion
@@ -135,6 +137,15 @@ public partial class AdminMenu : IAdminMenu
                         },
                         new()
                         {
+                            SystemName = "Filter level values",
+                            Title = await _localizationService.GetResourceAsync("Admin.Catalog.FilterLevelValues"),
+                            PermissionNames = new List<string> { StandardPermission.Catalog.FILTER_LEVEL_VALUE_VIEW },
+                            Url = GetMenuItemUrl("FilterLevelValue", "List"),
+                            Visible = _filterLevelSettings.FilterLevelEnabled,
+                            IconClass = "far fa-dot-circle"
+                        },
+                        new()
+                        {
                             SystemName = "Attributes",
                             Title = await _localizationService.GetResourceAsync("Admin.Catalog.Attributes"),
                             IconClass = "far fa-dot-circle",
@@ -165,7 +176,15 @@ public partial class AdminMenu : IAdminMenu
                                     IconClass = "far fa-circle"
                                 }
                             }
-                        }
+                        },
+                        new()
+                        {
+                            SystemName = "Price lists",
+                            Title = await _localizationService.GetResourceAsync("Admin.Catalog.PriceLists"),
+                            PermissionNames = new List<string> { StandardPermission.Catalog.PRICE_LISTS_VIEW },
+                            Url = GetMenuItemUrl("PriceList", "List"),
+                            IconClass = "far fa-dot-circle"
+                        },
                     }
                 },
                 //sales
@@ -326,10 +345,26 @@ public partial class AdminMenu : IAdminMenu
                         },
                         new()
                         {
+                            SystemName = "Newsletter subscription types",
+                            Title = await _localizationService.GetResourceAsync("Admin.Promotions.NewsLetterSubscriptionType"),
+                            PermissionNames = new List<string> { StandardPermission.Promotions.SUBSCRIPTION_TYPE_VIEW },
+                            Url = GetMenuItemUrl("NewsLetterSubscriptionType", "List"),
+                            IconClass = "far fa-dot-circle"
+                        },
+                        new()
+                        {
                             SystemName = "Campaigns",
                             Title = await _localizationService.GetResourceAsync("Admin.Promotions.Campaigns"),
                             PermissionNames = new List<string> { StandardPermission.Promotions.CAMPAIGNS_VIEW },
                             Url = GetMenuItemUrl("Campaign", "List"),
+                            IconClass = "far fa-dot-circle"
+                        },
+                        new()
+                        {
+                            SystemName = "Reminders",
+                            Title = await _localizationService.GetResourceAsync("Admin.Promotions.Reminders"),
+                            PermissionNames = new List<string> { StandardPermission.Promotions.REMINDERS_MANAGE },
+                            Url = GetMenuItemUrl("Reminder", "Index"),
                             IconClass = "far fa-dot-circle"
                         }
                     }
@@ -352,6 +387,14 @@ public partial class AdminMenu : IAdminMenu
                         },
                         new()
                         {
+                            SystemName = "Menus",
+                            Title = await _localizationService.GetResourceAsync("Admin.ContentManagement.Menus"),
+                            PermissionNames = new List<string> { StandardPermission.ContentManagement.MENU_VIEW },
+                            Url = GetMenuItemUrl("Menu", "List"),
+                            IconClass = "far fa-dot-circle"
+                        },
+                        new()
+                        {
                             SystemName = "Message templates",
                             Title = await _localizationService.GetResourceAsync("Admin.ContentManagement.MessageTemplates"),
                             PermissionNames =
@@ -360,27 +403,6 @@ public partial class AdminMenu : IAdminMenu
                                     StandardPermission.ContentManagement.MESSAGE_TEMPLATES_VIEW
                                 },
                             Url = GetMenuItemUrl("MessageTemplate", "List"),
-                            IconClass = "far fa-dot-circle"
-                        },
-                        new()
-                        {
-                            SystemName = "News items",
-                            Title = await _localizationService.GetResourceAsync("Admin.ContentManagement.News.NewsItems"),
-                            PermissionNames =
-                                new List<string> { StandardPermission.ContentManagement.NEWS_VIEW },
-                            Url = GetMenuItemUrl("News", "NewsItems"),
-                            IconClass = "far fa-dot-circle"
-                        },
-                        new()
-                        {
-                            SystemName = "News comments",
-                            Title = await _localizationService.GetResourceAsync("Admin.ContentManagement.News.Comments"),
-                            PermissionNames =
-                                new List<string>
-                                {
-                                    StandardPermission.ContentManagement.NEWS_COMMENTS_VIEW
-                                },
-                            Url = GetMenuItemUrl("News", "NewsComments"),
                             IconClass = "far fa-dot-circle"
                         },
                         new()
@@ -403,22 +425,6 @@ public partial class AdminMenu : IAdminMenu
                             Url = GetMenuItemUrl("Blog", "BlogComments"),
                             IconClass = "far fa-dot-circle"
                         },
-                        new()
-                        {
-                            SystemName = "Polls",
-                            Title = await _localizationService.GetResourceAsync("Admin.ContentManagement.Polls"),
-                            PermissionNames = new List<string> { StandardPermission.ContentManagement.POLLS_VIEW },
-                            Url = GetMenuItemUrl("Poll", "List"),
-                            IconClass = "far fa-dot-circle"
-                        },
-                        new()
-                        {
-                            SystemName = "Manage forums",
-                            Title = await _localizationService.GetResourceAsync("Admin.ContentManagement.Forums"),
-                            PermissionNames = new List<string> { StandardPermission.ContentManagement.FORUMS_VIEW },
-                            Url = GetMenuItemUrl("Forum", "List"),
-                            IconClass = "far fa-dot-circle"
-                        }
                     }
                 },
                 //configuration
@@ -481,6 +487,13 @@ public partial class AdminMenu : IAdminMenu
                                 },
                                 new()
                                 {
+                                    SystemName = "Filter (YMM) settings",
+                                    Title = await _localizationService.GetResourceAsync("Admin.Configuration.Settings.FilterLevel"),
+                                    Url = GetMenuItemUrl("Setting", "FilterLevel"),
+                                    IconClass = "far fa-circle"
+                                },
+                                new()
+                                {
                                     SystemName = "Shopping cart settings",
                                     Title = await _localizationService.GetResourceAsync("Admin.Configuration.Settings.ShoppingCart"),
                                     Url = GetMenuItemUrl("Setting", "ShoppingCart"),
@@ -512,20 +525,6 @@ public partial class AdminMenu : IAdminMenu
                                     SystemName = "Blog settings",
                                     Title = await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Blog"),
                                     Url = GetMenuItemUrl("Setting", "Blog"),
-                                    IconClass = "far fa-circle"
-                                },
-                                new()
-                                {
-                                    SystemName = "News settings",
-                                    Title = await _localizationService.GetResourceAsync("Admin.Configuration.Settings.News"),
-                                    Url = GetMenuItemUrl("Setting", "News"),
-                                    IconClass = "far fa-circle"
-                                },
-                                new()
-                                {
-                                    SystemName = "Forums settings",
-                                    Title = await _localizationService.GetResourceAsync("Admin.Configuration.Settings.Forums"),
-                                    Url = GetMenuItemUrl("Setting", "Forum"),
                                     IconClass = "far fa-circle"
                                 },
                                 new()
@@ -623,6 +622,14 @@ public partial class AdminMenu : IAdminMenu
                                     StandardPermission.Configuration.MANAGE_PAYMENT_METHODS
                                 },
                             Url = GetMenuItemUrl("Payment", "MethodRestrictions"),
+                            IconClass = "far fa-dot-circle"
+                        },
+                        new()
+                        {
+                            SystemName = "Sms providers",
+                            Title = await _localizationService.GetResourceAsync("Admin.Configuration.Sms.Providers"),
+                            PermissionNames = new List<string> { StandardPermission.Configuration.MANAGE_SMS_SETTINGS },
+                            Url = GetMenuItemUrl("Sms", "Providers"),
                             IconClass = "far fa-dot-circle"
                         },
                         new()
@@ -1042,8 +1049,8 @@ public partial class AdminMenu : IAdminMenu
 
         if (await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS, customer))
         {
-            await _eventPublisher.PublishAsync(new ThirdPartyPluginsMenuItemCreatedEvent(this, root.GetItemBySystem("Third party plugins")));
-            
+            await _eventPublisher.PublishAsync(new ThirdPartyPluginsMenuItemCreatedEvent(this, root.GetItemBySystemName("Third party plugins")));
+
             var adminMenuPlugins = await _adminMenuPluginManager.LoadAllPluginsAsync(customer);
 
             foreach (var adminMenuPlugin in adminMenuPlugins)
@@ -1054,10 +1061,13 @@ public partial class AdminMenu : IAdminMenu
 
         async Task checkPermissions(AdminMenuItem menuItem, AdminMenuItem rootItem = null)
         {
-            var permissions = (menuItem.PermissionNames.Any() ? menuItem.PermissionNames : (rootItem?.PermissionNames ?? new List<string>())).Distinct().Where(p => !string.IsNullOrEmpty(p)).ToList();
+            if (menuItem.Visible)
+            {
+                var permissions = (menuItem.PermissionNames.Any() ? menuItem.PermissionNames : (rootItem?.PermissionNames ?? new List<string>())).Distinct().Where(p => !string.IsNullOrEmpty(p)).ToList();
 
-            if (permissions.Any())
-                menuItem.Visible = menuItem.ChildNodes.Any() ? await permissions.AnyAwaitAsync(authorizePermission) : await permissions.AllAwaitAsync(authorizePermission);
+                if (permissions.Any())
+                    menuItem.Visible = menuItem.ChildNodes.Any() ? await permissions.AnyAwaitAsync(authorizePermission) : await permissions.AllAwaitAsync(authorizePermission);
+            }
 
             foreach (var childNode in menuItem.ChildNodes)
                 await checkPermissions(childNode, menuItem);
@@ -1100,19 +1110,20 @@ public partial class AdminMenu : IAdminMenu
     /// A task that represents the asynchronous operation
     /// The task result contains the root menu item
     /// </returns>
-    public async Task<AdminMenuItem> GetRootNodeAsync(bool showHidden = false)
+    public virtual async Task<AdminMenuItem> GetRootNodeAsync(bool showHidden = false)
     {
         if (_rootItem != null)
             return _rootItem;
 
         _rootItem = await LoadMenuAsync(showHidden);
 
-        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext ?? throw new ArgumentNullException(nameof(_actionContextAccessor.ActionContext)));
-
         void transformUrl(AdminMenuItem node)
         {
             if (node.Url?.StartsWith("~/", StringComparison.Ordinal) ?? false)
-                node.Url = urlHelper.Content(node.Url);
+            {
+                var pathBase = _httpContextAccessor.HttpContext?.Request.PathBase.Value ?? "";
+                node.Url = pathBase + node.Url[1..];
+            }
 
             foreach (var childNode in node.ChildNodes)
                 transformUrl(childNode);
@@ -1129,14 +1140,16 @@ public partial class AdminMenu : IAdminMenu
     /// <param name="controllerName">The name of the controller</param>
     /// <param name="actionName">The name of the action method</param>
     /// <returns>Menu item URL</returns>
-    public string GetMenuItemUrl(string controllerName, string actionName)
+    public virtual string GetMenuItemUrl(string controllerName, string actionName)
     {
         if (string.IsNullOrEmpty(controllerName) || string.IsNullOrEmpty(actionName))
             return null;
 
-        var urlHelper = _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext ?? throw new ArgumentNullException(nameof(_actionContextAccessor.ActionContext)));
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+            return null;
 
-        return urlHelper.Action(actionName, controllerName, new RouteValueDictionary { { "area", AreaNames.ADMIN } }, null, null);
+        return _linkGenerator.GetPathByAction(httpContext, actionName, controllerName, new { area = AreaNames.ADMIN });
     }
 
     #endregion

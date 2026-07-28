@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Http;
 using Nop.Services.Customers;
 using Nop.Services.Security;
 using Nop.Web.Factories;
@@ -28,27 +29,21 @@ public partial class ProfileController : BasePublicController
     public virtual async Task<IActionResult> Index(int? id, int? pageNumber)
     {
         if (!_customerSettings.AllowViewingProfiles)
-        {
-            return RedirectToRoute("Homepage");
-        }
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         var customerId = 0;
         if (id.HasValue)
-        {
             customerId = id.Value;
-        }
 
         var customer = await _customerService.GetCustomerByIdAsync(customerId);
         if (customer == null || await _customerService.IsGuestAsync(customer))
-        {
-            return RedirectToRoute("Homepage");
-        }
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         //display "edit" (manage) link
         if (await _permissionService.AuthorizeAsync(StandardPermission.Security.ACCESS_ADMIN_PANEL) && await _permissionService.AuthorizeAsync(StandardPermission.Customers.CUSTOMERS_VIEW))
             DisplayEditLink(Url.Action("Edit", "Customer", new { id = customer.Id, area = AreaNames.ADMIN }));
 
-        var model = await _profileModelFactory.PrepareProfileIndexModelAsync(customer, pageNumber);
+        var model = await _profileModelFactory.PrepareProfileIndexModelAsync(customer);
         return View(model);
     }
 }

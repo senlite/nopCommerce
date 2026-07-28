@@ -1,8 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Nop.Core;
 using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -15,9 +11,9 @@ using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;
-using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Framework.Infrastructure;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Payments.PayPalCommerce;
 
@@ -28,13 +24,10 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
 {
     #region Fields
 
-    private readonly IActionContextAccessor _actionContextAccessor;
     private readonly ILocalizationService _localizationService;
-    private readonly IPermissionService _permissionService;
+    private readonly INopUrlHelper _nopUrlHelper;
     private readonly ISettingService _settingService;
     private readonly IStoreService _storeService;
-    private readonly IUrlHelperFactory _urlHelperFactory;
-    private readonly IWorkContext _workContext;
     private readonly PaymentSettings _paymentSettings;
     private readonly PayPalCommerceServiceManager _serviceManager;
     private readonly PayPalCommerceSettings _settings;
@@ -44,25 +37,19 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
 
     #region Ctor
 
-    public PayPalCommercePaymentMethod(IActionContextAccessor actionContextAccessor,
-        ILocalizationService localizationService,
-        IPermissionService permissionService,
+    public PayPalCommercePaymentMethod(ILocalizationService localizationService,
+        INopUrlHelper nopUrlHelper,
         ISettingService settingService,
         IStoreService storeService,
-        IUrlHelperFactory urlHelperFactory,
-        IWorkContext workContext,
         PaymentSettings paymentSettings,
         PayPalCommerceServiceManager serviceManager,
         PayPalCommerceSettings settings,
         WidgetSettings widgetSettings)
     {
-        _actionContextAccessor = actionContextAccessor;
         _localizationService = localizationService;
-        _permissionService = permissionService;
+        _nopUrlHelper = nopUrlHelper;
         _settingService = settingService;
         _storeService = storeService;
-        _urlHelperFactory = urlHelperFactory;
-        _workContext = workContext;
         _paymentSettings = paymentSettings;
         _serviceManager = serviceManager;
         _settings = settings;
@@ -170,9 +157,18 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
     /// A task that represents the asynchronous operation
     /// The task result contains the process payment result
     /// </returns>
-    public Task<ProcessPaymentResult> ProcessRecurringPaymentAsync(ProcessPaymentRequest processPaymentRequest)
+    public async Task<ProcessPaymentResult> ProcessRecurringPaymentAsync(ProcessPaymentRequest processPaymentRequest)
     {
-        return Task.FromResult(new ProcessPaymentResult { Errors = new[] { "Recurring payment not supported" } });
+        //we process an initial order separately
+        if (processPaymentRequest.InitialOrder is null)
+            return new();
+
+        var (_, error) = await _serviceManager.ProcessNextRecurringPaymentAsync(_settings, processPaymentRequest);
+        if (!string.IsNullOrEmpty(error))
+            return new() { Errors = new[] { error }, RecurringPaymentFailed = true };
+
+        //request succeeded
+        return new();
     }
 
     /// <summary>
@@ -183,9 +179,13 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
     /// A task that represents the asynchronous operation
     /// The task result contains the result
     /// </returns>
-    public Task<CancelRecurringPaymentResult> CancelRecurringPaymentAsync(CancelRecurringPaymentRequest cancelPaymentRequest)
+    public async Task<CancelRecurringPaymentResult> CancelRecurringPaymentAsync(CancelRecurringPaymentRequest cancelPaymentRequest)
     {
-        return Task.FromResult(new CancelRecurringPaymentResult { Errors = new[] { "Recurring payment not supported" } });
+        var (_, error) = await _serviceManager.CancelRecurringPaymentAsync(_settings, cancelPaymentRequest.Order);
+        if (!string.IsNullOrEmpty(error))
+            return new() { Errors = new[] { error } };
+
+        return new();
     }
 
     /// <summary>
@@ -259,7 +259,7 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
     /// </summary>
     public override string GetConfigurationPageUrl()
     {
-        return _urlHelperFactory.GetUrlHelper(_actionContextAccessor.ActionContext).RouteUrl(PayPalCommerceDefaults.Route.Configuration);
+        return _nopUrlHelper.RouteUrl(PayPalCommerceDefaults.Route.Configuration);
     }
 
     /// <summary>
@@ -318,7 +318,7 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
 
         return null;
     }
-    
+
     /// <summary>
     /// Install the plugin
     /// </summary>
@@ -409,9 +409,9 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
             ["Plugins.Payments.PayPalCommerce.Fields.CustomerAuthenticationRequired"] = "Use 3D Secure",
             ["Plugins.Payments.PayPalCommerce.Fields.CustomerAuthenticationRequired.Hint"] = "3D Secure enables you to authenticate card holders through card issuers. It reduces the likelihood of fraud when you use supported cards and improves transaction performance. A successful 3D Secure authentication can shift liability for chargebacks due to fraud from you to the card issuer.",
             ["Plugins.Payments.PayPalCommerce.Fields.DisplayButtonsOnProductDetails"] = "Display buttons on product details",
-            ["Plugins.Payments.PayPalCommerce.Fields.DisplayButtonsOnProductDetails.Hint"] = "Determine whether to display PayPal buttons on product details pages, clicking on them matches the behavior of the default 'Add to cart' button.",
+            ["Plugins.Payments.PayPalCommerce.Fields.DisplayButtonsOnProductDetails.Hint"] = "Determine whether to display PayPal buttons on product details pages (simple products only) allowing buyers to complete a purchase without going through the full checkout process.",
             ["Plugins.Payments.PayPalCommerce.Fields.DisplayButtonsOnShoppingCart"] = "Display buttons on shopping cart",
-            ["Plugins.Payments.PayPalCommerce.Fields.DisplayButtonsOnShoppingCart.Hint"] = "Determine whether to display PayPal buttons on the shopping cart page instead of the default checkout button.",
+            ["Plugins.Payments.PayPalCommerce.Fields.DisplayButtonsOnShoppingCart.Hint"] = "Determine whether to display PayPal buttons on the shopping cart page in addition to the default checkout button.",
             ["Plugins.Payments.PayPalCommerce.Fields.DisplayLogoInFooter"] = "Display logo in footer",
             ["Plugins.Payments.PayPalCommerce.Fields.DisplayLogoInFooter.Hint"] = "Determine whether to display PayPal logo in the footer. These logos and banners are a great way to let your buyers know that you choose PayPal to securely process their payments.",
             ["Plugins.Payments.PayPalCommerce.Fields.DisplayLogoInHeaderLinks"] = "Display logo in header links",
@@ -565,7 +565,7 @@ public class PayPalCommercePaymentMethod : BasePlugin, IPaymentMethod, IWidgetPl
     /// <summary>
     /// Gets a recurring payment type of payment method
     /// </summary>
-    public RecurringPaymentType RecurringPaymentType => RecurringPaymentType.NotSupported;
+    public RecurringPaymentType RecurringPaymentType => RecurringPaymentType.Manual;
 
     /// <summary>
     /// Gets a payment method type

@@ -29,7 +29,7 @@
 
 @await RenderSectionAsync("Breadcrumb", false)
 
-<div class="side-2">
+<aside class="side-2">
     @if (IsSectionDefined("left"))
     {
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.LeftSideColumnBefore })
@@ -39,19 +39,18 @@
     else
     {
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.LeftSideColumnBefore })
-        @await RenderSectionAsync("CatalogFilters", false);
+        @await RenderSectionAsync("CatalogFilters", false)
         @await Component.InvokeAsync(typeof(CategoryNavigationViewComponent), new { currentCategoryId = currentCategoryId, currentProductId = currentProductId })
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.LeftSideColumnAfterCategoryNavigation })
         @await Component.InvokeAsync(typeof(ManufacturerNavigationViewComponent), new { currentManufacturerId = currentManufacturerId })
         @await Component.InvokeAsync(typeof(VendorNavigationViewComponent))
         @await Component.InvokeAsync(typeof(RecentlyViewedProductsBlockViewComponent), new { productThumbPictureSize = 64 })
         @await Component.InvokeAsync(typeof(PopularProductTagsViewComponent))
-        @await Component.InvokeAsync(typeof(PollBlockViewComponent), new { systemKeyword = "LeftColumnPoll" })
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.LeftSideColumnAfter })
     }
-</div>
-<div class="center-2">
+</aside>
+<section class="center-2">
     @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.MainColumnBefore })
     @RenderBody()
     @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.MainColumnAfter })
-</div>
+</section>

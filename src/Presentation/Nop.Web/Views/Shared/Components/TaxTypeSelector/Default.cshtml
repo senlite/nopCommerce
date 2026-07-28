@@ -1,6 +1,7 @@
 ﻿@model TaxTypeSelectorModel
 @using Nop.Core.Domain.Tax
-@inject Nop.Core.IWebHelper webHelper
+@using Nop.Services.Helpers
+@inject IWebHelper webHelper
 
 @{
     var returnUrl = webHelper.GetRawUrl(Context.Request);
@@ -9,13 +10,13 @@
     taxTypes.Add(new SelectListItem
     {
         Text = T("Tax.Inclusive").Text,
-        Value = Url.RouteUrl("ChangeTaxType", new { customertaxtype = ((int)TaxDisplayType.IncludingTax), returnUrl }, webHelper.GetCurrentRequestProtocol()),
+        Value = Url.RouteUrl(NopRouteNames.Standard.CHANGE_TAX_TYPE, new { customertaxtype = ((int)TaxDisplayType.IncludingTax), returnUrl }, webHelper.GetCurrentRequestProtocol()),
         Selected = Model.CurrentTaxType == TaxDisplayType.IncludingTax
     });
     taxTypes.Add(new SelectListItem
     {
         Text = T("Tax.Exclusive").Text,
-        Value = Url.RouteUrl("ChangeTaxType", new { customertaxtype = ((int)TaxDisplayType.ExcludingTax), returnUrl }, webHelper.GetCurrentRequestProtocol()),
+        Value = Url.RouteUrl(NopRouteNames.Standard.CHANGE_TAX_TYPE, new { customertaxtype = ((int)TaxDisplayType.ExcludingTax), returnUrl }, webHelper.GetCurrentRequestProtocol()),
         Selected = Model.CurrentTaxType == TaxDisplayType.ExcludingTax
     });
 }

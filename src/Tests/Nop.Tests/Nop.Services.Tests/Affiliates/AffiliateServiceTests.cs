@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 using Nop.Core.Domain.Affiliates;
 using Nop.Services.Affiliates;
 using Nop.Services.Common;
@@ -151,7 +151,10 @@ public class AffiliateServiceTests : ServiceTest<Affiliate>
 
             var updatedEntity = new Affiliate
             {
-                Active = true, AddressId = 1, AdminComment = "Test comment", FriendlyUrlName = "TestActiveAffiliate"
+                Active = true,
+                AddressId = 1,
+                AdminComment = "Test comment",
+                FriendlyUrlName = "TestActiveAffiliate"
             };
 
             return new CrudData<Affiliate>

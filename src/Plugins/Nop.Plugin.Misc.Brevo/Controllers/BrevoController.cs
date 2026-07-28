@@ -11,6 +11,7 @@ using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
+using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
@@ -34,6 +35,7 @@ public class BrevoController : BasePluginController
     protected readonly ILogger _logger;
     protected readonly IMessageTemplateService _messageTemplateService;
     protected readonly IMessageTokenProvider _messageTokenProvider;
+    protected readonly INewsLetterSubscriptionTypeService _newsLetterSubscriptionTypeService;
     protected readonly INotificationService _notificationService;
     protected readonly ISettingService _settingService;
     protected readonly IStaticCacheManager _staticCacheManager;
@@ -54,6 +56,7 @@ public class BrevoController : BasePluginController
         ILogger logger,
         IMessageTemplateService messageTemplateService,
         IMessageTokenProvider messageTokenProvider,
+        INewsLetterSubscriptionTypeService newsLetterSubscriptionTypeService,
         INotificationService notificationService,
         ISettingService settingService,
         IStaticCacheManager staticCacheManager,
@@ -70,6 +73,7 @@ public class BrevoController : BasePluginController
         _logger = logger;
         _messageTemplateService = messageTemplateService;
         _messageTokenProvider = messageTokenProvider;
+        _newsLetterSubscriptionTypeService = newsLetterSubscriptionTypeService;
         _notificationService = notificationService;
         _settingService = settingService;
         _staticCacheManager = staticCacheManager;
@@ -102,7 +106,6 @@ public class BrevoController : BasePluginController
         //prepare common properties
         model.ActiveStoreScopeConfiguration = storeId;
         model.ApiKey = brevoSettings.ApiKey;
-        model.ListId = brevoSettings.ListId;
         model.SmtpKey = brevoSettings.SmtpKey;
         model.SenderId = brevoSettings.SenderId;
         model.UseSmsNotifications = brevoSettings.UseSmsNotifications;
@@ -160,7 +163,6 @@ public class BrevoController : BasePluginController
         //prepare overridable settings
         if (storeId > 0)
         {
-            model.ListId_OverrideForStore = await _settingService.SettingExistsAsync(brevoSettings, settings => settings.ListId, storeId);
             model.UseSmtp_OverrideForStore = await _settingService.SettingExistsAsync(brevoSettings, settings => settings.UseSmtp, storeId);
             model.SenderId_OverrideForStore = await _settingService.SettingExistsAsync(brevoSettings, settings => settings.SenderId, storeId);
             model.UseSmsNotifications_OverrideForStore = await _settingService.SettingExistsAsync(brevoSettings, settings => settings.UseSmsNotifications, storeId);
@@ -172,6 +174,14 @@ public class BrevoController : BasePluginController
         var (smtpEnabled, smtpErrors) = await _brevoEmailManager.SmtpIsEnabledAsync();
         if (!string.IsNullOrEmpty(smtpErrors))
             _notificationService.ErrorNotification($"{BrevoDefaults.NotificationMessage} {smtpErrors}");
+
+        var newsLetterSubscriptionTypes = await _newsLetterSubscriptionTypeService.GetAllNewsLetterSubscriptionTypesAsync(storeId);
+        model.NewsLetterSubscriptionTypes = await newsLetterSubscriptionTypes.Select(subscriptionType => new NewsLetterSubscriptionMapModel
+        {
+            TypeId = subscriptionType.Id,
+            Name = subscriptionType.Name,
+            ListId = brevoSettings.SubscriptionTypeMappings.TryGetValue(subscriptionType.Id, out var value) ? value : 0,
+        }).ToListAsync();
 
         //get available contact lists to synchronize
         var (lists, listsErrors) = await _brevoEmailManager.GetListsAsync();
@@ -202,8 +212,8 @@ public class BrevoController : BasePluginController
             if (partnerSet)
             {
                 brevoSettings.PartnerValueSet = true;
-                _settingService.SaveSetting(brevoSettings, settings => settings.PartnerValueSet, clearCache: false);
-                _settingService.ClearCache();
+                await _settingService.SaveSettingAsync(brevoSettings, settings => settings.PartnerValueSet, clearCache: false);
+                await _settingService.ClearCacheAsync();
             }
         }
     }
@@ -214,6 +224,7 @@ public class BrevoController : BasePluginController
 
     [AuthorizeAdmin]
     [Area(AreaNames.ADMIN)]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> Configure()
     {
         var model = new ConfigurationModel();
@@ -226,6 +237,7 @@ public class BrevoController : BasePluginController
     [Area(AreaNames.ADMIN)]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("save")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> Configure(ConfigurationModel model)
     {
         if (!ModelState.IsValid)
@@ -248,6 +260,7 @@ public class BrevoController : BasePluginController
     [Area(AreaNames.ADMIN)]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("saveSync")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> SaveSynchronization(ConfigurationModel model)
     {
         if (!ModelState.IsValid)
@@ -261,8 +274,9 @@ public class BrevoController : BasePluginController
         await _settingService.SaveSettingAsync(brevoSettings, settings => settings.UnsubscribeWebhookId, clearCache: false);
 
         //set list of contacts to synchronize
-        brevoSettings.ListId = model.ListId;
-        await _settingService.SaveSettingOverridablePerStoreAsync(brevoSettings, settings => settings.ListId, model.ListId_OverrideForStore, storeId, false);
+        brevoSettings.SubscriptionTypeMappings = model.NewsLetterSubscriptionTypes
+            .ToDictionary(subscriptionType => subscriptionType.TypeId, subscriptionType => subscriptionType.ListId);
+        await _settingService.SaveSettingAsync(brevoSettings, settings => settings.SubscriptionTypeMappings, clearCache: false);
 
         //now clear settings cache
         await _settingService.ClearCacheAsync();
@@ -276,17 +290,17 @@ public class BrevoController : BasePluginController
     [Area(AreaNames.ADMIN)]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("sync")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> Synchronization(ConfigurationModel model)
     {
         if (!ModelState.IsValid)
             return await Configure();
 
         //synchronize contacts of selected store
-        var messages = await _brevoEmailManager.SynchronizeAsync(false, await _storeContext.GetActiveStoreScopeConfigurationAsync());
+        var messages = await _brevoEmailManager.SynchronizeAsync();
         foreach (var message in messages)
-        {
             _notificationService.Notification(message.Type, message.Message, false);
-        }
+
         if (!messages.Any(message => message.Type == NotifyType.Error))
         {
             ViewData["synchronizationStart"] = true;
@@ -311,6 +325,7 @@ public class BrevoController : BasePluginController
     [Area(AreaNames.ADMIN)]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("saveSMTP")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> ConfigureSMTP(ConfigurationModel model)
     {
         if (!ModelState.IsValid)
@@ -369,6 +384,7 @@ public class BrevoController : BasePluginController
     [HttpPost]
     [AuthorizeAdmin]
     [Area(AreaNames.ADMIN)]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> MessageList(BrevoMessageTemplateSearchModel searchModel)
     {
         var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
@@ -407,6 +423,7 @@ public class BrevoController : BasePluginController
     [HttpPost]
     [AuthorizeAdmin]
     [Area(AreaNames.ADMIN)]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> MessageUpdate(BrevoMessageTemplateModel model)
     {
         if (!ModelState.IsValid)
@@ -448,6 +465,7 @@ public class BrevoController : BasePluginController
     [Area(AreaNames.ADMIN)]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("saveSMS")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> ConfigureSMS(ConfigurationModel model)
     {
         if (!ModelState.IsValid)
@@ -474,6 +492,7 @@ public class BrevoController : BasePluginController
     [HttpPost]
     [AuthorizeAdmin]
     [Area(AreaNames.ADMIN)]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> SMSList(SmsSearchModel searchModel)
     {
         var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
@@ -540,6 +559,7 @@ public class BrevoController : BasePluginController
     [HttpPost]
     [AuthorizeAdmin]
     [Area(AreaNames.ADMIN)]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> SMSAdd(SmsModel model)
     {
         if (!ModelState.IsValid)
@@ -559,6 +579,7 @@ public class BrevoController : BasePluginController
     [HttpPost]
     [AuthorizeAdmin]
     [Area(AreaNames.ADMIN)]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> SMSDelete(SmsModel model)
     {
         if (!ModelState.IsValid)
@@ -580,6 +601,7 @@ public class BrevoController : BasePluginController
     [Area(AreaNames.ADMIN)]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("submitCampaign")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> SubmitCampaign(ConfigurationModel model)
     {
         if (!ModelState.IsValid)
@@ -598,6 +620,7 @@ public class BrevoController : BasePluginController
     [Area(AreaNames.ADMIN)]
     [HttpPost, ActionName("Configure")]
     [FormValueRequired("saveMA")]
+    [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> ConfigureMA(ConfigurationModel model)
     {
         if (!ModelState.IsValid)

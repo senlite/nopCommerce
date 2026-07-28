@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Nop.Core;
 using Nop.Core.Domain;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Localization;
@@ -8,16 +11,17 @@ using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Http;
+using Nop.Services.Attributes;
 using Nop.Services.Common;
 using Nop.Services.Directory;
 using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
+using Nop.Services.Themes;
 using Nop.Services.Vendors;
 using Nop.Web.Factories;
 using Nop.Web.Framework.Mvc.Filters;
-using Nop.Web.Framework.Themes;
 using Nop.Web.Models.Common;
 using Nop.Web.Models.Sitemap;
 
@@ -30,6 +34,7 @@ public partial class CommonController : BasePublicController
 
     protected readonly CaptchaSettings _captchaSettings;
     protected readonly CommonSettings _commonSettings;
+    protected readonly IAttributeService<ContactFormAttribute, ContactFormAttributeValue> _contactFormAttributeService;
     protected readonly ICommonModelFactory _commonModelFactory;
     protected readonly ICurrencyService _currencyService;
     protected readonly ICustomerActivityService _customerActivityService;
@@ -55,6 +60,7 @@ public partial class CommonController : BasePublicController
 
     public CommonController(CaptchaSettings captchaSettings,
         CommonSettings commonSettings,
+        IAttributeService<ContactFormAttribute, ContactFormAttributeValue> contactFormAttributeService,
         ICommonModelFactory commonModelFactory,
         ICurrencyService currencyService,
         ICustomerActivityService customerActivityService,
@@ -76,6 +82,7 @@ public partial class CommonController : BasePublicController
     {
         _captchaSettings = captchaSettings;
         _commonSettings = commonSettings;
+        _contactFormAttributeService = contactFormAttributeService;
         _commonModelFactory = commonModelFactory;
         _currencyService = currencyService;
         _customerActivityService = customerActivityService;
@@ -98,14 +105,85 @@ public partial class CommonController : BasePublicController
 
     #endregion
 
+    #region Utilities
+
+    protected virtual async IAsyncEnumerable<(string Name, string Value, string Error)> ParseCustomContactFormAttributesAsync(IFormCollection form)
+    {
+        ArgumentNullException.ThrowIfNull(form);
+
+        var attributes = await _contactFormAttributeService.GetAllAttributesAsync();
+        foreach (var attribute in attributes)
+        {
+            var controlId = string.Format(NopCommonDefaults.ContactFormAttributeControlName, attribute.Id);
+            var inputValue = "";
+
+            switch (attribute.AttributeControlType)
+            {
+                case AttributeControlType.DropdownList:
+                case AttributeControlType.RadioList:
+                {
+                    var ctrlAttributes = form[controlId];
+                    if (!StringValues.IsNullOrEmpty(ctrlAttributes))
+                    {
+                        var selectedAttributeId = int.Parse(ctrlAttributes);
+                        if (selectedAttributeId > 0)
+                        {
+                            var selectedVal = await _contactFormAttributeService.GetAttributeValueByIdAsync(selectedAttributeId);
+                            inputValue = selectedVal.Name;
+                        }
+                    }
+                }
+                break;
+                case AttributeControlType.Checkboxes:
+                {
+                    var cblAttributes = form[controlId];
+                    if (StringValues.IsNullOrEmpty(cblAttributes))
+                        break;
+
+                    var attrValues = await cblAttributes
+                        .Select(int.Parse)
+                        .Where(id => id > 0)
+                        .SelectAwait(async id =>
+                        {
+                            var selectedVal = await _contactFormAttributeService.GetAttributeValueByIdAsync(id);
+                            return selectedVal.Name;
+                        }).ToListAsync();
+
+                    inputValue = string.Join(", ", attrValues);
+                }
+                break;
+                case AttributeControlType.TextBox:
+                case AttributeControlType.MultilineTextbox:
+                {
+                    var ctrlAttributes = form[controlId];
+                    if (!StringValues.IsNullOrEmpty(ctrlAttributes))
+                        inputValue = WebUtility.HtmlEncode(string.Join(", ", ctrlAttributes.ToString().Trim()));
+                }
+                break;
+                //not supported customer attributes
+                case AttributeControlType.ReadonlyCheckboxes:
+                case AttributeControlType.Datepicker:
+                case AttributeControlType.ColorSquares:
+                case AttributeControlType.ImageSquares:
+                case AttributeControlType.FileUpload:
+                default:
+                    continue;
+            }
+
+            var notFoundWarning = "";
+            if (attribute.IsRequired && string.IsNullOrEmpty(inputValue))
+                notFoundWarning = string.Format(await _localizationService.GetResourceAsync("ContactUs.SelectAttribute"), await _localizationService.GetLocalizedAsync(attribute, a => a.Name));
+
+            yield return (attribute.Name, inputValue, notFoundWarning);
+        }
+    }
+
+    #endregion
+
     #region Methods
 
-    //page not found
     public virtual IActionResult PageNotFound()
     {
-        Response.StatusCode = 404;
-        Response.ContentType = "text/html";
-
         return View();
     }
 
@@ -121,7 +199,7 @@ public partial class CommonController : BasePublicController
 
         //home page
         if (string.IsNullOrEmpty(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         //language part in URL
         if (_localizationSettings.SeoFriendlyUrlsForLanguagesEnabled)
@@ -138,7 +216,7 @@ public partial class CommonController : BasePublicController
 
         //prevent open redirection attack
         if (!Url.IsLocalUrl(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         return Redirect(returnUrl);
     }
@@ -153,11 +231,11 @@ public partial class CommonController : BasePublicController
 
         //home page
         if (string.IsNullOrEmpty(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         //prevent open redirection attack
         if (!Url.IsLocalUrl(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         return Redirect(returnUrl);
     }
@@ -171,11 +249,11 @@ public partial class CommonController : BasePublicController
 
         //home page
         if (string.IsNullOrEmpty(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         //prevent open redirection attack
         if (!Url.IsLocalUrl(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         return Redirect(returnUrl);
     }
@@ -195,23 +273,24 @@ public partial class CommonController : BasePublicController
     [ValidateCaptcha]
     //available even when a store is closed
     [CheckAccessClosedStore(ignore: true)]
-    public virtual async Task<IActionResult> ContactUsSend(ContactUsModel model, bool captchaValid)
+    public virtual async Task<IActionResult> ContactUsSend(ContactUsModel model, bool captchaValid, IFormCollection form)
     {
         //validate CAPTCHA
         if (_captchaSettings.Enabled && _captchaSettings.ShowOnContactUsPage && !captchaValid)
-        {
             ModelState.AddModelError("", await _localizationService.GetResourceAsync("Common.WrongCaptchaMessage"));
-        }
 
-        model = await _commonModelFactory.PrepareContactUsModelAsync(model, true);
+        var customFields = await ParseCustomContactFormAttributesAsync(form).ToListAsync();
+
+        foreach (var (_, _, error) in customFields.Where(x => !string.IsNullOrEmpty(x.Error)).ToList())
+            ModelState.AddModelError("", error);
 
         if (ModelState.IsValid)
         {
             var subject = _commonSettings.SubjectFieldOnContactUsForm ? model.Subject : null;
-            var body = _htmlFormatter.FormatText(model.Enquiry, false, true, false, false, false, false);
+            var body = _htmlFormatter.FormatText(model.Enquiry);
 
             await _workflowMessageService.SendContactUsMessageAsync((await _workContext.GetWorkingLanguageAsync()).Id,
-                model.Email, model.FullName, subject, body);
+                model.Email, model.FullName, subject, body, customFields.ToDictionary(k => k.Name, v => v.Value));
 
             model.SuccessfullySent = true;
             model.Result = await _localizationService.GetResourceAsync("ContactUs.YourEnquiryHasBeenSent");
@@ -223,6 +302,8 @@ public partial class CommonController : BasePublicController
             return View(model);
         }
 
+        model = await _commonModelFactory.PrepareContactUsModelAsync(model, true, form);
+
         return View(model);
     }
 
@@ -230,11 +311,11 @@ public partial class CommonController : BasePublicController
     public virtual async Task<IActionResult> ContactVendor(int vendorId)
     {
         if (!_vendorSettings.AllowCustomersToContactVendors)
-            return RedirectToRoute("Homepage");
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         var vendor = await _vendorService.GetVendorByIdAsync(vendorId);
         if (vendor == null || !vendor.Active || vendor.Deleted)
-            return RedirectToRoute("Homepage");
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         var model = new ContactVendorModel();
         model = await _commonModelFactory.PrepareContactVendorModelAsync(model, vendor, false);
@@ -247,24 +328,22 @@ public partial class CommonController : BasePublicController
     public virtual async Task<IActionResult> ContactVendorSend(ContactVendorModel model, bool captchaValid)
     {
         if (!_vendorSettings.AllowCustomersToContactVendors)
-            return RedirectToRoute("Homepage");
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         var vendor = await _vendorService.GetVendorByIdAsync(model.VendorId);
         if (vendor == null || !vendor.Active || vendor.Deleted)
-            return RedirectToRoute("Homepage");
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         //validate CAPTCHA
         if (_captchaSettings.Enabled && _captchaSettings.ShowOnContactUsPage && !captchaValid)
-        {
             ModelState.AddModelError("", await _localizationService.GetResourceAsync("Common.WrongCaptchaMessage"));
-        }
 
         model = await _commonModelFactory.PrepareContactVendorModelAsync(model, vendor, true);
 
         if (ModelState.IsValid)
         {
             var subject = _commonSettings.SubjectFieldOnContactUsForm ? model.Subject : null;
-            var body = _htmlFormatter.FormatText(model.Enquiry, false, true, false, false, false, false);
+            var body = _htmlFormatter.FormatText(model.Enquiry);
 
             await _workflowMessageService.SendContactVendorMessageAsync(vendor, (await _workContext.GetWorkingLanguageAsync()).Id,
                 model.Email, model.FullName, subject, body);
@@ -282,7 +361,7 @@ public partial class CommonController : BasePublicController
     public virtual async Task<IActionResult> Sitemap(SitemapPageModel pageModel)
     {
         if (!_sitemapSettings.SitemapEnabled)
-            return RedirectToRoute("Homepage");
+            return RedirectToRoute(NopRouteNames.General.HOMEPAGE);
 
         var model = await _sitemapModelFactory.PrepareSitemapModelAsync(pageModel);
 
@@ -318,11 +397,11 @@ public partial class CommonController : BasePublicController
 
         //home page
         if (string.IsNullOrEmpty(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         //prevent open redirection attack
         if (!Url.IsLocalUrl(returnUrl))
-            returnUrl = Url.RouteUrl("Homepage");
+            returnUrl = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
 
         return Redirect(returnUrl);
     }
@@ -382,21 +461,21 @@ public partial class CommonController : BasePublicController
         //ensure it's invoked from our GenericPathRoute class
         if (!HttpContext.Items.TryGetValue(NopHttpDefaults.GenericRouteInternalRedirect, out var value) || value is not bool redirect || !redirect)
         {
-            url = Url.RouteUrl("Homepage");
+            url = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
             permanentRedirect = false;
         }
 
         //home page
         if (string.IsNullOrEmpty(url))
         {
-            url = Url.RouteUrl("Homepage");
+            url = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
             permanentRedirect = false;
         }
 
         //prevent open redirection attack
         if (!Url.IsLocalUrl(url))
         {
-            url = Url.RouteUrl("Homepage");
+            url = Url.RouteUrl(NopRouteNames.General.HOMEPAGE);
             permanentRedirect = false;
         }
 

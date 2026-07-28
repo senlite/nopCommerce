@@ -14,6 +14,8 @@ public partial record MaintenanceModel : BaseNopModel
         BackupFileSearchModel = new();
         DeleteAlreadySentQueuedEmails = new();
         DeleteMinificationFiles = new();
+        DeleteThumbsFiles = new();
+        ClearSearchHistory = new();
     }
 
     public DeleteGuestsModel DeleteGuests { get; set; }
@@ -28,7 +30,13 @@ public partial record MaintenanceModel : BaseNopModel
 
     public DeleteMinificationFilesModel DeleteMinificationFiles { get; set; }
 
+    public DeleteThumbFilesModel DeleteThumbsFiles { get; set; }
+
+    public ClearSearchHistoryModel ClearSearchHistory {  get; set; }
+
     public bool BackupSupported { get; set; }
+
+    public string DatabaseSize { get; set; }
 
     #region Nested classes
 
@@ -86,6 +94,20 @@ public partial record MaintenanceModel : BaseNopModel
     public partial record DeleteMinificationFilesModel : BaseNopModel
     {
         public int? NumberOfDeletedFiles { get; set; }
+    }
+
+    public partial record DeleteThumbFilesModel : BaseNopModel
+    {
+        public bool IsDeleteThumbsSupported { get; set; }
+        
+        public string FilesCountText { get; set; }
+        
+        public string FilesSizeText { get; set; }
+    }
+
+    public partial record ClearSearchHistoryModel : BaseNopModel
+    {
+        public int? NumberOfDeletedItems { get; set; }
     }
 
     #endregion

@@ -1,13 +1,4 @@
 ﻿@model GeneralCommonSettingsModel
-@inject Nop.Services.Stores.IStoreService storeService
-@using Nop.Web.Framework.Models.AdminAreaTour
-
-@{
-    //tour step
-    ViewBag.TourStep = TourStep.GeneralSettings;
-}
-
-@await Html.PartialAsync("_AdminTour")
 
 <div class="card-body">
     <div class="form-group row" id="theme-area">
@@ -31,7 +22,7 @@
                     <div class="checkbox form-check">
                         <label class="form-check-label">
                             <span>
-                                <input type="radio" name="@Html.NameFor(x => x.StoreInformationSettings.DefaultStoreTheme)" value="@theme.SystemName" @if (theme.SystemName.Equals(Model.StoreInformationSettings.DefaultStoreTheme, StringComparison.InvariantCultureIgnoreCase)) { <text> checked="checked" </text> }>
+                                <input type="radio" name="@Html.NameFor(x => x.StoreInformationSettings.DefaultStoreTheme)" value="@theme.SystemName" @if (theme.SystemName.Equals(Model.StoreInformationSettings.DefaultStoreTheme, StringComparison.InvariantCultureIgnoreCase)) { <text> checked="checked" </text> }/>
                                 @theme.FriendlyName
                             </span>
                             <img src="@Url.Content(theme.PreviewImageUrl)" alt="@theme.PreviewText" title="@theme.PreviewText">
@@ -85,26 +76,6 @@
     </div>
     <div class="form-group row advanced-setting">
         <div class="col-md-3">
-            <nop-override-store-checkbox asp-for="StoreInformationSettings.SubjectFieldOnContactUsForm_OverrideForStore" asp-input="StoreInformationSettings.SubjectFieldOnContactUsForm" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
-            <nop-label asp-for="StoreInformationSettings.SubjectFieldOnContactUsForm" />
-        </div>
-        <div class="col-md-9">
-            <nop-editor asp-for="StoreInformationSettings.SubjectFieldOnContactUsForm" />
-            <span asp-validation-for="StoreInformationSettings.SubjectFieldOnContactUsForm"></span>
-        </div>
-    </div>
-    <div class="form-group row advanced-setting">
-        <div class="col-md-3">
-            <nop-override-store-checkbox asp-for="StoreInformationSettings.UseSystemEmailForContactUsForm_OverrideForStore" asp-input="StoreInformationSettings.UseSystemEmailForContactUsForm" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
-            <nop-label asp-for="StoreInformationSettings.UseSystemEmailForContactUsForm" />
-        </div>
-        <div class="col-md-9">
-            <nop-editor asp-for="StoreInformationSettings.UseSystemEmailForContactUsForm" />
-            <span asp-validation-for="StoreInformationSettings.UseSystemEmailForContactUsForm"></span>
-        </div>
-    </div>
-    <div class="form-group row advanced-setting">
-        <div class="col-md-3">
             <nop-override-store-checkbox asp-for="StoreInformationSettings.PopupForTermsOfServiceLinks_OverrideForStore" asp-input="StoreInformationSettings.PopupForTermsOfServiceLinks" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
             <nop-label asp-for="StoreInformationSettings.PopupForTermsOfServiceLinks" />
         </div>
@@ -114,3 +85,8 @@
         </div>
     </div>
 </div>
+
+@if (await Html.IsTourActiveAsync())
+{
+    @await Html.PartialAsync("_GeneralCommon.Common.Tour")
+}
