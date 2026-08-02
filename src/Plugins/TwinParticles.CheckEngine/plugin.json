@@ -1,0 +1,11 @@
+{
+  "Group": "Misc",
+  "FriendlyName": "Check Engine",
+  "SystemName": "TwinParticles.CheckEngine",
+  "Version": "0.1.0",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "Twin Particles",
+  "DisplayOrder": 1,
+  "FileName": "TwinParticles.CheckEngine.dll",
+  "Description": "Automotive commerce platform plugin for nopCommerce"
+}
