@@ -1,0 +1,50 @@
+@model TwinParticles.CheckEngine.Components.CheckEngineThemeChromeViewComponent.ThemeChromeModel
+
+@{
+    var zone = (Model.WidgetZone ?? string.Empty).ToLowerInvariant();
+}
+
+@if (zone == "header_after")
+{
+    <section class="ce-theme-layout" data-ce-theme="layout-system">
+        <div class="ce-layout-shell">
+            <button type="button" class="ce-mega-menu-trigger" aria-label="Open vehicle categories">Menu</button>
+        </div>
+    </section>
+}
+else if (zone == "header_menu_after")
+{
+    <section class="ce-theme-garage-widget" data-ce-theme="garage-widget" dir="auto">
+        <span class="ce-active-vehicle-chip">Garage: select or switch vehicle</span>
+    </section>
+
+    <section class="ce-theme-vehicle-selector" data-ce-theme="vehicle-selector" dir="auto">
+        <label for="ce-vehicle-selector">Vehicle selector</label>
+        <select id="ce-vehicle-selector" name="vehicleSelector">
+            <option value="">Select vehicle</option>
+        </select>
+    </section>
+}
+else if (zone == "home_page_top")
+{
+    <section class="ce-theme-landing-template" data-ce-theme="landing-template">
+        <h2>Vehicle and part landing template</h2>
+        <p>Template scaffold for EP-11 landing experiences.</p>
+    </section>
+}
+else if (zone == "productdetails_top")
+{
+    <section class="ce-theme-fitment-band" data-ce-theme="fitment-band" dir="auto" role="status" aria-live="polite">
+        <strong>Fitment:</strong> Verify compatibility with your active vehicle.
+    </section>
+}
+else if (zone == "body_start_html_tag_after")
+{
+    <section class="ce-theme-sticky-search" data-ce-theme="sticky-search" dir="auto">
+        <form method="post" action="/check-engine/search/query">
+            <label for="ce-sticky-search-input">Search parts, OEM, or VIN</label>
+            <input id="ce-sticky-search-input" name="rawText" type="text" autocomplete="off" />
+            <button type="submit">Search</button>
+        </form>
+    </section>
+}

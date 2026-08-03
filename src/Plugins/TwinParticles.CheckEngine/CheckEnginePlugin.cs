@@ -1,16 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Services.Cms;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
 using Nop.Services.Security;
+using Nop.Web.Framework.Infrastructure;
 using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine;
 
-public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin
+public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 {
     private readonly ILocalizationService _localizationService;
     private readonly IPermissionService _permissionService;
@@ -32,6 +35,24 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin
     {
         return $"{_webHelper.GetStoreLocation()}Admin/CheckEngine/Configure";
     }
+
+    public Task<IList<string>> GetWidgetZonesAsync()
+    {
+        return Task.FromResult<IList<string>>([
+            PublicWidgetZones.HeaderAfter,
+            PublicWidgetZones.HeaderMenuAfter,
+            PublicWidgetZones.BodyStartHtmlTagAfter,
+            PublicWidgetZones.ProductDetailsTop,
+            PublicWidgetZones.HomepageTop
+        ]);
+    }
+
+    public Type GetWidgetViewComponent(string widgetZone)
+    {
+        return typeof(Components.CheckEngineThemeChromeViewComponent);
+    }
+
+    public bool HideInWidgetList => false;
 
     public override async Task InstallAsync()
     {

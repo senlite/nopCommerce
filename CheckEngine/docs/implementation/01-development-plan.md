@@ -45,5 +45,8 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 ## Phase 7 - Media foundations
 - Images (`EP-10`) Completed scaffold (items 44-48)
 
+## Phase 8 - Theme foundations
+- Theme (`EP-11`) Completed scaffold (items 62-67)
+
 ## Current implementation snapshot
 - See `CheckEngine/docs/implementation/05-current-status.md` for completed vs pending backlog slices.
