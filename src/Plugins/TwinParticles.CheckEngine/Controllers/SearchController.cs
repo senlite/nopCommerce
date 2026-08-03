@@ -15,12 +15,14 @@ public sealed class SearchController : BasePublicController
 {
     private readonly GarageContextSearchService _garageContextSearchService;
     private readonly GarageService _garageService;
+    private readonly ISearchRateLimiter _searchRateLimiter;
     private readonly IWorkContext _workContext;
 
-    public SearchController(GarageContextSearchService garageContextSearchService, GarageService garageService, IWorkContext workContext)
+    public SearchController(GarageContextSearchService garageContextSearchService, GarageService garageService, ISearchRateLimiter searchRateLimiter, IWorkContext workContext)
     {
         _garageContextSearchService = garageContextSearchService;
         _garageService = garageService;
+        _searchRateLimiter = searchRateLimiter;
         _workContext = workContext;
     }
 
@@ -30,6 +32,17 @@ public sealed class SearchController : BasePublicController
     {
         if (model is null)
             return BadRequest();
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var rateLimitKey = customer is null || customer.IsGuest()
+            ? $"search:ip:{ipAddress}"
+            : $"search:customer:{customer.Id}";
+
+        if (!_searchRateLimiter.TryAcquire(rateLimitKey, out var retryAfterSeconds))
+        {
+            return StatusCode(429, new { reasonCode = "search.rate_limited", retryAfterSeconds });
+        }
 
         var query = new SearchQuery
         {
@@ -49,7 +62,6 @@ public sealed class SearchController : BasePublicController
             Locale = model.Locale
         };
 
-        var customer = await _workContext.GetCurrentCustomerAsync();
         int? activeVehicleConfigurationId = null;
 
         if (customer is not null && !customer.IsGuest())

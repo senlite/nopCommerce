@@ -71,6 +71,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBilingualSearchTextNormalizer, DefaultBilingualSearchTextNormalizer>();
         services.AddSingleton<IProductSearchReadRepository, InMemoryProductSearchReadRepository>();
         services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
+        services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 
         services.AddSingleton<IGarageRepository, InMemoryGarageRepository>();
         services.AddSingleton<IGarageGuestStore, InMemoryGarageGuestStore>();
