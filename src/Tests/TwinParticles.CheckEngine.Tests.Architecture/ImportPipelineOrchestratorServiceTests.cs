@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
+using TwinParticles.CheckEngine.Application.Images;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Extraction;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
@@ -44,7 +45,8 @@ public class ImportPipelineOrchestratorServiceTests
             new ImportCategorizationService(),
             new ImportImageAssignmentService(),
             new ImportReviewService(),
-            new ImportPublicationService());
+            new ImportPublicationService(),
+            new ImageImportOrchestrationService(new ProductImageService(new FakeImageStorageService(), new FakeImageDeliveryService(), new FakeImageQuarantineService(), new FakeProductImageRepository())));
 
         var csv = "oem,name,vehicleConfigurationId,category,image\n11-51-7-586-925,Oil Filter,1001,Engine,https://img/1.jpg\n11-51-7-586-925,Oil Filter,1001,Engine,https://img/2.jpg\n";
         var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
@@ -103,5 +105,38 @@ public class ImportPipelineOrchestratorServiceTests
     {
         public Task<IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<OemRelation>>([]);
+    }
+
+    private sealed class FakeProductImageRepository : TwinParticles.CheckEngine.Domain.Images.IProductImageRepository
+    {
+        public Task<TwinParticles.CheckEngine.Domain.Images.ProductImageRecord?> GetPrimaryAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<TwinParticles.CheckEngine.Domain.Images.ProductImageRecord?>(null);
+
+        public Task UpsertPrimaryAsync(TwinParticles.CheckEngine.Domain.Images.ProductImageRecord record, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+    }
+
+    private sealed class FakeImageStorageService : TwinParticles.CheckEngine.Domain.Images.IImageStorageService
+    {
+        public Task<int?> DownloadAndCreatePictureAsync(string url, string seoName, string altText, string titleText, CancellationToken cancellationToken)
+            => Task.FromResult<int?>(123);
+
+        public Task<int?> GetDefaultPlaceholderPictureIdAsync(CancellationToken cancellationToken)
+            => Task.FromResult<int?>(999);
+
+        public Task<bool> ReplacePictureBinaryAsync(int pictureId, string sourceUrl, string seoName, string altText, string titleText, CancellationToken cancellationToken)
+            => Task.FromResult(true);
+    }
+
+    private sealed class FakeImageDeliveryService : TwinParticles.CheckEngine.Domain.Images.IImageDeliveryService
+    {
+        public Task<string?> GetVariantUrlAsync(int pictureId, TwinParticles.CheckEngine.Domain.Images.ImageVariant variant, CancellationToken cancellationToken)
+            => Task.FromResult<string?>("/images/123/product");
+    }
+
+    private sealed class FakeImageQuarantineService : TwinParticles.CheckEngine.Domain.Images.IImageQuarantineService
+    {
+        public Task<bool> ShouldQuarantineAsync(string sourceUrl, CancellationToken cancellationToken)
+            => Task.FromResult(false);
     }
 }

@@ -42,5 +42,8 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 - Search (`EP-07`) Completed scaffold (items 49-56)
 - Garage (`EP-08`) Completed scaffold (items 57-61)
 
+## Phase 7 - Media foundations
+- Images (`EP-10`) Completed scaffold (items 44-48)
+
 ## Current implementation snapshot
 - See `CheckEngine/docs/implementation/05-current-status.md` for completed vs pending backlog slices.

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TwinParticles.CheckEngine.Application.Images;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Extraction;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
@@ -27,6 +28,7 @@ public sealed class ImportPipelineOrchestratorService
     private readonly ImportImageAssignmentService _imageAssignmentService;
     private readonly ImportReviewService _reviewService;
     private readonly ImportPublicationService _publicationService;
+    private readonly ImageImportOrchestrationService _imageImportOrchestrationService;
 
     private readonly ConcurrentDictionary<Guid, ImportPipelineBatchState> _batches = new();
 
@@ -43,7 +45,8 @@ public sealed class ImportPipelineOrchestratorService
         ImportCategorizationService categorizationService,
         ImportImageAssignmentService imageAssignmentService,
         ImportReviewService reviewService,
-        ImportPublicationService publicationService)
+        ImportPublicationService publicationService,
+        ImageImportOrchestrationService imageImportOrchestrationService)
     {
         _clock = clock;
         _extractionService = extractionService;
@@ -58,6 +61,7 @@ public sealed class ImportPipelineOrchestratorService
         _imageAssignmentService = imageAssignmentService;
         _reviewService = reviewService;
         _publicationService = publicationService;
+        _imageImportOrchestrationService = imageImportOrchestrationService;
     }
 
     public async Task<ImportPipelineRunResult> RunAsync(ImportPipelineRunRequest request, CancellationToken cancellationToken)
@@ -143,6 +147,11 @@ public sealed class ImportPipelineOrchestratorService
 
     public ImportPublicationResult Publish(Guid batchId, bool dryRun)
     {
+        return PublishAsync(batchId, dryRun, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    public async Task<ImportPublicationResult> PublishAsync(Guid batchId, bool dryRun, CancellationToken cancellationToken)
+    {
         if (!_batches.TryGetValue(batchId, out var batch))
         {
             return new ImportPublicationResult
@@ -154,6 +163,12 @@ public sealed class ImportPipelineOrchestratorService
         }
 
         var result = _publicationService.Publish(batch.Rows, dryRun);
+        if (!dryRun)
+        {
+            foreach (var row in batch.Rows)
+                await _imageImportOrchestrationService.ApplyAsync(row, cancellationToken);
+        }
+
         batch.PublishedRows = result.PublishedRows;
         batch.FailedRows = result.FailedRows;
         batch.Status = dryRun ? "Review" : "Committed";

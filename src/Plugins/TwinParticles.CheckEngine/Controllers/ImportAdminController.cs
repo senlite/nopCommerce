@@ -76,11 +76,11 @@ public sealed class ImportAdminController : BasePluginController
     }
 
     [HttpPost]
-    public async Task<IActionResult> Publish([FromBody] ImportAdminPublishModel model)
+    public async Task<IActionResult> Publish([FromBody] ImportAdminPublishModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var result = _orchestrator.Publish(model.BatchId, model.DryRun);
+        var result = await _orchestrator.PublishAsync(model.BatchId, model.DryRun, cancellationToken);
         return Json(result);
     }
 }

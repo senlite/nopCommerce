@@ -53,6 +53,24 @@ Status date: 2026-08-03
   - 41 Image-assignment stage scaffold
   - 42 Human review admin workflow scaffold
   - 43 Publication stage with dry-run/partial-success scaffold
+- `EP-10` Image management ✅ Completed scaffold
+  - 44 Image sourcing/storage scaffold via nop picture service adapter
+  - 45 Derivative delivery variants scaffold (listing/product/zoom)
+  - 46 CDN delivery integration scaffold
+  - 47 Placeholder fallback scaffold
+  - 48 Professional replacement workflow scaffold
+  - 26 Extraction stage scaffold (CSV/Excel/PDF parser contracts + CSV parser implementation)
+  - 27 Normalization stage scaffold
+  - 28 Duplicate-detection stage scaffold
+  - 29 OEM-matching stage scaffold
+  - 36 Vehicle-matching stage scaffold
+  - 37 AI enrichment hook scaffold
+  - 38 Translation hook scaffold
+  - 39 SEO-generation hook scaffold
+  - 40 Categorisation stage scaffold
+  - 41 Image-assignment stage scaffold
+  - 42 Human review admin workflow scaffold
+  - 43 Publication stage with dry-run/partial-success scaffold
 
 ## In progress / not finished yet
 
@@ -60,14 +78,13 @@ Status date: 2026-08-03
 - No remaining EP-09 stage scaffolding items; future work is depth/production-hardening.
 
 ### Not started major epics
-- `EP-10` Image management pipeline
 - `EP-11` Theme components
 - `EP-12` L10n/RTL foundations
 - Remaining later-horizon epics (`EP-13+`)
 
 ## Validation snapshot
 
-- Latest CheckEngine architecture test suite run: **120 passed, 0 failed**.
+- Latest CheckEngine architecture test suite run: **124 passed, 0 failed**.
 - Validation has been run inside the CheckEngine test boundary repeatedly after each increment.
 
 ## Known open technical constraint
