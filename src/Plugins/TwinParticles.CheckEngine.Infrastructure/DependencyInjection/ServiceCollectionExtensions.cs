@@ -1,4 +1,21 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TwinParticles.CheckEngine.Domain.ImportPipeline;
+using TwinParticles.CheckEngine.Domain.Observability;
+using TwinParticles.CheckEngine.Domain.Oem;
+using TwinParticles.CheckEngine.Domain.Oem.Admin;
+using TwinParticles.CheckEngine.Domain.Performance;
+using TwinParticles.CheckEngine.Domain.Security;
+using TwinParticles.CheckEngine.Domain.Vehicle;
+using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
+using TwinParticles.CheckEngine.Domain.Vehicle.Aliases;
+using TwinParticles.CheckEngine.Infrastructure.ImportPipeline;
+using TwinParticles.CheckEngine.Infrastructure.Oem;
+using TwinParticles.CheckEngine.Infrastructure.Observability;
+using TwinParticles.CheckEngine.Infrastructure.Performance;
+using TwinParticles.CheckEngine.Infrastructure.Security;
+using TwinParticles.CheckEngine.Infrastructure.Vehicle.Admin;
+using TwinParticles.CheckEngine.Infrastructure.Vehicle.Aliases;
+using TwinParticles.CheckEngine.Infrastructure.Vehicle.VinDecoders;
 
 namespace TwinParticles.CheckEngine.Infrastructure.DependencyInjection;
 
@@ -6,6 +23,31 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddCheckEngineInfrastructure(this IServiceCollection services)
     {
+        services.AddSingleton<ICheckEngineTelemetry, LoggerCheckEngineTelemetry>();
+        services.AddSingleton<ICheckEngineClock, SystemCheckEngineClock>();
+        services.AddSingleton<ICheckEngineInputSanitizer, DefaultCheckEngineInputSanitizer>();
+        services.AddSingleton<IOemNormalizationService, DefaultOemNormalizationService>();
+        services.AddScoped<IOemAdminRepository, SqlOemAdminRepository>();
+        services.AddScoped<IOemRelationReadRepository, SqlOemAdminRepository>();
+        services.AddScoped<IOemSearchReadRepository, SqlOemAdminRepository>();
+
+        services.AddSingleton<IImportExtractionParser, CsvImportExtractionParser>();
+        services.AddSingleton<IImportExtractionParser, ExcelImportExtractionParser>();
+        services.AddSingleton<IImportExtractionParser, PdfImportExtractionParser>();
+
+        services.AddSingleton<IVehicleAliasNormalizationService, VehicleAliasNormalizationService>();
+        services.AddSingleton<IVehicleAliasCache, MemoryVehicleAliasCache>();
+        services.AddScoped<IVehicleAliasSqlExecutor, NopDataProviderVehicleAliasSqlExecutor>();
+        services.AddScoped<IVehicleAliasReadRepository, SqlVehicleAliasRepository>();
+        services.AddScoped<IVehicleAliasWriteRepository, SqlVehicleAliasRepository>();
+
+        services.AddScoped<IVehicleAdminRepository, SqlVehicleAdminRepository>();
+        services.AddScoped<IVehicleSeedLoader, BasicVehicleSeedLoader>();
+
+        services.AddSingleton<IManufacturerVinDecoder, BmwVinDecoder>();
+        services.AddSingleton<IVinDecoderRegistry, VinDecoderRegistry>();
+        services.AddSingleton<IVinDecodeRateLimiter, InMemoryVinDecodeRateLimiter>();
+
         return services;
     }
 }

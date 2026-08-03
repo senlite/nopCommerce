@@ -22,18 +22,21 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 7. Add unit and architecture test projects
 8. Add CI build/test gates
 
-## Phase 2 - Vehicle foundation (`EP-03`)
-1. Vehicle hierarchy schema
-2. Vehicle aggregates and invariants
-3. Admin CRUD
-4. Brand-agnostic seed loader
+## Phase 2 - Vehicle foundation (`EP-03`) ? Completed
+1. Vehicle hierarchy schema ?
+2. Vehicle aggregates and invariants ? (baseline modeled through domain entities and service contracts)
+3. Admin CRUD ? (full CRUD scaffold for Make/Model/Generation/Body/Engine/Market/Configuration/Alias)
+4. Brand-agnostic seed loader ? (basic seed loader scaffold)
 
 ## Phase 3 - Parallel foundations
-- VIN (`EP-04`)
-- OEM (`EP-05`)
+- VIN (`EP-04`) ? Completed (items 16-20)
+- OEM (`EP-05`) ? Completed (items 21-25)
 
 ## Phase 4 - Core differentiator
-- Fitment (`EP-06`)
+- Fitment (`EP-06`) ? Not started
 
 ## Phase 5 - Critical path
-- Import pipeline (`EP-09`) starts as soon as vehicle and OEM foundations exist
+- Import pipeline (`EP-09`) Completed scaffold (items 26-29, 36-43)
+
+## Current implementation snapshot
+- See `CheckEngine/docs/implementation/05-current-status.md` for completed vs pending backlog slices.

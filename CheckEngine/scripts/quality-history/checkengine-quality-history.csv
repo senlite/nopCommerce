@@ -1,0 +1,3 @@
+"timestamp_utc","total","passed","failed","skipped","duration_seconds","line_coverage_percent","branch_coverage_percent"
+"2026-08-03T00:43:12.9430119Z","41","41","0","0","54.12","0.50","0.17"
+"2026-08-03T00:45:37.0447597Z","41","41","0","0","51.18","0.50","0.17"

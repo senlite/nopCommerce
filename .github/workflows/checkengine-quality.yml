@@ -1,0 +1,43 @@
+name: checkengine-quality
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  checkengine-quality-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj
+
+      - name: Build
+        run: dotnet build src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj --configuration Release --no-restore
+
+      - name: Test with TRX and coverage
+        run: dotnet test src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj --configuration Release --no-build --logger "trx;LogFileName=checkengine-tests.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Build quality summary
+        if: always()
+        shell: pwsh
+        run: ./CheckEngine/scripts/summarize-checkengine-results.ps1 -ResultsDir "TestResults" -TrxName "checkengine-tests.trx"
+
+      - name: Upload test results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkengine-test-results
+          path: ./TestResults
