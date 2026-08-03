@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TwinParticles.CheckEngine.Domain.Fitment;
+using TwinParticles.CheckEngine.Domain.Garage;
 using TwinParticles.CheckEngine.Domain.ImportPipeline;
 using TwinParticles.CheckEngine.Domain.Observability;
 using TwinParticles.CheckEngine.Domain.Oem;
@@ -11,6 +12,7 @@ using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 using TwinParticles.CheckEngine.Domain.Vehicle.Aliases;
 using TwinParticles.CheckEngine.Infrastructure.Fitment;
+using TwinParticles.CheckEngine.Infrastructure.Garage;
 using TwinParticles.CheckEngine.Infrastructure.ImportPipeline;
 using TwinParticles.CheckEngine.Infrastructure.Oem;
 using TwinParticles.CheckEngine.Infrastructure.Observability;
@@ -61,6 +63,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBilingualSearchTextNormalizer, DefaultBilingualSearchTextNormalizer>();
         services.AddSingleton<IProductSearchReadRepository, InMemoryProductSearchReadRepository>();
         services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
+
+        services.AddSingleton<IGarageRepository, InMemoryGarageRepository>();
+        services.AddSingleton<IGarageGuestStore, InMemoryGarageGuestStore>();
+        services.AddSingleton<IGarageAuditService, InMemoryGarageAuditService>();
 
         return services;
     }

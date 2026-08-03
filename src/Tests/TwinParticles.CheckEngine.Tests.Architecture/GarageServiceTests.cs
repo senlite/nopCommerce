@@ -1,0 +1,218 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentAssertions;
+using NUnit.Framework;
+using TwinParticles.CheckEngine.Application.Garage;
+using TwinParticles.CheckEngine.Application.Oem;
+using TwinParticles.CheckEngine.Application.Vehicle.Vin;
+using TwinParticles.CheckEngine.Domain.Garage;
+using TwinParticles.CheckEngine.Domain.Observability;
+using TwinParticles.CheckEngine.Domain.Oem;
+using TwinParticles.CheckEngine.Domain.Vehicle;
+
+namespace TwinParticles.CheckEngine.Tests.Architecture;
+
+[TestFixture]
+public class GarageServiceTests
+{
+    [Test]
+    public async Task SetActiveVehicleAsync_Should_Keep_Exactly_One_Active()
+    {
+        var service = CreateService();
+        await service.AddVehicleAsync(15, 1001, null, "Car A", CancellationToken.None);
+        await service.AddVehicleAsync(15, 1002, null, "Car B", CancellationToken.None);
+
+        var set = await service.SetActiveVehicleAsync(15, 2, CancellationToken.None);
+        set.Should().BeTrue();
+
+        var garage = await service.GetAsync(15, CancellationToken.None);
+        garage.ActiveGarageVehicleId.Should().Be(2);
+        garage.Vehicles.Count(x => x.IsActive).Should().Be(1);
+        garage.Vehicles.Single(x => x.IsActive).Id.Should().Be(2);
+    }
+
+    [Test]
+    public async Task ClearActiveVehicleAsync_Should_Require_Confirmation()
+    {
+        var service = CreateService();
+        await service.AddVehicleAsync(16, 2001, null, "Car", CancellationToken.None);
+
+        var notConfirmed = await service.ClearActiveVehicleAsync(16, confirmed: false, CancellationToken.None);
+        notConfirmed.Should().BeFalse();
+
+        var garageAfterFailedClear = await service.GetAsync(16, CancellationToken.None);
+        garageAfterFailedClear.ActiveGarageVehicleId.Should().NotBeNull();
+
+        var confirmed = await service.ClearActiveVehicleAsync(16, confirmed: true, CancellationToken.None);
+        confirmed.Should().BeTrue();
+
+        var garage = await service.GetAsync(16, CancellationToken.None);
+        garage.ActiveGarageVehicleId.Should().BeNull();
+        garage.Vehicles.Any(x => x.IsActive).Should().BeFalse();
+    }
+
+    [Test]
+    public async Task MigrateGuestAsync_Should_Merge_Guest_Data_And_Remove_Guest_Payload()
+    {
+        var service = CreateService();
+
+        await service.SetGuestAsync("guest-1", new GarageGuestPayload
+        {
+            ActiveVehicleId = 1,
+            Vehicles =
+            [
+                new GarageVehicle { Id = 1, VehicleConfigurationId = 3001, Vin = "1HGCM82633A004352", Label = "Guest Car" }
+            ],
+            Oems =
+            [
+                new GarageOem { Id = 1, OemNumberId = 901, DisplayNumber = "11-51-7-586-925" }
+            ]
+        }, CancellationToken.None);
+
+        var migrated = await service.MigrateGuestAsync(42, "guest-1", CancellationToken.None);
+        migrated.Should().BeTrue();
+
+        var garage = await service.GetAsync(42, CancellationToken.None);
+        garage.Vehicles.Should().ContainSingle();
+        garage.Oems.Should().ContainSingle();
+
+        var payload = await service.GetGuestAsync("guest-1", CancellationToken.None);
+        payload.Vehicles.Should().BeEmpty();
+        payload.Oems.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task AdminViewAsync_Should_Record_Audit_Entry()
+    {
+        var audit = new FakeGarageAuditService();
+        var service = CreateService(auditService: audit);
+
+        await service.AddVehicleAsync(7, 7001, null, "AdminViewCar", CancellationToken.None);
+
+        var garage = await service.AdminViewAsync(7, CancellationToken.None);
+        garage.Should().NotBeNull();
+
+        audit.GetViewedCustomerIds().Should().Contain(7);
+    }
+
+    private static GarageService CreateService(IGarageAuditService? auditService = null)
+    {
+        var repository = new FakeGarageRepository();
+        var guestStore = new FakeGarageGuestStore();
+        var telemetry = new NoopTelemetry();
+
+        var vinService = new VinDecodeApplicationService(new FakeVinRegistry(), telemetry);
+        var oemService = new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository()));
+
+        return new GarageService(
+            repository,
+            guestStore,
+            auditService ?? new FakeGarageAuditService(),
+            vinService,
+            oemService);
+    }
+
+    private sealed class FakeGarageRepository : IGarageRepository
+    {
+        private readonly Dictionary<int, Garage> _state = [];
+
+        public Task<Garage> GetOrCreateAsync(int customerId, CancellationToken cancellationToken)
+        {
+            if (!_state.TryGetValue(customerId, out var garage))
+            {
+                garage = new Garage { Id = customerId, CustomerId = customerId };
+                _state[customerId] = garage;
+            }
+
+            return Task.FromResult(garage);
+        }
+
+        public Task<Garage?> GetByCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+        {
+            _state.TryGetValue(customerId, out var garage);
+            return Task.FromResult(garage);
+        }
+
+        public Task SaveAsync(Garage garage, CancellationToken cancellationToken)
+        {
+            _state[garage.CustomerId] = garage;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeGarageGuestStore : IGarageGuestStore
+    {
+        private readonly Dictionary<string, GarageGuestPayload> _state = [];
+
+        public Task<GarageGuestPayload?> GetAsync(string guestKey, CancellationToken cancellationToken)
+        {
+            _state.TryGetValue(guestKey, out var payload);
+            return Task.FromResult(payload);
+        }
+
+        public Task SetAsync(string guestKey, GarageGuestPayload payload, CancellationToken cancellationToken)
+        {
+            _state[guestKey] = payload;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(string guestKey, CancellationToken cancellationToken)
+        {
+            _state.Remove(guestKey);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeGarageAuditService : IGarageAuditService
+    {
+        private readonly List<int> _ids = [];
+
+        public void RecordAdminView(int customerId)
+        {
+            _ids.Add(customerId);
+        }
+
+        public IReadOnlyList<int> GetViewedCustomerIds() => _ids;
+    }
+
+    private sealed class FakeVinRegistry : IVinDecoderRegistry
+    {
+        public IManufacturerVinDecoder? Resolve(string wmi) => null;
+    }
+
+    private sealed class NoopTelemetry : ICheckEngineTelemetry
+    {
+        public void TrackEvent(string eventName, IReadOnlyDictionary<string, object?> properties)
+        {
+        }
+    }
+
+    private sealed class FakeOemNormalizationService : IOemNormalizationService
+    {
+        public string Normalize(string rawNumber)
+            => string.IsNullOrWhiteSpace(rawNumber) ? string.Empty : rawNumber.Replace("-", string.Empty);
+    }
+
+    private sealed class FakeOemSearchRepository : IOemSearchReadRepository
+    {
+        public Task<IReadOnlyList<OemNumber>> FindByNormalizedNumberAsync(string normalizedNumber, int? manufacturerId, CancellationToken cancellationToken)
+        {
+            if (normalizedNumber == "11517586925")
+            {
+                return Task.FromResult<IReadOnlyList<OemNumber>>([
+                    new OemNumber { Id = 901, ManufacturerId = manufacturerId ?? 1, DisplayNumber = "11-51-7-586-925", NormalizedNumber = normalizedNumber }
+                ]);
+            }
+
+            return Task.FromResult<IReadOnlyList<OemNumber>>([]);
+        }
+    }
+
+    private sealed class FakeOemRelationRepository : IOemRelationReadRepository
+    {
+        public Task<IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<OemRelation>>([]);
+    }
+}

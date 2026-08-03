@@ -1,7 +1,10 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Web.Controllers;
+using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Domain.Search;
 using TwinParticles.CheckEngine.Models;
@@ -10,11 +13,15 @@ namespace TwinParticles.CheckEngine.Controllers;
 
 public sealed class SearchController : BasePublicController
 {
-    private readonly UnifiedSearchService _service;
+    private readonly GarageContextSearchService _garageContextSearchService;
+    private readonly GarageService _garageService;
+    private readonly IWorkContext _workContext;
 
-    public SearchController(UnifiedSearchService service)
+    public SearchController(GarageContextSearchService garageContextSearchService, GarageService garageService, IWorkContext workContext)
     {
-        _service = service;
+        _garageContextSearchService = garageContextSearchService;
+        _garageService = garageService;
+        _workContext = workContext;
     }
 
     [HttpPost]
@@ -42,6 +49,16 @@ public sealed class SearchController : BasePublicController
             Locale = model.Locale
         };
 
-        return Json(await _service.SearchAsync(query, cancellationToken));
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        int? activeVehicleConfigurationId = null;
+
+        if (customer is not null && !customer.IsGuest())
+        {
+            var garage = await _garageService.GetAsync(customer.Id, cancellationToken);
+            var activeVehicle = garage.Vehicles.FirstOrDefault(x => x.Id == garage.ActiveGarageVehicleId);
+            activeVehicleConfigurationId = activeVehicle?.VehicleConfigurationId;
+        }
+
+        return Json(await _garageContextSearchService.SearchWithGarageContextAsync(query, activeVehicleConfigurationId, cancellationToken));
     }
 }

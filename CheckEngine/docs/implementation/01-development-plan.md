@@ -38,5 +38,9 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 ## Phase 5 - Critical path
 - Import pipeline (`EP-09`) Completed scaffold (items 26-29, 36-43)
 
+## Phase 6 - Unified search and garage context
+- Search (`EP-07`) Completed scaffold (items 49-56)
+- Garage (`EP-08`) Completed scaffold (items 57-61)
+
 ## Current implementation snapshot
 - See `CheckEngine/docs/implementation/05-current-status.md` for completed vs pending backlog slices.

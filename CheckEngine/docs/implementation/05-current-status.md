@@ -25,6 +25,21 @@ Status date: 2026-08-03
   - 33 Fail-closed evaluation scaffold
   - 34 Human review queue scaffold
   - 35 Caching + publish invalidation scaffold
+- `EP-07` Unified search ✅ Completed scaffold
+  - 49 Unified query contract scaffold
+  - 50 VIN mode integration scaffold
+  - 51 OEM mode integration scaffold
+  - 52 Vehicle-tree/category/keyword mode scaffold
+  - 53 Arabic-English normalization scaffold
+  - 54 Ranking/faceting scaffold
+  - 55 Zero-result recovery scaffold
+  - 56 Rebuild/degraded fallback scaffold
+- `EP-08` Garage ✅ Completed scaffold
+  - 57 Garage aggregate for vehicles/VINs/OEMs scaffold
+  - 58 Guest-to-account migration scaffold
+  - 59 Active-vehicle scoped browsing integration scaffold
+  - 60 Cross-device persistence scaffold (in-memory repository contract)
+  - 61 Admin support view with audit scaffold
 - `EP-09` Import pipeline ✅ Completed scaffold
   - 26 Extraction stage scaffold (CSV/Excel/PDF parser contracts + CSV parser implementation)
   - 27 Normalization stage scaffold
@@ -45,8 +60,6 @@ Status date: 2026-08-03
 - No remaining EP-09 stage scaffolding items; future work is depth/production-hardening.
 
 ### Not started major epics
-- `EP-07` Unified search modes/ranking/index lifecycle
-- `EP-08` Garage aggregate and migration
 - `EP-10` Image management pipeline
 - `EP-11` Theme components
 - `EP-12` L10n/RTL foundations
@@ -54,7 +67,7 @@ Status date: 2026-08-03
 
 ## Validation snapshot
 
-- Latest CheckEngine architecture test suite run: **109 passed, 0 failed**.
+- Latest CheckEngine architecture test suite run: **120 passed, 0 failed**.
 - Validation has been run inside the CheckEngine test boundary repeatedly after each increment.
 
 ## Known open technical constraint

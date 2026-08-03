@@ -2,6 +2,7 @@
 using TwinParticles.CheckEngine.Application.ImportPipeline.Extraction;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
 using TwinParticles.CheckEngine.Application.Fitment;
+using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Oem;
@@ -44,6 +45,9 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<UnifiedSearchService>();
         services.AddScoped<SearchIndexAdminService>();
+        services.AddScoped<GarageContextSearchService>();
+
+        services.AddScoped<GarageService>();
 
         return services;
     }

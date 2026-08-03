@@ -57,6 +57,16 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.SearchAdmin",
             pattern: "Admin/CheckEngine/SearchAdmin/{action}",
             defaults: new { controller = "SearchAdmin", action = "Rebuild" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.Garage",
+            pattern: "check-engine/garage/{action}",
+            defaults: new { controller = "Garage", action = "Current" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.GarageAdmin",
+            pattern: "Admin/CheckEngine/GarageAdmin/{action}",
+            defaults: new { controller = "GarageAdmin", action = "CustomerGarage" });
     }
 
     public int Priority => 0;
