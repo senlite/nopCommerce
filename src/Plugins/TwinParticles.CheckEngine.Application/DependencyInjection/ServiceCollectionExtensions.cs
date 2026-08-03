@@ -9,6 +9,7 @@ using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Search;
+using TwinParticles.CheckEngine.Application.Seo;
 using TwinParticles.CheckEngine.Application.Vehicle.Admin;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Import;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Services;
@@ -55,6 +56,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ImageImportOrchestrationService>();
 
         services.AddScoped<LocaleFormattingService>();
+
+        services.AddScoped<SeoLandingService>();
 
         return services;
     }

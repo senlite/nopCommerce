@@ -5,6 +5,7 @@ using TwinParticles.CheckEngine.Domain.Images;
 using TwinParticles.CheckEngine.Domain.ImportPipeline;
 using TwinParticles.CheckEngine.Domain.L10n;
 using TwinParticles.CheckEngine.Domain.Observability;
+using TwinParticles.CheckEngine.Domain.Seo;
 using TwinParticles.CheckEngine.Domain.Oem;
 using TwinParticles.CheckEngine.Domain.Oem.Admin;
 using TwinParticles.CheckEngine.Domain.Performance;
@@ -19,6 +20,7 @@ using TwinParticles.CheckEngine.Infrastructure.Images;
 using TwinParticles.CheckEngine.Infrastructure.ImportPipeline;
 using TwinParticles.CheckEngine.Infrastructure.L10n;
 using TwinParticles.CheckEngine.Infrastructure.Oem;
+using TwinParticles.CheckEngine.Infrastructure.Seo;
 using TwinParticles.CheckEngine.Infrastructure.Observability;
 using TwinParticles.CheckEngine.Infrastructure.Performance;
 using TwinParticles.CheckEngine.Infrastructure.Search;
@@ -78,6 +80,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IImageQuarantineService, SafeImageQuarantineService>();
 
         services.AddSingleton<ILocaleFormattingService, DefaultLocaleFormattingService>();
+
+        services.AddSingleton<ISeoLandingRepository, InMemorySeoLandingRepository>();
+        services.AddSingleton<ISeoUrlService, DefaultSeoUrlService>();
+        services.AddSingleton<ISeoStructuredDataService, DefaultSeoStructuredDataService>();
+        services.AddSingleton<ISeoSitemapService, InMemorySeoSitemapService>();
+        services.AddSingleton<ISeoPerformanceBudgetService, DefaultSeoPerformanceBudgetService>();
 
         return services;
     }

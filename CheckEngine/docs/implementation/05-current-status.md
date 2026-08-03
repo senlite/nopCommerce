@@ -72,6 +72,12 @@ Status date: 2026-08-03
   - 70 Mirrored icon direction scaffold
   - 71 Arabic formatting/typography-friendly locale scaffold
   - 72 Number/date/unit locale formatting service scaffold
+- `EP-13` SEO ✅ Completed scaffold
+  - 73 Vehicle and part landing generation scaffold
+  - 74 Structured data (JSON-LD) scaffold
+  - 75 URL architecture + hreflang scaffold
+  - 76 Sitemap index scaffold
+  - 77 Core Web Vitals budget gate scaffold
 
 ## In progress / not finished yet
 
@@ -79,11 +85,11 @@ Status date: 2026-08-03
 - No remaining EP-09 stage scaffolding items; future work is depth/production-hardening.
 
 ### Not started major epics
-- Remaining later-horizon epics (`EP-13+`)
+- Remaining later-horizon epics (`EP-14+`)
 
 ## Validation snapshot
 
-- Latest CheckEngine architecture test suite run: **129 passed, 0 failed**.
+- Latest CheckEngine architecture test suite run: **132 passed, 0 failed**.
 - Validation has been run inside the CheckEngine test boundary repeatedly after each increment.
 
 ## Known open technical constraint

@@ -51,5 +51,8 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 ## Phase 9 - Localization and RTL foundations
 - L10n/RTL (`EP-12`) Completed scaffold (items 68-72)
 
+## Phase 10 - SEO foundations
+- SEO (`EP-13`) Completed scaffold (items 73-77)
+
 ## Current implementation snapshot
 - See `CheckEngine/docs/implementation/05-current-status.md` for completed vs pending backlog slices.

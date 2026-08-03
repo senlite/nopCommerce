@@ -77,6 +77,11 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.L10nPreview",
             pattern: "check-engine/l10n/preview",
             defaults: new { controller = "L10n", action = "Preview" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SeoAdmin",
+            pattern: "Admin/CheckEngine/SeoAdmin/{action}",
+            defaults: new { controller = "SeoAdmin", action = "Sitemap" });
     }
 
     public int Priority => 0;
