@@ -48,5 +48,8 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 ## Phase 8 - Theme foundations
 - Theme (`EP-11`) Completed scaffold (items 62-67)
 
+## Phase 9 - Localization and RTL foundations
+- L10n/RTL (`EP-12`) Completed scaffold (items 68-72)
+
 ## Current implementation snapshot
 - See `CheckEngine/docs/implementation/05-current-status.md` for completed vs pending backlog slices.

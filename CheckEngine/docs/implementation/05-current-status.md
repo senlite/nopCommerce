@@ -66,6 +66,12 @@ Status date: 2026-08-03
   - 65 Theme sticky-search bar scaffold
   - 66 Theme product-page fitment band scaffold
   - 67 Theme landing template scaffold
+- `EP-12` L10n/RTL foundations ✅ Completed scaffold
+  - 68 Resource-key structure scaffold + localization preview keys
+  - 69 RTL logical CSS properties scaffold
+  - 70 Mirrored icon direction scaffold
+  - 71 Arabic formatting/typography-friendly locale scaffold
+  - 72 Number/date/unit locale formatting service scaffold
 
 ## In progress / not finished yet
 
@@ -73,12 +79,11 @@ Status date: 2026-08-03
 - No remaining EP-09 stage scaffolding items; future work is depth/production-hardening.
 
 ### Not started major epics
-- `EP-12` L10n/RTL foundations
 - Remaining later-horizon epics (`EP-13+`)
 
 ## Validation snapshot
 
-- Latest CheckEngine architecture test suite run: **126 passed, 0 failed**.
+- Latest CheckEngine architecture test suite run: **129 passed, 0 failed**.
 - Validation has been run inside the CheckEngine test boundary repeatedly after each increment.
 
 ## Known open technical constraint

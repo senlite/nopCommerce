@@ -66,7 +66,11 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.General.Enabled.Hint"] = "Determines whether Check Engine core services are enabled.",
             ["Plugins.TwinParticles.CheckEngine.Configuration"] = "Configuration",
             ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.Enabled"] = "Enabled",
-            ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.Enabled.Hint"] = "Toggle to enable or disable the Check Engine plugin scaffold."
+            ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.Enabled.Hint"] = "Toggle to enable or disable the Check Engine plugin scaffold.",
+            ["Plugins.TwinParticles.CheckEngine.L10n.Number"] = "Number format",
+            ["Plugins.TwinParticles.CheckEngine.L10n.Date"] = "Date format",
+            ["Plugins.TwinParticles.CheckEngine.L10n.Unit"] = "Unit format",
+            ["Plugins.TwinParticles.CheckEngine.L10n.Preview"] = "Localization preview"
         });
 
         await base.InstallAsync();

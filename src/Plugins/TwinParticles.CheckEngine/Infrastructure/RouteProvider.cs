@@ -72,6 +72,11 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.ImageAdmin",
             pattern: "Admin/CheckEngine/ImageAdmin/{action}",
             defaults: new { controller = "ImageAdmin", action = "Replace" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.L10nPreview",
+            pattern: "check-engine/l10n/preview",
+            defaults: new { controller = "L10n", action = "Preview" });
     }
 
     public int Priority => 0;

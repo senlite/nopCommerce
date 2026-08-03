@@ -5,6 +5,7 @@ using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Application.Images;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
+using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Search;
@@ -52,6 +53,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ProductImageService>();
         services.AddScoped<ImageImportOrchestrationService>();
+
+        services.AddScoped<LocaleFormattingService>();
 
         return services;
     }
