@@ -18,6 +18,13 @@ Status date: 2026-08-03
   - 23 Supersession chain service (directed + transitive)
   - 24 OEM admin linking scaffold
   - 25 OEM search integration hook (`ResolveOem` scaffold)
+- `EP-06` Fitment core ✅ Completed scaffold
+  - 30 Fitment claim aggregate + qualifiers model scaffold
+  - 31 Production-date window evaluation scaffold
+  - 32 Confidence + provenance scaffold
+  - 33 Fail-closed evaluation scaffold
+  - 34 Human review queue scaffold
+  - 35 Caching + publish invalidation scaffold
 - `EP-09` Import pipeline ✅ Completed scaffold
   - 26 Extraction stage scaffold (CSV/Excel/PDF parser contracts + CSV parser implementation)
   - 27 Normalization stage scaffold
@@ -38,7 +45,6 @@ Status date: 2026-08-03
 - No remaining EP-09 stage scaffolding items; future work is depth/production-hardening.
 
 ### Not started major epics
-- `EP-06` Fitment core
 - `EP-07` Unified search modes/ranking/index lifecycle
 - `EP-08` Garage aggregate and migration
 - `EP-10` Image management pipeline
@@ -48,7 +54,7 @@ Status date: 2026-08-03
 
 ## Validation snapshot
 
-- Latest CheckEngine architecture test suite run: **102 passed, 0 failed**.
+- Latest CheckEngine architecture test suite run: **109 passed, 0 failed**.
 - Validation has been run inside the CheckEngine test boundary repeatedly after each increment.
 
 ## Known open technical constraint

@@ -37,6 +37,26 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.ImportAdmin",
             pattern: "Admin/CheckEngine/ImportAdmin/{action}",
             defaults: new { controller = "ImportAdmin", action = "Run" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.FitmentEvaluate",
+            pattern: "check-engine/fitment/evaluate",
+            defaults: new { controller = "Fitment", action = "Evaluate" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.FitmentAdmin",
+            pattern: "Admin/CheckEngine/FitmentAdmin/{action}",
+            defaults: new { controller = "FitmentAdmin", action = "Queue" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SearchQuery",
+            pattern: "check-engine/search/query",
+            defaults: new { controller = "Search", action = "Query" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SearchAdmin",
+            pattern: "Admin/CheckEngine/SearchAdmin/{action}",
+            defaults: new { controller = "SearchAdmin", action = "Rebuild" });
     }
 
     public int Priority => 0;

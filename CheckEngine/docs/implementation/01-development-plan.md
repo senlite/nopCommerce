@@ -33,7 +33,7 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 - OEM (`EP-05`) ? Completed (items 21-25)
 
 ## Phase 4 - Core differentiator
-- Fitment (`EP-06`) ? Not started
+- Fitment (`EP-06`) Completed scaffold (items 30-35)
 
 ## Phase 5 - Critical path
 - Import pipeline (`EP-09`) Completed scaffold (items 26-29, 36-43)

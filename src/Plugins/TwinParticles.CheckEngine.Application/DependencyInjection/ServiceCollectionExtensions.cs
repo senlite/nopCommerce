@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Extraction;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
+using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Oem;
+using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Application.Vehicle.Admin;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Import;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Services;
@@ -35,6 +37,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ImportReviewService>();
         services.AddScoped<ImportPublicationService>();
         services.AddSingleton<ImportPipelineOrchestratorService>();
+
+        services.AddScoped<FitmentEvaluationService>();
+        services.AddScoped<FitmentPublicationPolicyService>();
+        services.AddScoped<FitmentReviewService>();
+
+        services.AddScoped<UnifiedSearchService>();
+        services.AddScoped<SearchIndexAdminService>();
 
         return services;
     }
