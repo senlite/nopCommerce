@@ -82,6 +82,11 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.SeoAdmin",
             pattern: "Admin/CheckEngine/SeoAdmin/{action}",
             defaults: new { controller = "SeoAdmin", action = "Sitemap" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.ErpAdmin",
+            pattern: "Admin/CheckEngine/ErpAdmin/{action}",
+            defaults: new { controller = "ErpAdmin", action = "Reconcile" });
     }
 
     public int Priority => 0;

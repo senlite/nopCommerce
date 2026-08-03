@@ -78,6 +78,13 @@ Status date: 2026-08-03
   - 75 URL architecture + hreflang scaffold
   - 76 Sitemap index scaffold
   - 77 Core Web Vitals budget gate scaffold
+- `EP-14` ERPNext integration ✅ Completed scaffold
+  - 78 Product/inventory sync queue + adapter scaffold
+  - 79 Customer sync pipeline scaffold
+  - 80 Order/invoice sync enqueue scaffold
+  - 81 Returns/shipments sync enqueue scaffold
+  - 82 Conflict resolution/retry/idempotency scaffold
+  - 83 Reconciliation report scaffold
 
 ## In progress / not finished yet
 
@@ -85,7 +92,7 @@ Status date: 2026-08-03
 - No remaining EP-09 stage scaffolding items; future work is depth/production-hardening.
 
 ### Not started major epics
-- Remaining later-horizon epics (`EP-14+`)
+- Remaining later-horizon epics (`EP-15+`)
 
 ## Validation snapshot
 

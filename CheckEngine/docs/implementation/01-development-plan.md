@@ -54,5 +54,8 @@ Start implementation with the first Horizon 1 slice defined by the product backl
 ## Phase 10 - SEO foundations
 - SEO (`EP-13`) Completed scaffold (items 73-77)
 
+## Phase 11 - ERPNext integration foundations
+- ERPNext (`EP-14`) Completed scaffold (items 78-83)
+
 ## Current implementation snapshot
 - See `CheckEngine/docs/implementation/05-current-status.md` for completed vs pending backlog slices.

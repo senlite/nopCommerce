@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TwinParticles.CheckEngine.Domain.Erp;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Garage;
 using TwinParticles.CheckEngine.Domain.Images;
@@ -14,6 +15,7 @@ using TwinParticles.CheckEngine.Domain.Security;
 using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 using TwinParticles.CheckEngine.Domain.Vehicle.Aliases;
+using TwinParticles.CheckEngine.Infrastructure.Erp;
 using TwinParticles.CheckEngine.Infrastructure.Fitment;
 using TwinParticles.CheckEngine.Infrastructure.Garage;
 using TwinParticles.CheckEngine.Infrastructure.Images;
@@ -86,6 +88,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISeoStructuredDataService, DefaultSeoStructuredDataService>();
         services.AddSingleton<ISeoSitemapService, InMemorySeoSitemapService>();
         services.AddSingleton<ISeoPerformanceBudgetService, DefaultSeoPerformanceBudgetService>();
+
+        services.AddSingleton<IErpSyncQueueRepository, InMemoryErpSyncQueueRepository>();
+        services.AddSingleton<IErpClientAdapter, StubErpClientAdapter>();
+        services.AddSingleton<IErpConflictResolutionService, DefaultErpConflictResolutionService>();
 
         return services;
     }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TwinParticles.CheckEngine.Application.Erp;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Extraction;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
 using TwinParticles.CheckEngine.Application.Fitment;
@@ -58,6 +59,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<LocaleFormattingService>();
 
         services.AddScoped<SeoLandingService>();
+
+        services.AddScoped<ErpSyncService>();
 
         return services;
     }
