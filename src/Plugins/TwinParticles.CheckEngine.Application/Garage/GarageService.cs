@@ -151,14 +151,18 @@ public sealed class GarageService
 
         var garage = await _repository.GetOrCreateAsync(customerId, cancellationToken);
 
+        var migratedVehicleIdByGuestVehicleId = new Dictionary<int, int>();
         foreach (var guestVehicle in payload.Vehicles)
         {
-            var exists = garage.Vehicles.Any(x =>
+            var existingVehicle = garage.Vehicles.FirstOrDefault(x =>
                 x.VehicleConfigurationId == guestVehicle.VehicleConfigurationId &&
                 string.Equals(x.Vin, guestVehicle.Vin, StringComparison.OrdinalIgnoreCase));
 
-            if (exists)
+            if (existingVehicle is not null)
+            {
+                migratedVehicleIdByGuestVehicleId[guestVehicle.Id] = existingVehicle.Id;
                 continue;
+            }
 
             var nextId = garage.Vehicles.Count == 0 ? 1 : garage.Vehicles.Max(x => x.Id) + 1;
             garage.Vehicles.Add(new GarageVehicle
@@ -171,6 +175,8 @@ public sealed class GarageService
                 IsActive = false,
                 CreatedUtc = DateTime.UtcNow
             });
+
+            migratedVehicleIdByGuestVehicleId[guestVehicle.Id] = nextId;
         }
 
         foreach (var guestOem in payload.Oems)
@@ -191,11 +197,15 @@ public sealed class GarageService
 
         if (!garage.ActiveGarageVehicleId.HasValue && payload.ActiveVehicleId.HasValue)
         {
-            var active = garage.Vehicles.FirstOrDefault(x => x.Id == payload.ActiveVehicleId.Value);
-            if (active is not null)
+            var mappedActiveId = migratedVehicleIdByGuestVehicleId.GetValueOrDefault(payload.ActiveVehicleId.Value);
+            if (mappedActiveId > 0)
             {
-                active.IsActive = true;
-                garage.ActiveGarageVehicleId = active.Id;
+                var active = garage.Vehicles.FirstOrDefault(x => x.Id == mappedActiveId);
+                if (active is not null)
+                {
+                    active.IsActive = true;
+                    garage.ActiveGarageVehicleId = active.Id;
+                }
             }
         }
 

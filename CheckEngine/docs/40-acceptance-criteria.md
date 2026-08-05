@@ -242,6 +242,8 @@ no code path left using the unmasked value.
 | `AC-004.1` | A stock nopCommerce 4.90.6 instance | Check Engine is installed from the admin Plugins page | installation completes with no manual SQL script and the plugin activates | Integration | `FR-925` |
 | `AC-005.1` | Check Engine installed with sample data | it is uninstalled with confirmation | no `Ce*` schema objects, setting keys, locale resources, or schedule tasks remain | Integration | `FR-921`–`922` |
 | `AC-006.1` | An administrator initiates uninstall | the confirmation dialog appears | it states that vehicle and fitment data will be deleted and offers an export action before proceeding | E2E | `FR-923`–`924` |
+| `AC-006.2` | A PostgreSQL-backed local install stack with Chromium playback | the install smoke test runs | it completes the install step, restarts the app, and captures distinct install/home screenshots | E2E | `FR-925`, `NFR-046` |
+| `AC-006.3` | The current browser E2E harness | the smoke suite runs | install, home, search, and sample PDP are exercised in one run | E2E | `FR-401`, `FR-412`, `FR-661` |
 | `AC-007.1` | The plugin's composition root | static analysis inspects service registration | every registration uses `INopStartup`/`IRouteProvider` and no nopCommerce composition root file is modified | Unit | `FR-911`, `913`, `ADR-012` |
 
 #### `EP-03` Vehicle database
@@ -296,6 +298,7 @@ no code path left using the unmasked value.
 | `AC-036.1` | An OEM search for a superseded number | it is executed | the linked current product displays with its supersession status shown | Integration | `FR-403`, `234` |
 | `AC-037.1` | An active garage vehicle | a category is browsed | only verified-fit parts display by default, with an explicit control to widen the filter | E2E | `FR-405`, `407` |
 | `AC-038.1` | A search that returns zero results | the results page renders | it offers at least one recovery path: widen fitment filter, alternate-spelling suggestion, or a link to the vehicle selector | E2E | `FR-412` |
+| `AC-038.2` | PostgreSQL-backed smoke stack with sample data | the search smoke runs | install/home/search/sample PDP are all exercised in the same run | E2E | `FR-401`, `FR-412`, `FR-661` |
 
 #### `EP-08` Customer garage
 
@@ -304,6 +307,7 @@ no code path left using the unmasked value.
 | `AC-040.1` | A signed-in customer | they save a Vehicle Configuration | it persists in their garage and is retrievable on the next session | Integration | `FR-701` |
 | `AC-041.1` | A guest with garage entries in browser storage | they sign in | the entries migrate to the account with no loss | E2E | `FR-704` |
 | `AC-042.1` | Multiple garage vehicles | one is marked active | storefront catalog surfaces immediately reflect fitment filtering for that vehicle, and only one vehicle is ever active at a time | E2E | `FR-705`–`706`, `INV-009` |
+| `AC-042.2` | The current browser E2E harness | the run completes | the successful run leaves screenshot artifacts for install/home, and the install step is verified against the restart cycle | E2E | `FR-925`, `NFR-046` |
 | `AC-043.1` | A garage entry added on one device | the same account signs in on a second device | the entry is present without a manual sync action | Integration | `FR-707` |
 | `AC-044.1` | A customer's data-export or erasure request | it is processed | garage entries — including saved VINs and OEM numbers — are included in the export or erasure | Integration | `FR-710`, `960`–`961` |
 

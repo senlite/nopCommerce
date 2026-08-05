@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Fitment;
 
@@ -15,6 +16,14 @@ public sealed class FitmentPublicationPolicyService
 
     public async Task<bool> TryPublishAsync(FitmentClaim claim, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(claim);
+
+        if (claim.Id <= 0 || !claim.IsActive)
+            return false;
+
+        if (claim.IsPublished)
+            return true;
+
         if (claim.SourceKindIsAi() || claim.Confidence < 0.85m)
             return false;
 

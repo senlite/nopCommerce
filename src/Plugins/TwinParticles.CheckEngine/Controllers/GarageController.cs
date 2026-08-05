@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
+using Nop.Core.Domain.Customers;
+using Nop.Services.Customers;
 using Nop.Web.Controllers;
 using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Domain.Garage;
@@ -13,11 +15,13 @@ namespace TwinParticles.CheckEngine.Controllers;
 public sealed class GarageController : BasePublicController
 {
     private readonly GarageService _garageService;
+    private readonly ICustomerService _customerService;
     private readonly IWorkContext _workContext;
 
-    public GarageController(GarageService garageService, IWorkContext workContext)
+    public GarageController(GarageService garageService, ICustomerService customerService, IWorkContext workContext)
     {
         _garageService = garageService;
+        _customerService = customerService;
         _workContext = workContext;
     }
 
@@ -25,17 +29,17 @@ public sealed class GarageController : BasePublicController
     public async Task<IActionResult> Current(CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
-        if (customer is null || customer.IsGuest())
-            return Unauthorized();
+        if (!await _customerService.IsGuestAsync(customer))
+            return Json(await _garageService.GetAsync(customer.Id, cancellationToken));
 
-        return Json(await _garageService.GetAsync(customer.Id, cancellationToken));
+        return Unauthorized();
     }
 
     [HttpPost]
     public async Task<IActionResult> AddVehicle([FromBody] GarageAddVehicleRequestModel model, CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
-        if (customer is null || customer.IsGuest())
+        if (await _customerService.IsGuestAsync(customer))
             return Unauthorized();
 
         if (model is null || (!model.VehicleConfigurationId.HasValue && string.IsNullOrWhiteSpace(model.Vin)))
@@ -49,7 +53,7 @@ public sealed class GarageController : BasePublicController
     public async Task<IActionResult> SetActive([FromBody] GarageSetActiveRequestModel model, CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
-        if (customer is null || customer.IsGuest())
+        if (await _customerService.IsGuestAsync(customer))
             return Unauthorized();
 
         var ok = await _garageService.SetActiveVehicleAsync(customer.Id, model.GarageVehicleId, cancellationToken);
@@ -60,7 +64,7 @@ public sealed class GarageController : BasePublicController
     public async Task<IActionResult> ClearActive([FromBody] GarageClearActiveRequestModel model, CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
-        if (customer is null || customer.IsGuest())
+        if (await _customerService.IsGuestAsync(customer))
             return Unauthorized();
 
         var ok = await _garageService.ClearActiveVehicleAsync(customer.Id, model.Confirmed, cancellationToken);
@@ -71,7 +75,7 @@ public sealed class GarageController : BasePublicController
     public async Task<IActionResult> SaveOem([FromBody] GarageSaveOemRequestModel model, CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
-        if (customer is null || customer.IsGuest())
+        if (await _customerService.IsGuestAsync(customer))
             return Unauthorized();
 
         var ok = await _garageService.SaveOemAsync(customer.Id, model.OemNumber, model.ManufacturerId, cancellationToken);
@@ -83,7 +87,7 @@ public sealed class GarageController : BasePublicController
     public async Task<IActionResult> Migrate([FromBody] GarageMigrateRequestModel model, CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
-        if (customer is null || customer.IsGuest())
+        if (await _customerService.IsGuestAsync(customer))
             return Unauthorized();
 
         if (model is null || string.IsNullOrWhiteSpace(model.GuestKey))

@@ -25,6 +25,14 @@ public sealed class VinDecodeApplicationService
 
         if (!TwinParticles.CheckEngine.Domain.Vehicle.Vin.TryCreate(rawVin, out var vin, out var errorCode, enforceCheckDigit: true))
         {
+            _telemetry.TrackEvent("checkengine.vin.decode", new Dictionary<string, object?>
+            {
+                ["outcome"] = "Failed",
+                ["wmi"] = null,
+                ["candidateCount"] = 0,
+                ["reasonCode"] = errorCode
+            });
+
             return Task.FromResult(new VinDecodeResult
             {
                 Outcome = "Failed",
@@ -38,6 +46,14 @@ public sealed class VinDecodeApplicationService
 
         if (decoder is null)
         {
+            _telemetry.TrackEvent("checkengine.vin.decode", new Dictionary<string, object?>
+            {
+                ["outcome"] = "Failed",
+                ["wmi"] = segments.Wmi,
+                ["candidateCount"] = 0,
+                ["reasonCode"] = "vin.wmi_unknown"
+            });
+
             return Task.FromResult(new VinDecodeResult
             {
                 Outcome = "Failed",

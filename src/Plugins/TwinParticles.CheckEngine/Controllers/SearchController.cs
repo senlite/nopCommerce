@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
+using Nop.Services.Customers;
 using Nop.Web.Controllers;
 using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Application.Search;
@@ -15,13 +16,15 @@ public sealed class SearchController : BasePublicController
 {
     private readonly GarageContextSearchService _garageContextSearchService;
     private readonly GarageService _garageService;
+    private readonly ICustomerService _customerService;
     private readonly ISearchRateLimiter _searchRateLimiter;
     private readonly IWorkContext _workContext;
 
-    public SearchController(GarageContextSearchService garageContextSearchService, GarageService garageService, ISearchRateLimiter searchRateLimiter, IWorkContext workContext)
+    public SearchController(GarageContextSearchService garageContextSearchService, GarageService garageService, ICustomerService customerService, ISearchRateLimiter searchRateLimiter, IWorkContext workContext)
     {
         _garageContextSearchService = garageContextSearchService;
         _garageService = garageService;
+        _customerService = customerService;
         _searchRateLimiter = searchRateLimiter;
         _workContext = workContext;
     }
@@ -34,8 +37,9 @@ public sealed class SearchController : BasePublicController
             return BadRequest();
 
         var customer = await _workContext.GetCurrentCustomerAsync();
+        var isGuest = await _customerService.IsGuestAsync(customer);
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var rateLimitKey = customer is null || customer.IsGuest()
+        var rateLimitKey = isGuest
             ? $"search:ip:{ipAddress}"
             : $"search:customer:{customer.Id}";
 
@@ -64,7 +68,7 @@ public sealed class SearchController : BasePublicController
 
         int? activeVehicleConfigurationId = null;
 
-        if (customer is not null && !customer.IsGuest())
+        if (!isGuest)
         {
             var garage = await _garageService.GetAsync(customer.Id, cancellationToken);
             var activeVehicle = garage.Vehicles.FirstOrDefault(x => x.Id == garage.ActiveGarageVehicleId);

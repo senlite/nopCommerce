@@ -37,7 +37,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateMake([FromBody] VehicleAdminDtos.MakeUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateMakeAsync(model, cancellationToken);
+        await _service.CreateMakeAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -45,7 +45,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateMake([FromBody] VehicleAdminDtos.MakeUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateMakeAsync(model, cancellationToken);
+        await _service.UpdateMakeAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -68,7 +68,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateModel([FromBody] VehicleAdminDtos.ModelUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateModelAsync(model, cancellationToken);
+        await _service.CreateModelAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -76,7 +76,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateModel([FromBody] VehicleAdminDtos.ModelUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateModelAsync(model, cancellationToken);
+        await _service.UpdateModelAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -99,7 +99,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateGeneration([FromBody] VehicleAdminDtos.GenerationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateGenerationAsync(model, cancellationToken);
+        await _service.CreateGenerationAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -107,7 +107,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateGeneration([FromBody] VehicleAdminDtos.GenerationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateGenerationAsync(model, cancellationToken);
+        await _service.UpdateGenerationAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -130,7 +130,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateBody([FromBody] VehicleAdminDtos.BodyUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateBodyAsync(model, cancellationToken);
+        await _service.CreateBodyAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -138,7 +138,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateBody([FromBody] VehicleAdminDtos.BodyUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateBodyAsync(model, cancellationToken);
+        await _service.UpdateBodyAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -161,7 +161,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateEngine([FromBody] VehicleAdminDtos.EngineUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateEngineAsync(model, cancellationToken);
+        await _service.CreateEngineAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -169,7 +169,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateEngine([FromBody] VehicleAdminDtos.EngineUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateEngineAsync(model, cancellationToken);
+        await _service.UpdateEngineAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -192,7 +192,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateMarket([FromBody] VehicleAdminDtos.MarketUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateMarketAsync(model, cancellationToken);
+        await _service.CreateMarketAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -200,7 +200,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateMarket([FromBody] VehicleAdminDtos.MarketUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateMarketAsync(model, cancellationToken);
+        await _service.UpdateMarketAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -223,7 +223,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateConfiguration([FromBody] VehicleAdminDtos.ConfigurationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateConfigurationAsync(model, cancellationToken);
+        await _service.CreateConfigurationAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -231,7 +231,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateConfiguration([FromBody] VehicleAdminDtos.ConfigurationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateConfigurationAsync(model, cancellationToken);
+        await _service.UpdateConfigurationAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -254,7 +254,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> CreateAlias([FromBody] VehicleAdminDtos.AliasUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateAliasAsync(model, cancellationToken);
+        await _service.CreateAliasAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -262,7 +262,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> UpdateAlias([FromBody] VehicleAdminDtos.AliasUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateAliasAsync(model, cancellationToken);
+        await _service.UpdateAliasAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 

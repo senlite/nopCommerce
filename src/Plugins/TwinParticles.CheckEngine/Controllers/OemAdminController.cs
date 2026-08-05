@@ -37,7 +37,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> CreateManufacturer([FromBody] OemAdminDtos.ManufacturerUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateManufacturerAsync(model, cancellationToken);
+        await _service.CreateManufacturerAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -45,7 +45,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> UpdateManufacturer([FromBody] OemAdminDtos.ManufacturerUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateManufacturerAsync(model, cancellationToken);
+        await _service.UpdateManufacturerAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -68,7 +68,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> CreateOemNumber([FromBody] OemAdminDtos.OemNumberUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateOemNumberAsync(model, cancellationToken);
+        await _service.CreateOemNumberAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -76,7 +76,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> UpdateOemNumber([FromBody] OemAdminDtos.OemNumberUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateOemNumberAsync(model, cancellationToken);
+        await _service.UpdateOemNumberAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -99,7 +99,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> CreateRelation([FromBody] OemAdminDtos.OemRelationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateRelationAsync(model, cancellationToken);
+        await _service.CreateRelationAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 
@@ -107,7 +107,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> UpdateRelation([FromBody] OemAdminDtos.OemRelationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateRelationAsync(model, cancellationToken);
+        await _service.UpdateRelationAsync(model.ToEntity(), cancellationToken);
         return Ok();
     }
 

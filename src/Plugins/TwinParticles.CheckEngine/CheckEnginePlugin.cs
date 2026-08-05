@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Services.Cms;
+using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
+using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 using Nop.Web.Framework.Infrastructure;
 using TwinParticles.CheckEngine.Configuration;
@@ -70,7 +72,10 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.L10n.Number"] = "Number format",
             ["Plugins.TwinParticles.CheckEngine.L10n.Date"] = "Date format",
             ["Plugins.TwinParticles.CheckEngine.L10n.Unit"] = "Unit format",
-            ["Plugins.TwinParticles.CheckEngine.L10n.Preview"] = "Localization preview"
+            ["Plugins.TwinParticles.CheckEngine.L10n.Preview"] = "Localization preview",
+            ["Plugins.TwinParticles.CheckEngine.Licence.Status"] = "Licence status",
+            ["Plugins.TwinParticles.CheckEngine.Licence.LastHeartbeat"] = "Last heartbeat",
+            ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "Activation key"
         });
 
         await base.InstallAsync();

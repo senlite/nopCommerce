@@ -96,7 +96,7 @@ live in [11](11-domain-model.md). Engineering rules live in [34](34-coding-stand
 ### Assumptions
 
 - The host has completed Horizon 0 (platform on 4.90.6) before Check Engine is installed.
-- SQL Server 2019+ is the system of record; Redis is available when the store runs as a web farm.
+- SQL Server 2019+ remains the system of record; current browser verification uses PostgreSQL 16 in Podman with local Chromium and does not alter the production storage target.
 - Operators may disable AI and ERP independently; the storefront remains functional.
 - Separate Paymob and Bosta plugins may or may not be installed; Check Engine does not require them.
 

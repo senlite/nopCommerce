@@ -1,0 +1,14 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0-bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends chromium ca-certificates fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY . .
+RUN dotnet restore src/Tests/TwinParticles.CheckEngine.Tests.E2E/TwinParticles.CheckEngine.Tests.E2E.csproj
+
+ENV PLAYWRIGHT_BROWSER_PATH=/usr/bin/chromium
+ENV E2E_BASE_URL=http://web:5000
+
+CMD ["dotnet", "test", "src/Tests/TwinParticles.CheckEngine.Tests.E2E/TwinParticles.CheckEngine.Tests.E2E.csproj", "--logger", "trx", "--results-directory", "/tmp/testresults"]

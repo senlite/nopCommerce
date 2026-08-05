@@ -140,6 +140,7 @@ flowchart TB
 | `TwinParticles.CheckEngine` | Plugin (copied to `Plugins/TwinParticles.CheckEngine`) | `BasePlugin`, startup, controllers, views, `plugin.json` |
 | `TwinParticles.CheckEngine.Tests.Unit` | Test | Domain and application unit tests |
 | `TwinParticles.CheckEngine.Tests.Integration` | Test | Migrations, repositories, host smoke |
+| `TwinParticles.CheckEngine.Tests.E2E` | Test | Playwright install/home/search/sample PDP smoke |
 | `TwinParticles.CheckEngine.Tests.Architecture` | Test | NetArchTest / custom reference rules |
 
 **Directory placement (normative)**

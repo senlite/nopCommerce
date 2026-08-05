@@ -26,6 +26,8 @@ public sealed class ImportPipelineRowState
 
     public string ReviewStatus { get; set; } = "Pending";
 
+    public string? ReviewReasonCode { get; set; }
+
     public bool IsPublished { get; set; }
 
     public string? PublishError { get; set; }

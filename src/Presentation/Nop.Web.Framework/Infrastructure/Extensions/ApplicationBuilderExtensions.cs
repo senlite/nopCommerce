@@ -508,7 +508,7 @@ namespace Nop.Web.Framework.Infrastructure.Extensions
                         if (ipNetParts.Length == 2)
                         {
                             if (IPAddress.TryParse(ipNetParts[0], out var ip) && int.TryParse(ipNetParts[1], out var length))
-                                options.KnownNetworks.Add(new IPNetwork(ip, length));
+                                options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(ip, length));
                         }
                     }
                 }

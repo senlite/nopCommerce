@@ -84,6 +84,55 @@ public class GarageServiceTests
     }
 
     [Test]
+    public async Task MigrateGuestAsync_Should_Map_Guest_Active_Vehicle_To_Merged_Vehicle()
+    {
+        var service = CreateService();
+
+        await service.SetGuestAsync("guest-active-map", new GarageGuestPayload
+        {
+            ActiveVehicleId = 9,
+            Vehicles =
+            [
+                new GarageVehicle { Id = 9, VehicleConfigurationId = 4001, Vin = "WP0ZZZ99ZTS392124", Label = "Mapped Active" }
+            ]
+        }, CancellationToken.None);
+
+        var migrated = await service.MigrateGuestAsync(50, "guest-active-map", CancellationToken.None);
+        migrated.Should().BeTrue();
+
+        var garage = await service.GetAsync(50, CancellationToken.None);
+        garage.ActiveGarageVehicleId.Should().NotBeNull();
+        garage.Vehicles.Count(x => x.IsActive).Should().Be(1);
+        garage.Vehicles.Single(x => x.IsActive).VehicleConfigurationId.Should().Be(4001);
+    }
+
+    [Test]
+    public async Task MigrateGuestAsync_Should_Not_Override_Existing_Active_Vehicle()
+    {
+        var service = CreateService();
+
+        await service.AddVehicleAsync(51, 5001, null, "Existing Active", CancellationToken.None);
+
+        await service.SetGuestAsync("guest-existing-active", new GarageGuestPayload
+        {
+            ActiveVehicleId = 9,
+            Vehicles =
+            [
+                new GarageVehicle { Id = 9, VehicleConfigurationId = 5002, Vin = "WBAFR7C50CC811111", Label = "Guest Vehicle" }
+            ]
+        }, CancellationToken.None);
+
+        var migrated = await service.MigrateGuestAsync(51, "guest-existing-active", CancellationToken.None);
+        migrated.Should().BeTrue();
+
+        var garage = await service.GetAsync(51, CancellationToken.None);
+        garage.ActiveGarageVehicleId.Should().Be(1);
+        garage.Vehicles.Count.Should().Be(2);
+        garage.Vehicles.Count(x => x.IsActive).Should().Be(1);
+        garage.Vehicles.Single(x => x.IsActive).Id.Should().Be(1);
+    }
+
+    [Test]
     public async Task AdminViewAsync_Should_Record_Audit_Entry()
     {
         var audit = new FakeGarageAuditService();

@@ -191,12 +191,12 @@ Corpus is product IP; versioned under `tests/corpus/fitment/`.
 
 | Type | Scope |
 |---|---|
-| Smoke | Home, search, PDP fitment band, garage |
+| Smoke | Install, home, search, sample PDP (implemented); garage remains planned |
 | axe | Key templates (`NFR-046`) |
 | RTL visual | Protocol in [23](23-ux-guidelines.md) |
 | Keyboard | Garage + search + selector (`NFR-047`) |
 
-Prefer Playwright against staging theme.
+Implemented Playwright E2E currently runs against a PostgreSQL-backed local stack. The runner scripts are `e2e/start-manual-stack.ps1` for manual inspection and `e2e/run-regressions.ps1` for automated smoke checks. Local Chromium can be supplied via `PLAYWRIGHT_BROWSER_PATH`. Staging-theme a11y/RTL/keyboard coverage remains defined but is not yet automated.
 
 ### Performance tests
 
@@ -238,7 +238,7 @@ Never commit production customer VINs.
 |---|---|
 | PR | Unit + Architecture + fast Integration subset + format + secret + docs |
 | Nightly | Full Integration + contract + corpus + vulnerable pkgs |
-| RC | + Perf sample + Playwright smoke + axe |
+| RC | + PostgreSQL-backed Playwright smoke (install/home/search/sample PDP); axe/RTL/keyboard remain future |
 
 ---
 

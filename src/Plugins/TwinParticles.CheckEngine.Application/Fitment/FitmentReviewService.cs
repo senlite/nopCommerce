@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Fitment;
@@ -28,12 +29,18 @@ public sealed class FitmentReviewService
 
     public async Task ApproveAsync(int claimId, CancellationToken cancellationToken)
     {
+        if (claimId <= 0)
+            throw new ArgumentException("Claim id must be positive.", nameof(claimId));
+
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Fits, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, true, cancellationToken);
     }
 
     public async Task RejectAsync(int claimId, CancellationToken cancellationToken)
     {
+        if (claimId <= 0)
+            throw new ArgumentException("Claim id must be positive.", nameof(claimId));
+
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Rejected, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, false, cancellationToken);
         await _reviewQueueRepository.EnqueueAsync(claimId, "fitment.rejected_by_reviewer", cancellationToken);

@@ -98,11 +98,18 @@ dotnet build src/NopCommerce.sln -c Debug
 # 2. Verify the platform runs before adding the plugin
 dotnet run --project src/Presentation/Nop.Web
 
+# 2a. Manual install verification (current E2E stack uses PostgreSQL 16 + Chromium)
+.\e2e\start-manual-stack.ps1
+# browse to http://127.0.0.1:5000 and confirm the install flow
+
 # 3. Build the plugin. Output is copied to the Nop.Web plugins directory
 #    by the plugin project's post-build target.
 dotnet build src/Plugins/TwinParticles.CheckEngine -c Debug
 
-# 4. Run the full test suite
+# 4. Run the E2E smoke / regression suite (PostgreSQL-backed)
+.\e2e\run-regressions.ps1
+
+# 5. Run the full test suite
 dotnet test src/NopCommerce.sln
 ```
 

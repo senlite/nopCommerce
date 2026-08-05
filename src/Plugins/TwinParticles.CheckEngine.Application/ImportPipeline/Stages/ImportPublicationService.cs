@@ -22,8 +22,17 @@ public sealed class ImportPublicationService
 
         foreach (var row in rows)
         {
+            if (row.ReviewStatus == "Rejected")
+            {
+                row.IsPublished = false;
+                row.PublishError = "import.review_rejected";
+                failed++;
+                continue;
+            }
+
             if (row.ReviewStatus != "Approved")
             {
+                row.IsPublished = false;
                 row.PublishError = "import.review_pending";
                 failed++;
                 continue;

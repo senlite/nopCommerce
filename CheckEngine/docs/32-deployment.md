@@ -79,7 +79,7 @@ Takeaways:
 ### Assumptions
 
 - Windows or Linux hosts supported by nopCommerce 4.90.
-- SQL Server 2019+.
+- The current verification stack uses PostgreSQL 16 in Podman; production database choice remains environment-specific.
 - Operator has backup rights before any upgrade.
 
 ### Dependencies
@@ -143,7 +143,8 @@ restore.
 3. Restart app; install from Admin → Local plugins.  
 4. Confirm migrations applied; open configuration.  
 5. Set theme `CheckEngine`; configure search/ERP/AI as needed (AI default off).  
-6. Smoke: VIN decode, search, PDP fitment, install permissions.
+6. Smoke: VIN decode, search, PDP fitment, install permissions.  
+7. For the current E2E verification stack, use PostgreSQL 16 + Chromium via `e2e/start-manual-stack.ps1` or `e2e/run-regressions.ps1`.
 
 Must succeed without manual SQL (`FR-925`).
 
@@ -200,9 +201,7 @@ Warm-up URL hits home + search after deploy (`NFR-012`).
 
 ### Containerisation
 
-Supported pattern: containerise **nopCommerce host** with plugin folder mounted/copied; SQL and Redis
-as separate services. Official images may vary — pin versions; run same install steps. Not required for
-v1.0 GA but documented for operators who containerise.
+Supported pattern: containerise **nopCommerce host** with plugin folder mounted/copied; the current E2E verification stack uses PostgreSQL 16 as a separate service and local Chromium for browser playback. The helper scripts `e2e/start-manual-stack.ps1` and `e2e/run-regressions.ps1` start the host and verify install/home/search/sample PDP smoke flows. Official images may vary — pin versions; run the same install steps. Not required for v1.0 GA but documented for operators who containerise.
 
 ### Backup and DR
 

@@ -137,11 +137,30 @@ public sealed class ImportPipelineOrchestratorService
         if (!_batches.TryGetValue(batchId, out var batch))
             return false;
 
+        var normalizedReviewStatus = reviewStatus?.Trim();
+        if (!string.Equals(normalizedReviewStatus, "Approved", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalizedReviewStatus, "Pending", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(normalizedReviewStatus, "Rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         var row = batch.Rows.FirstOrDefault(x => x.RowNumber == rowNumber);
         if (row is null)
             return false;
 
-        row.ReviewStatus = reviewStatus;
+        var canonicalReviewStatus = string.Equals(normalizedReviewStatus, "Approved", StringComparison.OrdinalIgnoreCase)
+            ? "Approved"
+            : string.Equals(normalizedReviewStatus, "Rejected", StringComparison.OrdinalIgnoreCase)
+                ? "Rejected"
+                : "Pending";
+
+        row.ReviewStatus = canonicalReviewStatus;
+        if (canonicalReviewStatus == "Approved")
+            row.ReviewReasonCode = null;
+        else if (canonicalReviewStatus == "Rejected")
+            row.ReviewReasonCode = "import.review.rejected_by_operator";
+
         return true;
     }
 

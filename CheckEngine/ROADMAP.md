@@ -141,7 +141,7 @@ Horizon 1 is complete when all of the following hold. These are gates, not aspir
 - [ ] The storefront meets its Core Web Vitals targets on a mid-range mobile device over a throttled connection
 - [ ] Arabic and English render correctly in RTL and LTR with no layout defects
 - [ ] Orders, inventory, and customers reconcile with ERPNext with no manual intervention
-- [ ] Test coverage meets the thresholds in [35](docs/35-testing-strategy.md)
+- [ ] Test coverage meets the thresholds in [35](docs/35-testing-strategy.md), including the implemented PostgreSQL-backed Playwright smoke stack for install/home/search/sample PDP
 - [ ] The plugin installs and uninstalls cleanly on a stock 4.90.6 instance, leaving no orphaned schema
 - [ ] Security review passes with no open high or critical findings
 

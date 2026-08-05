@@ -83,6 +83,7 @@ and maintainability requirements for Check Engine on nopCommerce 4.90.
 - Hosting meets the platform requirements in [README.md](../README.md#platform-requirements).
 - Redis is used for web-farm cache scenarios; in-process cache is acceptable for single-node.
 - External AI and ERP latency is excluded from core budgets unless an NFR explicitly includes it.
+- Current browser verification uses the PostgreSQL-backed Podman stack in `e2e/start-manual-stack.ps1` and `e2e/run-regressions.ps1` with local Chromium; that setup is for smoke validation, not a production database commitment.
 
 ### Dependencies
 

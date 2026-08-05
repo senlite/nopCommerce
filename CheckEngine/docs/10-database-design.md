@@ -91,6 +91,7 @@ this document owns storage shape.
   all user-facing text including Arabic.
 - Soft delete is used where audit requires retention; hard delete on uninstall of plugin-owned rows.
 - Money and tax remain in nopCommerce order tables.
+- The production schema target remains SQL Server 2019+; the current browser verification stack uses PostgreSQL 16 in Podman only for E2E smoke runs.
 
 ### Dependencies
 

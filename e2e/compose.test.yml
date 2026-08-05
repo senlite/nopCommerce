@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: nopCommerce_db_password123!
+      POSTGRES_USER: nopCommerce
+      POSTGRES_DB: nopCommerce
+    ports:
+      - "5432:5432"
+
+  web:
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.web
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  tests:
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile.tests
+    volumes:
+      - ./.browser:/browser:ro
+    environment:
+      E2E_BASE_URL: http://web:5000
+      PLAYWRIGHT_BROWSER_PATH: /browser/chrome-win/chrome.exe
+      E2E_ADMIN_EMAIL: admin@yourStore.com
+      E2E_ADMIN_PASSWORD: Admin123$
+      E2E_CONNECTION_STRING: Host=db;Port=5432;Database=nopCommerce;Username=nopCommerce;Password=nopCommerce_db_password123!
+      E2E_DATA_PROVIDER: "3"
+    depends_on:
+      - web

@@ -5,6 +5,7 @@ using TwinParticles.CheckEngine.Domain.Garage;
 using TwinParticles.CheckEngine.Domain.Images;
 using TwinParticles.CheckEngine.Domain.ImportPipeline;
 using TwinParticles.CheckEngine.Domain.L10n;
+using TwinParticles.CheckEngine.Domain.Licensing;
 using TwinParticles.CheckEngine.Domain.Observability;
 using TwinParticles.CheckEngine.Domain.Seo;
 using TwinParticles.CheckEngine.Domain.Oem;
@@ -21,6 +22,7 @@ using TwinParticles.CheckEngine.Infrastructure.Garage;
 using TwinParticles.CheckEngine.Infrastructure.Images;
 using TwinParticles.CheckEngine.Infrastructure.ImportPipeline;
 using TwinParticles.CheckEngine.Infrastructure.L10n;
+using TwinParticles.CheckEngine.Infrastructure.Licensing;
 using TwinParticles.CheckEngine.Infrastructure.Oem;
 using TwinParticles.CheckEngine.Infrastructure.Seo;
 using TwinParticles.CheckEngine.Infrastructure.Observability;
@@ -83,6 +85,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IImageQuarantineService, SafeImageQuarantineService>();
 
         services.AddSingleton<ILocaleFormattingService, DefaultLocaleFormattingService>();
+
+        services.AddSingleton<ILicenceStateStore, InMemoryLicenceStateStore>();
 
         services.AddSingleton<ISeoLandingRepository, InMemorySeoLandingRepository>();
         services.AddSingleton<ISeoUrlService, DefaultSeoUrlService>();
