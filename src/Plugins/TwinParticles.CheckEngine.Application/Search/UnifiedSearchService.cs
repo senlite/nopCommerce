@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Search;
 
@@ -12,6 +13,7 @@ namespace TwinParticles.CheckEngine.Application.Search;
 
 public sealed class UnifiedSearchService
 {
+    private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly IBilingualSearchTextNormalizer _bilingualNormalizer;
     private readonly FitmentEvaluationService _fitmentEvaluationService;
     private readonly OemResolveService _oemResolveService;
@@ -25,7 +27,8 @@ public sealed class UnifiedSearchService
         OemResolveService oemResolveService,
         FitmentEvaluationService fitmentEvaluationService,
         ISearchIndexHealthService searchIndexHealthService,
-        IBilingualSearchTextNormalizer bilingualNormalizer)
+        IBilingualSearchTextNormalizer bilingualNormalizer,
+        IAiCompletionPort? aiCompletionPort = null)
     {
         _productSearchReadRepository = productSearchReadRepository;
         _vinDecodeService = vinDecodeService;
@@ -33,6 +36,7 @@ public sealed class UnifiedSearchService
         _fitmentEvaluationService = fitmentEvaluationService;
         _searchIndexHealthService = searchIndexHealthService;
         _bilingualNormalizer = bilingualNormalizer;
+        _aiCompletionPort = aiCompletionPort;
     }
 
     public async Task<SearchResult> SearchAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -43,14 +47,38 @@ public sealed class UnifiedSearchService
         var healthy = await _searchIndexHealthService.IsHealthyAsync(cancellationToken);
         var degraded = !healthy;
 
-        IReadOnlyList<SearchHit> hits = mode switch
+        IReadOnlyList<SearchHit> hits;
+        var modeUsed = mode;
+
+        if (mode == SearchMode.NaturalLanguage)
         {
-            SearchMode.Vin => await SearchVinAsync(query, normalizedText, cancellationToken),
-            SearchMode.Oem => await SearchOemAsync(query, normalizedText, cancellationToken),
-            SearchMode.VehicleTree => await _productSearchReadRepository.SearchByVehicleTreeAsync(query, cancellationToken),
-            SearchMode.Category => await _productSearchReadRepository.SearchByCategoryAsync(query, cancellationToken),
-            _ => await _productSearchReadRepository.SearchKeywordAsync(CloneQuery(query, normalizedText, query.Mode), cancellationToken)
-        };
+            var (keywords, succeeded) = await ExtractNaturalLanguageKeywordsAsync(normalizedText, cancellationToken);
+            if (succeeded)
+            {
+                hits = await _productSearchReadRepository.SearchKeywordAsync(
+                    CloneQuery(query, keywords, SearchMode.Keyword),
+                    cancellationToken);
+                modeUsed = SearchMode.NaturalLanguage;
+            }
+            else
+            {
+                hits = await _productSearchReadRepository.SearchKeywordAsync(
+                    CloneQuery(query, normalizedText, SearchMode.Keyword),
+                    cancellationToken);
+                modeUsed = SearchMode.Keyword;
+            }
+        }
+        else
+        {
+            hits = mode switch
+            {
+                SearchMode.Vin => await SearchVinAsync(query, normalizedText, cancellationToken),
+                SearchMode.Oem => await SearchOemAsync(query, normalizedText, cancellationToken),
+                SearchMode.VehicleTree => await _productSearchReadRepository.SearchByVehicleTreeAsync(query, cancellationToken),
+                SearchMode.Category => await _productSearchReadRepository.SearchByCategoryAsync(query, cancellationToken),
+                _ => await _productSearchReadRepository.SearchKeywordAsync(CloneQuery(query, normalizedText, query.Mode), cancellationToken)
+            };
+        }
 
         if (degraded && hits.Count == 0)
         {
@@ -84,7 +112,7 @@ public sealed class UnifiedSearchService
 
         return new SearchResult
         {
-            ModeUsed = mode,
+            ModeUsed = modeUsed,
             Hits = ranked,
             Facets = facets,
             Suggestions = suggestions,
@@ -110,6 +138,32 @@ public sealed class UnifiedSearchService
             return SearchMode.Oem;
 
         return SearchMode.Keyword;
+    }
+
+    private async Task<(string Keywords, bool Succeeded)> ExtractNaturalLanguageKeywordsAsync(string text, CancellationToken cancellationToken)
+    {
+        if (_aiCompletionPort is null)
+            return (text, false);
+
+        try
+        {
+            var result = await _aiCompletionPort.CompleteAsync(new AiCompletionRequest
+            {
+                PromptKey = "search.natural_language",
+                Prompt = $"Extract plain search keywords from this automotive query. Return only keywords, no punctuation.\nQuery: {text}",
+                MaxTokens = 64,
+                Temperature = 0
+            }, cancellationToken);
+
+            if (!result.Success || string.IsNullOrWhiteSpace(result.Text))
+                return (text, false);
+
+            return (result.Text.Trim(), true);
+        }
+        catch
+        {
+            return (text, false);
+        }
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchVinAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)

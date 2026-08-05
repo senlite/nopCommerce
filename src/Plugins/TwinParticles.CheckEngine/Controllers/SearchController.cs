@@ -17,16 +17,24 @@ public sealed class SearchController : BasePublicController
     private readonly GarageContextSearchService _garageContextSearchService;
     private readonly GarageService _garageService;
     private readonly ICustomerService _customerService;
+    private readonly RecommendationService _recommendationService;
     private readonly ISearchRateLimiter _searchRateLimiter;
     private readonly IWorkContext _workContext;
 
-    public SearchController(GarageContextSearchService garageContextSearchService, GarageService garageService, ICustomerService customerService, ISearchRateLimiter searchRateLimiter, IWorkContext workContext)
+    public SearchController(
+        GarageContextSearchService garageContextSearchService,
+        GarageService garageService,
+        ICustomerService customerService,
+        ISearchRateLimiter searchRateLimiter,
+        IWorkContext workContext,
+        RecommendationService recommendationService)
     {
         _garageContextSearchService = garageContextSearchService;
         _garageService = garageService;
         _customerService = customerService;
         _searchRateLimiter = searchRateLimiter;
         _workContext = workContext;
+        _recommendationService = recommendationService;
     }
 
     [HttpPost]
@@ -76,5 +84,29 @@ public sealed class SearchController : BasePublicController
         }
 
         return Json(await _garageContextSearchService.SearchWithGarageContextAsync(query, activeVehicleConfigurationId, cancellationToken));
+    }
+
+    [HttpGet]
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> Recommend(int? vehicleConfigurationId, int take = 8, CancellationToken cancellationToken = default)
+    {
+        if (take <= 0)
+            take = 8;
+
+        if (!vehicleConfigurationId.HasValue)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var isGuest = await _customerService.IsGuestAsync(customer);
+            if (!isGuest)
+            {
+                var garage = await _garageService.GetAsync(customer.Id, cancellationToken);
+                var activeVehicle = garage.Vehicles.FirstOrDefault(x => x.Id == garage.ActiveGarageVehicleId);
+                vehicleConfigurationId = activeVehicle?.VehicleConfigurationId;
+            }
+        }
+
+        var recommendations = await _recommendationService.GetRecommendationsAsync(vehicleConfigurationId, take, cancellationToken);
+        return Json(recommendations);
     }
 }
