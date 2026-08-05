@@ -11,10 +11,21 @@
 - `blocked` = cannot proceed without prerequisite/decision
 
 ## Current overall progress
-- Completed tasks: 11 / 52
+- Completed tasks: 15 / 52
 - In-progress tasks: 2 / 52
-- Pending tasks: 39 / 52
+- Pending tasks: 35 / 52
 - Blocked tasks: 0 / 52
+
+### Track 2 progress notes (2026-08-05)
+- Fitment schema + `SqlFitmentClaimRepository` wired (replaces in-memory claim store).
+- Import pipeline schema + `SqlImportPipelineRepository` + domain `ImportBatch`/`ImportRow` ports.
+- Product↔OEM map schema + `SqlProductOemMapRepository`.
+- Garage SQL repository wired (`SqlGarageRepository` replaces in-memory garage store; guest store remains in-memory).
+- SEO landing, ERP sync queue, and product image meta SQL repositories wired (`SqlSeoLandingRepository`, `SqlErpSyncQueueRepository`, `SqlProductImageRepository`).
+- Fitment review queue event schema + `SqlFitmentReviewQueueRepository` wired (append-only reject/audit events).
+- Migration safety suite added (`MigrationSafetyConventionsTests`): auto-reversing rollback, unique ordered versions, FK parent-before-child, uninstall drop-order, `TP_CE_` naming.
+- Hot-path indexes added for NFR-001/003/006/007/008 (`HotPath*Index` migrations + `HotPathIndexCatalogTests`): OEM normalized covering, fitment covering/review-queue, garage/hierarchy FKs, OEM relation walks.
+- Track 2 complete. Live SQL Server apply/rollback rehearsal remains under release dry-run (`T7.3`); CI perf bench gates remain under `T5.4`.
 
 ## Completed baseline (already done)
 - `done` E2E.1: Permanent Playwright harness added (`src/Tests/TwinParticles.CheckEngine.Tests.E2E`)
@@ -43,10 +54,10 @@
 ### Track 2 — Infrastructure and persistence
 | ID | Task | Status | Validation |
 |---|---|---|---|
-| T2.1 | Full SQL Server schema coverage against DB design doc | in-progress | Migration tests |
-| T2.2 | Repository implementations replace temporary in-memory gaps where required | in-progress | Integration tests |
-| T2.3 | Migration rollback/forward safety checks on populated dataset | pending | Migration safety suite |
-| T2.4 | Index and query hot-path tuning aligned to NFR budgets | pending | Perf baselines |
+| T2.1 | Full SQL Server schema coverage against DB design doc | done | Migration + architecture convention tests |
+| T2.2 | Repository implementations replace temporary in-memory gaps where required | done | Architecture convention tests + plugin build |
+| T2.3 | Migration rollback/forward safety checks on populated dataset | done | `dotnet test ... --filter MigrationSafetyConventionsTests` |
+| T2.4 | Index and query hot-path tuning aligned to NFR budgets | done | `dotnet test ... --filter HotPathIndexCatalogTests` |
 
 ### Track 3 — Storefront/search/admin features
 | ID | Task | Status | Validation |
@@ -93,6 +104,7 @@
 | T7.4 | Final acceptance checklist and go/no-go report | pending | Stakeholder signoff |
 
 ## Immediate next actions
-1. Execute `T2.1` and `T2.2`: advance SQL schema coverage and replace in-memory repository gaps.
-2. Validate plugin build and architecture/integration tests after each infrastructure change.
-3. Update this plan after each milestone so it remains the implementation source of truth.
+1. Begin Track 3 storefront/search/admin feature completion (`T3.1` unified search).
+2. Keep `T5.4` for CI performance benchmark harness against these hot-path indexes.
+3. Keep `T7.3` release dry-run for live SQL Server apply/rollback rehearsal on a populated DB.
+4. Update this plan after each milestone so it remains the implementation source of truth.

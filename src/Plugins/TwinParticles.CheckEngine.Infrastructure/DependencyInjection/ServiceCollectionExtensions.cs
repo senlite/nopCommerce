@@ -52,10 +52,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IImportExtractionParser, PdfImportExtractionParser>();
 
         services.AddSingleton<IFitmentCache, MemoryFitmentCache>();
-        services.AddSingleton<InMemoryFitmentClaimRepository>();
-        services.AddSingleton<IFitmentClaimReadRepository>(sp => sp.GetRequiredService<InMemoryFitmentClaimRepository>());
-        services.AddSingleton<IFitmentClaimWriteRepository>(sp => sp.GetRequiredService<InMemoryFitmentClaimRepository>());
-        services.AddSingleton<IFitmentReviewQueueRepository, InMemoryFitmentReviewQueueRepository>();
+        services.AddScoped<SqlFitmentClaimRepository>();
+        services.AddScoped<IFitmentClaimReadRepository>(sp => sp.GetRequiredService<SqlFitmentClaimRepository>());
+        services.AddScoped<IFitmentClaimWriteRepository>(sp => sp.GetRequiredService<SqlFitmentClaimRepository>());
+        services.AddScoped<IFitmentReviewQueueRepository, SqlFitmentReviewQueueRepository>();
+        services.AddScoped<IImportPipelineRepository, SqlImportPipelineRepository>();
+        services.AddScoped<IProductOemMapRepository, SqlProductOemMapRepository>();
 
         services.AddSingleton<IVehicleAliasNormalizationService, VehicleAliasNormalizationService>();
         services.AddSingleton<IVehicleAliasCache, MemoryVehicleAliasCache>();
@@ -75,11 +77,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
         services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 
-        services.AddSingleton<IGarageRepository, InMemoryGarageRepository>();
+        services.AddScoped<IGarageRepository, SqlGarageRepository>();
         services.AddSingleton<IGarageGuestStore, InMemoryGarageGuestStore>();
         services.AddSingleton<IGarageAuditService, InMemoryGarageAuditService>();
 
-        services.AddSingleton<IProductImageRepository, InMemoryProductImageRepository>();
+        services.AddScoped<IProductImageRepository, SqlProductImageRepository>();
         services.AddScoped<IImageStorageService, NopPictureImageStorageService>();
         services.AddScoped<IImageDeliveryService, ConfigurableCdnImageDeliveryService>();
         services.AddScoped<IImageQuarantineService, SafeImageQuarantineService>();
@@ -88,13 +90,13 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<ILicenceStateStore, InMemoryLicenceStateStore>();
 
-        services.AddSingleton<ISeoLandingRepository, InMemorySeoLandingRepository>();
+        services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddSingleton<ISeoUrlService, DefaultSeoUrlService>();
         services.AddSingleton<ISeoStructuredDataService, DefaultSeoStructuredDataService>();
         services.AddSingleton<ISeoSitemapService, InMemorySeoSitemapService>();
         services.AddSingleton<ISeoPerformanceBudgetService, DefaultSeoPerformanceBudgetService>();
 
-        services.AddSingleton<IErpSyncQueueRepository, InMemoryErpSyncQueueRepository>();
+        services.AddScoped<IErpSyncQueueRepository, SqlErpSyncQueueRepository>();
         services.AddSingleton<IErpClientAdapter, StubErpClientAdapter>();
         services.AddSingleton<IErpConflictResolutionService, DefaultErpConflictResolutionService>();
 
