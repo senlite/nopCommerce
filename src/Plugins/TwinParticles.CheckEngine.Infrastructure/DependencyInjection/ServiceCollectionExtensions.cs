@@ -44,6 +44,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICheckEngineTelemetry, LoggerCheckEngineTelemetry>();
         services.AddSingleton<ICheckEngineClock, SystemCheckEngineClock>();
         services.AddSingleton<ICheckEngineInputSanitizer, DefaultCheckEngineInputSanitizer>();
+        services.AddSingleton<InMemoryCheckEngineAuditService>();
+        // Prefer SQL audit when INopDataProvider is available; InMemory remains registered above for tests/local.
+        services.AddScoped<ICheckEngineAuditService, SqlCheckEngineAuditService>();
         services.AddSingleton<IOemNormalizationService, DefaultOemNormalizationService>();
         services.AddScoped<IOemAdminRepository, SqlOemAdminRepository>();
         services.AddScoped<IOemRelationReadRepository, SqlOemAdminRepository>();
@@ -75,7 +78,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IVinDecodeRateLimiter, InMemoryVinDecodeRateLimiter>();
 
         services.AddSingleton<IBilingualSearchTextNormalizer, DefaultBilingualSearchTextNormalizer>();
-        services.AddSingleton<IProductSearchReadRepository, InMemoryProductSearchReadRepository>();
+        services.AddScoped<IProductSearchReadRepository, SqlProductSearchReadRepository>();
         services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
         services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 
@@ -106,6 +109,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAiCompletionPort, OpenAiCompatibleCompletionPort>();
         services.AddSingleton<IAiUsageLedger, InMemoryAiUsageLedger>();
         services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
+        services.AddScoped<ICheckEngineDatabaseHealthProbe, NopDataProviderDatabaseHealthProbe>();
 
         return services;
     }
