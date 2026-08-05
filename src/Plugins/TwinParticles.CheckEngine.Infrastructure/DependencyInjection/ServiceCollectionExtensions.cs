@@ -62,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFitmentClaimWriteRepository>(sp => sp.GetRequiredService<SqlFitmentClaimRepository>());
         services.AddScoped<IFitmentReviewQueueRepository, SqlFitmentReviewQueueRepository>();
         services.AddScoped<IImportPipelineRepository, SqlImportPipelineRepository>();
+        services.AddScoped<IImportProductPublisher, NopImportProductPublisher>();
         services.AddScoped<IProductOemMapRepository, SqlProductOemMapRepository>();
 
         services.AddSingleton<IVehicleAliasNormalizationService, VehicleAliasNormalizationService>();

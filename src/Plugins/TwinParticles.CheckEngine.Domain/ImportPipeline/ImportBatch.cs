@@ -6,6 +6,8 @@ public sealed class ImportBatch
 {
     public int Id { get; set; }
 
+    public Guid? CorrelationId { get; set; }
+
     public string FileName { get; set; } = string.Empty;
 
     public ImportSourceFormat SourceFormat { get; set; }

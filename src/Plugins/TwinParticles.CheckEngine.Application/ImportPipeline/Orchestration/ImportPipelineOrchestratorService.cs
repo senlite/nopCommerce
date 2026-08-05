@@ -2,8 +2,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using TwinParticles.CheckEngine.Application.Images;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Extraction;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
@@ -31,6 +33,7 @@ public sealed class ImportPipelineOrchestratorService
     private readonly ImportPublicationService _publicationService;
     private readonly ImageImportOrchestrationService _imageImportOrchestrationService;
     private readonly ICheckEngineAuditService? _auditService;
+    private readonly IServiceScopeFactory? _scopeFactory;
 
     private readonly ConcurrentDictionary<Guid, ImportPipelineBatchState> _batches = new();
 
@@ -49,7 +52,8 @@ public sealed class ImportPipelineOrchestratorService
         ImportReviewService reviewService,
         ImportPublicationService publicationService,
         ImageImportOrchestrationService imageImportOrchestrationService,
-        ICheckEngineAuditService? auditService = null)
+        ICheckEngineAuditService? auditService = null,
+        IServiceScopeFactory? scopeFactory = null)
     {
         _clock = clock;
         _extractionService = extractionService;
@@ -66,6 +70,7 @@ public sealed class ImportPipelineOrchestratorService
         _publicationService = publicationService;
         _imageImportOrchestrationService = imageImportOrchestrationService;
         _auditService = auditService;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<ImportPipelineRunResult> RunAsync(ImportPipelineRunRequest request, CancellationToken cancellationToken)
@@ -121,6 +126,7 @@ public sealed class ImportPipelineOrchestratorService
         };
 
         _batches[batchId] = batch;
+        await PersistBatchAsync(batch, cancellationToken);
 
         return new ImportPipelineRunResult
         {
@@ -182,6 +188,7 @@ public sealed class ImportPipelineOrchestratorService
                 .GetResult();
         }
 
+        PersistBatchAsync(batch, CancellationToken.None).GetAwaiter().GetResult();
         return true;
     }
 
@@ -202,7 +209,7 @@ public sealed class ImportPipelineOrchestratorService
             };
         }
 
-        var result = _publicationService.Publish(batch.Rows, dryRun);
+        var result = await PublishWithOptionalCatalogAsync(batch, dryRun, cancellationToken);
         if (!dryRun)
         {
             foreach (var row in batch.Rows)
@@ -225,6 +232,71 @@ public sealed class ImportPipelineOrchestratorService
                 cancellationToken);
         }
 
+        await PersistBatchAsync(batch, cancellationToken);
         return result;
+    }
+
+    private async Task<ImportPublicationResult> PublishWithOptionalCatalogAsync(
+        ImportPipelineBatchState batch,
+        bool dryRun,
+        CancellationToken cancellationToken)
+    {
+        if (_scopeFactory is not null)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var publisher = scope.ServiceProvider.GetService<IImportProductPublisher>();
+            if (publisher is not null)
+                return await new ImportPublicationService(publisher).PublishAsync(batch.Rows, dryRun, cancellationToken);
+        }
+
+        return await _publicationService.PublishAsync(batch.Rows, dryRun, cancellationToken);
+    }
+
+    private async Task PersistBatchAsync(ImportPipelineBatchState batch, CancellationToken cancellationToken)
+    {
+        if (_scopeFactory is null)
+            return;
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var pipelineRepository = scope.ServiceProvider.GetService<IImportPipelineRepository>();
+            if (pipelineRepository is null)
+                return;
+
+            var entity = new ImportBatch
+            {
+                Id = batch.SqlBatchId ?? 0,
+                CorrelationId = batch.BatchId,
+                FileName = batch.FileName,
+                SourceFormat = batch.Format,
+                Status = batch.Status,
+                RowCount = batch.TotalRows,
+                CreatedUtc = batch.CreatedUtc.UtcDateTime,
+                UpdatedUtc = _clock.UtcNow.UtcDateTime
+            };
+
+            await pipelineRepository.UpsertBatchAsync(entity, cancellationToken);
+            batch.SqlBatchId = entity.Id;
+
+            var rows = batch.Rows.Select(row => new ImportRow
+            {
+                BatchId = entity.Id,
+                RowNumber = row.RowNumber,
+                RawPayload = JsonSerializer.Serialize(row.Fields),
+                NormalizedOem = row.OemNumberNormalized,
+                MatchedOemNumberId = row.OemNumberId,
+                ProposedProductId = row.Fields.TryGetValue("publishedProductId", out var pid) && int.TryParse(pid, out var id) ? id : null,
+                ReviewStatus = row.ReviewStatus,
+                ReviewNote = row.ReviewReasonCode,
+                Confidence = row.IsDuplicate ? 0.4m : 0.9m
+            }).ToList();
+
+            await pipelineRepository.ReplaceRowsAsync(entity.Id, rows, cancellationToken);
+        }
+        catch
+        {
+            // Persistence is best-effort; in-memory session state remains authoritative for the request.
+        }
     }
 }
