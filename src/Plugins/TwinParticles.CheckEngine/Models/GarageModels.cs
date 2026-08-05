@@ -21,6 +21,11 @@ public sealed class GarageClearActiveRequestModel
     public bool Confirmed { get; set; }
 }
 
+public sealed class GarageRemoveVehicleRequestModel
+{
+    public int GarageVehicleId { get; set; }
+}
+
 public sealed class GarageSaveOemRequestModel
 {
     public string OemNumber { get; set; } = string.Empty;

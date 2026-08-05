@@ -14,6 +14,11 @@ public sealed class RouteProvider : IRouteProvider
             defaults: new { controller = "CheckEngine", action = "Configure" });
 
         endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.Dashboard",
+            pattern: "Admin/CheckEngine/Dashboard",
+            defaults: new { controller = "CheckEngine", action = "Dashboard" });
+
+        endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.VehicleAdmin",
             pattern: "Admin/CheckEngine/VehicleAdmin/{action}",
             defaults: new { controller = "VehicleAdmin", action = "Makes" });
@@ -54,6 +59,11 @@ public sealed class RouteProvider : IRouteProvider
             defaults: new { controller = "Search", action = "Query" });
 
         endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SearchRecommend",
+            pattern: "check-engine/search/recommend",
+            defaults: new { controller = "Search", action = "Recommend" });
+
+        endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.SearchAdmin",
             pattern: "Admin/CheckEngine/SearchAdmin/{action}",
             defaults: new { controller = "SearchAdmin", action = "Rebuild" });
@@ -87,6 +97,16 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.ErpAdmin",
             pattern: "Admin/CheckEngine/ErpAdmin/{action}",
             defaults: new { controller = "ErpAdmin", action = "Reconcile" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.Health",
+            pattern: "check-engine/health",
+            defaults: new { controller = "Health", action = "Get" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.DiagnosticsAdmin",
+            pattern: "Admin/CheckEngine/DiagnosticsAdmin/{action}",
+            defaults: new { controller = "DiagnosticsAdmin", action = "Package" });
     }
 
     public int Priority => 0;

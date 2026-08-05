@@ -71,6 +71,20 @@ public sealed class GarageController : BasePublicController
         return ok ? Ok() : BadRequest(new { reasonCode = "garage.clear_not_confirmed" });
     }
 
+    [HttpDelete]
+    public async Task<IActionResult> RemoveVehicle([FromBody] GarageRemoveVehicleRequestModel model, CancellationToken cancellationToken)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (await _customerService.IsGuestAsync(customer))
+            return Unauthorized();
+
+        if (model is null || model.GarageVehicleId <= 0)
+            return BadRequest(new { reasonCode = "garage.invalid_vehicle" });
+
+        var ok = await _garageService.RemoveVehicleAsync(customer.Id, model.GarageVehicleId, cancellationToken);
+        return ok ? Ok() : NotFound();
+    }
+
     [HttpPost]
     public async Task<IActionResult> SaveOem([FromBody] GarageSaveOemRequestModel model, CancellationToken cancellationToken)
     {

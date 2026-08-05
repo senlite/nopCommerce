@@ -129,7 +129,7 @@ public class UnifiedSearchServiceTests
         bool indexHealthy = true)
     {
         var vinService = new VinDecodeApplicationService(new FakeVinRegistry(), new NoopTelemetry());
-        var oemService = new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchReadRepository(oemMatches ?? []), new OemSupersessionService(new FakeOemRelationReadRepository()));
+        var oemService = new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchReadRepository(oemMatches ?? []), new OemSupersessionService(new FakeOemRelationReadRepository()), new EmptyProductOemMapRepository());
         var fitmentService = new FitmentEvaluationService(new FakeFitmentReadRepository(fitmentMap), new FakeFitmentCache());
 
         return new UnifiedSearchService(
@@ -261,6 +261,18 @@ public class UnifiedSearchServiceTests
     {
         public Task<IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<OemRelation>>([]);
+    }
+
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
     }
 
     private sealed class FakeFitmentReadRepository : IFitmentClaimReadRepository

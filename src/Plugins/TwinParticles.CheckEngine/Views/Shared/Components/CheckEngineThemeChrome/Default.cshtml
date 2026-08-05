@@ -15,13 +15,13 @@
 else if (zone == "header_menu_after")
 {
     <section class="ce-theme-garage-widget" data-ce-theme="garage-widget" dir="auto">
-        <span class="ce-active-vehicle-chip">Garage: select or switch vehicle</span>
+        <span class="ce-active-vehicle-chip">Garage empty — add a vehicle to check fitment</span>
     </section>
 
     <section class="ce-theme-vehicle-selector" data-ce-theme="vehicle-selector" dir="auto">
         <label for="ce-vehicle-selector">Vehicle selector</label>
         <select id="ce-vehicle-selector" name="vehicleSelector">
-            <option value="">Select vehicle</option>
+            <option value="">No vehicles yet — add one</option>
         </select>
     </section>
 }
@@ -34,17 +34,19 @@ else if (zone == "home_page_top")
 }
 else if (zone == "productdetails_top")
 {
-    <section class="ce-theme-fitment-band" data-ce-theme="fitment-band" dir="auto" role="status" aria-live="polite">
+    <section class="ce-theme-fitment-band" data-ce-theme="fitment-band" data-ce-product-id="" dir="auto" role="status" aria-live="polite">
         <strong>Fitment:</strong> Verify compatibility with your active vehicle.
     </section>
 }
 else if (zone == "body_start_html_tag_after")
 {
+    <script src="~/Plugins/TwinParticles.CheckEngine/Content/checkengine-storefront.js" asp-append-version="true"></script>
     <section class="ce-theme-sticky-search" data-ce-theme="sticky-search" dir="auto">
         <form method="post" action="/check-engine/search/query">
             <label for="ce-sticky-search-input">Search parts, OEM, or VIN</label>
             <input id="ce-sticky-search-input" name="rawText" type="text" autocomplete="off" />
             <button type="submit">Search</button>
         </form>
+        <div id="ce-search-results" class="ce-search-results" aria-live="polite"></div>
     </section>
 }

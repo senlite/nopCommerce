@@ -133,6 +133,40 @@ public class GarageServiceTests
     }
 
     [Test]
+    public async Task RemoveVehicleAsync_Should_Remove_And_Promote_Another_When_Active_Removed()
+    {
+        var service = CreateService();
+        await service.AddVehicleAsync(18, 1801, null, "Car A", CancellationToken.None);
+        await service.AddVehicleAsync(18, 1802, null, "Car B", CancellationToken.None);
+
+        var garageBefore = await service.GetAsync(18, CancellationToken.None);
+        garageBefore.ActiveGarageVehicleId.Should().Be(1);
+
+        var removed = await service.RemoveVehicleAsync(18, 1, CancellationToken.None);
+        removed.Should().BeTrue();
+
+        var garage = await service.GetAsync(18, CancellationToken.None);
+        garage.Vehicles.Should().ContainSingle();
+        garage.Vehicles[0].Id.Should().Be(2);
+        garage.ActiveGarageVehicleId.Should().Be(2);
+        garage.Vehicles.Single(x => x.IsActive).Id.Should().Be(2);
+    }
+
+    [Test]
+    public async Task RemoveVehicleAsync_Should_Clear_Active_When_Last_Vehicle_Removed()
+    {
+        var service = CreateService();
+        await service.AddVehicleAsync(19, 1901, null, "Only Car", CancellationToken.None);
+
+        var removed = await service.RemoveVehicleAsync(19, 1, CancellationToken.None);
+        removed.Should().BeTrue();
+
+        var garage = await service.GetAsync(19, CancellationToken.None);
+        garage.Vehicles.Should().BeEmpty();
+        garage.ActiveGarageVehicleId.Should().BeNull();
+    }
+
+    [Test]
     public async Task AdminViewAsync_Should_Record_Audit_Entry()
     {
         var audit = new FakeGarageAuditService();
@@ -153,7 +187,11 @@ public class GarageServiceTests
         var telemetry = new NoopTelemetry();
 
         var vinService = new VinDecodeApplicationService(new FakeVinRegistry(), telemetry);
-        var oemService = new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository()));
+        var oemService = new OemResolveService(
+            new FakeOemNormalizationService(),
+            new FakeOemSearchRepository(),
+            new OemSupersessionService(new FakeOemRelationRepository()),
+            new EmptyProductOemMapRepository());
 
         return new GarageService(
             repository,
@@ -263,5 +301,17 @@ public class GarageServiceTests
     {
         public Task<IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<OemRelation>>([]);
+    }
+
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
     }
 }

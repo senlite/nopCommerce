@@ -53,7 +53,7 @@ public class ImportPipelineReviewStatusTests
         var normalization = new ImportNormalizationService(new FakeOemNormalizationService());
         var duplicate = new ImportDuplicateDetectionService();
 
-        var resolveService = new OemResolveService(new FakeOemNormalizationService(), new FakeSearchRepository(), new OemSupersessionService(new EmptyRelationReadRepository()));
+        var resolveService = new OemResolveService(new FakeOemNormalizationService(), new FakeSearchRepository(), new OemSupersessionService(new EmptyRelationReadRepository()), new EmptyProductOemMapRepository());
         var oemMatching = new ImportOemMatchingService(resolveService);
 
         return new ImportPipelineOrchestratorService(
@@ -108,6 +108,18 @@ public class ImportPipelineReviewStatusTests
     {
         public Task<System.Collections.Generic.IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
             => Task.FromResult<System.Collections.Generic.IReadOnlyList<OemRelation>>([]);
+    }
+
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<System.Collections.Generic.IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<System.Collections.Generic.IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<System.Collections.Generic.IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<System.Collections.Generic.IReadOnlyList<ProductOemMap>>([]);
     }
 
     private sealed class FakeProductImageRepository : TwinParticles.CheckEngine.Domain.Images.IProductImageRepository

@@ -13,12 +13,18 @@ public sealed class OemResolveService
     private readonly IOemNormalizationService _normalizationService;
     private readonly IOemSearchReadRepository _searchRepository;
     private readonly OemSupersessionService _supersessionService;
+    private readonly IProductOemMapRepository _productOemMapRepository;
 
-    public OemResolveService(IOemNormalizationService normalizationService, IOemSearchReadRepository searchRepository, OemSupersessionService supersessionService)
+    public OemResolveService(
+        IOemNormalizationService normalizationService,
+        IOemSearchReadRepository searchRepository,
+        OemSupersessionService supersessionService,
+        IProductOemMapRepository productOemMapRepository)
     {
         _normalizationService = normalizationService;
         _searchRepository = searchRepository;
         _supersessionService = supersessionService;
+        _productOemMapRepository = productOemMapRepository;
     }
 
     public async Task<OemResolveResult> ResolveAsync(OemResolveQuery query, CancellationToken cancellationToken)
@@ -45,6 +51,9 @@ public sealed class OemResolveService
         if (chain.Success && chain.ChainOemNumberIds.Count > 1)
             currentOemNumberId = chain.ChainOemNumberIds[^1];
 
+        var productMaps = await _productOemMapRepository.GetByOemNumberIdAsync(resolved.Id, cancellationToken);
+        var productIds = productMaps.Select(x => x.ProductId).Distinct().ToList();
+
         var result = OemResolveResult.Ok();
         result.OemNumberId = resolved.Id;
         result.ManufacturerId = resolved.ManufacturerId;
@@ -52,7 +61,7 @@ public sealed class OemResolveService
         result.NormalizedNumber = resolved.NormalizedNumber;
         result.IsObsolete = resolved.IsObsolete;
         result.CurrentOemNumberId = currentOemNumberId;
-        result.ProductIds = [];
+        result.ProductIds = productIds;
 
         return result;
     }

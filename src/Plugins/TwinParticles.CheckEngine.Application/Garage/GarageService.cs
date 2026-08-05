@@ -111,6 +111,41 @@ public sealed class GarageService
         return true;
     }
 
+    public async Task<bool> RemoveVehicleAsync(int customerId, int garageVehicleId, CancellationToken cancellationToken)
+    {
+        var garage = await _repository.GetByCustomerIdAsync(customerId, cancellationToken);
+        if (garage is null)
+            return false;
+
+        var target = garage.Vehicles.FirstOrDefault(x => x.Id == garageVehicleId);
+        if (target is null)
+            return false;
+
+        var wasActive = target.IsActive || garage.ActiveGarageVehicleId == garageVehicleId;
+        garage.Vehicles.Remove(target);
+
+        if (wasActive)
+        {
+            foreach (var vehicle in garage.Vehicles)
+                vehicle.IsActive = false;
+
+            var next = garage.Vehicles.FirstOrDefault();
+            if (next is not null)
+            {
+                next.IsActive = true;
+                garage.ActiveGarageVehicleId = next.Id;
+            }
+            else
+            {
+                garage.ActiveGarageVehicleId = null;
+            }
+        }
+
+        garage.UpdatedUtc = DateTime.UtcNow;
+        await _repository.SaveAsync(garage, cancellationToken);
+        return true;
+    }
+
     public async Task<bool> SaveOemAsync(int customerId, string oemNumber, int? manufacturerId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(oemNumber))

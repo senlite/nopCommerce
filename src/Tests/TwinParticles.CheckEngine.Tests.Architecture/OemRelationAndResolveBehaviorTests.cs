@@ -108,7 +108,7 @@ public class OemRelationAndResolveBehaviorTests
     private static OemResolveService CreateResolveService(IOemSearchReadRepository searchRepository, IOemRelationReadRepository relationRepository)
     {
         var supersessionService = new OemSupersessionService(relationRepository);
-        return new OemResolveService(new FakeNormalizationService(), searchRepository, supersessionService);
+        return new OemResolveService(new FakeNormalizationService(), searchRepository, supersessionService, new EmptyProductOemMapRepository());
     }
 
     private static FakeRelationReadRepository BuildDepthExceededRelations()
@@ -205,5 +205,17 @@ public class OemRelationAndResolveBehaviorTests
 
             return Task.FromResult<IReadOnlyList<OemRelation>>(result);
         }
+    }
+
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
     }
 }

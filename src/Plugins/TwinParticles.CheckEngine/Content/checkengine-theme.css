@@ -1,1 +1,97 @@
-.ce-theme-layout,.ce-theme-garage-widget,.ce-theme-vehicle-selector,.ce-theme-sticky-search,.ce-theme-fitment-band,.ce-theme-landing-template{padding:.75rem 1rem;border:1px solid #2a2a2a;background:#111;color:#f1f1f1}.ce-sticky-search input{min-width:16rem}[dir="rtl"] .ce-theme-layout,[dir="rtl"] .ce-theme-garage-widget,[dir="rtl"] .ce-theme-vehicle-selector,[dir="rtl"] .ce-theme-sticky-search,[dir="rtl"] .ce-theme-fitment-band,[dir="rtl"] .ce-theme-landing-template{text-align:start;inset-inline-start:auto}.ce-icon-chevron-inline{display:inline-block;transform:scaleX(1)}[dir="rtl"] .ce-icon-chevron-inline{transform:scaleX(-1)}
+.ce-theme-layout,
+.ce-theme-garage-widget,
+.ce-theme-vehicle-selector,
+.ce-theme-sticky-search,
+.ce-theme-fitment-band,
+.ce-theme-landing-template {
+  padding: .75rem 1rem;
+  border: 1px solid #2a2a2a;
+  background: #111;
+  color: #f1f1f1;
+}
+
+.ce-sticky-search input,
+.ce-theme-sticky-search input {
+  min-width: 16rem;
+}
+
+.ce-theme-fitment-band.ce-fit-fits {
+  border-color: #2e7d32;
+  background: #122016;
+  color: #9be29b;
+}
+
+.ce-theme-fitment-band.ce-fit-nofit {
+  border-color: #c62828;
+  background: #201212;
+  color: #ff9b9b;
+}
+
+.ce-theme-fitment-band.ce-fit-unknown,
+.ce-theme-fitment-band.ce-fit-select {
+  border-color: #c9a227;
+  background: #1f1a10;
+  color: #ffd666;
+}
+
+.ce-search-results {
+  margin-top: .75rem;
+  padding: .5rem .75rem;
+  border: 1px solid #333;
+  background: #161616;
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.ce-search-results-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ce-search-result-item {
+  padding: .35rem 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.ce-search-result-item:last-child {
+  border-bottom: 0;
+}
+
+.ce-search-result-item a {
+  color: #9ecbff;
+  text-decoration: none;
+}
+
+.ce-search-result-item a:hover {
+  text-decoration: underline;
+}
+
+.ce-search-score {
+  color: #9a9a9a;
+  font-size: .85em;
+}
+
+.ce-search-empty {
+  margin: 0;
+  color: #b0b0b0;
+}
+
+[dir="rtl"] .ce-theme-layout,
+[dir="rtl"] .ce-theme-garage-widget,
+[dir="rtl"] .ce-theme-vehicle-selector,
+[dir="rtl"] .ce-theme-sticky-search,
+[dir="rtl"] .ce-theme-fitment-band,
+[dir="rtl"] .ce-theme-landing-template {
+  text-align: start;
+  inset-inline-start: auto;
+}
+
+.ce-icon-chevron-inline {
+  display: inline-block;
+  transform: scaleX(1);
+}
+
+[dir="rtl"] .ce-icon-chevron-inline {
+  transform: scaleX(-1);
+}

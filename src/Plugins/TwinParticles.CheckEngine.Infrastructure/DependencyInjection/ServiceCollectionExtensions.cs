@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Erp;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Garage;
@@ -16,6 +17,7 @@ using TwinParticles.CheckEngine.Domain.Security;
 using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 using TwinParticles.CheckEngine.Domain.Vehicle.Aliases;
+using TwinParticles.CheckEngine.Infrastructure.Ai;
 using TwinParticles.CheckEngine.Infrastructure.Erp;
 using TwinParticles.CheckEngine.Infrastructure.Fitment;
 using TwinParticles.CheckEngine.Infrastructure.Garage;
@@ -97,8 +99,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISeoPerformanceBudgetService, DefaultSeoPerformanceBudgetService>();
 
         services.AddScoped<IErpSyncQueueRepository, SqlErpSyncQueueRepository>();
-        services.AddSingleton<IErpClientAdapter, StubErpClientAdapter>();
+        services.AddSingleton<IErpClientAdapter, ErpNextHttpClientAdapter>();
         services.AddSingleton<IErpConflictResolutionService, DefaultErpConflictResolutionService>();
+
+        services.AddSingleton(_ => CheckEngineAiOptions.Current);
+        services.AddSingleton<IAiCompletionPort, OpenAiCompatibleCompletionPort>();
+        services.AddSingleton<IAiUsageLedger, InMemoryAiUsageLedger>();
+        services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
 
         return services;
     }
