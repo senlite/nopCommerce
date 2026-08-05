@@ -10,6 +10,7 @@ using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Domain.ImportPipeline;
 using TwinParticles.CheckEngine.Domain.Performance;
+using TwinParticles.CheckEngine.Domain.Security;
 
 namespace TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
 
@@ -29,6 +30,7 @@ public sealed class ImportPipelineOrchestratorService
     private readonly ImportReviewService _reviewService;
     private readonly ImportPublicationService _publicationService;
     private readonly ImageImportOrchestrationService _imageImportOrchestrationService;
+    private readonly ICheckEngineAuditService? _auditService;
 
     private readonly ConcurrentDictionary<Guid, ImportPipelineBatchState> _batches = new();
 
@@ -46,7 +48,8 @@ public sealed class ImportPipelineOrchestratorService
         ImportImageAssignmentService imageAssignmentService,
         ImportReviewService reviewService,
         ImportPublicationService publicationService,
-        ImageImportOrchestrationService imageImportOrchestrationService)
+        ImageImportOrchestrationService imageImportOrchestrationService,
+        ICheckEngineAuditService? auditService = null)
     {
         _clock = clock;
         _extractionService = extractionService;
@@ -62,6 +65,7 @@ public sealed class ImportPipelineOrchestratorService
         _reviewService = reviewService;
         _publicationService = publicationService;
         _imageImportOrchestrationService = imageImportOrchestrationService;
+        _auditService = auditService;
     }
 
     public async Task<ImportPipelineRunResult> RunAsync(ImportPipelineRunRequest request, CancellationToken cancellationToken)
@@ -132,7 +136,7 @@ public sealed class ImportPipelineOrchestratorService
         return _batches.TryGetValue(batchId, out var state) ? state : null;
     }
 
-    public bool SetReviewStatus(Guid batchId, int rowNumber, string reviewStatus)
+    public bool SetReviewStatus(Guid batchId, int rowNumber, string reviewStatus, string actor = "system")
     {
         if (!_batches.TryGetValue(batchId, out var batch))
             return false;
@@ -149,6 +153,7 @@ public sealed class ImportPipelineOrchestratorService
         if (row is null)
             return false;
 
+        var before = row.ReviewStatus;
         var canonicalReviewStatus = string.Equals(normalizedReviewStatus, "Approved", StringComparison.OrdinalIgnoreCase)
             ? "Approved"
             : string.Equals(normalizedReviewStatus, "Rejected", StringComparison.OrdinalIgnoreCase)
@@ -160,6 +165,22 @@ public sealed class ImportPipelineOrchestratorService
             row.ReviewReasonCode = null;
         else if (canonicalReviewStatus == "Rejected")
             row.ReviewReasonCode = "import.review.rejected_by_operator";
+
+        if (_auditService is not null
+            && (canonicalReviewStatus == "Approved" || canonicalReviewStatus == "Rejected"))
+        {
+            var action = canonicalReviewStatus == "Approved" ? "import.approve" : "import.reject";
+            _auditService.AppendAsync(
+                    actor,
+                    action,
+                    "ImportRow",
+                    $"{batchId}:{rowNumber}",
+                    beforeJson: $"{{\"reviewStatus\":\"{before}\"}}",
+                    afterJson: $"{{\"reviewStatus\":\"{canonicalReviewStatus}\"}}",
+                    CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+        }
 
         return true;
     }
@@ -191,6 +212,18 @@ public sealed class ImportPipelineOrchestratorService
         batch.PublishedRows = result.PublishedRows;
         batch.FailedRows = result.FailedRows;
         batch.Status = dryRun ? "Review" : "Committed";
+
+        if (_auditService is not null && !dryRun)
+        {
+            await _auditService.AppendAsync(
+                "system",
+                "import.publish",
+                "ImportBatch",
+                batchId.ToString(),
+                beforeJson: null,
+                afterJson: $"{{\"publishedRows\":{result.PublishedRows},\"failedRows\":{result.FailedRows}}}",
+                cancellationToken);
+        }
 
         return result;
     }
