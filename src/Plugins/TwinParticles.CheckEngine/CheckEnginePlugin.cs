@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Data.Migrations;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -18,20 +20,30 @@ namespace TwinParticles.CheckEngine;
 public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 {
     private readonly ILocalizationService _localizationService;
+    private readonly IMigrationManager _migrationManager;
     private readonly IPermissionService _permissionService;
     private readonly ISettingService _settingService;
     private readonly IWebHelper _webHelper;
 
     public CheckEnginePlugin(ILocalizationService localizationService,
+        IMigrationManager migrationManager,
         IPermissionService permissionService,
         ISettingService settingService,
         IWebHelper webHelper)
     {
         _localizationService = localizationService;
+        _migrationManager = migrationManager;
         _permissionService = permissionService;
         _settingService = settingService;
         _webHelper = webHelper;
     }
+
+    /// <summary>
+    /// Check Engine migrations live in the Infrastructure assembly, but nopCommerce only scans the
+    /// assembly declaring the plugin type, so they must be applied explicitly.
+    /// </summary>
+    private static Assembly MigrationAssembly =>
+        typeof(Infrastructure.DependencyInjection.ServiceCollectionExtensions).Assembly;
 
     public override string GetConfigurationPageUrl()
     {
@@ -58,6 +70,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
     public override async Task InstallAsync()
     {
+        _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.Installation);
+
         await _settingService.SaveSettingAsync(new CheckEnginePluginSettings());
         await _permissionService.InstallPermissionsAsync(new CheckEnginePermissionProvider());
 
@@ -90,6 +104,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await _permissionService.UninstallPermissionsAsync(new CheckEnginePermissionProvider());
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.TwinParticles.CheckEngine");
+
+        _migrationManager.ApplyDownMigrations(MigrationAssembly);
 
         await base.UninstallAsync();
     }

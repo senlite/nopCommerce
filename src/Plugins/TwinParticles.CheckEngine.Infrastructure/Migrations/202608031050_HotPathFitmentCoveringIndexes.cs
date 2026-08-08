@@ -13,7 +13,8 @@ public sealed class HotPathFitmentCoveringIndexesMigration : AutoReversingMigrat
     public override void Up()
     {
         // Covering index for vehicle-constrained published product lookup (search / garage filter).
-        Create.Index("IX_TP_CE_FitmentClaim_VehicleConfigurationId_IsPublished_Covering")
+        // Name kept under 64 chars so it is valid on MySQL as well as SQL Server.
+        Create.Index("IX_TP_CE_FitmentClaim_VehicleConfig_IsPublished_Covering")
             .OnTable("TP_CE_FitmentClaim")
             .OnColumn("VehicleConfigurationId").Ascending()
             .OnColumn("IsPublished").Ascending()
