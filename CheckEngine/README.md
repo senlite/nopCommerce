@@ -15,6 +15,9 @@ that general-purpose e-commerce platforms structurally lack: a **vehicle-aware c
 **fitment engine** that guarantees a part fits a specific vehicle, and a **VIN-to-parts search path**
 that lets a customer arrive with nothing but a chassis number and leave with the correct component.
 
+> 📘 **New here?** The [Check Engine User Guide](USER-GUIDE.md) is a screenshot-led walkthrough of
+> installing, configuring, and using the plugin end to end.
+
 > **Status:** Specification phase. This repository is the documentation baseline and single source of
 > truth for the product. It is implementation-ready: every document is written to the level of detail
 > a development team needs to begin work without further discovery. See [ROADMAP.md](ROADMAP.md) for
