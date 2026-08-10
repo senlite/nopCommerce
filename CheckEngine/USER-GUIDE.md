@@ -22,6 +22,7 @@ All screenshots in this guide were captured from a live store running the plugin
 10. [HTTP API reference](#10-http-api-reference)
 11. [Optional integrations (AI and ERP)](#11-optional-integrations-ai-and-erp)
 12. [Troubleshooting](#12-troubleshooting)
+12a. [Theming and appearance](#12a-theming-and-appearance)
 13. [Known limitations](#13-known-limitations)
 14. [Uninstalling](#14-uninstalling)
 
@@ -134,11 +135,16 @@ for running the import pipeline.
 
 ### 6.1 The Check Engine chrome
 
-With the widget active, the storefront gains a **sticky search bar** ("Search parts, OEM, or VIN") and a
-**vehicle selector / garage** control. On a fresh session the garage is empty ("No vehicles yet — add
-one").
+With the widget active, the storefront gains a **sticky search rail** that sits directly below the store
+header. The rail holds, in order: the **garage context chip**, the **vehicle selector**, the unified
+**search field** ("Search parts, OEM, or VIN"), an **Include unverified fit** toggle, and the **Search**
+button. On the home page a Check Engine **hero panel** introduces the vehicle-first flow.
 
-![Storefront home showing the Check Engine search bar and vehicle selector](docs/user-guide/images/01-storefront-home.webp)
+![Storefront home showing the Check Engine search rail and hero panel](docs/user-guide/images/01-storefront-home.webp)
+
+The rail stays visible while scrolling, and on small screens it reflows so the query field always leads:
+
+![Check Engine rail and hero stacked on a 390px mobile viewport](docs/user-guide/images/09-mobile-layout.webp)
 
 ### 6.2 Searching for parts
 
@@ -151,13 +157,19 @@ typed and routes the query accordingly.
 | An OEM part number (e.g. `11-51-7-586-925`) | OEM | Normalizes and resolves the number, follows supersession, returns linked products |
 | Free text (e.g. `oil filter`) | Keyword | Bilingual keyword search, fitment-filtered when a vehicle is active |
 
-Results render in a panel directly under the search box. Each hit shows the product name and a relevance
-score:
+Results render in a dropdown directly under the search field. The panel header shows the result count and
+the **mode that was actually used** (and flags `degraded` when the search index is unavailable). Each row
+shows the product name plus brand and product id:
 
 ![Check Engine search for "oil filter" returning a matching part](docs/user-guide/images/02-search-results.webp)
 
-When no part matches, the panel shows a clear empty state ("No matching parts found") rather than a wrong
-result — fitment answers are always fail-closed.
+Behaviour worth knowing:
+
+- **Include unverified fit** widens results to parts whose compatibility could not be verified. It is off
+  by default, so a vehicle-filtered search only returns verified fits.
+- `Esc` closes the dropdown and returns focus to the field; clicking outside also dismisses it.
+- When no part matches, the panel shows a clear empty state with recovery advice rather than a wrong
+  result — fitment answers are always fail-closed.
 
 ### 6.3 The garage and active vehicle
 
@@ -179,6 +191,9 @@ fitment engine for the active vehicle and shows one of a small set of states —
 | **Fits** | The part is a verified fit for the active vehicle |
 | **Does not fit** | The part is known not to fit |
 | **Unknown** | Compatibility can't be verified (also the fail-closed result on any error) |
+
+Every state is encoded three ways — colour, icon, and text — so the meaning never depends on colour
+alone. When no vehicle is set, the band offers an **Add your vehicle** action inline.
 
 ![Product page showing the Check Engine fitment band](docs/user-guide/images/03-product-fitment-band.webp)
 
@@ -324,6 +339,43 @@ Both are **off/unconfigured by default** and degrade safely.
 
 ---
 
+## 12a. Theming and appearance
+
+The storefront components ship as a small design system rather than ad-hoc styles, implemented from
+[docs/22-ui-design-system.md](docs/22-ui-design-system.md):
+
+| File | Role |
+|---|---|
+| `Content/checkengine-tokens.css` | Design tokens — palette, spacing scale, radius, type scale, motion. Layer 1 (primitive) and layer 2 (semantic). |
+| `Content/checkengine-theme.css` | Component styles. References only `var(--ce-*)` tokens, never raw hex. |
+| `Content/checkengine-storefront.js` | Behaviour for the rail, garage, and fitment band. |
+
+Both stylesheets are registered automatically by the widget, so they are picked up by nopCommerce's CSS
+bundling — you do not need to edit the theme to include them.
+
+**To re-skin Check Engine, override the tokens** rather than the component rules. For example, in your
+theme's stylesheet:
+
+```css
+:root {
+  --ce-action-primary: #b3121d;   /* brand accent */
+  --ce-surface-canvas: #101418;   /* rail background */
+  --ce-radius-md: 4px;            /* squarer controls */
+}
+```
+
+Accessibility and layout behaviour built into the components:
+
+- WCAG 2.2 AA contrast targets, with a 2px focus ring (2px offset) on every interactive control.
+- Fitment status uses colour **plus** icon **plus** text.
+- Full RTL support via CSS logical properties; directional icons mirror, brand marks and product media
+  do not. OEM numbers and VINs stay LTR and monospaced inside Arabic copy.
+- Verified from 320px to 2560px; below 1200px the search field takes its own row so it never collapses.
+- Honours `prefers-reduced-motion`; status transitions stay at or under 200ms.
+- Loading uses skeleton rows with reserved height to protect the CLS budget.
+
+---
+
 ## 13. Known limitations
 
 - **Database:** Check Engine's SQL repositories use SQL Server syntax (for example `SCOPE_IDENTITY()`).
@@ -331,8 +383,11 @@ Both are **off/unconfigured by default** and degrade safely.
   work against **SQL Server**. Use SQL Server for a full evaluation.
 - **Admin UI:** admin workflows are exposed as **JSON endpoints** plus the operator dashboard, not as
   full AdminLTE CRUD screens yet.
-- **Storefront styling:** the sticky search widget ships with minimal CSS and can overlap the store logo
-  depending on the active theme; it needs theme-level positioning for production.
+- **Storefront styling:** the chrome renders below the host header and is styled from Check Engine's own
+  token set. It is designed against nopCommerce's DefaultClean theme; a heavily customised theme may need
+  token overrides (see [Theming and appearance](#12a-theming-and-appearance)).
+- **Web fonts:** the design system specifies Outfit and IBM Plex, loaded from Google Fonts. If your
+  deployment blocks external font hosts, self-host them and override `--ce-font-display` / `--ce-font-ui`.
 - **Search data source:** out of the box, search resolves against fitment/OEM maps with a small seeded
   fallback, so results reflect Check Engine data rather than the full nopCommerce catalog until you link
   products.

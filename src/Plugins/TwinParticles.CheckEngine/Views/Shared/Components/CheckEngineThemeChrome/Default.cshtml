@@ -4,49 +4,144 @@
     var zone = (Model.WidgetZone ?? string.Empty).ToLowerInvariant();
 }
 
-@if (zone == "header_after")
+@*
+    Assets are registered once from the body-start zone. Nothing visible is rendered there so the
+    Check Engine chrome can never overlap the host theme's header/logo.
+*@
+@if (zone == "body_start_html_tag_after")
 {
-    <section class="ce-theme-layout" data-ce-theme="layout-system">
-        <div class="ce-layout-shell">
-            <button type="button" class="ce-mega-menu-trigger" aria-label="Open vehicle categories">Menu</button>
-        </div>
-    </section>
-}
-else if (zone == "header_menu_after")
-{
-    <section class="ce-theme-garage-widget" data-ce-theme="garage-widget" dir="auto">
-        <span class="ce-active-vehicle-chip">Garage empty — add a vehicle to check fitment</span>
-    </section>
+    NopHtml.AddCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css");
+    NopHtml.AddCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-theme.css");
+    NopHtml.AddHeadCustomParts("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">");
+    NopHtml.AddHeadCustomParts("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>");
+    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap\">");
 
-    <section class="ce-theme-vehicle-selector" data-ce-theme="vehicle-selector" dir="auto">
-        <label for="ce-vehicle-selector">Vehicle selector</label>
-        <select id="ce-vehicle-selector" name="vehicleSelector">
-            <option value="">No vehicles yet — add one</option>
-        </select>
+    <script src="~/Plugins/TwinParticles.CheckEngine/Content/checkengine-storefront.js" asp-append-version="true"></script>
+}
+else if (zone == "header_after")
+{
+    @* Search rail: unified query + vehicle context chip + submit, per the design system layout regions. *@
+    <div class="ce-root ce-rail" data-ce-theme="sticky-search" role="search">
+        <div class="ce-rail__inner">
+            <button type="button"
+                    class="ce-chip"
+                    id="ce-garage-chip"
+                    data-ce-theme="garage-widget"
+                    data-ce-state="empty"
+                    aria-haspopup="dialog"
+                    aria-expanded="false">
+                <svg class="ce-icon ce-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+                    <path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M4 13h16v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4z" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="ce-chip__text">
+                    <span class="ce-chip__label">@T("Plugins.TwinParticles.CheckEngine.Garage.Label")</span>
+                    <span class="ce-chip__value" id="ce-garage-chip-value">@T("Plugins.TwinParticles.CheckEngine.Garage.SelectVehicle")</span>
+                </span>
+            </button>
+
+            @* Vehicle switcher. Kept as a native select so it is keyboard and screen-reader friendly. *@
+            <label class="ce-visually-hidden" for="ce-vehicle-selector">@T("Plugins.TwinParticles.CheckEngine.Garage.VehicleSelector")</label>
+            <select id="ce-vehicle-selector" class="ce-select" name="vehicleSelector" data-ce-theme="vehicle-selector">
+                <option value="">@T("Plugins.TwinParticles.CheckEngine.Garage.Empty")</option>
+            </select>
+
+            <form class="ce-search" id="ce-search-form" method="post" action="/check-engine/search/query" role="none">
+                <div class="ce-search__field">
+                    <svg class="ce-icon ce-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+                    </svg>
+                    <label class="ce-visually-hidden" for="ce-sticky-search-input">@T("Plugins.TwinParticles.CheckEngine.Search.Label")</label>
+                    <input id="ce-sticky-search-input"
+                           class="ce-search__input"
+                           name="rawText"
+                           type="search"
+                           autocomplete="off"
+                           enterkeyhint="search"
+                           placeholder="@T("Plugins.TwinParticles.CheckEngine.Search.Placeholder")"
+                           aria-describedby="ce-search-hint"
+                           aria-controls="ce-search-results"
+                           aria-expanded="false" />
+                </div>
+
+                <label class="ce-toggle" for="ce-widen-fitment">
+                    <input type="checkbox" id="ce-widen-fitment" name="widenFitment" />
+                    <span>@T("Plugins.TwinParticles.CheckEngine.Search.Widen")</span>
+                </label>
+
+                <button type="submit" class="ce-btn ce-btn--primary">
+                    <span class="ce-btn__label">@T("Plugins.TwinParticles.CheckEngine.Search.Submit")</span>
+                </button>
+
+                <p id="ce-search-hint" class="ce-visually-hidden">@T("Plugins.TwinParticles.CheckEngine.Search.Hint")</p>
+
+                <div id="ce-search-results" class="ce-results" role="region" aria-label="@T("Plugins.TwinParticles.CheckEngine.Search.ResultsLabel")" hidden></div>
+                <p class="ce-visually-hidden" id="ce-search-status" role="status" aria-live="polite"></p>
+            </form>
+        </div>
+
+        @* Localised copy for the client script, so no user-facing string is hardcoded in JS. *@
+        <script type="application/json" id="ce-i18n">
+            {
+                "garageLabel": "@T("Plugins.TwinParticles.CheckEngine.Garage.Label")",
+                "garageSelect": "@T("Plugins.TwinParticles.CheckEngine.Garage.SelectVehicle")",
+                "garageEmpty": "@T("Plugins.TwinParticles.CheckEngine.Garage.Empty")",
+                "garageAdd": "@T("Plugins.TwinParticles.CheckEngine.Garage.AddVehicle")",
+                "garageVinPrompt": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinPrompt")",
+                "garageAddFailed": "@T("Plugins.TwinParticles.CheckEngine.Garage.AddFailed")",
+                "searchEmptyTitle": "@T("Plugins.TwinParticles.CheckEngine.Search.Empty.Title")",
+                "searchEmptyHint": "@T("Plugins.TwinParticles.CheckEngine.Search.Empty.Hint")",
+                "searchUnavailable": "@T("Plugins.TwinParticles.CheckEngine.Search.Unavailable")",
+                "searchResultsCount": "@T("Plugins.TwinParticles.CheckEngine.Search.ResultsCount")",
+                "searchMode": "@T("Plugins.TwinParticles.CheckEngine.Search.Mode")",
+                "fitsLabel": "@T("Plugins.TwinParticles.CheckEngine.Fitment.Fits")",
+                "fitsHint": "@T("Plugins.TwinParticles.CheckEngine.Fitment.Fits.Hint")",
+                "unfitLabel": "@T("Plugins.TwinParticles.CheckEngine.Fitment.DoesNotFit")",
+                "unfitHint": "@T("Plugins.TwinParticles.CheckEngine.Fitment.DoesNotFit.Hint")",
+                "unknownLabel": "@T("Plugins.TwinParticles.CheckEngine.Fitment.Unknown")",
+                "unknownHint": "@T("Plugins.TwinParticles.CheckEngine.Fitment.Unknown.Hint")",
+                "selectLabel": "@T("Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle")",
+                "selectHint": "@T("Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle.Hint")",
+                "fitmentCta": "@T("Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle.Cta")"
+            }
+        </script>
+    </div>
+}
+else if (zone == "productdetails_top")
+{
+    @* Fitment band: colour + icon + text, never a speculative "Fits". Starts in the honest unknown state. *@
+    <section class="ce-root ce-fitment"
+             data-ce-theme="fitment-band"
+             data-ce-fit="select"
+             data-ce-product-id=""
+             aria-live="polite">
+        <svg class="ce-icon ce-fitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v4" stroke-linecap="round" />
+            <path d="M12 16h.01" stroke-linecap="round" />
+        </svg>
+        <span class="ce-fitment__text">
+            <span class="ce-fitment__status">@T("Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle")</span>
+            <span class="ce-fitment__detail">@T("Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle.Hint")</span>
+        </span>
     </section>
 }
 else if (zone == "home_page_top")
 {
-    <section class="ce-theme-landing-template" data-ce-theme="landing-template">
-        <h2>Vehicle and part landing template</h2>
-        <p>Template scaffold for EP-11 landing experiences.</p>
-    </section>
-}
-else if (zone == "productdetails_top")
-{
-    <section class="ce-theme-fitment-band" data-ce-theme="fitment-band" data-ce-product-id="" dir="auto" role="status" aria-live="polite">
-        <strong>Fitment:</strong> Verify compatibility with your active vehicle.
-    </section>
-}
-else if (zone == "body_start_html_tag_after")
-{
-    <script src="~/Plugins/TwinParticles.CheckEngine/Content/checkengine-storefront.js" asp-append-version="true"></script>
-    <section class="ce-theme-sticky-search" data-ce-theme="sticky-search" dir="auto">
-        <form method="post" action="/check-engine/search/query">
-            <label for="ce-sticky-search-input">Search parts, OEM, or VIN</label>
-            <input id="ce-sticky-search-input" name="rawText" type="text" autocomplete="off" />
-            <button type="submit">Search</button>
-        </form>
-        <div id="ce-search-results" class="ce-search-results" aria-live="polite"></div>
+    <section class="ce-root ce-hero" data-ce-theme="landing-template">
+        <div class="ce-hero__inner">
+            <span class="ce-hero__eyebrow">@T("Plugins.TwinParticles.CheckEngine.Hero.Eyebrow")</span>
+            <h1 class="ce-hero__title">@T("Plugins.TwinParticles.CheckEngine.Hero.Title")</h1>
+            <p class="ce-hero__lead">@T("Plugins.TwinParticles.CheckEngine.Hero.Lead")</p>
+            <div class="ce-hero__cta">
+                <button type="button" class="ce-btn ce-btn--primary" data-ce-action="focus-search">
+                    @T("Plugins.TwinParticles.CheckEngine.Hero.PrimaryCta")
+                </button>
+                <button type="button" class="ce-btn ce-btn--quiet" data-ce-action="add-vehicle">
+                    @T("Plugins.TwinParticles.CheckEngine.Hero.SecondaryCta")
+                </button>
+            </div>
+        </div>
     </section>
 }
