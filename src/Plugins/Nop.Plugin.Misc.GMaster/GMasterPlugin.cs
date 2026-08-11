@@ -61,6 +61,7 @@ public sealed class GMasterPlugin : BasePlugin, IMiscPlugin
             ["Plugins.Misc.GMaster.ImportedCategories"] = "Imported categories",
             ["Plugins.Misc.GMaster.ClearedProducts"] = "Cleared products",
             ["Plugins.Misc.GMaster.ClearedCategories"] = "Cleared categories",
+            ["Plugins.Misc.GMaster.ClearedCartItems"] = "Cleared cart / wishlist items",
             ["Plugins.Misc.GMaster.Reimport"] = "Replace catalog now",
             ["Plugins.Misc.GMaster.Reimport.Warning"] = "Destructive action: this soft-deletes every active product and category before rebuilding the GMaster catalog. Historical orders remain intact.",
             ["Plugins.Misc.GMaster.Reimport.Confirmation"] = $"Type {GMasterDefaults.ReimportConfirmation} to continue",

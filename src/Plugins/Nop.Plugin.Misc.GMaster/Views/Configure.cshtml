@@ -15,7 +15,7 @@
     }
     .gm-hero h1 { margin: 0 0 8px; color: #fff; font-weight: 700; }
     .gm-hero p { margin: 0; color: #bdcbd2; max-width: 760px; }
-    .gm-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .gm-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
     .gm-stat { padding: 18px; border: 1px solid #dfe3e8; border-radius: 8px; background: #fff; }
     .gm-stat strong { display: block; font-size: 28px; color: #123d50; }
     .gm-stat span { color: #687684; }
@@ -54,6 +54,10 @@
                 <div class="gm-stat">
                     <strong>@Model.ClearedCategoryCount</strong>
                     <span>@T("Plugins.Misc.GMaster.ClearedCategories")</span>
+                </div>
+                <div class="gm-stat">
+                    <strong>@Model.ClearedCartItemCount</strong>
+                    <span>@T("Plugins.Misc.GMaster.ClearedCartItems")</span>
                 </div>
             </div>
 
@@ -94,7 +98,7 @@
             <form asp-controller="GMaster" asp-action="Reimport" method="post">
                 <div class="form-group">
                     <nop-label asp-for="Confirmation" />
-                    <nop-editor asp-for="Confirmation" html-attributes="@(new { @class = "gm-confirm", autocomplete = "off" })" />
+                    <nop-editor asp-for="Confirmation" asp-render-form-control-class="false" html-attributes="@(new { @class = "gm-confirm form-control", autocomplete = "off" })" />
                     <span asp-validation-for="Confirmation"></span>
                 </div>
                 <button type="submit" class="btn btn-danger">

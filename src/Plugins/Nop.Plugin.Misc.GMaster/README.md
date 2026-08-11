@@ -30,11 +30,12 @@ Installing the plugin:
 2. Stages the complete GMaster replacement as unpublished, so a staging failure leaves the current
    storefront online.
 3. Soft-deletes every previous active product and category through nopCommerce services.
-4. Publishes a GMaster root category, ten focused subcategories, and the staged products.
-5. Stores supplier cost in `ProductCost` and calculated EGP selling price in `Price`.
-6. Sets EGP as the store's primary currency and unpublishes other currencies so the EGP amounts cannot
+4. Clears current cart and wishlist rows so no session retains a now-deleted product.
+5. Publishes a GMaster root category, ten focused subcategories, and the staged products.
+6. Stores supplier cost in `ProductCost` and calculated EGP selling price in `Price`.
+7. Sets EGP as the store's primary currency and unpublishes other currencies so the EGP amounts cannot
    be shown under a misleading currency symbol.
-7. Adds original, trademark-free SVG category illustrations (also reused as product placeholders).
+8. Adds original, trademark-free SVG category illustrations (also reused as product placeholders).
 
 Soft-delete is deliberate: it clears the visible catalog while preserving historical orders and
 invoices that reference old product ids.

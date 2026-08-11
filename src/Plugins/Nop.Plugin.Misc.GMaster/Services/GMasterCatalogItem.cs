@@ -14,6 +14,7 @@ public sealed record GMasterCatalogItem(
 public sealed record GMasterCatalogImportResult(
     int ClearedProducts,
     int ClearedCategories,
+    int ClearedCartItems,
     int ImportedProducts,
     int ImportedCategories,
     DateTime CompletedUtc);

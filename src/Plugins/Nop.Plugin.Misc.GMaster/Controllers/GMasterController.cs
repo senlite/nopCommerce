@@ -90,6 +90,7 @@ public sealed class GMasterController : BasePluginController
             ImportedCategoryCount = _settings.ImportedCategoryCount,
             ClearedProductCount = _settings.ClearedProductCount,
             ClearedCategoryCount = _settings.ClearedCategoryCount,
+            ClearedCartItemCount = _settings.ClearedCartItemCount,
             LastError = _settings.LastError
         };
 }

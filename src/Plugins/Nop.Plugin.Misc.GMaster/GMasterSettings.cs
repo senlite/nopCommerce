@@ -14,6 +14,8 @@ public sealed class GMasterSettings : ISettings
 
     public int ClearedCategoryCount { get; set; }
 
+    public int ClearedCartItemCount { get; set; }
+
     public string CatalogSourceVersion { get; set; } = string.Empty;
 
     public string LastError { get; set; } = string.Empty;

@@ -3,7 +3,9 @@ using System.Text;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Directory;
+using Nop.Core.Domain.Orders;
 using Nop.Core.Infrastructure;
+using Nop.Data;
 using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
@@ -28,6 +30,7 @@ public sealed class GMasterCatalogImportService
     private readonly IProductService _productService;
     private readonly IProductTemplateService _productTemplateService;
     private readonly ISettingService _settingService;
+    private readonly IRepository<ShoppingCartItem> _shoppingCartItemRepository;
     private readonly IUrlRecordService _urlRecordService;
 
     public GMasterCatalogImportService(
@@ -45,6 +48,7 @@ public sealed class GMasterCatalogImportService
         IProductService productService,
         IProductTemplateService productTemplateService,
         ISettingService settingService,
+        IRepository<ShoppingCartItem> shoppingCartItemRepository,
         IUrlRecordService urlRecordService)
     {
         _categoryService = categoryService;
@@ -61,6 +65,7 @@ public sealed class GMasterCatalogImportService
         _productService = productService;
         _productTemplateService = productTemplateService;
         _settingService = settingService;
+        _shoppingCartItemRepository = shoppingCartItemRepository;
         _urlRecordService = urlRecordService;
     }
 
@@ -140,6 +145,12 @@ public sealed class GMasterCatalogImportService
             displayOrder++;
         }
 
+        // Cart and wishlist rows point to product ids. Clear them at cutover so customers never see
+        // "Product is deleted" entries left over from the replaced catalog.
+        var existingCartItems = await _shoppingCartItemRepository.GetAllAsync(query => query);
+        if (existingCartItems.Count > 0)
+            await _shoppingCartItemRepository.DeleteAsync(existingCartItems, publishEvent: false);
+
         // Destructive cutover is deliberate and is the plugin's core contract.
         foreach (var product in existingProducts)
         {
@@ -179,6 +190,7 @@ public sealed class GMasterCatalogImportService
         _settings.ImportedCategoryCount = categories.Count + 1;
         _settings.ClearedProductCount = existingProducts.Count;
         _settings.ClearedCategoryCount = existingCategories.Count;
+        _settings.ClearedCartItemCount = existingCartItems.Count;
         _settings.CatalogSourceVersion = GMasterDefaults.SourceVersion;
         _settings.LastError = string.Empty;
         await _settingService.SaveSettingAsync(_settings);
@@ -186,6 +198,7 @@ public sealed class GMasterCatalogImportService
         return new GMasterCatalogImportResult(
             existingProducts.Count,
             existingCategories.Count,
+            existingCartItems.Count,
             items.Count,
             categories.Count + 1,
             completedUtc);

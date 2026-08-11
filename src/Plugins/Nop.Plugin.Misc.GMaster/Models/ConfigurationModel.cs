@@ -23,6 +23,9 @@ public sealed record ConfigurationModel : BaseNopModel
     [NopResourceDisplayName("Plugins.Misc.GMaster.ClearedCategories")]
     public int ClearedCategoryCount { get; init; }
 
+    [NopResourceDisplayName("Plugins.Misc.GMaster.ClearedCartItems")]
+    public int ClearedCartItemCount { get; init; }
+
     [NopResourceDisplayName("Plugins.Misc.GMaster.LastError")]
     public string LastError { get; init; } = string.Empty;
 
