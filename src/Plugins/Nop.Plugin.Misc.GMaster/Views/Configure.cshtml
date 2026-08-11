@@ -1,0 +1,107 @@
+@model ConfigurationModel
+
+@{
+    Layout = "_ConfigurePlugin";
+    NopHtml.SetActiveMenuItemSystemName("Local plugins");
+}
+
+<style>
+    .gm-hero {
+        padding: 28px;
+        margin-bottom: 20px;
+        color: #f4f7f9;
+        background: linear-gradient(135deg, #08151f, #123d50);
+        border-radius: 12px;
+    }
+    .gm-hero h1 { margin: 0 0 8px; color: #fff; font-weight: 700; }
+    .gm-hero p { margin: 0; color: #bdcbd2; max-width: 760px; }
+    .gm-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .gm-stat { padding: 18px; border: 1px solid #dfe3e8; border-radius: 8px; background: #fff; }
+    .gm-stat strong { display: block; font-size: 28px; color: #123d50; }
+    .gm-stat span { color: #687684; }
+    .gm-danger { border-inline-start: 4px solid #c62828; }
+    .gm-confirm { max-width: 420px; font-family: monospace; }
+    @@media (max-width: 767px) { .gm-stat-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<div class="gm-hero" dir="auto">
+    <h1>GMaster Catalog Importer</h1>
+    <p>
+        يستبدل كتالوج المتجر بقطع وإكسسوارات BMW المنقحة من ملفي الأسعار المرفقين،
+        مع حفظ تكلفة المورد وتسعير البيع بالجنيه المصري.
+    </p>
+</div>
+
+<div class="cards-group">
+    <div class="card card-default">
+        <div class="card-header">
+            Import summary / ملخص الاستيراد
+        </div>
+        <div class="card-body">
+            <div class="gm-stat-grid">
+                <div class="gm-stat">
+                    <strong>@Model.ImportedProductCount</strong>
+                    <span>@T("Plugins.Misc.GMaster.ImportedProducts")</span>
+                </div>
+                <div class="gm-stat">
+                    <strong>@Model.ImportedCategoryCount</strong>
+                    <span>@T("Plugins.Misc.GMaster.ImportedCategories")</span>
+                </div>
+                <div class="gm-stat">
+                    <strong>@Model.ClearedProductCount</strong>
+                    <span>@T("Plugins.Misc.GMaster.ClearedProducts")</span>
+                </div>
+                <div class="gm-stat">
+                    <strong>@Model.ClearedCategoryCount</strong>
+                    <span>@T("Plugins.Misc.GMaster.ClearedCategories")</span>
+                </div>
+            </div>
+
+            <dl class="row mt-4">
+                <dt class="col-sm-3">@T("Plugins.Misc.GMaster.LastImport")</dt>
+                <dd class="col-sm-9">@(Model.LastImportUtc?.ToString("u") ?? "—")</dd>
+                <dt class="col-sm-3">@T("Plugins.Misc.GMaster.SourceVersion")</dt>
+                <dd class="col-sm-9"><code>@(Model.CatalogSourceVersion ?? "—")</code></dd>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(Model.LastError))
+            {
+                <div class="alert alert-danger">
+                    <strong>@T("Plugins.Misc.GMaster.LastError"):</strong> @Model.LastError
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card card-default">
+        <div class="card-header">@T("Plugins.Misc.GMaster.Pricing")</div>
+        <div class="card-body">
+            <p>@T("Plugins.Misc.GMaster.Pricing.Detail")</p>
+            <p class="text-muted mb-0">
+                سعر ملف المورد يُحفظ في <code>ProductCost</code>، وسعر البيع المحسوب يُحفظ في <code>Price</code>.
+                العملة الأساسية للمتجر تُضبط على EGP.
+            </p>
+        </div>
+    </div>
+
+    <div class="card card-default gm-danger">
+        <div class="card-header text-danger">@T("Plugins.Misc.GMaster.Reimport")</div>
+        <div class="card-body">
+            <div class="alert alert-warning" role="alert">
+                <strong>تحذير:</strong> @T("Plugins.Misc.GMaster.Reimport.Warning")
+            </div>
+
+            <form asp-controller="GMaster" asp-action="Reimport" method="post">
+                <div class="form-group">
+                    <nop-label asp-for="Confirmation" />
+                    <nop-editor asp-for="Confirmation" html-attributes="@(new { @class = "gm-confirm", autocomplete = "off" })" />
+                    <span asp-validation-for="Confirmation"></span>
+                </div>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-restore"></i>
+                    @T("Plugins.Misc.GMaster.Reimport")
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

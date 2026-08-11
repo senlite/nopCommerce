@@ -1,0 +1,185 @@
+sku,name_ar,name_en,oem,vehicle_models,category_key,cost_price,selling_price,source_file
+GM-51717059379,كارتيره أمامي يسار E90,E90 Front Fender Liner Front LH,51717059379,E90,body-underbody,600,870,fiber.pdf
+GM-51717059380,كارتيره أمامي يمين E90,E90 Front Fender Liner Front RH,51717059380,E90,body-underbody,600,870,fiber.pdf
+GM-51717260293,كارتيره خلفي يسار F30,F30 Rear Fender Liner LH,51717260293,F30,body-underbody,700,1020,fiber.pdf
+GM-51717260294,كارتيره خلفي يمين F30,F30 Rear Fender Liner RH,51717260294,F30,body-underbody,700,1020,fiber.pdf
+GM-51711944363,كارتيره أمامي خلفي يسار E34,E34 Front Fender Liner Rear LH,51711944363,E34,body-underbody,600,870,fiber.pdf
+GM-51711944364,كارتيره أمامي خلفي يمين E34,E34 Front Fender Liner Rear RH,51711944364,E34,body-underbody,600,870,fiber.pdf
+GM-51717033749,كارتيره أمامي كامل يسار E60,E60 Front Fender Liner Complete LH,51717033749,E60,body-underbody,700,1020,fiber.pdf
+GM-51717033750,كارتيره أمامي كامل يمين E60,E60 Front Fender Liner Complete RH,51717033750,E60,body-underbody,700,1020,fiber.pdf
+GM-51717290159,كارتيره أمامي داخلي يسار E84/X1,E84 Front Inner Liner Front LH,51717290159,"E84,X1",body-underbody,600,870,fiber.pdf
+GM-51717290160,كارتيره أمامي داخلي يمين E84/X1,E84 Front Inner Liner Front RH,51717290160,"E84,X1",body-underbody,600,870,fiber.pdf
+GM-51712990087,كارتيره خلفي يسار E84/X1,E84 Rear Fender Liner LH,51712990087,"E84,X1",body-underbody,800,1160,fiber.pdf
+GM-51712990088,كارتيره خلفي يمين E84/X1,E84 Rear Fender Liner RH,51712990088,"E84,X1",body-underbody,800,1160,fiber.pdf
+GM-51717033757,أرضية جسم قصيرة يسار E60,E60 Under Body Cover Short LH,51717033757,E60,body-underbody,700,1020,fiber.pdf
+GM-51717033758,أرضية جسم قصيرة يمين E60,E60 Under Body Cover Short RH,51717033758,E60,body-underbody,700,1020,fiber.pdf
+GM-51757129341,أرضية محرك E90,E90 Under Engine Cover,51757129341,E90,body-underbody,700,1020,fiber.pdf
+GM-51757163562,مصفحة سفلية E90,E90 Under Cover,51757163562,E90,body-underbody,600,870,fiber.pdf
+GM-51717033748,مصفحة وسط أرضية E60,E60 Center Under Body Cover,51717033748,E60,body-underbody,1200,1620,fiber.pdf
+GM-51752990575,مصفحة محرك E84/X1,E84 Under Engine Cover,51752990575,"E84,X1",body-underbody,1000,1450,fiber.pdf
+GM-51757061943,مصفحة محرك E60,E60 Under Engine Cover,51757061943,E60,body-underbody,600,870,fiber.pdf
+GM-51488193941,عازل غطاء محرك أمامي E46,E46 Front Hood Insulation,51488193941,E46,body-underbody,700,1020,fiber.pdf
+GM-51487059260,عازل غطاء محرك أمامي E90,E90 Front Hood Insulation,51487059260,E90,body-underbody,800,1160,fiber.pdf
+GM-51488159483,عازل غطاء محرك أمامي E39,E39 Front Hood Insulation,51488159483,E39,body-underbody,800,1160,fiber.pdf
+GM-51772990165,دائر رفرف أمامي يسار E84,E84 Front Wheel Arch LH,51772990165,E84,body-underbody,500,780,fiber.pdf
+GM-51772990166,دائر رفرف أمامي يمين E84,E84 Front Wheel Arch RH,51772990166,E84,body-underbody,500,780,fiber.pdf
+GM-51772990171,دائر رفرف خلفي يسار E84,E84 Rear Wheel Arch LH,51772990171,E84,body-underbody,500,780,fiber.pdf
+GM-51772990172,دائر رفرف خلفي يمين E84,E84 Rear Wheel Arch RH,51772990172,E84,body-underbody,500,780,fiber.pdf
+GM-51718193811,مكمل كارتيره E46 أمامي يسار,E46 Inner Liner FL,51718193811,E46,body-underbody,400,620,fiber.pdf
+GM-51718193812,مكمل كارتيره E46 أمامي يمين,E46 Inner Liner FR,51718193812,E46,body-underbody,400,620,fiber.pdf
+GM-51712993140,مكمل كارتيره / لوحة بطانة داخلية E84,E84 Inner Liner Cover Plate,51712993140,E84,body-underbody,500,780,fiber.pdf
+GM-51717143850,مكمل كارتيره / لوحة بطانة داخلية E90,E90 Inner Liner Cover Plate,51717143850,E90,body-underbody,500,780,fiber.pdf
+GM-51642990176,مجمع هواء / إطار خزان ماء E84,E84 Water Tank Frame,51642990176,E84,body-underbody,3500,4480,fiber.pdf
+GM-51119883247/9451692,اكصدام أمامي F49 LCI,F49 LCI Front Bumper,51119883247/9451692,F49,body-underbody,3000,4050,fiber.pdf
+GM-51119883250/9451691,اكصدام أمامي F49 LCI بفتحتي رادار,F49 LCI Front Bumper With 2 Radar Holes,51119883250/9451691,F49,body-underbody,3000,4050,fiber.pdf
+GM-64229166889/64229166890/64229209136/64229172167,طقم فتحات تكييف وسط F10,F10 Middle AC Vent Set,64229166889/64229166890/64229209136/64229172167,F10,climate-vents,1800,2430,accessories.pdf
+GM-51417279316,مقبض باب كليب أون بيج F30,F30 Clip-On Door Handle Beige,51417279316,F30,interior-handles-trim,720,1050,accessories.pdf
+GM-51417279311/51417279312/51427281465/51427281466-BEIGE,طقم مقابض أبواب بيج F30,F30 Door Handle Set Beige,51417279311/51417279312/51427281465/51427281466,F30,interior-handles-trim,1080,1460,accessories.pdf
+GM-51417279311/51417279312/51427281465/51427281466-BLACK,طقم مقابض أبواب أسود F30,F30 Door Handle Set Black,51417279311/51417279312/51427281465/51427281466,F30,interior-handles-trim,1080,1460,accessories.pdf
+GM-51417261933/72258605141R,طقم مقابض أبواب أحمر بني F10,F10 Door Handle Set Red Brown,51417261933/72258605141R,F10,interior-handles-trim,504,740,accessories.pdf
+GM-51417225873/51417225848R-BLACK,طقم مقابض أبواب أسود F10,F10 Door Handle Set Black,51417225873/51417225848R,F10,interior-handles-trim,504,740,accessories.pdf
+GM-51417359291/51417225276R,طقم مقابض أبواب موكا F10,F10 Door Handle Set Mokka,51417359291/51417225276R,F10,interior-handles-trim,504,740,accessories.pdf
+GM-51417225873-2/51417225848R,طقم مقابض أبواب نقش كربون F10,F10 Door Handle Set Carbon Pattern,51417225873-2/51417225848R,F10,interior-handles-trim,594,870,accessories.pdf
+GM-51417275487/51417275488,غطاء مقبض باب لامع أسود F30,F30 Door Handle Cover Gloss Black,51417275487/51417275488,F30,interior-handles-trim,1260,1710,accessories.pdf
+GM-51169216865,غطاء مسند ذراع أسود F10/F11,F10/F11 Armrest Lid Panel Black,51169216865,"F10,F11",interior-handles-trim,810,1180,accessories.pdf
+GM-51169216869,غطاء مسند ذراع أحمر بني F10/F11,F10/F11 Armrest Lid Panel Red Brown,51169216869,"F10,F11",interior-handles-trim,810,1180,accessories.pdf
+GM-61319217334/51417230853/51417230854/51419150339/51419150340-BEIGE,طقم مقابض أبواب بيج E90,E90 Door Handle Set Beige,61319217334/51417230853/51417230854/51419150339/51419150340,E90,interior-handles-trim,1440,1950,accessories.pdf
+GM-51169235453,غطاء مسند ذراع نقش كربون F30,F30 Armrest Lid Panel Carbon Pattern,51169235453,F30,interior-handles-trim,720,1050,accessories.pdf
+GM-61319217326/51417230849/51417230850/51419150335/51419150336-BLACK,طقم مقابض أبواب أسود E90,E90 Door Handle Set Black,61319217326/51417230849/51417230850/51419150335/51419150336,E90,interior-handles-trim,1440,1950,accessories.pdf
+GM-51167137552,غطاء مسند ذراع نقش كربون E90,E90 Armrest Lid Panel Carbon Pattern,51167137552,E90,interior-handles-trim,720,1050,accessories.pdf
+GM-51130054493/51130054494,شبك أمامي لامع أسود F30,F30 Front Grill Gloss Black,51130054493/51130054494,F30,exterior-grilles,990,1440,accessories.pdf
+GM-51169216866,غطاء مسند ذراع بيج F10/F11,F10/F11 Armrest Lid Panel Beige,51169216866,"F10,F11",interior-handles-trim,1000,1450,accessories.pdf
+GM-51167133208,غطاء مسند ذراع نقش كربون E60,E60 Armrest Lid Panel Carbon Pattern,51167133208,E60,interior-handles-trim,1000,1450,accessories.pdf
+GM-51417279311-CARBON,مقبض داخلي حر نقش ألياف كربون F30,F30 Free Inner Handle Carbon Fiber Pattern,51417279311,F30,interior-handles-trim,1000,1450,accessories.pdf
+GM-51169234131-BLACK,قاعدة عصا ناقل أسود F30,F30 Gear Lever Base Panel Black,51169234131,F30,interior-handles-trim,800,1160,accessories.pdf
+GM-51169234131-CARBON,قاعدة عصا ناقل نقش ألياف كربون F30,F30 Gear Lever Base Panel Carbon Fiber Pattern,51169234131,F30,interior-handles-trim,800,1160,accessories.pdf
+GM-51169234131-GLOSSBLACK,قاعدة عصا ناقل أسود لامع F30,F30 Gear Lever Base Panel Gloss Black,51169234131,F30,interior-handles-trim,800,1160,accessories.pdf
+GM-61319217332-BLACK,زر مفتاح رافع زجاج أسود E90,E90 Window Lift Switch Button Black,61319217332,E90,electrical-switches,2160,2920,accessories.pdf
+GM-61319217334-BEIGE,زر مفتاح رافع زجاج بيج E90,E90 Window Lift Switch Button Beige,61319217334,E90,electrical-switches,2160,2920,accessories.pdf
+GM-61319259007-A1-1,غطاء مقبض هيكل فضي عادي يسار مقود F30,F30 Chassis Handlebar Cover Ordinary Silver Plating LHD,61319259007-A1-1,F30,interior-handles-trim,800,1160,accessories.pdf
+GM-61319259007-A1-2,غطاء مقبض هيكل ألياف كربون يسار مقود F30,F30 Chassis Handlebar Cover Ordinary Carbon Fiber LHD,61319259007-A1-2,F30,interior-handles-trim,800,1160,accessories.pdf
+GM-51130054493/51130054494-LED,شبك كليوي مضيء بليد F30,F30 Front Kidney Luminous Grille With LED Lights,51130054493/51130054494,F30,exterior-grilles,6000,7680,accessories.pdf
+GM-32302157308,عجلة قيادة E90,E90 Steering Wheel,32302157308,E90,steering-wheels,7000,8960,accessories.pdf
+GM-E60-STEERING-WHEEL,عجلة قيادة E60,E60 Steering Wheel,,E60,steering-wheels,9000,11520,accessories.pdf
+GM-32302230186,عجلة قيادة LED F30,F30 LED Steering Wheel,32302230186,F30,steering-wheels,40000,48800,accessories.pdf
+GM-SJX-BM-068,سبويلر سقف M4 لـ E60,E60 M4 Roof Spoiler,SJX-BM-068,E60,spoilers-styling,600,870,accessories.pdf
+GM-SJX-BM-067,سبويلر شفة M5 لـ E60,E60 M5 Lip Spoiler,SJX-BM-067,E60,spoilers-styling,600,870,accessories.pdf
+GM-SJX-BM-066,سبويلر شفة M4 لـ E60,E60 M4 Lip Spoiler,SJX-BM-066,E60,spoilers-styling,600,870,accessories.pdf
+GM-SJX-BM-020,سبويلر E36,E36 Spoiler,SJX-BM-020,E36,spoilers-styling,1800,2430,accessories.pdf
+GM-SJX-BM-020-LEGS,سبويلر E36 بأرجل تثبيت,E36 Spoiler With Legs,SJX-BM-020,E36,spoilers-styling,1800,2430,accessories.pdf
+GM-SJX-BM-021,سبويلر كبير E46,E46 Big Spoiler,SJX-BM-021,E46,spoilers-styling,1500,2030,accessories.pdf
+GM-SJX-BM-023,سبويلر سقف E46,E46 Roof Spoiler,SJX-BM-023,E46,spoilers-styling,600,870,accessories.pdf
+GM-SJX-BM-029,سبويلر سقف M4 لـ E90,E90 M4 Roof Spoiler,SJX-BM-029,E90,spoilers-styling,600,870,accessories.pdf
+GM-64229130458-1,شبك فتحة تكييف أمامي,Front AC Vent Grille,64229130458-1,"E90,E91,E92,E93",climate-vents,144,230,accessories.pdf
+GM-64229130458-MZ,شبك فتحة تكييف سريع التركيب,AC Vent Grille Quick Install,64229130458-MZ,"E90,E91,E92,E93",climate-vents,450,700,accessories.pdf
+GM-64119310445-M,زر تحكم تدفئة,Heater Control Button,64119310445-M,"E70,E71",climate-vents,144,230,accessories.pdf
+GM-64119344143-MA,أزرار تحكم تدفئة بدون OFF,Heater Control Buttons Without OFF,64119344143-MA,"E90,E84,E87,F25",climate-vents,144,230,accessories.pdf
+GM-61316932796-A1-A1,زر مفتاح أنوار أمامية,Headlight Switch Button,61316932796-A1,"E90,E84",electrical-switches,270,420,accessories.pdf
+GM-61316932796-B1-B1,زر مفتاح أنوار أمامية,Headlight Switch Button,61316932796-B1,"E90,E84",electrical-switches,396,620,accessories.pdf
+GM-51448036236,غطاء لمبة قراءة سقف,Roof Reading Lamp Cover,51448036236,"E84,E91",lighting-lenses,504,740,accessories.pdf
+GM-64223417431-1,شبك فتحة تكييف أمامي E83,Front AC Vent Grille,64223417431-1,E83,climate-vents,540,790,accessories.pdf
+GM-61316945874,مفتاح نافذة,Window Switch,61316945874,"E90,E70,E71",electrical-switches,360,560,accessories.pdf
+GM-61316945876,مفتاح نافذة,Window Switch,61316945876,"E90,E70,E71",electrical-switches,360,560,accessories.pdf
+GM-61319113773,مفتاح نافذة,Window Switch,61319113773,"E60,E83",electrical-switches,360,560,accessories.pdf
+GM-61319113771,مفتاح نافذة,Window Switch,61319113771,"E60,E83",electrical-switches,360,560,accessories.pdf
+GM-61319217329,مفتاح نافذة أمامي يسار,Front Left Window Switch,61319217329,E90,electrical-switches,1170,1580,accessories.pdf
+GM-61319217334-FLWS,مفتاح نافذة أمامي يسار,Front Left Window Switch,61319217334,E90,electrical-switches,1170,1580,accessories.pdf
+GM-51457138797,شريط كوب حامل أكواب,Cup Holder Strip Trim,51457138797,E90,cupholders-storage,1080,1460,accessories.pdf
+GM-51169218925-1,حامل أكواب مشروبات,Drinks Cup Holder,51169218925-1,"F30,F35,F34,F33,F31,F36",cupholders-storage,810,1180,accessories.pdf
+GM-51417279315-T4,طقم مقبض سحب باب داخلي,Inner Door Pull Handle Set,51417279315-T4,F30,interior-handles-trim,990,1440,accessories.pdf
+GM-51417275487-T4,غطاء مقبض,Handle Cover,51417275487-T4,"F35,F30,F33",interior-handles-trim,1620,2190,accessories.pdf
+GM-61319122112,مفتاح نافذة,Window Switch,61319122112,E60,electrical-switches,1170,1580,accessories.pdf
+GM-61319122113,مفتاح نافذة,Window Switch,61319122113,E60,electrical-switches,1170,1580,accessories.pdf
+GM-61319216049/61319218044,مفتاح نافذة أمامي يسار,Front Left Window Switch,61319216049/61319218044,E84,electrical-switches,1170,1580,accessories.pdf
+GM-61313414354,مفتاح نافذة أمامي يسار,Front Left Window Switch,61313414354,E83,electrical-switches,1170,1580,accessories.pdf
+GM-51138402645/646,شبك أوتو,Auto Grille,51138402645/646,E53,exterior-grilles,1000,1450,accessories.pdf
+GM-51113420091/092,شبك أوتو,Auto Grille,51113420091/092,E83,exterior-grilles,1500,2030,accessories.pdf
+GM-51117210725/726,شبك أوتو,Auto Grille,51117210725/726,F25,exterior-grilles,1200,1620,accessories.pdf
+GM-51137367421/422,شبك أوتو,Auto Grille,51137367421/422,F25,exterior-grilles,1200,1620,accessories.pdf
+GM-51712337762/763,شبك أوتو,Auto Grille,51712337762/763,F25,exterior-grilles,1200,1620,accessories.pdf
+GM-51112993305/306,إطار خزان ماء,Water Tank Frame,51112993305/306,E84,body-underbody,900,1310,accessories.pdf
+GM-51112993307/308,شبك أوتو,Auto Grille,51112993307/308,E84,exterior-grilles,900,1310,accessories.pdf
+GM-E84-AUTOGRILLE-800,شبك أوتو,Auto Grille,,E84,exterior-grilles,800,1160,accessories.pdf
+GM-51137042961/962,شبك أوتو,Auto Grille,51137042961/962,E39,exterior-grilles,800,1160,accessories.pdf
+GM-E46-AUTOGRILLE-700,شبك أوتو,Auto Grille,,E46,exterior-grilles,700,1020,accessories.pdf
+GM-51137005837/838,شبك أوتو,Auto Grille,51137005837/838,E36,exterior-grilles,800,1160,accessories.pdf
+GM-E39-AUTOGRILLE-650,شبك أوتو,Auto Grille,,E39,exterior-grilles,650,950,accessories.pdf
+GM-E36-AUTOGRILLE-650,شبك أوتو,Auto Grille,,E36,exterior-grilles,650,950,accessories.pdf
+GM-51137027061/062,شبك أوتو,Auto Grille,51137027061/062,E36,exterior-grilles,900,1310,accessories.pdf
+GM-51712155447/446,شبك أوتو,Auto Grille,51712155447/446,E60,exterior-grilles,700,1020,accessories.pdf
+GM-51137030545/546,شبك أوتو,Auto Grille,51137030545/546,E60,exterior-grilles,700,1020,accessories.pdf
+GM-51137201967/968,شبك أوتو,Auto Grille,51137201967/968,E46,exterior-grilles,700,1020,accessories.pdf
+GM-51137201969/970,شبك أوتو,Auto Grille,51137201969/970,E90,exterior-grilles,900,1310,accessories.pdf
+GM-51137157277/278,شبك أوتو,Auto Grille,51137157277/278,E90,exterior-grilles,900,1310,accessories.pdf
+GM-E83-06-LENS-COVER,غطاء عدسة فانوس 06 E83,06 E83 Lens Cover,,E83,lighting-lenses,2000,2700,accessories.pdf
+GM-E84-10-LAMP-COVER,غطاء لمبة 10 E84,10 E84 Lamp Cover,,E84,lighting-lenses,2000,2700,accessories.pdf
+GM-X3-10-LAMP-COVER,غطاء لمبة 10 X3,10 X3 Lamp Cover,,X3,lighting-lenses,3000,4050,accessories.pdf
+GM-F30-16-LAMP-COVER,غطاء لمبة 16 F30,16 F30 Lamp Cover,,F30,lighting-lenses,2000,2700,accessories.pdf
+GM-E46-98-LENS-COVER,غطاء عدسة فانوس 98 E46,98 E46 Lens Cover,,E46,lighting-lenses,700,1020,accessories.pdf
+GM-E90-05-LENS-COVER,غطاء عدسة فانوس 05 E90,05 E90 Lens Cover,,E90,lighting-lenses,800,1160,accessories.pdf
+GM-F30-13-LENS-COVER,غطاء عدسة فانوس 13 F30,13 F30 Lens Cover,,F30,lighting-lenses,800,1160,accessories.pdf
+GM-F30-16-LENS-COVER,غطاء عدسة فانوس 16 F30,16 F30 Lens Cover,,F30,lighting-lenses,800,1160,accessories.pdf
+GM-E60-04-LENS-COVER,غطاء عدسة فانوس 04 E60,04 E60 Lens Cover,,E60,lighting-lenses,2500,3380,accessories.pdf
+GM-E60-04-LENS-COVER-LOW,غطاء عدسة فانوس 04 E60 LOW,04 E60 Lens Cover LOW,,E60,lighting-lenses,800,1160,accessories.pdf
+GM-E60-04-LENS-COVER-HIGH,غطاء عدسة فانوس 04 E60 HIGH,04 E60 Lens Cover HIGH,,E60,lighting-lenses,1000,1450,accessories.pdf
+GM-X1-10-LENS-COVER,غطاء عدسة فانوس 10 X1,10 X1 Lens Cover,,X1,lighting-lenses,900,1310,accessories.pdf
+GM-X1-10-HOUSING-HALOGEN,بيت فانوس هالوجين 10 X1,10 X1 Housing Halogen,,X1,lighting-lenses,2000,2700,accessories.pdf
+GM-X1-10-HOUSING-XENON,بيت فانوس زينون 10 X1,10 X1 Housing Xenon,,X1,lighting-lenses,3000,4050,accessories.pdf
+GM-X1-14-HOUSING,بيت فانوس 14 X1,14 X1 Housing,,X1,lighting-lenses,2000,2700,accessories.pdf
+GM-X5-04-LENS-COVER,غطاء عدسة فانوس 04 X5,04 X5 Lens Cover,,X5,lighting-lenses,1200,1620,accessories.pdf
+GM-E38-94-LENS-COVER,غطاء عدسة فانوس 94 E38,94 E38 Lens Cover,,E38,lighting-lenses,1000,1450,accessories.pdf
+GM-E38-98-LENS-COVER,غطاء عدسة فانوس 98 E38,98 E38 Lens Cover,,E38,lighting-lenses,1000,1450,accessories.pdf
+GM-E39-00-LENS-COVER,غطاء عدسة فانوس 00 E39,00 E39 Lens Cover,,E39,lighting-lenses,900,1310,accessories.pdf
+GM-YWZY001012,كشاف ضباب,Fog Lamp,YWZY001012,E34,lighting-lenses,500,780,accessories.pdf
+GM-YWZY001013,كشاف ضباب,Fog Lamp,YWZY001013,E36,lighting-lenses,400,620,accessories.pdf
+GM-64229166883,فتحة شبك تكييف,AC Grill Vent,64229166883,"F10,F18",climate-vents,700,1020,accessories.pdf
+GM-64229166884,فتحة شبك تكييف,AC Grill Vent,64229166884,"F10,F18",climate-vents,700,1020,accessories.pdf
+GM-64229166885,فتحة شبك تكييف,AC Grill Vent,64229166885,"F10,F18",climate-vents,800,1160,accessories.pdf
+GM-51417230849+51419150335+51417230850*2+51419150336*2,مقبض سحب داخلي,Inner Pull Handle,51417230849+51419150335+51417230850*2+51419150336*2,E90,interior-handles-trim,1200,1620,accessories.pdf
+GM-51412991775*2+51412991776*2,مقبض سحب داخلي,Inner Pull Handle,51412991775*2+51412991776*2,"E84,X1",interior-handles-trim,900,1310,accessories.pdf
+GM-51168190205,حامل أكواب,Cup Holder,51168190205,E39,cupholders-storage,800,1160,accessories.pdf
+GM-51439125298,غطاء فيشة OBD,OBD Plug Cover,51439125298,"E81,E82,E87,E88,E84,X1",interior-handles-trim,200,310,accessories.pdf
+GM-51459125622,حامل أكواب,Cup Holder,51459125622,E60,cupholders-storage,1100,1490,accessories.pdf
+GM-51459125626,حامل أكواب,Cup Holder,51459125626,E60,cupholders-storage,1100,1490,accessories.pdf
+GM-51459173463,حامل أكواب,Cup Holder,51459173463,E90,cupholders-storage,1200,1620,accessories.pdf
+GM-51137171699,مفتاح باب خلفي/شنطة,Tailgate Switch,51137171699,E46,electrical-switches,1600,2160,accessories.pdf
+GM-51247368752/51247463161,مفتاح باب خلفي/شنطة,Tailgate Switch,51247368752/51247463161,"F10,F16,F26,F48,F86,F85,F15,F28,F25,F49,F18,F11,F36,F83,F33,F82,F32,F35,F34,F31,F80,F30,F46,F45",electrical-switches,500,780,accessories.pdf
+GM-51247368753/51247463162,مفتاح باب خلفي/شنطة,Tailgate Switch,51247368753/51247463162,"F10,F16,F26,F48,F86,F85,F15,F28,F25,F49,F18,F11,F36,F83,F33,F82,F32,F35,F34,F31,F80,F30,F46,F45",electrical-switches,500,780,accessories.pdf
+GM-51167284999,مرآة جانبية يسار,Rearview Mirror LH,51167284999,"F20,F30",mirrors,700,1020,accessories.pdf
+GM-51167285000,مرآة جانبية يمين,Rearview Mirror RH,51167285000,"F20,F30",mirrors,700,1020,accessories.pdf
+GM-51167366039,مرآة جانبية يسار MINI,Rearview Mirror LH,51167366039,"F55,F56,F57",mirrors,1200,1620,accessories.pdf
+GM-51167366040,مرآة جانبية يمين MINI,Rearview Mirror RH,51167366040,"F55,F56,F57",mirrors,1200,1620,accessories.pdf
+GM-51167251583,مرآة جانبية يسار,Rearview Mirror LH,51167251583,"E60,F18,F02",mirrors,700,1020,accessories.pdf
+GM-51167251584,مرآة جانبية يمين,Rearview Mirror RH,51167251584,"E60,F18,F02",mirrors,700,1020,accessories.pdf
+GM-51167186582,مرآة جانبية يمين,Rearview Mirror RH,51167186582,"E60,F18,F02",mirrors,1000,1450,accessories.pdf
+GM-51167186581,مرآة جانبية يسار,Rearview Mirror LH,51167186581,"E60,F18,F02",mirrors,1000,1450,accessories.pdf
+GM-51167200103,مرآة جانبية يسار,Rearview Mirror LH,51167200103,"E70,E71,X5,X6",mirrors,1000,1450,accessories.pdf
+GM-51167200104,مرآة جانبية يمين,Rearview Mirror RH,51167200104,"E70,E71,X5,X6",mirrors,1000,1450,accessories.pdf
+GM-51162991659,مرآة جانبية يسار,Rearview Mirror LH,51162991659,"E84,F25",mirrors,900,1310,accessories.pdf
+GM-51162991660,مرآة جانبية يمين,Rearview Mirror RH,51162991660,"E84,F25",mirrors,900,1310,accessories.pdf
+GM-51163404625,مرآة جانبية يسار,Rearview Mirror LH,51163404625,E83,mirrors,800,1160,accessories.pdf
+GM-51163404626,مرآة جانبية يمين,Rearview Mirror RH,51163404626,E83,mirrors,800,1160,accessories.pdf
+GM-51167445413,مرآة جانبية يسار,Rearview Mirror LH,51167445413,"G20,G38",mirrors,1000,1450,accessories.pdf
+GM-51167445414,مرآة جانبية يمين,Rearview Mirror RH,51167445414,"G20,G38",mirrors,1000,1450,accessories.pdf
+GM-51167145267,مرآة جانبية يسار,Rearview Mirror LH,51167145267,"E90,E87",mirrors,800,1160,accessories.pdf
+GM-51167145268,مرآة جانبية يمين,Rearview Mirror RH,51167145268,"E90,E87",mirrors,600,870,accessories.pdf
+GM-51167132735,مرآة جانبية يسار,Rearview Mirror LH,51167132735,"E90,E87",mirrors,600,870,accessories.pdf
+GM-51167132736,مرآة جانبية يمين,Rearview Mirror RH,51167132736,"E90,E87",mirrors,600,870,accessories.pdf
+GM-51167252893,مرآة جانبية يسار,Rearview Mirror LH,51167252893,E90,mirrors,600,870,accessories.pdf
+GM-51167252894,مرآة جانبية يمين,Rearview Mirror RH,51167252894,E90,mirrors,600,870,accessories.pdf
+GM-51167377975,مرآة جانبية يسار,Rearview Mirror LH,51167377975,"F49,X1",mirrors,1400,1890,accessories.pdf
+GM-51167377976,مرآة جانبية يمين,Rearview Mirror RH,51167377976,"F49,X1",mirrors,1400,1890,accessories.pdf
+GM-51167028427,مرآة جانبية يسار,Rearview Mirror LH,51167028427,"E65,E66",mirrors,1000,1450,accessories.pdf
+GM-51167028428,مرآة جانبية يمين,Rearview Mirror RH,51167028428,"E65,E66",mirrors,1000,1450,accessories.pdf
+GM-51168247131,مرآة جانبية يسار,Rearview Mirror LH,51168247131,"E65,E66",mirrors,1000,1450,accessories.pdf
+GM-51168247132,مرآة جانبية يمين,Rearview Mirror RH,51168247132,"E65,E66",mirrors,1000,1450,accessories.pdf
+GM-51167065081,مرآة جانبية يسار,Rearview Mirror LH,51167065081,E60,mirrors,700,1020,accessories.pdf
+GM-51167065082,مرآة جانبية يمين,Rearview Mirror RH,51167065082,E60,mirrors,700,1020,accessories.pdf
+GM-51167168180,مرآة جانبية يسار,Rearview Mirror LH,51167168180,E60,mirrors,700,1020,accessories.pdf
+GM-51167168181,مرآة جانبية يمين,Rearview Mirror RH,51167168181,E60,mirrors,700,1020,accessories.pdf
+GM-51167291219,مرآة جانبية يسار,Rearview Mirror LH,51167291219,"X3,X4,X5,X6,X7",mirrors,1000,1450,accessories.pdf
+GM-51167291220,مرآة جانبية يمين,Rearview Mirror RH,51167291220,"X3,X4,X5,X6,X7",mirrors,1000,1450,accessories.pdf
+GM-51167362319,مرآة جانبية يسار,Rearview Mirror LH,51167362319,"X3,X4,X5,X6,X7",mirrors,1000,1450,accessories.pdf
+GM-51167362320,مرآة جانبية يمين,Rearview Mirror RH,51167362320,"X3,X4,X5,X6,X7",mirrors,1000,1450,accessories.pdf
+GM-51162755625,مرآة جانبية يسار MINI,Rearview Mirror LH,51162755625,"R55,R56",mirrors,800,1160,accessories.pdf
+GM-51162755626,مرآة جانبية يمين MINI,Rearview Mirror RH,51162755626,"R55,R56",mirrors,800,1160,accessories.pdf
