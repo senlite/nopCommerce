@@ -70,9 +70,9 @@ public sealed class GMasterCatalogImportService
     }
 
     /// <summary>
-    /// Validates the source, stages a complete unpublished replacement, then soft-deletes the previous
-    /// active catalog and publishes the replacement. Soft-delete intentionally preserves historical
-    /// order integrity; staging first avoids a blank storefront if creation fails.
+    /// Validates the source, stages a complete unpublished replacement, publishes it, then soft-deletes
+    /// the previous active catalog. Soft-delete preserves historical order integrity; publish-first
+    /// cutover means a failure can temporarily overlap catalogs but can never blank the storefront.
     /// </summary>
     public async Task<GMasterCatalogImportResult> ReplaceCatalogAsync(CancellationToken cancellationToken = default)
     {
@@ -145,26 +145,10 @@ public sealed class GMasterCatalogImportService
             displayOrder++;
         }
 
-        // Cart and wishlist rows point to product ids. Clear them at cutover so customers never see
-        // "Product is deleted" entries left over from the replaced catalog.
-        var existingCartItems = await _shoppingCartItemRepository.GetAllAsync(query => query);
-        if (existingCartItems.Count > 0)
-            await _shoppingCartItemRepository.DeleteAsync(existingCartItems, publishEvent: false);
-
-        // Destructive cutover is deliberate and is the plugin's core contract.
-        foreach (var product in existingProducts)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await _productService.DeleteProductAsync(product);
-        }
-
-        // Delete deepest categories first so parents do not have to be reparented repeatedly.
-        foreach (var category in existingCategories.OrderByDescending(category => category.ParentCategoryId))
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await _categoryService.DeleteCategoryAsync(category);
-        }
-
+        // Cutover starts by publishing the complete staged replacement. If any publish operation fails,
+        // the old catalog is still online; a failure can produce overlap, but never a blank storefront.
+        // Do not observe request cancellation after this point: client disconnects must not interrupt a
+        // destructive cutover halfway through.
         root.Published = true;
         root.UpdatedOnUtc = DateTime.UtcNow;
         await _categoryService.UpdateCategoryAsync(root);
@@ -183,6 +167,20 @@ public sealed class GMasterCatalogImportService
         }
 
         await ConfigureEgyptianPoundAsync();
+
+        // Cart and wishlist rows point to the previous product ids. Clear them before deleting those
+        // products so customers never see "Product is deleted" rows.
+        var existingCartItems = await _shoppingCartItemRepository.GetAllAsync(query => query);
+        if (existingCartItems.Count > 0)
+            await _shoppingCartItemRepository.DeleteAsync(existingCartItems, publishEvent: false);
+
+        foreach (var product in existingProducts)
+            await _productService.DeleteProductAsync(product);
+
+        // Child categories first minimizes reparenting churn; this is a two-level-safe preference,
+        // not a reliance on database identifier order.
+        foreach (var category in existingCategories.OrderByDescending(category => category.ParentCategoryId != 0))
+            await _categoryService.DeleteCategoryAsync(category);
 
         var completedUtc = DateTime.UtcNow;
         _settings.LastImportUtc = completedUtc;
@@ -428,7 +426,7 @@ public sealed class GMasterCatalogImportService
             Name = $"{item.ArabicName} | {item.EnglishName}",
             Sku = item.Sku,
             ManufacturerPartNumber = item.Oem,
-            ShortDescription = $"{item.ArabicName} — متوافق مع {item.VehicleModels}.",
+            ShortDescription = $"{safeArabic} — متوافق مع {safeModels}.",
             FullDescription = $"""
                 <div dir="auto">
                   <h2>{safeArabic}</h2>

@@ -44,6 +44,8 @@ public sealed class GMasterCatalogParser
                 throw new InvalidOperationException($"Catalog row {rowIndex + 1} is missing a required value.");
             }
 
+            EnsurePlainText(row, rowIndex + 1);
+
             if (!skus.Add(sku))
                 throw new InvalidOperationException($"Duplicate SKU '{sku}' in catalog row {rowIndex + 1}.");
 
@@ -69,6 +71,17 @@ public sealed class GMasterCatalogParser
         }
 
         return items;
+    }
+
+    private static void EnsurePlainText(IReadOnlyList<string> fields, int rowNumber)
+    {
+        // The bundled source is data, never markup. Reject tags rather than attempting to sanitize
+        // attacker-controlled HTML into product names, metadata, or admin comments.
+        if (fields.Any(value => value.Contains('<') || value.Contains('>')))
+            throw new InvalidOperationException($"Catalog row {rowNumber} contains HTML markup.");
+
+        if (fields.Any(value => value.IndexOf('\0') >= 0))
+            throw new InvalidOperationException($"Catalog row {rowNumber} contains a null character.");
     }
 
     /// <summary>

@@ -43,7 +43,7 @@ public sealed class GMasterController : BasePluginController
     [HttpGet]
     public async Task<IActionResult> Configure()
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await AuthorizedAsync())
             return AccessDeniedView();
 
         return View("~/Plugins/Misc.GMaster/Views/Configure.cshtml", BuildModel());
@@ -52,7 +52,7 @@ public sealed class GMasterController : BasePluginController
     [HttpPost]
     public async Task<IActionResult> Reimport(ConfigurationModel model, CancellationToken cancellationToken)
     {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
+        if (!await AuthorizedAsync())
             return AccessDeniedView();
 
         if (!string.Equals(model.Confirmation?.Trim(), GMasterDefaults.ReimportConfirmation, StringComparison.Ordinal))
@@ -93,4 +93,8 @@ public sealed class GMasterController : BasePluginController
             ClearedCartItemCount = _settings.ClearedCartItemCount,
             LastError = _settings.LastError
         };
+
+    private async Task<bool> AuthorizedAsync()
+        => await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins) &&
+           await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts);
 }

@@ -31,12 +31,22 @@ public sealed class GMasterPlugin : BasePlugin, IMiscPlugin
 
     public override async Task InstallAsync()
     {
-        await _settingService.SaveSettingAsync(new GMasterSettings());
+        var settings = new GMasterSettings();
+        await _settingService.SaveSettingAsync(settings);
         await InstallLocaleResourcesAsync();
 
-        // The user explicitly requested replacement during setup. The source is parsed and validated
-        // in full before the first existing catalog entity is soft-deleted.
-        await _catalogImportService.ReplaceCatalogAsync();
+        try
+        {
+            // The user explicitly requested replacement during setup. The complete replacement is
+            // staged and published before the previous catalog is soft-deleted.
+            await _catalogImportService.ReplaceCatalogAsync();
+        }
+        catch (Exception exception)
+        {
+            settings.LastError = exception.Message;
+            await _settingService.SaveSettingAsync(settings);
+            throw;
+        }
 
         await base.InstallAsync();
     }
@@ -63,7 +73,7 @@ public sealed class GMasterPlugin : BasePlugin, IMiscPlugin
             ["Plugins.Misc.GMaster.ClearedCategories"] = "Cleared categories",
             ["Plugins.Misc.GMaster.ClearedCartItems"] = "Cleared cart / wishlist items",
             ["Plugins.Misc.GMaster.Reimport"] = "Replace catalog now",
-            ["Plugins.Misc.GMaster.Reimport.Warning"] = "Destructive action: this stages a replacement, then soft-deletes every active product/category and clears current cart/wishlist items before publishing GMaster. Historical orders remain intact.",
+            ["Plugins.Misc.GMaster.Reimport.Warning"] = "Destructive action: this stages and publishes a replacement, clears current cart/wishlist items, then soft-deletes the previous active catalog. Historical orders remain intact.",
             ["Plugins.Misc.GMaster.Reimport.Confirmation"] = $"Type {GMasterDefaults.ReimportConfirmation} to continue",
             ["Plugins.Misc.GMaster.Reimport.InvalidConfirmation"] = "Confirmation text did not match. The catalog was not changed.",
             ["Plugins.Misc.GMaster.Reimport.Success"] = "GMaster catalog replacement completed: {0} products across {1} categories.",

@@ -29,9 +29,10 @@ Installing the plugin:
 1. Parses and validates the whole bundled CSV before changing the store.
 2. Stages the complete GMaster replacement as unpublished, so a staging failure leaves the current
    storefront online.
-3. Soft-deletes every previous active product and category through nopCommerce services.
+3. Publishes the GMaster root category, ten subcategories, and all staged products before destructive
+   cleanup, so a cutover failure can overlap catalogs but cannot blank the storefront.
 4. Clears current cart and wishlist rows so no session retains a now-deleted product.
-5. Publishes a GMaster root category, ten focused subcategories, and the staged products.
+5. Soft-deletes every previous active product and category through nopCommerce services.
 6. Stores supplier cost in `ProductCost` and calculated EGP selling price in `Price`.
 7. Sets EGP as the store's primary currency and unpublishes other currencies so the EGP amounts cannot
    be shown under a misleading currency symbol.

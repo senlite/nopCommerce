@@ -61,6 +61,20 @@ public class GMasterCatalogTests
     }
 
     [Test]
+    public void Parser_Should_Reject_Html_In_Catalog_Data()
+    {
+        const string csv = """
+            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_price,selling_price,source_file
+            GM-X,قطعة,<script>alert(1)</script>,X,E90,body-underbody,100,160,fiber.pdf
+            """;
+
+        Action parseHtml = () => new GMasterCatalogParser().Parse(csv);
+        var exception = Assert.Throws<InvalidOperationException>(parseHtml);
+
+        Assert.That(exception!.Message, Does.Contain("HTML markup"));
+    }
+
+    [Test]
     public void Every_Category_Should_Have_Bilingual_Copy_And_Original_Glyph()
     {
         Assert.That(GMasterCategoryCatalog.All, Has.Count.EqualTo(10));
