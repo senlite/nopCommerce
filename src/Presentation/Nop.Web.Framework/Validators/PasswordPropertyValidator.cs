@@ -1,81 +1,126 @@
+﻿using System.Text;
 using System.Text.RegularExpressions;
 using FluentValidation;
 using FluentValidation.Validators;
 using Nop.Core.Domain.Customers;
 using Nop.Services.Localization;
 
-namespace Nop.Web.Framework.Validators
+namespace Nop.Web.Framework.Validators;
+
+public partial class PasswordPropertyValidator<T, TProperty> : PropertyValidator<T, TProperty>, IRegularExpressionValidator
 {
-    public class PasswordPropertyValidator<T, TProperty> : PropertyValidator<T, TProperty>
+    #region Fields
+
+    protected readonly CustomerSettings _customerSettings;
+    protected readonly ILocalizationService _localizationService;
+
+    #endregion
+
+    #region Ctor
+
+    public PasswordPropertyValidator(ILocalizationService localizationService, CustomerSettings customerSettings)
     {
-        #region Fields
-
-        protected readonly CustomerSettings _customerSettings;
-        protected readonly ILocalizationService _localizationService;
-
-        #endregion
-
-        #region Ctor
-
-        public PasswordPropertyValidator(ILocalizationService localizationService, CustomerSettings customerSettings)
-        {
-            _localizationService = localizationService;
-            _customerSettings = customerSettings;
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Validates a specific property value
-        /// </summary>
-        /// <param name="context">The validation context. The parent object can be obtained from here</param>
-        /// <param name="value">The current property value to validate</param>
-        /// <returns>True if valid, otherwise false</returns>
-        public override bool IsValid(ValidationContext<T> context, TProperty value)
-        {
-            var password = value as string;
-
-            if (string.IsNullOrEmpty(password))
-            {
-                context.AddFailure(_localizationService.GetResourceAsync("Validation.Password.IsNotEmpty").Result);
-                return false;
-            }
-
-            var regExp = "^";
-            //Passwords must be at least X characters and contain the following: upper case (A-Z), lower case (a-z), number (0-9) and special character (e.g. !@#$%^&*-)
-            regExp += _customerSettings.PasswordRequireUppercase ? "(?=.*?[A-Z])" : "";
-            regExp += _customerSettings.PasswordRequireLowercase ? "(?=.*?[a-z])" : "";
-            regExp += _customerSettings.PasswordRequireDigit ? "(?=.*?[0-9])" : "";
-            regExp += _customerSettings.PasswordRequireNonAlphanumeric ? "(?=.*?[#?!@$%^&*-])" : "";
-            regExp += $".{{{_customerSettings.PasswordMinLength},{_customerSettings.PasswordMaxLength}}}$";
-
-            if (!Regex.IsMatch(password, regExp))
-            {
-                var regExpError = string.Format(_localizationService.GetResourceAsync("Validation.Password.Rule").Result,
-                    string.Format(_localizationService.GetResourceAsync("Validation.Password.LengthValidation").Result, _customerSettings.PasswordMinLength, _customerSettings.PasswordMaxLength),
-                    _customerSettings.PasswordRequireUppercase ? _localizationService.GetResourceAsync("Validation.Password.RequireUppercase").Result : "",
-                    _customerSettings.PasswordRequireLowercase ? _localizationService.GetResourceAsync("Validation.Password.RequireLowercase").Result : "",
-                    _customerSettings.PasswordRequireDigit ? _localizationService.GetResourceAsync("Validation.Password.RequireDigit").Result : "",
-                    _customerSettings.PasswordRequireNonAlphanumeric ? _localizationService.GetResourceAsync("Validation.Password.RequireNonAlphanumeric").Result : "");
-
-                context.AddFailure(regExpError);
-
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Returns the default error message template for this validator, when not overridden
-        /// </summary>
-        /// <param name="errorCode">The currently configured error code for the validator</param>
-        protected override string GetDefaultMessageTemplate(string errorCode) => "Password is not valid";
-
-        #region Properties
-
-        public override string Name => "PasswordPropertyValidator";
-
-        #endregion
+        _localizationService = localizationService;
+        _customerSettings = customerSettings;
     }
+
+    #endregion
+
+    #region Utilities
+
+    private async Task<string> GetValidationMessageAsync()
+    {
+        var regExpError = new StringBuilder()
+            .AppendJoin(' ',
+                await _localizationService.GetResourceAsync("Validation.Password.Rule"),
+                string.Format(await _localizationService.GetResourceAsync("Validation.Password.LengthValidation"), _customerSettings.PasswordMinLength, _customerSettings.PasswordMaxLength));
+
+        if (_customerSettings.PasswordRequireUppercase)
+            regExpError.AppendFormat(", {0}", await _localizationService.GetResourceAsync("Validation.Password.RequireUppercase"));
+
+        if (_customerSettings.PasswordRequireLowercase)
+            regExpError.AppendFormat(", {0}", await _localizationService.GetResourceAsync("Validation.Password.RequireLowercase"));
+
+        if (_customerSettings.PasswordRequireDigit)
+            regExpError.AppendFormat(", {0}", await _localizationService.GetResourceAsync("Validation.Password.RequireDigit"));
+
+        if (_customerSettings.PasswordRequireNonAlphanumeric)
+            regExpError.AppendFormat(", {0}", await _localizationService.GetResourceAsync("Validation.Password.RequireNonAlphanumeric"));
+
+        return regExpError.ToString();
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Validates a specific property value
+    /// </summary>
+    /// <param name="context">The validation context. The parent object can be obtained from here</param>
+    /// <param name="value">The current property value to validate</param>
+    /// <returns>True if valid, otherwise false</returns>
+    public override bool IsValid(ValidationContext<T> context, TProperty value)
+    {
+        var password = value as string;
+
+        if (string.IsNullOrEmpty(password))
+        {
+            context.AddFailure(_localizationService.GetResourceAsync("Validation.Password.IsNotEmpty").Result);
+            return false;
+        }
+
+        if (!Regex.IsMatch(password, Expression))
+        {
+            context.AddFailure(GetDefaultMessageTemplate(string.Empty));
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Returns the default error message template for this validator, when not overridden
+    /// </summary>
+    /// <param name="errorCode">The currently configured error code for the validator</param>
+    protected override string GetDefaultMessageTemplate(string errorCode)
+    {
+        return GetValidationMessageAsync().Result;
+    }
+
+    #region Properties
+
+    /// <summary>
+    /// Gets regular expression for client side (pattern source: https://emailregex.com/)
+    /// </summary>
+    public string Expression
+    {
+        get
+        {
+            var regExp = new StringBuilder("^");
+
+            // upper case (A-Z),
+            if (_customerSettings.PasswordRequireUppercase)
+                regExp.Append("(?=.*?[A-Z])");
+
+            // lower case (a-z),
+            if (_customerSettings.PasswordRequireLowercase)
+                regExp.Append("(?=.*?[a-z])");
+
+            // number (0-9)
+            if (_customerSettings.PasswordRequireDigit)
+                regExp.Append("(?=.*?[0-9])");
+
+            // and special character (e.g. !@#$%^&*-)
+            if (_customerSettings.PasswordRequireNonAlphanumeric)
+                regExp.Append("(?=.*?[#?!@$%^&*-])");
+
+            // password length must be in the range
+            regExp.Append($".{{{_customerSettings.PasswordMinLength},{_customerSettings.PasswordMaxLength}}}$");
+
+            return regExp.ToString();
+        }
+    }
+
+    public override string Name => "PasswordPropertyValidator";
+
+    #endregion
 }

@@ -15,12 +15,12 @@
     </div>
     <div class="page-body">
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.RegisterTop, additionalData = Model })
-        <form asp-route="Register" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post" autocomplete="off">
+        <form asp-route="@NopRouteNames.Standard.REGISTER" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post" autocomplete="off">
             <div asp-validation-summary="ModelOnly" class="message-error"></div>
-            <div class="fieldset">
-                <div class="title">
-                    <strong>@T("Account.YourPersonalDetails")</strong>
-                </div>
+            <section class="fieldset">
+                <h2 class="title">
+                    @T("Account.YourPersonalDetails")
+                </h2>
                 <div class="form-fields">
                     @if (Model.GenderEnabled)
                     {
@@ -35,6 +35,13 @@
                                     <input type="radio" asp-for="Gender" value="F" checked="@(Model.Gender == "F")" id="gender-female" />
                                     <label class="forcheckbox" for="gender-female">@T("Account.Fields.Gender.Female")</label>
                                 </span>
+                                @if (Model.NeutralGenderEnabled)
+                                {
+                                    <span class="Neutral">
+                                        <input type="radio" asp-for="Gender" value="N" checked="@(Model.Gender == "N")" id="gender-neutral" />
+                                        <label class="forcheckbox" for="gender-neutral">@T("Account.Fields.Gender.Neutral")</label>
+                                    </span>
+                                }
                             </div>
                         </div>
                     }
@@ -112,13 +119,13 @@
 
                     }
                 </div>
-            </div>
+            </section>
             @if (Model.CompanyEnabled || Model.DisplayVatNumber)
             {
-                <div class="fieldset">
-                    <div class="title">
-                        <strong>@T("Account.CompanyDetails")</strong>
-                    </div>
+                <section class="fieldset">
+                    <h2 class="title">
+                        @T("Account.CompanyDetails")
+                    </h2>
                     <div class="form-fields">
                         @if (Model.CompanyEnabled)
                         {
@@ -137,11 +144,16 @@
                             <div class="inputs">
                                 <label asp-for="VatNumber" asp-postfix=":"></label>
                                 <input asp-for="VatNumber" />
+                                @if (Model.VatNumberRequired)
+                                {
+                                    <nop-required />
+                                }
+                                <span asp-validation-for="VatNumber"></span>
                                 <span class="vat-note"><em>@T("Account.Fields.VatNumber.Note")</em></span>
                             </div>
                         }
                     </div>
-                </div>
+                </section>
             }
             @if (Model.StreetAddressEnabled ||
                 Model.StreetAddress2Enabled ||
@@ -150,10 +162,10 @@
                 Model.CountyEnabled ||
                 Model.CountryEnabled)
             {
-                <div class="fieldset">
-                    <div class="title">
-                        <strong>@T("Account.YourAddress")</strong>
-                    </div>
+                <section class="fieldset">
+                    <h2 class="title">
+                        @T("Account.YourAddress")
+                    </h2>
                     <div class="form-fields">
                         @if (Model.StreetAddressEnabled)
                         {
@@ -221,7 +233,7 @@
                                 <label asp-for="CountryId" asp-postfix=":"></label>
                                 <select asp-for="CountryId" asp-items="Model.AvailableCountries"
                                         data-trigger="country-select"
-                                        data-url="@(Url.RouteUrl("GetStatesByCountryId"))"
+                                        data-url="@(Url.RouteUrl(NopRouteNames.Ajax.GET_STATES_BY_COUNTRY_ID))"
                                         data-stateprovince="#@Html.IdFor(model => model.StateProvinceId)"
                                         data-loading="#states-loading-progress"></select>
                                 @if (Model.CountryRequired)
@@ -245,14 +257,14 @@
                             </div>
                         }
                     </div>
-                </div>
+                </section>
             }
             @if (Model.PhoneEnabled || Model.FaxEnabled)
             {
-                <div class="fieldset">
-                    <div class="title">
-                        <strong>@T("Account.YourContactInformation")</strong>
-                    </div>
+                <section class="fieldset">
+                    <h2 class="title">
+                        @T("Account.YourContactInformation")
+                    </h2>
                     <div class="form-fields">
                         @if (Model.PhoneEnabled)
                         {
@@ -279,36 +291,49 @@
                             </div>
                         }
                     </div>
-                </div>
+                </section>
             }
-            @if (Model.NewsletterEnabled || Model.CustomerAttributes.Count > 0)
+            @if (Model.NewsletterEnabled && Model.NewsLetterSubscriptions.Count > 0)
             {
-                <div class="fieldset">
-                    <div class="title">
-                        <strong>@T("Account.Options")</strong>
-                    </div>
+                <section class="fieldset">
+                    <h2 class="title">
+                        @T("Account.SubscribeToNewsletter")
+                    </h2>
                     <div class="form-fields">
-                        @if (Model.NewsletterEnabled)
-                        {
-                            <div class="inputs">
-                                <label asp-for="Newsletter" asp-postfix=":"></label>
-                                <input asp-for="Newsletter" />
-                                <span asp-validation-for="Newsletter"></span>
+                        <div class="inputs">
+                            <div class="attributes">
+                                <ul>
+                                    @for (int i = 0; i < Model.NewsLetterSubscriptions.Count; i++)
+                                    {
+                                        <li>
+                                            <label asp-for="NewsLetterSubscriptions[i].IsActive">@Model.NewsLetterSubscriptions[i].Name</label>
+                                            <input type="hidden" asp-for="NewsLetterSubscriptions[i].TypeId" />
+                                            <input class="form-check-input" type="checkbox" asp-for="NewsLetterSubscriptions[i].IsActive" />
+                                        </li>
+                                    }
+                                </ul>
                             </div>
-                        }
-                        @if (Model.CustomerAttributes.Count > 0)
-                        {
-                            @await Html.PartialAsync("_CustomerAttributes", Model.CustomerAttributes)
-                        }
+                        </div>
                     </div>
-                </div>
+                </section>
+            }
+            @if (Model.CustomerAttributes.Count > 0)
+            {
+                <section class="fieldset">
+                    <h2 class="title">
+                        @T("Account.Options")
+                    </h2>
+                    <div class="form-fields">
+                        @await Html.PartialAsync("_CustomerAttributes", Model.CustomerAttributes)
+                    </div>
+                </section>
             }
             @if (Model.AllowCustomersToSetTimeZone)
             {
-                <div class="fieldset">
-                    <div class="title">
-                        <strong>@T("Account.Preferences")</strong>
-                    </div>
+                <section class="fieldset">
+                    <h2 class="title">
+                        @T("Account.Preferences")
+                    </h2>
                     <div class="form-fields">
                         <div class="inputs">
                             <label asp-for="TimeZoneId" asp-postfix=":"></label>
@@ -316,12 +341,12 @@
                             <span asp-validation-for="TimeZoneId"></span>
                         </div>
                     </div>
-                </div>
+                </section>
             }
-            <div class="fieldset">
-                <div class="title">
-                    <strong>@T("Account.YourPassword")</strong>
-                </div>
+            <section class="fieldset">
+                <h2 class="title">
+                    @T("Account.YourPassword")
+                </h2>
                 <div class="form-fields">
                     <div class="inputs">
                         <label asp-for="Password" asp-postfix=":"></label>
@@ -344,19 +369,19 @@
                         @Html.Raw(Html.GenerateHoneypotInput())
                     }
                 </div>
-            </div>
+            </section>
 
             @if (Model.AcceptPrivacyPolicyEnabled || Model.GdprConsents.Count > 0)
             {
-                <div class="fieldset">
-                    <div class="title">
-                        <strong>@T("Account.UserAgreement")</strong>
-                    </div>
+                <section class="fieldset">
+                    <h2 class="title">
+                        @T("Account.UserAgreement")
+                    </h2>
                     <div class="form-fields">
                         @if (Model.AcceptPrivacyPolicyEnabled)
                         {
                             <script asp-location="Footer">
-                                $(document).ready(function() {
+                                $(function() {
                                     $('#register-button').on('click', function() {
                                         if ($('#accept-consent').is(':checked')) {
                                             //do some stuff
@@ -376,11 +401,11 @@
                                 {
                                     <span class="read" id="read-privacyinfo">@T("Account.Fields.AcceptPrivacyPolicy.Read")</span>
                                     <script asp-location="Footer">
-                                    $(document).ready(function() {
+                                    $(function() {
                                         $('#read-privacyinfo').on('click',
                                             function(e) {
                                                 displayPopupContentFromUrl(
-                                                    '@Url.RouteUrl("TopicPopup", new {SystemName = "privacyinfo"})',
+                                                        '@Url.RouteUrl(NopRouteNames.Ajax.TOPIC_POPUP, new { SystemName = "privacyinfo" })',
                                                     '@T("Account.Fields.AcceptPrivacyPolicy")');
                                             });
                                     });
@@ -388,7 +413,7 @@
                                 }
                                 else
                                 {
-                                    <a class="read" id="read-privacyinfo" href="@Url.RouteTopicUrl("privacyinfo")">@T("Account.Fields.AcceptPrivacyPolicy.Read")</a>
+                                    <a class="read" id="read-privacyinfo" href="@await NopUrl.RouteTopicUrlAsync("privacyinfo")">@T("Account.Fields.AcceptPrivacyPolicy.Read")</a>
                                 }
                             </div>
                         }
@@ -400,7 +425,7 @@
                                 if (consent.IsRequired)
                                 {
                                     <script asp-location="Footer">
-                                    $(document).ready(function() {
+                                    $(function() {
                                         $('#register-button').on('click', function() {
                                             if ($('#consent@(consent.Id)').is(':checked')) {
                                                     //do some stuff
@@ -422,12 +447,12 @@
 
                         }
                     </div>
-                </div>
+                </section>
             }
 
-            <div class="buttons">
+            <section class="buttons">
                 <button type="submit" name="register-button" id="register-button" class="button-1 register-next-step-button">@T("Account.Register.Button")</button>
-            </div>
+            </section>
         </form>
         <div class="external-authentication">
             @await Component.InvokeAsync(typeof(ExternalMethodsViewComponent), "ExternalAuthentication")

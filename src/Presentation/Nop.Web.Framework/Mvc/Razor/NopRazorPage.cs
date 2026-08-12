@@ -2,51 +2,38 @@
 using Nop.Services.Localization;
 using Nop.Web.Framework.Localization;
 
-namespace Nop.Web.Framework.Mvc.Razor
+namespace Nop.Web.Framework.Mvc.Razor;
+
+/// <summary>
+/// Web view page
+/// </summary>
+/// <typeparam name="TModel">Model</typeparam>
+public abstract partial class NopRazorPage<TModel> : Microsoft.AspNetCore.Mvc.Razor.RazorPage<TModel>
 {
-    /// <summary>
-    /// Web view page
-    /// </summary>
-    /// <typeparam name="TModel">Model</typeparam>
-    public abstract partial class NopRazorPage<TModel> : Microsoft.AspNetCore.Mvc.Razor.RazorPage<TModel>
-    {
-        protected ILocalizationService _localizationService;
-        protected Localizer _localizer;
+    protected ILocalizationService _localizationService;
+    protected Localizer _localizer;
 
-        /// <summary>
-        /// Get a localized resources
-        /// </summary>
-        public Localizer T
+    /// <summary>
+    /// Get a localized resources
+    /// </summary>
+    public Localizer T
+    {
+        get
         {
-            get
+            _localizationService ??= EngineContext.Current.Resolve<ILocalizationService>();
+
+            _localizer ??= (format, args) =>
             {
-                if (_localizationService == null)
-                    _localizationService = EngineContext.Current.Resolve<ILocalizationService>();
-
-                if (_localizer == null)
+                var resFormat = _localizationService.GetResourceAsync(format).Result;
+                if (string.IsNullOrEmpty(resFormat))
                 {
-                    _localizer = (format, args) =>
-                    {
-                        var resFormat = _localizationService.GetResourceAsync(format).Result;
-                        if (string.IsNullOrEmpty(resFormat))
-                        {
-                            return new LocalizedString(format);
-                        }
-                        return new LocalizedString((args == null || args.Length == 0)
-                            ? resFormat
-                            : string.Format(resFormat, args));
-                    };
+                    return new LocalizedString(format);
                 }
-                return _localizer;
-            }
+                return new LocalizedString((args == null || args.Length == 0)
+                    ? resFormat
+                    : string.Format(resFormat, args));
+            };
+            return _localizer;
         }
-    }
-
-    /// <summary>
-    /// Web view page
-    /// </summary>
-    /// TODO: Doesn't seem to be used anywhere
-    public abstract partial class NopRazorPage : NopRazorPage<dynamic>
-    {
     }
 }

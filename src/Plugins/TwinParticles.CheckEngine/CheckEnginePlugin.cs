@@ -73,7 +73,6 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.Installation);
 
         await _settingService.SaveSettingAsync(new CheckEnginePluginSettings());
-        await _permissionService.InstallPermissionsAsync(new CheckEnginePermissionProvider());
 
         await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
         {
@@ -133,7 +132,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
     public override async Task UninstallAsync()
     {
-        await _permissionService.UninstallPermissionsAsync(new CheckEnginePermissionProvider());
+        await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.TwinParticles.CheckEngine");
 

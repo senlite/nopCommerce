@@ -42,7 +42,7 @@
             </button>
             <nop-antiforgery-token />
             <script>
-                $(document).ready(function () {
+                $(function() {
                     $("#back-in-stock-notify-me").on('click', function () {
                         var subscribeButton = this;
                         var postData = {};
@@ -51,7 +51,7 @@
                             cache: false,
                             type: "POST",
                             data: postData,
-                            url: "@(Url.RouteUrl("BackInStockSubscribeSend", new { productId = Model.ProductId }))",
+                            url: "@(Url.RouteUrl(NopRouteNames.Ajax.BACK_IN_STOCK_SUBSCRIBE_SEND, new { productId = Model.ProductId }))",
                             success: function (data, textStatus, jqXHR) {
                                 $(subscribeButton).closest('.ui-dialog-content').dialog('destroy').remove();
                                 location.reload();

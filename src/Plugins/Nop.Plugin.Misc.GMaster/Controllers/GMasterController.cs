@@ -12,7 +12,7 @@ using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Misc.GMaster.Controllers;
 
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 [AuthorizeAdmin]
 [AutoValidateAntiforgeryToken]
 public sealed class GMasterController : BasePluginController
@@ -104,6 +104,7 @@ public sealed class GMasterController : BasePluginController
         };
 
     private async Task<bool> AuthorizedAsync()
-        => await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins) &&
-           await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts);
+        => await _permissionService.AuthorizeAsync(StandardPermission.Configuration.MANAGE_PLUGINS) &&
+           await _permissionService.AuthorizeAsync(StandardPermission.Catalog.PRODUCTS_CREATE_EDIT_DELETE) &&
+           await _permissionService.AuthorizeAsync(StandardPermission.Catalog.CATEGORIES_CREATE_EDIT_DELETE);
 }

@@ -1,6 +1,4 @@
-﻿@inject Nop.Services.Common.IGenericAttributeService genericAttributeService
-@inject IWorkContext workContext
-@{
+﻿@{
     const string cardId = "order-incomplete-report-card";
     const string hideCardAttributeName = "Reports.HideOrderIncompleteReportCard";
     var hideCard = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideCardAttributeName);
@@ -26,7 +24,7 @@
         </div>
     </div>
     <script>
-        $(document).ready(function () {
+        $(function() {
             var collapsed = !$('#@cardId').hasClass('collapsed-card');
             if (collapsed) {
                 $('#orderIncompleteReport').load('@Url.Action("GetOrderIncomplete", "Home")');

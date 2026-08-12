@@ -63,8 +63,7 @@
             new ColumnProperty(nameof(ProductAttributeCombinationModel.PictureThumbnailUrl))
             {
             Title = T("Admin.Catalog.Products.ProductAttributes.AttributeCombinations.Fields.Picture").Text,
-            Width = "200",
-            Render = new RenderPicture()
+            Render = new RenderPicture("", 80)
             },
             new ColumnProperty(nameof(ProductAttributeCombinationModel.Id))
             {
@@ -94,7 +93,7 @@
                 }
 
                 function renderProductAttributesCombinationsColumnEdit(data, type, row, meta) {
-                    return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/Product/ProductAttributeCombinationEditPopup/")' + data + '?btnId=btnRefreshCombinations&formId=product-form\', 800, 700, true); return false;\" class="btn btn-default"><i class="fas fa-pencil-alt"></i>@T("Admin.Common.Edit").Text</button>';
+                    return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/Product/ProductAttributeCombinationEditPopup/")' + data + '?btnId=btnRefreshCombinations&formId=product-form\', 800, 700, true); return false;\" class="btn btn-default"><i class="fas fa-pencil"></i>@T("Admin.Common.Edit").Text</button>';
                 }
             </script>
 
@@ -113,7 +112,7 @@
             <nop-action-confirmation asp-button-id="btnGenerateAllCombinations" />
             <button type="submit" id="btnRefreshCombinations" style="display: none"></button>
             <script>
-                $(document).ready(function() {
+                $(function() {
                     $('#btnRefreshCombinations').click(function() {
                         //refresh grid
                         $("#attributecombinations-grid").DataTable().ajax.reload();
@@ -123,7 +122,7 @@
                     });
 
                     //generate combinations
-                    $("#btnGenerateAllCombinations-action-confirmation-submit-button").bind("click", function () {
+                    $("#btnGenerateAllCombinations-action-confirmation-submit-button").on("click", function () {
                         var postData = {
 
                         };
@@ -139,7 +138,7 @@
                                 updateTable('#attributecombinations-grid');
                             },
                             error: function (jqXHR, textStatus, errorThrown) {
-                                $("#generateAllAttributeCombinationsAlert").click();
+                                $("#generateAllAttributeCombinationsAlert").trigger("click");
                             }
                         });
                         $('#btnGenerateAllCombinations-action-confirmation').modal('toggle');

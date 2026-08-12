@@ -12,7 +12,7 @@ using TwinParticles.CheckEngine.Security;
 namespace TwinParticles.CheckEngine.Controllers;
 
 [AuthorizeAdmin]
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 [AutoValidateAntiforgeryToken]
 public sealed class ErpAdminController : BasePluginController
 {

@@ -8,19 +8,24 @@ using FluentMigrator;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 
-namespace Nop.Data.Migrations.Installation
+namespace Nop.Data.Migrations.Installation;
+
+[NopSchemaMigration("2020/03/17 11:26:08:9037680", "Add FK on RewardPointsHistory into order table", MigrationProcessType.Installation)]
+public class AddOrderRewardPointsHistoryFK : ForwardOnlyMigration
 {
-    [NopSchemaMigration("2020/03/17 11:26:08:9037680", "Add FK on RewardPointsHistory into order table", MigrationProcessType.Installation)]
-    public class AddOrderRewardPointsHistoryFK : ForwardOnlyMigration
+    #region Methods          
+
+    public override void Up()
     {
-        #region Methods          
+        var dataSettings = DataSettingsManager.LoadSettings();
 
-        public override void Up()
-        {
-            Create.ForeignKey().FromTable(nameof(Order)).ForeignColumn(nameof(Order.RewardPointsHistoryEntryId))
-                .ToTable(nameof(RewardPointsHistory)).PrimaryColumn(nameof(RewardPointsHistory.Id)).OnDelete(Rule.None);
-        }
+        //foreign keys are not supported in SQLite
+        if (dataSettings.DataProvider == DataProviderType.Unknown)
+            return;
 
-        #endregion
+        Create.ForeignKey().FromTable(nameof(Order)).ForeignColumn(nameof(Order.RewardPointsHistoryEntryId))
+            .ToTable(nameof(RewardPointsHistory)).PrimaryColumn(nameof(RewardPointsHistory.Id)).OnDelete(Rule.None);
     }
+
+    #endregion
 }

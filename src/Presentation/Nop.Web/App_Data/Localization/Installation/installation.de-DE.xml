@@ -1,16 +1,25 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Language Name="Deutsch" IsDefault="false" IsRightToLeft="false">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Language Name="German" IsDefault="false" IsRightToLeft="false">
   <LocaleResource Name="AdminEmail">
     <Value>E-Mail des Administrators</Value>
   </LocaleResource>
   <LocaleResource Name="AdminEmailRequired">
-    <Value>E-Mail für Admin eingeben</Value>
+    <Value>E-Mail des Admins eingeben</Value>
   </LocaleResource>
   <LocaleResource Name="AdminPassword">
     <Value>Administrator Passwort</Value>
   </LocaleResource>
   <LocaleResource Name="AdminPasswordRequired">
     <Value>Admin-Passwort eingeben</Value>
+  </LocaleResource>
+  <LocaleResource Name="CharacterSet">
+    <Value>Zeichensatz</Value>
+  </LocaleResource>
+  <LocaleResource Name="Collation">
+    <Value>Sortierfolge</Value>
+  </LocaleResource>
+  <LocaleResource Name="CollationRequired">
+    <Value>Sortierfolge ist erforderlich</Value>
   </LocaleResource>
   <LocaleResource Name="ConfigureDirectoryPermissions">
     <Value>Das Konto '{0}' hat keine Ändern-Rechte für den Ordner '{1}'. Bitte konfigurieren Sie diese Berechtigungen.</Value>
@@ -133,7 +142,7 @@
     <Value>Shop Information</Value>
   </LocaleResource>
   <LocaleResource Name="SubscribeNewsletters">
-    <Value>Subscribe to nopCommerce newsletter</Value>
+    <Value>Abonnieren Sie den nopCommerce Newsletter</Value>
   </LocaleResource>
   <LocaleResource Name="Title">
     <Value>nopCommerce-Installation</Value>
