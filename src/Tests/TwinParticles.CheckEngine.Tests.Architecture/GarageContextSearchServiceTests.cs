@@ -56,7 +56,7 @@ public class GarageContextSearchServiceTests
         var searchService = new UnifiedSearchService(
             new FakeSearchRepository(),
             new VinDecodeApplicationService(new FakeVinRegistry(), new NoopTelemetry()),
-            new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository())),
+            new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository()), new EmptyProductOemMapRepository()),
             new FitmentEvaluationService(new FakeFitmentRepository(), new FakeFitmentCache()),
             new FakeSearchIndexHealthService(),
             new LowerNormalizer());
@@ -177,6 +177,18 @@ public class GarageContextSearchServiceTests
     {
         public Task<IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<OemRelation>>([]);
+    }
+
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
     }
 
     private sealed class FakeSearchIndexHealthService : ISearchIndexHealthService

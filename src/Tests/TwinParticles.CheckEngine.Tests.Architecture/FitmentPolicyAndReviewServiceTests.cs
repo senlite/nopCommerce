@@ -120,7 +120,7 @@ public class FitmentPolicyAndReviewServiceTests
         var readRepository = new FakeReadRepository();
         var writeRepository = new FakeWriteRepository();
         var queueRepository = new FakeReviewQueueRepository();
-        var service = new FitmentReviewService(readRepository, writeRepository, queueRepository);
+        var service = new FitmentReviewService(readRepository, writeRepository, queueRepository, new NoOpAuditService());
 
         await service.ApproveAsync(300, CancellationToken.None);
 
@@ -137,7 +137,7 @@ public class FitmentPolicyAndReviewServiceTests
         var readRepository = new FakeReadRepository();
         var writeRepository = new FakeWriteRepository();
         var queueRepository = new FakeReviewQueueRepository();
-        var service = new FitmentReviewService(readRepository, writeRepository, queueRepository);
+        var service = new FitmentReviewService(readRepository, writeRepository, queueRepository, new NoOpAuditService());
 
         await service.RejectAsync(301, CancellationToken.None);
 
@@ -196,5 +196,18 @@ public class FitmentPolicyAndReviewServiceTests
             Enqueued.Add((claimId, reasonCode));
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class NoOpAuditService : TwinParticles.CheckEngine.Domain.Security.ICheckEngineAuditService
+    {
+        public Task AppendAsync(
+            string actor,
+            string action,
+            string entityType,
+            string entityId,
+            string? beforeJson,
+            string? afterJson,
+            CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 }

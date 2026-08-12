@@ -1,1 +1,676 @@
-.ce-theme-layout,.ce-theme-garage-widget,.ce-theme-vehicle-selector,.ce-theme-sticky-search,.ce-theme-fitment-band,.ce-theme-landing-template{padding:.75rem 1rem;border:1px solid #2a2a2a;background:#111;color:#f1f1f1}.ce-sticky-search input{min-width:16rem}[dir="rtl"] .ce-theme-layout,[dir="rtl"] .ce-theme-garage-widget,[dir="rtl"] .ce-theme-vehicle-selector,[dir="rtl"] .ce-theme-sticky-search,[dir="rtl"] .ce-theme-fitment-band,[dir="rtl"] .ce-theme-landing-template{text-align:start;inset-inline-start:auto}.ce-icon-chevron-inline{display:inline-block;transform:scaleX(1)}[dir="rtl"] .ce-icon-chevron-inline{transform:scaleX(-1)}
+/*
+ * Check Engine — component styles.
+ * Consumes design tokens from checkengine-tokens.css. No raw hex values here.
+ * Layout uses logical properties throughout so RTL is a first-class layout, not a mirror.
+ */
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+.ce-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* One consistent, visible focus indicator across every Check Engine control. */
+.ce-root :focus-visible,
+.ce-fitment :focus-visible {
+  outline: 2px solid var(--ce-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--ce-radius-sm);
+}
+
+/* OEM numbers and VINs stay Western-Arabic and left-to-right even inside RTL copy. */
+.ce-code {
+  font-family: var(--ce-font-mono);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.ce-icon {
+  inline-size: 1.125em;
+  block-size: 1.125em;
+  flex: none;
+  stroke-width: 1.75;
+}
+
+/* Directional glyphs mirror in RTL; brand marks and product media never do. */
+[dir='rtl'] .ce-icon--directional {
+  transform: scaleX(-1);
+}
+
+/* ============================================================
+   Search rail  (region: below header, above main)
+   ============================================================ */
+
+.ce-rail {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--ce-rail-z);
+  font-family: var(--ce-font-ui);
+  font-size: var(--ce-font-size-md);
+  line-height: var(--ce-line-body);
+  color: var(--ce-text-primary);
+  background: var(--ce-surface-canvas);
+  border-block-end: 1px solid var(--ce-border-hairline);
+  /* Lifts the dark rail off the host theme's light content area. */
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ce-action-primary) 35%, transparent),
+              0 6px 18px rgba(11, 14, 19, 0.28);
+}
+
+@supports (backdrop-filter: blur(8px)) {
+  .ce-rail {
+    background: color-mix(in srgb, var(--ce-surface-canvas) 88%, transparent);
+    backdrop-filter: blur(10px);
+  }
+}
+
+.ce-rail__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--ce-space-3);
+  inline-size: 100%;
+  max-inline-size: var(--ce-max-content-width);
+  margin-inline: auto;
+  padding: var(--ce-space-3) var(--ce-space-4);
+}
+
+/* ============================================================
+   Context chip  (active vehicle / garage)
+   ============================================================ */
+
+.ce-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ce-space-2);
+  min-block-size: var(--ce-control-height);
+  padding-inline: var(--ce-space-3);
+  font: inherit;
+  font-weight: var(--ce-weight-medium);
+  color: var(--ce-text-primary);
+  text-align: start;
+  background: var(--ce-surface-raised);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-md);
+  cursor: pointer;
+  transition: border-color var(--ce-duration-fast) var(--ce-ease-standard),
+              background-color var(--ce-duration-fast) var(--ce-ease-standard);
+}
+
+.ce-chip:hover {
+  border-color: var(--ce-action-primary-hover);
+}
+
+/* Prompting state — no vehicle chosen yet. */
+.ce-chip[data-ce-state='empty'] {
+  border-color: color-mix(in srgb, var(--ce-action-primary) 60%, var(--ce-border-hairline));
+  color: var(--ce-text-primary);
+}
+
+.ce-chip__icon {
+  color: var(--ce-action-primary-hover);
+}
+
+.ce-chip__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.ce-chip__label {
+  font-size: var(--ce-font-size-xs);
+  font-weight: var(--ce-weight-regular);
+  color: var(--ce-text-muted);
+}
+
+.ce-chip__value {
+  font-size: var(--ce-font-size-sm);
+  color: var(--ce-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-inline-size: 18ch;
+}
+
+/* ============================================================
+   Vehicle select — native control, themed with an explicit caret
+   ============================================================ */
+
+.ce-select {
+  min-block-size: var(--ce-control-height);
+  max-inline-size: 15rem;
+  padding-inline: var(--ce-space-3) var(--ce-space-6);
+  font: inherit;
+  font-size: var(--ce-font-size-sm);
+  color: var(--ce-text-primary);
+  background-color: var(--ce-surface-raised);
+  /* Caret is drawn inline so it is visible on the dark surface in both directions. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A7B4C8' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--ce-space-3) center;
+  background-size: 1rem 1rem;
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-md);
+  appearance: none;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+[dir='rtl'] .ce-select {
+  background-position: left var(--ce-space-3) center;
+}
+
+.ce-select:hover {
+  border-color: var(--ce-action-primary-hover);
+}
+
+.ce-select option {
+  color: var(--ce-text-primary);
+  background: var(--ce-surface-raised);
+}
+
+/* ============================================================
+   Search form
+   ============================================================ */
+
+.ce-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--ce-space-2);
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.ce-search__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.ce-search__icon {
+  position: absolute;
+  inset-inline-start: var(--ce-space-3);
+  color: var(--ce-text-muted);
+  pointer-events: none;
+}
+
+.ce-search__input {
+  inline-size: 100%;
+  min-block-size: var(--ce-control-height);
+  padding-block: 0;
+  padding-inline: calc(var(--ce-space-4) + 1.125em) var(--ce-space-3);
+  font: inherit;
+  color: var(--ce-text-primary);
+  background: var(--ce-surface-raised);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-md);
+  transition: border-color var(--ce-duration-fast) var(--ce-ease-standard);
+}
+
+.ce-search__input::placeholder {
+  color: var(--ce-text-muted);
+}
+
+.ce-search__input:hover {
+  border-color: color-mix(in srgb, var(--ce-action-primary-hover) 45%, var(--ce-border-hairline));
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.ce-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ce-space-2);
+  min-block-size: var(--ce-control-height);
+  padding-inline: var(--ce-space-4);
+  font: inherit;
+  font-weight: var(--ce-weight-semibold);
+  border: 1px solid transparent;
+  border-radius: var(--ce-radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--ce-duration-fast) var(--ce-ease-standard),
+              border-color var(--ce-duration-fast) var(--ce-ease-standard);
+}
+
+.ce-btn--primary {
+  color: var(--ce-action-on-primary);
+  background: var(--ce-action-primary);
+}
+
+.ce-btn--primary:hover {
+  background: color-mix(in srgb, var(--ce-action-primary) 80%, var(--ce-action-primary-hover));
+}
+
+.ce-btn--quiet {
+  color: var(--ce-text-primary);
+  background: transparent;
+  border-color: var(--ce-border-hairline);
+}
+
+.ce-btn--quiet:hover {
+  border-color: var(--ce-action-primary-hover);
+}
+
+.ce-btn[aria-disabled='true'],
+.ce-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Widen-fitment toggle
+   ============================================================ */
+
+.ce-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ce-space-2);
+  min-block-size: var(--ce-control-height);
+  padding-inline: var(--ce-space-2);
+  font-size: var(--ce-font-size-sm);
+  color: var(--ce-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ce-toggle input {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  accent-color: var(--ce-action-primary);
+  cursor: pointer;
+}
+
+/* The checkbox needs its own indicator; a bare native outline is invisible on this surface. */
+.ce-toggle input:focus-visible {
+  outline: 2px solid var(--ce-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Surface focus on the whole label so the hit area and the indicator agree. */
+.ce-toggle:has(input:focus-visible) {
+  color: var(--ce-text-primary);
+  border-radius: var(--ce-radius-sm);
+  box-shadow: 0 0 0 2px var(--ce-focus-ring);
+}
+
+/* ============================================================
+   Results panel (dropdown)
+   ============================================================ */
+
+.ce-results {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--ce-space-2));
+  z-index: calc(var(--ce-rail-z) + 1);
+  max-block-size: min(60vh, 28rem);
+  overflow-y: auto;
+  background: var(--ce-surface-raised);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-lg);
+  box-shadow: var(--ce-shadow-raised);
+}
+
+.ce-results[hidden] {
+  display: none;
+}
+
+.ce-results__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ce-space-3);
+  padding: var(--ce-space-3) var(--ce-space-4);
+  font-size: var(--ce-font-size-xs);
+  color: var(--ce-text-muted);
+  border-block-end: 1px solid var(--ce-border-hairline);
+}
+
+.ce-results__mode {
+  font-weight: var(--ce-weight-semibold);
+  color: var(--ce-text-primary);
+}
+
+.ce-results__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--ce-space-2);
+}
+
+.ce-results__item + .ce-results__item {
+  margin-block-start: var(--ce-space-1);
+}
+
+.ce-results__link {
+  display: flex;
+  align-items: center;
+  gap: var(--ce-space-3);
+  padding: var(--ce-space-3);
+  color: var(--ce-text-primary);
+  text-decoration: none;
+  border-radius: var(--ce-radius-md);
+  transition: background-color var(--ce-duration-fast) var(--ce-ease-standard);
+}
+
+.ce-results__link:hover {
+  background: color-mix(in srgb, var(--ce-action-primary) 14%, transparent);
+}
+
+.ce-results__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.ce-results__name {
+  font-weight: var(--ce-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-results__meta {
+  font-size: var(--ce-font-size-xs);
+  color: var(--ce-text-muted);
+}
+
+.ce-results__badge {
+  margin-inline-start: auto;
+  padding: var(--ce-space-1) var(--ce-space-2);
+  font-size: var(--ce-font-size-xs);
+  border-radius: var(--ce-radius-sm);
+  border: 1px solid var(--ce-border-hairline);
+  color: var(--ce-text-muted);
+  white-space: nowrap;
+}
+
+.ce-results__badge--fits {
+  color: var(--ce-text-primary);
+  border-color: var(--ce-fit-fits);
+  background: color-mix(in srgb, var(--ce-fit-fits) 22%, transparent);
+}
+
+.ce-results__empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ce-space-2);
+  padding: var(--ce-space-5) var(--ce-space-4);
+  text-align: center;
+  color: var(--ce-text-muted);
+}
+
+.ce-results__empty-title {
+  font-weight: var(--ce-weight-semibold);
+  color: var(--ce-text-primary);
+}
+
+.ce-results__hint {
+  margin: 0;
+  font-size: var(--ce-font-size-sm);
+}
+
+/* Skeleton rows reserve layout space so loading does not shift the page (CLS budget). */
+.ce-skeleton {
+  padding: var(--ce-space-2);
+}
+
+.ce-skeleton__row {
+  block-size: 44px;
+  margin: var(--ce-space-1) var(--ce-space-2);
+  border-radius: var(--ce-radius-md);
+  background: linear-gradient(90deg,
+      color-mix(in srgb, var(--ce-border-hairline) 55%, transparent) 25%,
+      color-mix(in srgb, var(--ce-border-hairline) 85%, transparent) 37%,
+      color-mix(in srgb, var(--ce-border-hairline) 55%, transparent) 63%);
+  background-size: 400% 100%;
+  animation: ce-shimmer 1.4s ease infinite;
+}
+
+@keyframes ce-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ce-skeleton__row { animation: none; }
+}
+
+/* ============================================================
+   Fitment band (product detail page)
+   ============================================================ */
+
+.ce-fitment {
+  display: flex;
+  align-items: center;
+  gap: var(--ce-space-3);
+  margin-block: var(--ce-space-4);
+  padding: var(--ce-space-4);
+  font-family: var(--ce-font-ui);
+  line-height: var(--ce-line-body);
+  color: var(--ce-text-primary);
+  background: var(--ce-surface-raised);
+  border: 1px solid var(--ce-border-hairline);
+  border-inline-start: 4px solid var(--ce-fit-unknown);
+  border-radius: var(--ce-radius-md);
+  transition: background-color var(--ce-duration-status) var(--ce-ease-standard),
+              border-color var(--ce-duration-status) var(--ce-ease-standard);
+}
+
+.ce-fitment__icon {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  stroke-width: 1.75;
+}
+
+.ce-fitment__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.ce-fitment__status {
+  font-weight: var(--ce-weight-semibold);
+}
+
+.ce-fitment__detail {
+  font-size: var(--ce-font-size-sm);
+  color: var(--ce-text-muted);
+}
+
+.ce-fitment__action {
+  margin-inline-start: auto;
+}
+
+/* Status is always encoded by colour AND icon AND text. */
+.ce-fitment[data-ce-fit='fits'] {
+  border-inline-start-color: var(--ce-fit-fits);
+  background: color-mix(in srgb, var(--ce-fit-fits) 16%, var(--ce-surface-raised));
+}
+
+.ce-fitment[data-ce-fit='fits'] .ce-fitment__icon { color: var(--ce-fit-fits); }
+
+.ce-fitment[data-ce-fit='unfit'] {
+  border-inline-start-color: var(--ce-fit-unfit);
+  background: color-mix(in srgb, var(--ce-fit-unfit) 16%, var(--ce-surface-raised));
+}
+
+.ce-fitment[data-ce-fit='unfit'] .ce-fitment__icon { color: var(--ce-fit-unfit); }
+
+.ce-fitment[data-ce-fit='unknown'] {
+  border-inline-start-color: var(--ce-fit-unknown);
+}
+
+.ce-fitment[data-ce-fit='unknown'] .ce-fitment__icon { color: var(--ce-text-muted); }
+
+.ce-fitment[data-ce-fit='select'] {
+  border-inline-start-color: var(--ce-action-primary);
+  background: color-mix(in srgb, var(--ce-action-primary) 14%, var(--ce-surface-raised));
+}
+
+.ce-fitment[data-ce-fit='select'] .ce-fitment__icon { color: var(--ce-action-primary-hover); }
+
+/* ============================================================
+   Home landing hero — one composition, no card grid or stat strip
+   ============================================================ */
+
+.ce-hero {
+  position: relative;
+  overflow: hidden;
+  margin-block-end: var(--ce-space-6);
+  padding: var(--ce-space-8) var(--ce-space-5);
+  font-family: var(--ce-font-ui);
+  color: var(--ce-text-primary);
+  background:
+    radial-gradient(120% 140% at 85% 15%,
+      color-mix(in srgb, var(--ce-action-primary) 26%, transparent) 0%,
+      transparent 60%),
+    var(--ce-surface-canvas);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-lg);
+}
+
+.ce-hero__inner {
+  max-inline-size: 52ch;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.ce-hero__eyebrow {
+  display: inline-block;
+  margin-block-end: var(--ce-space-3);
+  padding: var(--ce-space-1) var(--ce-space-3);
+  font-size: var(--ce-font-size-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ce-text-muted);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-sm);
+}
+
+/*
+ * Colours are set explicitly on every text node. The host theme styles bare h1/p/select
+ * elements, and a direct rule always beats an inherited value, so relying on inheritance
+ * from .ce-hero leaves the headline rendering in the theme's dark ink.
+ */
+.ce-hero__title {
+  margin: 0 0 var(--ce-space-3);
+  font-family: var(--ce-font-display);
+  font-size: var(--ce-font-size-3xl);
+  font-weight: var(--ce-weight-semibold);
+  line-height: var(--ce-line-display);
+  letter-spacing: -0.02em;
+  color: var(--ce-text-primary);
+}
+
+.ce-hero__lead {
+  margin: 0 0 var(--ce-space-5);
+  font-size: var(--ce-font-size-lg);
+  line-height: var(--ce-line-body);
+  color: var(--ce-text-muted);
+}
+
+.ce-hero__cta {
+  display: inline-flex;
+  gap: var(--ce-space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ============================================================
+   Responsive — verified 320px to 2560px
+   ============================================================ */
+
+/*
+ * Below the desktop breakpoint the five controls cannot share one row without the query
+ * field collapsing, so the search takes a full row of its own and the context controls sit above it.
+ */
+@media (max-width: 1199px) {
+  .ce-rail__inner {
+    flex-wrap: wrap;
+    row-gap: var(--ce-space-2);
+  }
+
+  .ce-search {
+    order: 2;
+    flex-basis: 100%;
+  }
+
+  .ce-chip__value { max-inline-size: 14ch; }
+
+  .ce-select { max-inline-size: 12rem; }
+}
+
+/* Mobile: compact rail; the query field leads and stays reachable. */
+@media (max-width: 767px) {
+  :root { --ce-control-height: 40px; }
+
+  .ce-rail__inner {
+    gap: var(--ce-space-2);
+    padding: var(--ce-space-2) var(--ce-space-3);
+  }
+
+  .ce-search {
+    order: -1;
+    flex-wrap: wrap;
+    row-gap: var(--ce-space-2);
+  }
+
+  .ce-search__field { flex-basis: 100%; }
+
+  .ce-chip,
+  .ce-select {
+    flex: 1 1 0;
+    min-inline-size: 0;
+    max-inline-size: none;
+  }
+
+  .ce-chip__value { max-inline-size: none; }
+
+  .ce-toggle {
+    font-size: var(--ce-font-size-xs);
+    padding-inline: 0;
+  }
+
+  /* Anchor the dropdown to the rail rather than the viewport so it cannot cover the page. */
+  .ce-results {
+    inset-inline: 0;
+    max-block-size: 55vh;
+  }
+
+  .ce-hero { padding: var(--ce-space-6) var(--ce-space-4); }
+
+  .ce-hero__title { font-size: var(--ce-font-size-xl); }
+
+  .ce-hero__lead { font-size: var(--ce-font-size-md); }
+
+  .ce-hero__cta { display: flex; flex-direction: column; }
+
+  .ce-fitment { flex-wrap: wrap; }
+
+  .ce-fitment__action {
+    margin-inline-start: 0;
+    inline-size: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .ce-chip__label { display: none; }
+}

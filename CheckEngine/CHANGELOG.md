@@ -42,6 +42,14 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — EXECUTION-PLAN Tracks 0–7 complete (engineering):**
+  - Deterministic build scripts (`CheckEngine/scripts/build-checkengine.sh|.ps1`) and CI wiring
+  - SQL product search, storefront widgets (search/fitment/garage), admin dashboard
+  - Import SQL persistence (`CorrelationId`), Excel/PDF extractors, `NopImportProductPublisher`
+  - AI completion ports (Null + OpenAI-compatible), unpublished proposal workflow
+  - ERPNext HTTP adapter with stub fallback; fitment-constrained recommendations
+  - Audit events, health/diagnostics endpoints, perf/resilience/traceability gates
+  - Operator runbook + acceptance go/no-go (`docs/implementation/06`, `07`)
 - **Phase 2 — Architecture and domain model** (documentation baseline continuation):
   - [08 System Architecture](docs/08-system-architecture.md) — Clean Architecture layers, module map,
     cross-cutting concerns, deployment topologies, host-internal vs Horizon 5 public API, and ADRs

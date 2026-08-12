@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Application.Erp;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Extraction;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Normalization;
@@ -10,6 +11,7 @@ using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Oem;
+using TwinParticles.CheckEngine.Application.Observability;
 using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Application.Seo;
 using TwinParticles.CheckEngine.Application.Vehicle.Admin;
@@ -52,6 +54,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<UnifiedSearchService>();
         services.AddScoped<SearchIndexAdminService>();
         services.AddScoped<GarageContextSearchService>();
+        services.AddScoped<RecommendationService>();
 
         services.AddScoped<GarageService>();
 
@@ -62,8 +65,11 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<SeoLandingService>();
 
+        services.AddScoped<AiProposalService>();
+
         services.AddScoped<ILicenceService, DefaultLicenceService>();
         services.AddScoped<ErpSyncService>();
+        services.AddScoped<CheckEngineHealthService>();
 
         return services;
     }

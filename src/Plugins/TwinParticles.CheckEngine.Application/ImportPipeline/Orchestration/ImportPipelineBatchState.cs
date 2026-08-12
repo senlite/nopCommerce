@@ -8,6 +8,8 @@ public sealed class ImportPipelineBatchState
 {
     public Guid BatchId { get; init; }
 
+    public int? SqlBatchId { get; set; }
+
     public string FileName { get; init; } = string.Empty;
 
     public ImportSourceFormat Format { get; init; }

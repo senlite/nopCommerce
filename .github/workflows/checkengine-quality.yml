@@ -30,6 +30,9 @@ jobs:
       - name: Test with TRX and coverage
         run: dotnet test src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj --configuration Release --no-build --logger "trx;LogFileName=checkengine-tests.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
+      - name: Deterministic CheckEngine build script
+        run: bash CheckEngine/scripts/build-checkengine.sh
+
       - name: Build quality summary
         if: always()
         shell: pwsh

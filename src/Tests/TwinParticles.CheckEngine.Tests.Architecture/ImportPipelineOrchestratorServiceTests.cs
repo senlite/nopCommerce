@@ -29,7 +29,7 @@ public class ImportPipelineOrchestratorServiceTests
         var normalization = new ImportNormalizationService(new FakeOemNormalizationService());
         var duplicate = new ImportDuplicateDetectionService();
 
-        var resolveService = new OemResolveService(new FakeOemNormalizationService(), new FakeSearchRepository(), new OemSupersessionService(new EmptyRelationReadRepository()));
+        var resolveService = new OemResolveService(new FakeOemNormalizationService(), new FakeSearchRepository(), new OemSupersessionService(new EmptyRelationReadRepository()), new EmptyProductOemMapRepository());
         var oemMatching = new ImportOemMatchingService(resolveService);
 
         var orchestrator = new ImportPipelineOrchestratorService(
@@ -105,6 +105,18 @@ public class ImportPipelineOrchestratorServiceTests
     {
         public Task<IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<OemRelation>>([]);
+    }
+
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
     }
 
     private sealed class FakeProductImageRepository : TwinParticles.CheckEngine.Domain.Images.IProductImageRepository

@@ -1,0 +1,99 @@
+/*
+ * Check Engine — design tokens
+ * Layer 1 (primitive) and layer 2 (semantic) of the token architecture defined in
+ * CheckEngine/docs/22-ui-design-system.md. Component CSS must reference only var(--ce-*)
+ * and never a raw hex value.
+ */
+
+:root {
+  /* ---------- Primitive palette ---------- */
+  --ce-raw-graphite-950: #0B0E13;
+  --ce-raw-graphite-900: #12161E;
+  --ce-raw-graphite-800: #1A2030;
+  --ce-raw-graphite-700: #243044;
+  --ce-raw-cloud-100: #E8EEF7;
+  --ce-raw-cloud-300: #A7B4C8;
+  --ce-raw-blue-600: #0066B1;
+  --ce-raw-blue-400: #3D9BE0;
+  --ce-raw-green-700: #1A7F37;
+  --ce-raw-amber-700: #9A6700;
+  --ce-raw-red-700: #CF222E;
+  --ce-raw-slate-600: #6E7781;
+
+  /* ---------- Semantic surfaces and text ---------- */
+  --ce-surface-sunken: var(--ce-raw-graphite-950);
+  --ce-surface-canvas: var(--ce-raw-graphite-900);
+  --ce-surface-raised: var(--ce-raw-graphite-800);
+  --ce-border-hairline: var(--ce-raw-graphite-700);
+  --ce-text-primary: var(--ce-raw-cloud-100);
+  --ce-text-muted: var(--ce-raw-cloud-300);
+
+  /* ---------- Semantic actions ---------- */
+  --ce-action-primary: var(--ce-raw-blue-600);
+  --ce-action-primary-hover: var(--ce-raw-blue-400);
+  --ce-action-on-primary: var(--ce-raw-cloud-100);
+  --ce-focus-ring: var(--ce-raw-blue-400);
+
+  /* ---------- Fitment / status ---------- */
+  --ce-fit-fits: var(--ce-raw-green-700);
+  --ce-fit-unfit: var(--ce-raw-red-700);
+  --ce-fit-unknown: var(--ce-raw-slate-600);
+  --ce-status-warning: var(--ce-raw-amber-700);
+
+  /* ---------- Spacing scale ---------- */
+  --ce-space-1: 4px;
+  --ce-space-2: 8px;
+  --ce-space-3: 12px;
+  --ce-space-4: 16px;
+  --ce-space-5: 24px;
+  --ce-space-6: 32px;
+  --ce-space-7: 48px;
+  --ce-space-8: 64px;
+
+  /* ---------- Radius ---------- */
+  --ce-radius-sm: 4px;
+  --ce-radius-md: 8px;
+  --ce-radius-lg: 12px;
+
+  /* ---------- Typography ---------- */
+  --ce-font-display: 'Outfit', 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
+  --ce-font-ui: 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
+  --ce-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --ce-font-size-xs: 0.75rem;
+  --ce-font-size-sm: 0.875rem;
+  --ce-font-size-md: 1rem;
+  --ce-font-size-lg: 1.125rem;
+  --ce-font-size-xl: 1.5rem;
+  --ce-font-size-2xl: 2rem;
+  --ce-font-size-3xl: 2.75rem;
+
+  --ce-line-body: 1.45;
+  --ce-line-display: 1.2;
+
+  --ce-weight-regular: 400;
+  --ce-weight-medium: 500;
+  --ce-weight-semibold: 600;
+
+  /* ---------- Elevation ---------- */
+  /* Single soft shadow, reserved for dropdowns/sheets — not stacked on every surface. */
+  --ce-shadow-raised: 0 12px 32px rgba(11, 14, 19, 0.55);
+
+  /* ---------- Motion (status changes stay at or under 200ms) ---------- */
+  --ce-duration-fast: 120ms;
+  --ce-duration-status: 180ms;
+  --ce-ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* ---------- Layout ---------- */
+  --ce-max-content-width: 1280px;
+  --ce-control-height: 44px; /* comfortable touch target */
+  --ce-rail-z: 1030;
+}
+
+/* Honour the operating-system reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ce-duration-fast: 1ms;
+    --ce-duration-status: 1ms;
+  }
+}

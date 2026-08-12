@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using LinqToDB.Data;
@@ -20,9 +22,19 @@ public sealed class SqlImportPipelineRepository : IImportPipelineRepository
     public async Task<ImportBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
-            @"SELECT Id, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc
+            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc
 FROM TP_CE_ImportBatch WHERE Id = @id",
             new DataParameter("id", batchId));
+
+        return rows.Select(MapBatch).FirstOrDefault();
+    }
+
+    public async Task<ImportBatch?> GetBatchByCorrelationIdAsync(Guid correlationId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
+            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc
+FROM TP_CE_ImportBatch WHERE CorrelationId = @correlationId",
+            new DataParameter("correlationId", correlationId));
 
         return rows.Select(MapBatch).FirstOrDefault();
     }
@@ -33,7 +45,8 @@ FROM TP_CE_ImportBatch WHERE Id = @id",
         {
             var updated = await _dataProvider.ExecuteNonQueryAsync(
                 @"UPDATE TP_CE_ImportBatch
-SET FileName = @fileName,
+SET CorrelationId = @correlationId,
+    FileName = @fileName,
     SourceFormatId = @sourceFormatId,
     Status = @status,
     UploadedByCustomerId = @uploadedByCustomerId,
@@ -41,6 +54,7 @@ SET FileName = @fileName,
     ErrorSummary = @errorSummary,
     UpdatedUtc = @updatedUtc
 WHERE Id = @id",
+                new DataParameter("correlationId", batch.CorrelationId),
                 new DataParameter("fileName", batch.FileName),
                 new DataParameter("sourceFormatId", (int)batch.SourceFormat),
                 new DataParameter("status", batch.Status),
@@ -56,10 +70,11 @@ WHERE Id = @id",
 
         var inserted = await _dataProvider.QueryAsync<ScalarIntRow>(
             @"INSERT INTO TP_CE_ImportBatch
-(FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc)
+(CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc)
 VALUES
-(@fileName, @sourceFormatId, @status, @uploadedByCustomerId, @rowCount, @errorSummary, @createdUtc, @updatedUtc);
+(@correlationId, @fileName, @sourceFormatId, @status, @uploadedByCustomerId, @rowCount, @errorSummary, @createdUtc, @updatedUtc);
 SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+            new DataParameter("correlationId", batch.CorrelationId),
             new DataParameter("fileName", batch.FileName),
             new DataParameter("sourceFormatId", (int)batch.SourceFormat),
             new DataParameter("status", batch.Status),
@@ -99,7 +114,7 @@ VALUES
 (@batchId, @rowNumber, @rawPayload, @normalizedOem, @matchedOemNumberId, @proposedProductId, @proposedFitmentJson, @confidence, @reviewStatus, @reviewNote)",
                 new DataParameter("batchId", batchId),
                 new DataParameter("rowNumber", row.RowNumber),
-                new DataParameter("rawPayload", row.RawPayload),
+                new DataParameter("rawPayload", row.RawPayload ?? JsonSerializer.Serialize(new { })),
                 new DataParameter("normalizedOem", row.NormalizedOem),
                 new DataParameter("matchedOemNumberId", row.MatchedOemNumberId),
                 new DataParameter("proposedProductId", row.ProposedProductId),
@@ -114,6 +129,7 @@ VALUES
         => new()
         {
             Id = row.Id,
+            CorrelationId = row.CorrelationId,
             FileName = row.FileName,
             SourceFormat = (ImportSourceFormat)row.SourceFormatId,
             Status = row.Status,
@@ -132,13 +148,14 @@ VALUES
     private sealed class ImportBatchRow
     {
         public int Id { get; set; }
+        public Guid? CorrelationId { get; set; }
         public string FileName { get; set; } = string.Empty;
         public int SourceFormatId { get; set; }
         public string Status { get; set; } = string.Empty;
         public int? UploadedByCustomerId { get; set; }
         public int RowCount { get; set; }
         public string? ErrorSummary { get; set; }
-        public System.DateTime CreatedUtc { get; set; }
-        public System.DateTime UpdatedUtc { get; set; }
+        public DateTime CreatedUtc { get; set; }
+        public DateTime UpdatedUtc { get; set; }
     }
 }

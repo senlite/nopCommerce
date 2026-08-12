@@ -67,4 +67,12 @@ public sealed class CheckEngineController : BasePluginController
 
         return await Configure();
     }
+
+    public async Task<IActionResult> Dashboard()
+    {
+        if (!await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return AccessDeniedView();
+
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/Dashboard.cshtml");
+    }
 }

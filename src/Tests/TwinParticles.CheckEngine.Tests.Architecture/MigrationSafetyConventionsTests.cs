@@ -154,6 +154,7 @@ public class MigrationSafetyConventionsTests
         // Mirrors CheckEngine/docs/10-database-design.md uninstall drop order guidance.
         var dropOrder = new[]
         {
+            "TP_CE_AuditEvent",
             "TP_CE_FitmentReviewQueueEvent",
             "TP_CE_FitmentQualifier",
             "TP_CE_FitmentClaim",

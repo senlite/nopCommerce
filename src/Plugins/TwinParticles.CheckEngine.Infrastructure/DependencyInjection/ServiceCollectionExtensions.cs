@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Erp;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Garage;
@@ -16,6 +17,7 @@ using TwinParticles.CheckEngine.Domain.Security;
 using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 using TwinParticles.CheckEngine.Domain.Vehicle.Aliases;
+using TwinParticles.CheckEngine.Infrastructure.Ai;
 using TwinParticles.CheckEngine.Infrastructure.Erp;
 using TwinParticles.CheckEngine.Infrastructure.Fitment;
 using TwinParticles.CheckEngine.Infrastructure.Garage;
@@ -42,6 +44,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICheckEngineTelemetry, LoggerCheckEngineTelemetry>();
         services.AddSingleton<ICheckEngineClock, SystemCheckEngineClock>();
         services.AddSingleton<ICheckEngineInputSanitizer, DefaultCheckEngineInputSanitizer>();
+        services.AddSingleton<InMemoryCheckEngineAuditService>();
+        // Prefer SQL audit when INopDataProvider is available; InMemory remains registered above for tests/local.
+        services.AddScoped<ICheckEngineAuditService, SqlCheckEngineAuditService>();
         services.AddSingleton<IOemNormalizationService, DefaultOemNormalizationService>();
         services.AddScoped<IOemAdminRepository, SqlOemAdminRepository>();
         services.AddScoped<IOemRelationReadRepository, SqlOemAdminRepository>();
@@ -57,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFitmentClaimWriteRepository>(sp => sp.GetRequiredService<SqlFitmentClaimRepository>());
         services.AddScoped<IFitmentReviewQueueRepository, SqlFitmentReviewQueueRepository>();
         services.AddScoped<IImportPipelineRepository, SqlImportPipelineRepository>();
+        services.AddScoped<IImportProductPublisher, NopImportProductPublisher>();
         services.AddScoped<IProductOemMapRepository, SqlProductOemMapRepository>();
 
         services.AddSingleton<IVehicleAliasNormalizationService, VehicleAliasNormalizationService>();
@@ -73,7 +79,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IVinDecodeRateLimiter, InMemoryVinDecodeRateLimiter>();
 
         services.AddSingleton<IBilingualSearchTextNormalizer, DefaultBilingualSearchTextNormalizer>();
-        services.AddSingleton<IProductSearchReadRepository, InMemoryProductSearchReadRepository>();
+        services.AddScoped<IProductSearchReadRepository, SqlProductSearchReadRepository>();
         services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
         services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 
@@ -97,8 +103,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISeoPerformanceBudgetService, DefaultSeoPerformanceBudgetService>();
 
         services.AddScoped<IErpSyncQueueRepository, SqlErpSyncQueueRepository>();
-        services.AddSingleton<IErpClientAdapter, StubErpClientAdapter>();
+        services.AddSingleton<IErpClientAdapter, ErpNextHttpClientAdapter>();
         services.AddSingleton<IErpConflictResolutionService, DefaultErpConflictResolutionService>();
+
+        services.AddSingleton(_ => CheckEngineAiOptions.Current);
+        services.AddSingleton<IAiCompletionPort, OpenAiCompatibleCompletionPort>();
+        services.AddSingleton<IAiUsageLedger, InMemoryAiUsageLedger>();
+        services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
+        services.AddScoped<ICheckEngineDatabaseHealthProbe, NopDataProviderDatabaseHealthProbe>();
 
         return services;
     }
