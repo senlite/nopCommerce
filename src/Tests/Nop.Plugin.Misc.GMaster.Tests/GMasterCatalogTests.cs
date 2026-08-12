@@ -91,6 +91,54 @@ public class GMasterCatalogTests
     }
 
     [Test]
+    public void Bundled_Photos_Should_Use_The_Numbered_Multi_Image_Convention()
+    {
+        var catalogPath = LocateCatalog();
+        var items = new GMasterCatalogParser().Parse(File.ReadAllText(catalogPath));
+
+        var photographed = items.Where(item => !string.IsNullOrWhiteSpace(item.ImageFile)).ToList();
+
+        Action assertions = () =>
+        {
+            Assert.That(GMasterCatalogImportService.MaxPicturesPerProduct, Is.EqualTo(3));
+            Assert.That(photographed, Has.All.Matches<GMasterCatalogItem>(
+                item => item.ImageFile == $"{item.Sku}-1.jpg"),
+                "the primary photo must follow <SKU>-1.jpg so <SKU>-2/-3 drop-ins are discovered");
+        };
+        Assert.Multiple(assertions);
+    }
+
+    [Test]
+    public void A_Sku_That_Prefixes_Another_Sku_Should_Not_Borrow_Its_Photos()
+    {
+        // "GM-11117568264" is a prefix of "GM-11117568264-A481"; a naive glob would cross-wire them.
+        var catalogPath = LocateCatalog();
+        var partsDirectory = Path.Combine(Path.GetDirectoryName(catalogPath)!, "parts");
+        var items = new GMasterCatalogParser().Parse(File.ReadAllText(catalogPath));
+
+        var skus = items.Select(item => item.Sku).ToHashSet();
+        var prefixPairs = items
+            .Where(item => skus.Any(other => other != item.Sku && other.StartsWith(item.Sku + "-", StringComparison.Ordinal)))
+            .ToList();
+
+        Assume.That(prefixPairs, Is.Not.Empty, "the dataset should contain at least one prefix pair");
+
+        foreach (var item in prefixPairs)
+        {
+            var borrowed = Directory
+                .GetFiles(partsDirectory, $"{item.Sku}-*")
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(name => name is not null)
+                .Where(name => !System.Text.RegularExpressions.Regex.IsMatch(
+                    name!, $"^{System.Text.RegularExpressions.Regex.Escape(item.Sku)}-[0-9]+$"))
+                .ToList();
+
+            Assert.That(borrowed, Is.Not.Empty,
+                $"expected a same-prefix neighbour file for {item.Sku} to prove the numeric-suffix rule matters");
+        }
+    }
+
+    [Test]
     public void Every_Category_Should_Have_Bilingual_Copy_And_Original_Glyph()
     {
         Assert.That(GMasterCategoryCatalog.All, Has.Count.EqualTo(12));

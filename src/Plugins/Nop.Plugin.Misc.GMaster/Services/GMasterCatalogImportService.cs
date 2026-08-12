@@ -16,6 +16,9 @@ namespace Nop.Plugin.Misc.GMaster.Services;
 
 public sealed class GMasterCatalogImportService
 {
+    /// <summary>Maximum photos attached per product.</summary>
+    public const int MaxPicturesPerProduct = 3;
+
     private readonly ICategoryService _categoryService;
     private readonly ICategoryTemplateService _categoryTemplateService;
     private readonly CurrencySettings _currencySettings;
@@ -136,19 +139,21 @@ public sealed class GMasterCatalogImportService
                 DisplayOrder = 0
             });
 
-            // Prefer the real supplier photo; fall back to the category illustration when a row has none.
-            var productPictureId = await TryCreateProductPictureAsync(imageDirectory, item);
-            if (productPictureId.HasValue)
-                importedImages++;
-            else
-                productPictureId = pictures[item.CategoryKey];
+            // Prefer the real supplier photos; fall back to the category illustration when a row has none.
+            var productPictureIds = await CreateProductPicturesAsync(imageDirectory, item);
+            importedImages += productPictureIds.Count;
+            if (productPictureIds.Count == 0)
+                productPictureIds = [pictures[item.CategoryKey]];
 
-            await _productService.InsertProductPictureAsync(new ProductPicture
+            for (var pictureIndex = 0; pictureIndex < productPictureIds.Count; pictureIndex++)
             {
-                ProductId = product.Id,
-                PictureId = productPictureId.Value,
-                DisplayOrder = 0
-            });
+                await _productService.InsertProductPictureAsync(new ProductPicture
+                {
+                    ProductId = product.Id,
+                    PictureId = productPictureIds[pictureIndex],
+                    DisplayOrder = pictureIndex
+                });
+            }
 
             var productSlug = await _urlRecordService.ValidateSeNameAsync(
                 product,
@@ -220,32 +225,64 @@ public sealed class GMasterCatalogImportService
             completedUtc);
     }
 
-    private async Task<int?> TryCreateProductPictureAsync(string imageDirectory, GMasterCatalogItem item)
+    /// <summary>
+    /// Collects up to <see cref="MaxPicturesPerProduct"/> photos for a product.
+    /// Files follow "&lt;SKU&gt;-1.jpg", "&lt;SKU&gt;-2.jpg", ... so additional licensed photography can be
+    /// dropped into the parts folder and picked up on the next import without any code change.
+    /// </summary>
+    private async Task<List<int>> CreateProductPicturesAsync(string imageDirectory, GMasterCatalogItem item)
     {
+        var pictureIds = new List<int>(MaxPicturesPerProduct);
         if (string.IsNullOrWhiteSpace(item.ImageFile))
-            return null;
+            return pictureIds;
 
-        var imagePath = _fileProvider.Combine(imageDirectory, item.ImageFile);
-        if (!_fileProvider.FileExists(imagePath))
-            return null;
-
-        var mimeType = _fileProvider.GetFileExtension(item.ImageFile).ToLowerInvariant() switch
+        foreach (var fileName in EnumerateImageFileNames(item))
         {
-            ".png" => MimeTypes.ImagePng,
-            ".gif" => MimeTypes.ImageGif,
-            _ => MimeTypes.ImageJpeg
-        };
+            var imagePath = _fileProvider.Combine(imageDirectory, fileName);
+            if (!_fileProvider.FileExists(imagePath))
+                continue;
 
-        var bytes = await _fileProvider.ReadAllBytesAsync(imagePath);
-        var seoName = await _pictureService.GetPictureSeNameAsync($"gmaster-{item.Sku}");
-        var picture = await _pictureService.InsertPictureAsync(
-            bytes,
-            mimeType,
-            seoName,
-            $"{item.ArabicName} - {item.EnglishName}",
-            item.EnglishName,
-            validateBinary: false);
-        return picture.Id;
+            var mimeType = _fileProvider.GetFileExtension(fileName).ToLowerInvariant() switch
+            {
+                ".png" => MimeTypes.ImagePng,
+                ".gif" => MimeTypes.ImageGif,
+                ".webp" => "image/webp",
+                _ => MimeTypes.ImageJpeg
+            };
+
+            var bytes = await _fileProvider.ReadAllBytesAsync(imagePath);
+            var suffix = pictureIds.Count == 0 ? string.Empty : $"-{pictureIds.Count + 1}";
+            var seoName = await _pictureService.GetPictureSeNameAsync($"gmaster-{item.Sku}{suffix}");
+            var picture = await _pictureService.InsertPictureAsync(
+                bytes,
+                mimeType,
+                seoName,
+                $"{item.ArabicName} - {item.EnglishName}",
+                item.EnglishName,
+                validateBinary: false);
+
+            pictureIds.Add(picture.Id);
+            if (pictureIds.Count == MaxPicturesPerProduct)
+                break;
+        }
+
+        return pictureIds;
+    }
+
+    /// <summary>
+    /// Yields the candidate file names for a product, in display order. The numeric suffix is matched
+    /// exactly so a SKU that is a prefix of another SKU cannot borrow its photos.
+    /// </summary>
+    private static IEnumerable<string> EnumerateImageFileNames(GMasterCatalogItem item)
+    {
+        yield return item.ImageFile;
+
+        string[] extensions = [".jpg", ".jpeg", ".png", ".webp"];
+        for (var index = 2; index <= MaxPicturesPerProduct; index++)
+        {
+            foreach (var extension in extensions)
+                yield return $"{item.Sku}-{index}{extension}";
+        }
     }
 
     public static decimal CalculateSellingPrice(decimal cost)

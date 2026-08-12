@@ -14,11 +14,18 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import io
 import re
 import sys
 from pathlib import Path
 
 import openpyxl
+from PIL import Image, ImageFilter
+
+# Storefront canvas for the primary photo. The supplier embeds ~86px thumbnails, so this cannot add
+# detail; it resamples cleanly onto a white square instead of letting the theme stretch a tiny bitmap.
+CANVAS = 600
+CONTENT_SCALE = 0.82
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 CSV_PATH = PLUGIN_ROOT / "Content" / "gmaster-catalog.csv"
@@ -172,6 +179,41 @@ def chassis_codes(description: str) -> str:
     return ",".join(seen[:12])
 
 
+def normalize_image(data: bytes) -> bytes | None:
+    """Resample a supplier thumbnail onto a clean white square canvas.
+
+    This does not invent detail. It avoids the browser/theme upscaling an 86px bitmap directly,
+    which is what made the grid look like pixel mush.
+    """
+    try:
+        with Image.open(io.BytesIO(data)) as source:
+            image = source.convert("RGBA")
+    except Exception:
+        return None
+
+    # Drop a fully transparent border so the part fills the canvas predictably.
+    alpha = image.split()[-1]
+    box = alpha.getbbox()
+    if box:
+        image = image.crop(box)
+
+    flat = Image.new("RGB", image.size, (255, 255, 255))
+    flat.paste(image, mask=image.split()[-1])
+
+    target = int(CANVAS * CONTENT_SCALE)
+    ratio = min(target / flat.width, target / flat.height)
+    size = (max(1, round(flat.width * ratio)), max(1, round(flat.height * ratio)))
+    resized = flat.resize(size, Image.LANCZOS)
+    resized = resized.filter(ImageFilter.UnsharpMask(radius=1.6, percent=110, threshold=3))
+
+    canvas = Image.new("RGB", (CANVAS, CANVAS), (255, 255, 255))
+    canvas.paste(resized, ((CANVAS - size[0]) // 2, (CANVAS - size[1]) // 2))
+
+    buffer = io.BytesIO()
+    canvas.save(buffer, format="JPEG", quality=88, optimize=True)
+    return buffer.getvalue()
+
+
 def normalize_oem(raw: str) -> str:
     return re.sub(r"[^0-9A-Za-z]", "", str(raw or "")).upper()
 
@@ -253,16 +295,16 @@ def main(paths: list[str]) -> None:
             category = classify(name_en, description)
             category_counts[category] = category_counts.get(category, 0) + 1
 
+            # Primary photo is always "<SKU>-1.jpg". Additional licensed photos can be dropped in as
+            # "<SKU>-2.jpg" / "<SKU>-3.jpg"; the importer discovers them automatically.
             image_file = ""
             image = images.get(row)
             if image is not None:
-                data = image._data()
-                ext = (image.format or "jpeg").lower()
-                if ext == "jpg":
-                    ext = "jpeg"
-                image_file = f"{sku}.{ext}"
-                (IMAGE_DIR / image_file).write_bytes(data)
-                with_image += 1
+                normalized = normalize_image(image._data())
+                if normalized is not None:
+                    image_file = f"{sku}-1.jpg"
+                    (IMAGE_DIR / image_file).write_bytes(normalized)
+                    with_image += 1
 
             rows_out.append({
                 "sku": sku,

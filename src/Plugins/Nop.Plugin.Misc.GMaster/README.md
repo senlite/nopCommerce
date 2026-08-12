@@ -51,8 +51,41 @@ Installing the plugin:
 6. Stores the EGP-converted supplier cost in `ProductCost` and the retail price in `Price`.
 7. Sets EGP as the store's primary currency and unpublishes other currencies so the EGP amounts cannot
    be shown under a misleading currency symbol.
-8. Attaches the real supplier photo per product, falling back to an original trademark-free category SVG
-   only for rows without a photo.
+8. Attaches up to three real photos per product, falling back to an original trademark-free category SVG
+   only for rows without any photo.
+
+## Product photography
+
+The supplier workbooks embed roughly **86×86 px** thumbnails — that is the highest resolution present in
+any file supplied. `build_catalog.py` resamples each one onto a clean 600×600 white canvas so the theme
+is not stretching a tiny bitmap, but resampling **cannot invent detail**.
+
+Photos follow a numbered convention in `Content/parts`:
+
+```
+GM-11537644811-1.jpg   <- primary, generated from the workbook
+GM-11537644811-2.jpg   <- optional, drop in
+GM-11537644811-3.jpg   <- optional, drop in
+```
+
+The importer attaches up to `MaxPicturesPerProduct` (3) per product and matches the numeric suffix
+exactly, so a SKU that is a prefix of another SKU (`GM-11117568264` vs `GM-11117568264-A481`) can never
+borrow its neighbour's photos. **To get three high-resolution photos per product, drop the extra files
+into `Content/parts` using this convention and reimport — no code change is required.**
+
+### Sourcing higher-resolution photos legally
+
+Do **not** scrape product photos from search engines, retailer sites, or marketplace listings. A product
+photo is a separate copyrighted work from the part itself; reselling the part grants no licence to the
+photo, and statutory damages run per image. Supplier photo dumps frequently contain images the supplier
+never had the right to redistribute, which passes the infringement straight through to this store.
+
+Defensible sources, in order of preference:
+
+1. **Ask the supplier for their high-resolution image pack plus written commercial-use permission.** They
+   already sent thumbnails, so the originals almost certainly exist. This is free and the cleanest route.
+2. **Licence a commercial parts-image dataset** keyed by OE number and match on the `oem` column.
+3. **Photograph the stock in-house** — full ownership, and the only option that shows the exact item sold.
 
 Soft-delete is deliberate: it clears the visible catalog while preserving historical orders and
 invoices that reference old product ids.
