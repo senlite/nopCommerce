@@ -130,6 +130,12 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await base.InstallAsync();
     }
 
+    public override async Task UpdateAsync(string currentVersion, string targetVersion)
+    {
+        _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.Update);
+        await base.UpdateAsync(currentVersion, targetVersion);
+    }
+
     public override async Task UninstallAsync()
     {
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
