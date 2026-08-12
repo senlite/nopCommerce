@@ -2,34 +2,51 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-12
 
 ## Status legend
 - `pending` = not started
+- `partial` = real implementation exists, but the documented exit criteria are not fully met
 - `in-progress` = currently being implemented
 - `done` = implemented and validated
 - `blocked` = cannot proceed without prerequisite/decision
+- `not-committed` = evaluated in the larger vision but deliberately outside the committed roadmap
 
 ## Current overall progress
-- Completed tasks: 52 / 52
-- In-progress tasks: 0 / 52
-- Pending tasks: 0 / 52
-- Blocked tasks: 0 / 52 (release dry-run SQL Server clone is an ops prerequisite, not a code task blocker)
 
-### Completion notes (2026-08-05)
-- Track 3: SQL product search, storefront JS widgets, garage remove, admin dashboard, import SQL persistence + Excel/PDF parsers + catalog publisher.
-- Track 4: AI ports (Null/OpenAI-compatible), ERPNext HTTP adapter with stub fallback, recommendations, NL search fallback.
-- Track 5: Audit schema, health/diagnostics, a11y smoke, perf budgets, resilience tests.
-- Track 6: Coverage/traceability gates, E2E API/a11y soft specs, CI build script step.
-- Track 7: Operator runbook + acceptance go/no-go; docs synchronized.
-- Decisions: MySQL for local nopCommerce host (Npgsql/linq2db incompatibility); SQL Server remains production OLTP for `TP_CE_*`; AI/ERP safe defaults off/unconfigured.
+This plan has three accounting levels. They must not be conflated:
+
+1. **Engineering scaffold: 40 / 40 enumerated tasks done** (37 legacy `T0`–`T7` rows plus three
+   baseline E2E rows). Earlier revisions claimed “52 / 52,” but did not identify the other twelve
+   tasks; that unauditable total is retired. The scaffold builds and its architecture/behavior tests pass.
+2. **Documented product vision (`EP-01`–`EP-28`): 0 / 28 epics fully closed, 20 partial, 8 pending.**
+   An epic is only closed when every exit criterion in
+   [38 Epics](docs/38-epics.md) is evidenced.
+3. **Horizon 1 / v1.0 release gate: 0 / 12 checklist items fully evidenced.** See
+   [41 Release Plan](docs/41-release-plan.md#v10--foundation). Check Engine remains **pre-release**.
+
+The previous “52 / 52 complete” headline was both unauditable from the listed tasks and misleading when
+read as completion of Horizon 1 or the full roadmap. This revision uses only enumerated tasks and makes
+all remaining work in the larger documented vision explicit.
+
+### Implemented scaffold summary (2026-08-05)
+- SQL-backed vehicle/OEM/fitment/garage/import repositories and FluentMigrator schema exist.
+- Storefront search, garage and fitment widgets plus admin JSON workflows exist.
+- CSV and Excel import, best-effort PDF extraction, review and nopCommerce product publication exist.
+- OpenAI-compatible and ERPNext HTTP adapters exist with disabled/stub fallbacks.
+- Audit schema, health/diagnostics, convention tests, microbenchmarks and build scripts exist.
+- Decisions: MySQL is used for the local 4.70 host; SQL Server remains the documented production OLTP
+  target; AI and ERP default to disabled/unconfigured.
 
 ## Completed baseline (already done)
 - `done` E2E.1: Permanent Playwright harness added (`src/Tests/TwinParticles.CheckEngine.Tests.E2E`)
 - `done` E2E.2: PostgreSQL-backed install smoke flow implemented
 - `done` E2E.3: Manual/automated Podman scripts implemented (`e2e/start-manual-stack.ps1`, `e2e/run-regressions.ps1`)
 
-## Execution backlog
+## Completed engineering scaffold (legacy Tracks T0–T7)
+
+These tasks preserve the audit trail for the completed implementation slice. `done` here means the
+scoped code or convention test exists; it does **not** supersede the epic exit criteria below.
 
 ### Track 0 — Build and platform stability
 | ID | Task | Status | Validation |
@@ -100,7 +117,191 @@
 | T7.3 | Release runbook and operator manual finalized | done | `docs/implementation/06-operator-runbook.md` |
 | T7.4 | Final acceptance checklist and go/no-go report | done | `docs/implementation/07-acceptance-go-no-go.md` |
 
+## Product vision execution backlog
+
+The authoritative scope and exit criteria remain
+[ROADMAP](ROADMAP.md), [38 Epics](docs/38-epics.md), and
+[41 Release Plan](docs/41-release-plan.md). The tables below record the delta between those documents
+and the code as of 2026-08-12.
+
+| Horizon | Epic status |
+|---|---|
+| 0 | `EP-01` partial |
+| 1 | `EP-02`–`EP-16` partial; `EP-17` pending |
+| 2 | `EP-18`–`EP-21` partial |
+| 3 | `EP-22`–`EP-24` pending |
+| 4 | `EP-25`–`EP-27` pending |
+| 5 | `EP-28` pending |
+| **Total** | **0 done, 20 partial, 8 pending** |
+
+### Horizon 0 — Platform prerequisite (`EP-01`)
+
+| ID | Task | Status | Completion evidence required |
+|---|---|---|---|
+| H0.1 | Upgrade host and plugin from nopCommerce 4.70 / .NET 8 to 4.90.6 / .NET 9 | pending | Host version, plugin metadata and all projects target the documented platform |
+| H0.2 | Pass the full host regression suite on 4.90.6 | pending | Stock host build and regression report |
+| H0.3 | Install, upgrade and uninstall the plugin on stock 4.90.6 | blocked | Disposable SQL Server instance and clean lifecycle report |
+| H0.4 | Rehearse populated-database rollback | blocked | Restore and rollback evidence from a disposable clone |
+
+Current evidence: this repository and `plugin.json` target nopCommerce 4.70 and `net8.0`; therefore
+`EP-01` is not complete.
+
+### Horizon 1 — Foundation / v1.0 (`EP-02`–`EP-17`)
+
+#### Plugin lifecycle and platform integrity
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | partial | Static migration tests pass; live SQL Server apply/down rehearsal is outstanding |
+| H1.2 | Add uninstall confirmation and export-before-drop workflow | pending | Uninstall currently applies down migrations immediately |
+| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | partial | Package remains `0.1.0` for nopCommerce 4.70 |
+
+#### Vehicle, VIN, OEM and fitment data
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H1.4 | Load a reference-scale BMW vehicle hierarchy without third-party runtime dependency | pending | Default seed is generic scaffolding, not the launch dataset |
+| H1.5 | Support make/model merge and archive while preserving fitment and audit history | pending | CRUD exists; merge/archive workflow is absent |
+| H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | partial | ISO validation exists, but decoder mappings cover only a small hard-coded set |
+| H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | partial | Candidate contracts exist; production corpus and log audit do not |
+| H1.8 | Validate OEM normalization/supersession against 500,000 entries | partial | SQL implementation exists; scale and conflict benchmarks do not |
+| H1.9 | Build and pass the fitment accuracy corpus Must set at 100% | pending | Policy/unit tests exist; the required accuracy corpus does not |
+| H1.10 | Validate cached and uncached fitment latency at reference scale | partial | In-process microbenchmarks exist; production-scale data does not |
+| H1.11 | Import production-scale catalog and fitment provenance data | pending | No reference-scale BMW fitment dataset is bundled or loaded |
+
+#### Search and customer garage
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H1.12 | Complete VIN, OEM, vehicle-tree, category and keyword search against production data | partial | Routing and SQL queries exist; seeded fallback data masks empty/incomplete stores |
+| H1.13 | Add production full-text/external index with incremental rebuild and SQL degradation | pending | “Index rebuild” only toggles an in-memory health flag |
+| H1.14 | Meet first-page latency and accuracy budgets on the published benchmark set | pending | No reference-catalog search benchmark exists |
+| H1.15 | Add facets, autocomplete and zero-result recovery UX | pending | Not implemented |
+| H1.16 | Add privacy-safe search analytics | pending | No production analytics pipeline exists |
+| H1.17 | Persist guest garage safely and migrate on sign-in | partial | Signed-in SQL garage exists; guest state is process-local memory |
+| H1.18 | Add garage VIN encryption, data export and erasure | pending | Required privacy workflows are absent |
+
+#### Import and image management
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H1.19 | Make all twelve import stages independently rerunnable and durably SQL-backed | partial | Pipeline exists; request memory remains authoritative and SQL persistence is best effort |
+| H1.20 | Support robust PDF extraction, including scanned/image PDFs | partial | Current parser is best-effort text extraction only; OCR is absent |
+| H1.21 | Prove a 10,000-row batch through review/publication within the documented SLA | pending | No scale/SLA test exists |
+| H1.22 | Complete duplicate merge/link/keep-separate operator decisions | partial | Detection exists; full durable operator workflow is incomplete |
+| H1.23 | Generate and store listing, product and zoom image derivatives | partial | Variant contracts exist; CDN delivery builds synthetic URLs |
+| H1.24 | Complete licensed supplier-image sourcing and batch replacement workflow | partial | URL assignment, quarantine and individual replacement exist; sourcing operations do not |
+
+#### Theme, localisation and SEO
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H1.25 | Complete the premium theme component set, including the documented mega menu | partial | Search, garage and fitment chrome exist; mega menu and full theme are absent |
+| H1.26 | Provide full Arabic/English localisation parity | partial | Logical RTL CSS exists; complete Arabic resource dictionaries do not |
+| H1.27 | Validate RTL/LTR, keyboard and screen-reader behavior from 320–2,560 px | partial | Smoke specs are soft when widgets are absent; no complete browser matrix |
+| H1.28 | Meet Core Web Vitals on throttled mid-range mobile hardware | pending | No Lighthouse/CWV gate exists |
+| H1.29 | Expose public vehicle/part SEO landing routes with stable localized URLs and hreflang | partial | Landing records can be generated, but public landing routes are absent |
+| H1.30 | Integrate incremental sitemap generation and thin-page noindex policy | partial | Sitemap is process-local and performance policy is a permissive stub |
+
+#### ERPNext, security, licensing and regional plugins
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H1.31 | Synchronize products, inventory, customers, orders, invoices, returns and shipments bidirectionally | partial | HTTP adapter and queue exist; no complete event-driven entity flows |
+| H1.32 | Add scheduled processing and nopCommerce order/customer event consumers | pending | ERP operations are manually triggered through admin endpoints |
+| H1.33 | Reconcile ERP order, payment and inventory totals daily | partial | Current report summarizes queue jobs, not cross-system financial totals |
+| H1.34 | Complete GDPR export/erasure, tamper-evident audit and retention workflows | partial | Permission/audit baseline exists; complete privacy lifecycle does not |
+| H1.35 | Pass an independent security assessment with no high/critical findings | blocked | Security stakeholder review and sign-off are external gates |
+| H1.36 | Implement online/offline licence activation and expiry read-only behavior | partial | Licence service uses an in-memory state store; no production activation authority |
+| H1.37 | Build the separate Paymob reference payment plugin | pending | Required by `EP-17`; absent from the repository |
+| H1.38 | Build the separate Bosta reference shipping plugin | pending | Required by `EP-17`; absent from the repository |
+
+### Horizon 2 — Intelligence / v1.1 (`EP-18`–`EP-21`)
+
+Partial Horizon 2 scaffolding landed early. It must not be described as a completed Intelligence release.
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H2.1 | Complete multi-provider AI abstraction | partial | OpenAI-compatible and Null ports exist; dedicated Azure OpenAI/Anthropic adapters do not |
+| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | Toggles and in-memory ledger exist; ceilings are not enforced across every call |
+| H2.3 | Parse natural language into structured vehicle/part intent | partial | Current flow extracts keywords or falls back to ordinary keyword search |
+| H2.4 | Implement vector/semantic bilingual search | pending | No embedding model or vector index exists |
+| H2.5 | Pass the published natural-language/semantic accuracy benchmark | pending | Benchmark corpus and target evidence are absent |
+| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Hooks call an LLM but mostly set stage flags rather than durable candidate fields |
+| H2.7 | Enforce the controlled automotive translation glossary | pending | No glossary-backed generation/validation pipeline exists |
+| H2.8 | Complete reviewable AI fitment candidate workflow | partial | Proposal safety exists; complete operator workflow is absent |
+| H2.9 | Productionize fitment-constrained recommendations | partial | Rule-based recommendations exist; scale, ranking and quality gates do not |
+| H2.10 | Build the grounded customer assistant | pending | No assistant service or storefront experience exists |
+
+### Horizon 3 — Marketplace / v1.2 (`EP-22`–`EP-24`)
+
+These are deliberately future-horizon items, not current Horizon 1 defects.
+
+| ID | Task | Status |
+|---|---|---|
+| H3.1 | Supplier onboarding, verification and agreement acceptance | pending |
+| H3.2 | Vendor catalog/order/customer isolation and upgrade path | pending |
+| H3.3 | Vendor dashboards, inventory and performance analytics | pending |
+| H3.4 | Flat, percentage, tiered and category-specific commissions | pending |
+| H3.5 | Payout reconciliation and statements integrated with ERPNext | pending |
+| H3.6 | Multi-vendor cart, split orders and split shipments | pending |
+| H3.7 | Attributed, reviewable and revocable vendor fitment contributions | pending |
+
+### Horizon 4 — Vertical portals / v1.3–v1.5 (`EP-25`–`EP-27`)
+
+| ID | Task | Status |
+|---|---|---|
+| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | pending |
+| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | pending |
+| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | pending |
+
+### Horizon 5 — Platform / v2.0 (`EP-28`)
+
+| ID | Task | Status | Dependency |
+|---|---|---|---|
+| H5.1 | Multi-tenant data/configuration isolation | pending | Marketplace foundations |
+| H5.2 | Metered billing and per-tenant operations | pending | Multi-tenant runtime |
+| H5.3 | Versioned public REST API and webhooks | pending | Stable product contracts |
+| H5.4 | Vehicle data as a service with the documented ethics/licensing guardrails | pending | Owned dataset and legal approval |
+| H5.5 | Retarget to .NET 10 | blocked | nopCommerce release supporting .NET 10 |
+
+### Evaluated but not committed
+
+The following are **not missing implementation** and must not be counted as defects:
+
+| Capability | Status | Reason |
+|---|---|---|
+| Native mobile applications | not-committed | Requires a stable Horizon 5 public API and validated demand |
+| Shopify/WooCommerce/Magento/enterprise platform adapters | not-committed | Requires a qualified commercial deal |
+| Regional compliance packs | not-committed | Promoted only by a blocking jurisdictional requirement |
+| Public API consumer ecosystem | not-committed | Follows a stable public API |
+| OBD-II diagnostics and vehicle telemetry | not-committed | Explicitly rejected as a different product category |
+| Headless-only Horizon 1 architecture | not-committed | Explicitly deferred until the Horizon 5 API |
+
+## Release and evidence gates
+
+| ID | Gate | Status |
+|---|---|---|
+| G1 | Legacy scaffold build and architecture suite green | done |
+| G2 | Real line coverage thresholds (not convention/name checks) | pending |
+| G3 | Fitment accuracy corpus Must set at 100% | pending |
+| G4 | Search, import and fitment performance at reference scale | pending |
+| G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | blocked |
+| G6 | Complete browser accessibility, RTL and CWV evidence | pending |
+| G7 | Product owner sign-off | blocked |
+| G8 | Security sign-off | blocked |
+| G9 | Private beta exit gate | pending |
+| G10 | Public beta exit gate | pending |
+| G11 | Commercial packaging and production licence authority | pending |
+| G12 | nopCommerce Marketplace submission | pending |
+
 ## Immediate next actions
-1. Run live SQL Server migration apply/uninstall rehearsal on a disposable clone (ops).
-2. Obtain product/security stakeholder sign-off on the go/no-go checklist.
-3. Keep this plan updated if post-release defects reopen a track.
+
+Work follows dependency order rather than skipping to later roadmap features:
+
+1. Complete Horizon 0: upgrade and validate nopCommerce 4.90.6 / .NET 9.
+2. Load the reference BMW vehicle/fitment corpus and make G3 measurable.
+3. Replace Horizon 1 in-memory/stub production paths in search, import, garage, SEO, ERP and licensing.
+4. Run SQL Server lifecycle, reference-scale performance, accessibility/RTL/CWV and security gates.
+5. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
+6. Resume unfinished Horizon 2 work only after the Horizon 1 release gate is evidenced.
