@@ -7,8 +7,8 @@ public sealed record GMasterCatalogItem(
     string Oem,
     string VehicleModels,
     string CategoryKey,
-    decimal CostPrice,
-    decimal SellingPrice,
+    decimal CostRmb,
+    string ImageFile,
     string SourceFile);
 
 public sealed record GMasterCatalogImportResult(
@@ -17,4 +17,5 @@ public sealed record GMasterCatalogImportResult(
     int ClearedCartItems,
     int ImportedProducts,
     int ImportedCategories,
+    int ImportedImages,
     DateTime CompletedUtc);

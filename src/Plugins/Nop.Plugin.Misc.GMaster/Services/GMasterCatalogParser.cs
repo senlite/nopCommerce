@@ -18,7 +18,7 @@ public sealed class GMasterCatalogParser
         var expected = new[]
         {
             "sku", "name_ar", "name_en", "oem", "vehicle_models",
-            "category_key", "cost_price", "selling_price", "source_file"
+            "category_key", "cost_rmb", "image_file", "source_file"
         };
 
         if (!header.SequenceEqual(expected, StringComparer.OrdinalIgnoreCase))
@@ -34,11 +34,11 @@ public sealed class GMasterCatalogParser
                 throw new InvalidOperationException($"Catalog row {rowIndex + 1} has {row.Count} columns; expected {expected.Length}.");
 
             var sku = row[0].Trim();
-            var ArabicName = row[1].Trim();
+            var arabicName = row[1].Trim();
             var englishName = row[2].Trim();
             var categoryKey = row[5].Trim();
 
-            if (string.IsNullOrWhiteSpace(sku) || string.IsNullOrWhiteSpace(ArabicName) ||
+            if (string.IsNullOrWhiteSpace(sku) || string.IsNullOrWhiteSpace(arabicName) ||
                 string.IsNullOrWhiteSpace(englishName) || string.IsNullOrWhiteSpace(categoryKey))
             {
                 throw new InvalidOperationException($"Catalog row {rowIndex + 1} is missing a required value.");
@@ -49,24 +49,22 @@ public sealed class GMasterCatalogParser
             if (!skus.Add(sku))
                 throw new InvalidOperationException($"Duplicate SKU '{sku}' in catalog row {rowIndex + 1}.");
 
-            if (!decimal.TryParse(row[6], NumberStyles.Number, CultureInfo.InvariantCulture, out var cost) || cost <= 0)
-                throw new InvalidOperationException($"Invalid cost price on catalog row {rowIndex + 1}.");
+            if (!decimal.TryParse(row[6], NumberStyles.Number, CultureInfo.InvariantCulture, out var costRmb) || costRmb <= 0)
+                throw new InvalidOperationException($"Invalid RMB cost on catalog row {rowIndex + 1}.");
 
-            if (!decimal.TryParse(row[7], NumberStyles.Number, CultureInfo.InvariantCulture, out var selling) ||
-                selling <= cost)
-            {
-                throw new InvalidOperationException($"Selling price must be greater than cost on catalog row {rowIndex + 1}.");
-            }
+            var imageFile = row[7].Trim();
+            if (imageFile.Contains('/') || imageFile.Contains('\\') || imageFile.Contains(".."))
+                throw new InvalidOperationException($"Unsafe image file path on catalog row {rowIndex + 1}.");
 
             items.Add(new GMasterCatalogItem(
                 sku,
-                ArabicName,
+                arabicName,
                 englishName,
                 row[3].Trim(),
                 row[4].Trim(),
                 categoryKey,
-                cost,
-                selling,
+                costRmb,
+                imageFile,
                 row[8].Trim()));
         }
 

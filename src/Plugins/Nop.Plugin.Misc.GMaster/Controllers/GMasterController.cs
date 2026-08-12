@@ -62,6 +62,13 @@ public sealed class GMasterController : BasePluginController
             return RedirectToAction(nameof(Configure));
         }
 
+        // Persist the operator-supplied conversion rate before importing so cost/selling prices use it.
+        if (model.RmbToEgpRate > 0)
+        {
+            _settings.RmbToEgpRate = model.RmbToEgpRate;
+            await _settingService.SaveSettingAsync(_settings);
+        }
+
         try
         {
             var result = await _catalogImportService.ReplaceCatalogAsync(cancellationToken);
@@ -88,6 +95,8 @@ public sealed class GMasterController : BasePluginController
             CatalogSourceVersion = _settings.CatalogSourceVersion,
             ImportedProductCount = _settings.ImportedProductCount,
             ImportedCategoryCount = _settings.ImportedCategoryCount,
+            ImportedImageCount = _settings.ImportedImageCount,
+            RmbToEgpRate = _settings.RmbToEgpRate > 0 ? _settings.RmbToEgpRate : GMasterDefaults.DefaultRmbToEgpRate,
             ClearedProductCount = _settings.ClearedProductCount,
             ClearedCategoryCount = _settings.ClearedCategoryCount,
             ClearedCartItemCount = _settings.ClearedCartItemCount,

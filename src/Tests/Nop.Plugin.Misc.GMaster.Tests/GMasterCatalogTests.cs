@@ -24,11 +24,11 @@ public class GMasterCatalogTests
     }
 
     [Test]
-    public void Parser_Should_Read_Quoted_Bilingual_Row()
+    public void Parser_Should_Read_Quoted_Bilingual_Row_With_Image()
     {
         const string csv = """
-            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_price,selling_price,source_file
-            GM-51717059379,"كارتيرة أمامي شمال E90","Front fender liner, left","51717059379","E90","body-underbody",600,870,fiber.pdf
+            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_rmb,image_file,source_file
+            GM-11517586925,"طلمبة مياه كهربائية","Electric water pump, N52","11517586925","E90,E60,F10","cooling-system",360,GM-11517586925.jpeg,PILU8022228
             """;
 
         var items = new GMasterCatalogParser().Parse(csv);
@@ -37,11 +37,13 @@ public class GMasterCatalogTests
         var item = items[0];
         Action assertions = () =>
         {
-            Assert.That(item.Sku, Is.EqualTo("GM-51717059379"));
-            Assert.That(item.ArabicName, Does.Contain("كارتيرة"));
-            Assert.That(item.EnglishName, Is.EqualTo("Front fender liner, left"));
-            Assert.That(item.CostPrice, Is.EqualTo(600));
-            Assert.That(item.SellingPrice, Is.EqualTo(870));
+            Assert.That(item.Sku, Is.EqualTo("GM-11517586925"));
+            Assert.That(item.ArabicName, Does.Contain("طلمبة"));
+            Assert.That(item.EnglishName, Is.EqualTo("Electric water pump, N52"));
+            Assert.That(item.CategoryKey, Is.EqualTo("cooling-system"));
+            Assert.That(item.CostRmb, Is.EqualTo(360));
+            Assert.That(item.ImageFile, Is.EqualTo("GM-11517586925.jpeg"));
+            Assert.That(item.VehicleModels, Is.EqualTo("E90,E60,F10"));
         };
         Assert.Multiple(assertions);
     }
@@ -50,9 +52,9 @@ public class GMasterCatalogTests
     public void Parser_Should_Reject_Duplicate_Skus()
     {
         const string csv = """
-            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_price,selling_price,source_file
-            GM-A,قطعة,Part,A,E90,body-underbody,100,160,fiber.pdf
-            GM-A,قطعة أخرى,Other part,B,F30,body-underbody,100,160,fiber.pdf
+            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_rmb,image_file,source_file
+            GM-A,قطعة,Part,A,E90,cooling-system,100,GM-A.jpeg,PILU8022228
+            GM-A,قطعة أخرى,Other part,B,F30,cooling-system,100,GM-A.jpeg,PILU8022228
             """;
 
         Action parseDuplicate = () => new GMasterCatalogParser().Parse(csv);
@@ -64,8 +66,8 @@ public class GMasterCatalogTests
     public void Parser_Should_Reject_Html_In_Catalog_Data()
     {
         const string csv = """
-            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_price,selling_price,source_file
-            GM-X,قطعة,<script>alert(1)</script>,X,E90,body-underbody,100,160,fiber.pdf
+            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_rmb,image_file,source_file
+            GM-X,قطعة,<script>alert(1)</script>,X,E90,cooling-system,100,GM-X.jpeg,PILU8022228
             """;
 
         Action parseHtml = () => new GMasterCatalogParser().Parse(csv);
@@ -75,9 +77,23 @@ public class GMasterCatalogTests
     }
 
     [Test]
+    public void Parser_Should_Reject_Unsafe_Image_Path()
+    {
+        const string csv = """
+            sku,name_ar,name_en,oem,vehicle_models,category_key,cost_rmb,image_file,source_file
+            GM-X,قطعة,Part,X,E90,cooling-system,100,../../secret.png,PILU8022228
+            """;
+
+        Action parsePath = () => new GMasterCatalogParser().Parse(csv);
+        var exception = Assert.Throws<InvalidOperationException>(parsePath);
+
+        Assert.That(exception!.Message, Does.Contain("Unsafe image file path"));
+    }
+
+    [Test]
     public void Every_Category_Should_Have_Bilingual_Copy_And_Original_Glyph()
     {
-        Assert.That(GMasterCategoryCatalog.All, Has.Count.EqualTo(10));
+        Assert.That(GMasterCategoryCatalog.All, Has.Count.EqualTo(12));
         Assert.That(
             GMasterCategoryCatalog.All.Select(category => category.Key),
             Is.Unique);
@@ -106,31 +122,37 @@ public class GMasterCatalogTests
     }
 
     [Test]
-    public void Bundled_Catalog_Should_Be_Valid_Unique_And_Follow_Pricing_Policy()
+    public void Bundled_Catalog_Should_Be_Valid_Unique_And_Photographed()
     {
         var catalogPath = LocateCatalog();
+        var partsDirectory = Path.Combine(Path.GetDirectoryName(catalogPath)!, "parts");
         var items = new GMasterCatalogParser().Parse(File.ReadAllText(catalogPath));
         var allowedCategories = GMasterCategoryCatalog.All.Select(category => category.Key).ToHashSet();
-        var pricingMismatches = items
-            .Where(item => item.SellingPrice !=
-                           GMasterCatalogImportService.CalculateSellingPrice(item.CostPrice))
-            .Select(item =>
-                $"{item.Sku}: got {item.SellingPrice}, expected {GMasterCatalogImportService.CalculateSellingPrice(item.CostPrice)}")
+
+        var missingImages = items
+            .Where(item => !string.IsNullOrWhiteSpace(item.ImageFile))
+            .Where(item => !File.Exists(Path.Combine(partsDirectory, item.ImageFile)))
+            .Select(item => item.ImageFile)
             .ToList();
+
+        var withImage = items.Count(item => !string.IsNullOrWhiteSpace(item.ImageFile));
 
         Action assertions = () =>
         {
-            Assert.That(items, Has.Count.EqualTo(184),
-                "the curated source should retain every distinct saleable line from both PDFs");
+            Assert.That(items, Has.Count.GreaterThanOrEqualTo(400),
+                "the full container packing lists should import several hundred products");
             Assert.That(items.Select(item => item.Sku), Is.Unique);
             Assert.That(items, Has.All.Matches<GMasterCatalogItem>(
                 item => allowedCategories.Contains(item.CategoryKey)));
-            Assert.That(pricingMismatches, Is.Empty,
-                $"catalog selling prices must follow the policy: {string.Join("; ", pricingMismatches)}");
+            Assert.That(items, Has.All.Matches<GMasterCatalogItem>(item => item.CostRmb > 0));
+            Assert.That(missingImages, Is.Empty,
+                $"every referenced photo must be bundled: {string.Join(", ", missingImages)}");
+            Assert.That(withImage, Is.GreaterThanOrEqualTo(items.Count - 5),
+                "almost every product should carry a real supplier photo");
             Assert.That(items, Has.Some.Matches<GMasterCatalogItem>(
-                item => item.SourceFile == "accessories.pdf"));
+                item => item.SourceFile == "CULU6339343"));
             Assert.That(items, Has.Some.Matches<GMasterCatalogItem>(
-                item => item.SourceFile == "fiber.pdf"));
+                item => item.SourceFile == "PILU8022228"));
         };
         Assert.Multiple(assertions);
     }

@@ -64,11 +64,13 @@ public sealed class GMasterPlugin : BasePlugin, IMiscPlugin
         => _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
         {
             ["Plugins.Misc.GMaster.Title"] = "GMaster Catalog Importer",
-            ["Plugins.Misc.GMaster.Description"] = "Imports the curated accessories and fiber price lists into a clean BMW-compatible parts catalog.",
+            ["Plugins.Misc.GMaster.Description"] = "Imports the supplier container packing lists (with real part photos) into a clean BMW-compatible parts catalog.",
             ["Plugins.Misc.GMaster.LastImport"] = "Last import (UTC)",
             ["Plugins.Misc.GMaster.SourceVersion"] = "Catalog source version",
             ["Plugins.Misc.GMaster.ImportedProducts"] = "Imported products",
             ["Plugins.Misc.GMaster.ImportedCategories"] = "Imported categories",
+            ["Plugins.Misc.GMaster.ImportedImages"] = "Imported product photos",
+            ["Plugins.Misc.GMaster.RmbRate"] = "RMB → EGP conversion rate",
             ["Plugins.Misc.GMaster.ClearedProducts"] = "Cleared products",
             ["Plugins.Misc.GMaster.ClearedCategories"] = "Cleared categories",
             ["Plugins.Misc.GMaster.ClearedCartItems"] = "Cleared cart / wishlist items",
@@ -79,6 +81,6 @@ public sealed class GMasterPlugin : BasePlugin, IMiscPlugin
             ["Plugins.Misc.GMaster.Reimport.Success"] = "GMaster catalog replacement completed: {0} products across {1} categories.",
             ["Plugins.Misc.GMaster.LastError"] = "Last error",
             ["Plugins.Misc.GMaster.Pricing"] = "Egyptian-market pricing policy",
-            ["Plugins.Misc.GMaster.Pricing.Detail"] = "Cost ≤ 500: +55%; 501–1,000: +45%; 1,001–3,000: +35%; 3,001–10,000: +28%; above 10,000: +22%. Selling prices are rounded up to the next EGP 10."
+            ["Plugins.Misc.GMaster.Pricing.Detail"] = "Supplier RMB cost is converted to EGP using the configured rate, then a retail margin is applied: EGP cost ≤ 500: +55%; 501–1,000: +45%; 1,001–3,000: +35%; 3,001–10,000: +28%; above 10,000: +22%. Selling prices are rounded up to the next EGP 10."
         });
 }

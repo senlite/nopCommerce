@@ -17,6 +17,12 @@ public sealed record ConfigurationModel : BaseNopModel
     [NopResourceDisplayName("Plugins.Misc.GMaster.ImportedCategories")]
     public int ImportedCategoryCount { get; init; }
 
+    [NopResourceDisplayName("Plugins.Misc.GMaster.ImportedImages")]
+    public int ImportedImageCount { get; init; }
+
+    [NopResourceDisplayName("Plugins.Misc.GMaster.RmbRate")]
+    public decimal RmbToEgpRate { get; set; }
+
     [NopResourceDisplayName("Plugins.Misc.GMaster.ClearedProducts")]
     public int ClearedProductCount { get; init; }
 

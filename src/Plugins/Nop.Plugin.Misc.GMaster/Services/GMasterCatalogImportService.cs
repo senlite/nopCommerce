@@ -84,6 +84,9 @@ public sealed class GMasterCatalogImportService
         var items = _catalogParser.Parse(csv);
         ValidateCategories(items);
 
+        var rmbToEgp = _settings.RmbToEgpRate > 0 ? _settings.RmbToEgpRate : GMasterDefaults.DefaultRmbToEgpRate;
+        var imageDirectory = _fileProvider.MapPath($"~/{GMasterDefaults.ImageRelativeDirectory}");
+
         var categoryTemplate = (await _categoryTemplateService.GetAllCategoryTemplatesAsync()).FirstOrDefault()
             ?? throw new InvalidOperationException("nopCommerce has no category template.");
         var productTemplate = (await _productTemplateService.GetAllProductTemplatesAsync()).FirstOrDefault()
@@ -100,17 +103,22 @@ public sealed class GMasterCatalogImportService
         // Stage the entire replacement catalog unpublished. If staging fails, the currently published
         // catalog remains online; a later successful run will clean up the unpublished partial stage.
         var pictures = await CreateCategoryPicturesAsync();
-        var root = await CreateRootCategoryAsync(categoryTemplate.Id, pictures["body-underbody"], published: false);
+        var brandingPictureId = pictures.Values.First();
+        var root = await CreateRootCategoryAsync(categoryTemplate.Id, brandingPictureId, published: false);
         var categories = await CreateCategoriesAsync(root.Id, categoryTemplate.Id, pictures);
-        var manufacturer = await CreateManufacturerAsync(manufacturerTemplate.Id, pictures["exterior-grilles"]);
+        var manufacturer = await CreateManufacturerAsync(manufacturerTemplate.Id, brandingPictureId);
         var importedProducts = new List<Product>(items.Count);
+        var importedImages = 0;
 
         var displayOrder = 0;
         foreach (var item in items)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var product = CreateProduct(item, productTemplate.Id, displayOrder);
+            var costEgp = Math.Round(item.CostRmb * rmbToEgp, 2, MidpointRounding.AwayFromZero);
+            var sellingEgp = CalculateSellingPrice(costEgp);
+
+            var product = CreateProduct(item, productTemplate.Id, displayOrder, costEgp, sellingEgp);
             await _productService.InsertProductAsync(product);
             importedProducts.Add(product);
 
@@ -128,10 +136,17 @@ public sealed class GMasterCatalogImportService
                 DisplayOrder = 0
             });
 
+            // Prefer the real supplier photo; fall back to the category illustration when a row has none.
+            var productPictureId = await TryCreateProductPictureAsync(imageDirectory, item);
+            if (productPictureId.HasValue)
+                importedImages++;
+            else
+                productPictureId = pictures[item.CategoryKey];
+
             await _productService.InsertProductPictureAsync(new ProductPicture
             {
                 ProductId = product.Id,
-                PictureId = pictures[item.CategoryKey],
+                PictureId = productPictureId.Value,
                 DisplayOrder = 0
             });
 
@@ -186,9 +201,11 @@ public sealed class GMasterCatalogImportService
         _settings.LastImportUtc = completedUtc;
         _settings.ImportedProductCount = items.Count;
         _settings.ImportedCategoryCount = categories.Count + 1;
+        _settings.ImportedImageCount = importedImages;
         _settings.ClearedProductCount = existingProducts.Count;
         _settings.ClearedCategoryCount = existingCategories.Count;
         _settings.ClearedCartItemCount = existingCartItems.Count;
+        _settings.RmbToEgpRate = rmbToEgp;
         _settings.CatalogSourceVersion = GMasterDefaults.SourceVersion;
         _settings.LastError = string.Empty;
         await _settingService.SaveSettingAsync(_settings);
@@ -199,7 +216,36 @@ public sealed class GMasterCatalogImportService
             existingCartItems.Count,
             items.Count,
             categories.Count + 1,
+            importedImages,
             completedUtc);
+    }
+
+    private async Task<int?> TryCreateProductPictureAsync(string imageDirectory, GMasterCatalogItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.ImageFile))
+            return null;
+
+        var imagePath = _fileProvider.Combine(imageDirectory, item.ImageFile);
+        if (!_fileProvider.FileExists(imagePath))
+            return null;
+
+        var mimeType = _fileProvider.GetFileExtension(item.ImageFile).ToLowerInvariant() switch
+        {
+            ".png" => MimeTypes.ImagePng,
+            ".gif" => MimeTypes.ImageGif,
+            _ => MimeTypes.ImageJpeg
+        };
+
+        var bytes = await _fileProvider.ReadAllBytesAsync(imagePath);
+        var seoName = await _pictureService.GetPictureSeNameAsync($"gmaster-{item.Sku}");
+        var picture = await _pictureService.InsertPictureAsync(
+            bytes,
+            mimeType,
+            seoName,
+            $"{item.ArabicName} - {item.EnglishName}",
+            item.EnglishName,
+            validateBinary: false);
+        return picture.Id;
     }
 
     public static decimal CalculateSellingPrice(decimal cost)
@@ -228,16 +274,6 @@ public sealed class GMasterCatalogImportService
 
         if (unknown.Count > 0)
             throw new InvalidOperationException($"Unknown category keys: {string.Join(", ", unknown)}.");
-
-        foreach (var item in items)
-        {
-            var expectedSellingPrice = CalculateSellingPrice(item.CostPrice);
-            if (item.SellingPrice != expectedSellingPrice)
-            {
-                throw new InvalidOperationException(
-                    $"SKU '{item.Sku}' has selling price {item.SellingPrice}; expected {expectedSellingPrice} from the configured Egyptian-market margin policy.");
-            }
-        }
     }
 
     private async Task ConfigureEgyptianPoundAsync()
@@ -403,14 +439,19 @@ public sealed class GMasterCatalogImportService
         return manufacturer;
     }
 
-    private static Product CreateProduct(GMasterCatalogItem item, int templateId, int displayOrder)
+    private static Product CreateProduct(
+        GMasterCatalogItem item,
+        int templateId,
+        int displayOrder,
+        decimal costEgp,
+        decimal sellingEgp)
     {
         var safeArabic = WebUtility.HtmlEncode(item.ArabicName);
         var safeEnglish = WebUtility.HtmlEncode(item.EnglishName);
         var safeOem = WebUtility.HtmlEncode(item.Oem);
         var safeModels = WebUtility.HtmlEncode(item.VehicleModels);
-        var margin = item.SellingPrice - item.CostPrice;
-        var marginPercent = Math.Round(margin / item.CostPrice * 100m, 1);
+        var margin = sellingEgp - costEgp;
+        var marginPercent = costEgp > 0 ? Math.Round(margin / costEgp * 100m, 1) : 0m;
 
         var oemLine = string.IsNullOrWhiteSpace(item.Oem)
             ? string.Empty
@@ -440,11 +481,11 @@ public sealed class GMasterCatalogImportService
                   <p><small>السعر المعروض هو سعر البيع. تكلفة المورد محفوظة في حقل تكلفة المنتج داخل لوحة الإدارة.</small></p>
                 </div>
                 """,
-            AdminComment = $"Imported by GMaster. Cost EGP {item.CostPrice:0.##}; selling EGP {item.SellingPrice:0.##}; gross margin {marginPercent:0.#}%. Source {item.SourceFile}.",
+            AdminComment = $"Imported by GMaster. Cost RMB {item.CostRmb:0.##} → EGP {costEgp:0.##}; selling EGP {sellingEgp:0.##}; gross margin {marginPercent:0.#}%. Source {item.SourceFile}.",
             ProductTemplateId = templateId,
             AllowCustomerReviews = true,
-            Price = item.SellingPrice,
-            ProductCost = item.CostPrice,
+            Price = sellingEgp,
+            ProductCost = costEgp,
             IsShipEnabled = true,
             Weight = 1m,
             Length = 30m,
