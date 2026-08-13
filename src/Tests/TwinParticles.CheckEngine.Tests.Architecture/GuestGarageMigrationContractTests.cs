@@ -33,6 +33,8 @@ public class GuestGarageMigrationContractTests
             "a key cannot retrieve browser-local data from another process or node");
         script.Should().Contain("window.localStorage.removeItem(GUEST_PAYLOAD_KEY)",
             "the browser copy is removed only after a successful merge");
+        script.Should().Contain("return populateVehicleSelector().then",
+            "the signed-in UI must show the migrated vehicle immediately without a manual refresh");
     }
 
     [Test]

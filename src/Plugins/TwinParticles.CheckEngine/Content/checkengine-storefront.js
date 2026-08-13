@@ -675,7 +675,10 @@
           } catch (e) {
             /* ignore */
           }
-          return;
+          document.documentElement.removeAttribute('data-ce-garage-migration');
+          return populateVehicleSelector().then(function () {
+            evaluateFitmentBand();
+          });
         }
 
         // Retain the browser copy and retry on the next authenticated page. Surface the state to
