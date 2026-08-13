@@ -220,7 +220,7 @@ designed to be driven from the dashboard, scripts, or your own tooling.
 | **Garage support** | `/Admin/CheckEngine/GarageAdmin/CustomerGarage` | Read a customer's garage for support |
 | **Images** | `/Admin/CheckEngine/ImageAdmin/Replace` | Replace a placeholder image with a professional asset |
 | **SEO** | `/Admin/CheckEngine/SeoAdmin/{Sitemap,GenerateVehicle,GeneratePartForVehicle,RebuildSitemap}` | Landing-page and sitemap helpers |
-| **ERP** | `/Admin/CheckEngine/ErpAdmin/{Queue,Process,Reconcile,InventorySnapshot}` | ERPNext sync (see [section 11](#11-optional-integrations-ai-and-erp)). Order placement and customer registration automatically enqueue PII-minimized jobs; a plugin-owned 60-second scheduled task processes them with atomic claiming, idempotent event delivery, stale-claim recovery, and bounded delayed retries |
+| **ERP** | `/Admin/CheckEngine/ErpAdmin/{Queue,Process,Reconcile,InventorySnapshot}` | ERPNext sync (see [section 11](#11-optional-integrations-ai-and-erp)). When ERP is enabled, order placement and customer registration enqueue PII-minimized jobs without propagating queue failures; a plugin-owned five-minute scheduled task processes them with atomic claiming, idempotent event delivery, stale-claim recovery, and bounded delayed retries |
 
 ---
 
