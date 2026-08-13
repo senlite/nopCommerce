@@ -200,7 +200,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.19 | Make all twelve import stages independently rerunnable and durably SQL-backed | partial | Pipeline exists; request memory remains authoritative and SQL persistence is best effort |
+| H1.19 | Make all twelve import stages independently rerunnable and durably SQL-backed | done | SQL is authoritative for source bytes, run options, stage cursor/completions, errors and full row state; every stage checkpoints and can be rerun after process restart. Live SQL Server run/restart/vehicle-match rerun preserved upstream OEM state |
 | H1.20 | Support robust PDF extraction, including scanned/image PDFs | partial | Current parser is best-effort text extraction only; OCR is absent |
 | H1.21 | Prove a 10,000-row batch through review/publication within the documented SLA | pending | No scale/SLA test exists |
 | H1.22 | Complete duplicate merge/link/keep-separate operator decisions | partial | Detection exists; full durable operator workflow is incomplete |
@@ -316,7 +316,6 @@ Work follows dependency order rather than skipping to later roadmap features:
 
 1. Grow the BMW dataset (H1.4) from the curated launch slice toward the documented generation priority
    list and reference-scale volume.
-2. Make the import pipeline durably SQL-authoritative and independently rerunnable (H1.19).
-3. Complete search facets/autocomplete and build the reference accuracy/performance benchmark (H1.14–H1.15).
-4. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
-5. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
+2. Complete search facets/autocomplete and build the reference accuracy/performance benchmark (H1.14–H1.15).
+3. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
+4. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.

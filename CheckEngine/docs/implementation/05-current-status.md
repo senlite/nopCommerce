@@ -26,7 +26,8 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - Publishing/approving/rejecting a fitment claim regenerates the affected EN/AR landings so indexability updates immediately
 - Storefront JS for sticky search, fitment band, garage widget
 - Garage remove-vehicle + admin Dashboard Razor view
-- Import pipeline persists to SQL (`CorrelationId`), Excel/PDF parsers, `NopImportProductPublisher`
+- Import pipeline is SQL-authoritative: source bytes, options, stage cursor/completions and full row
+  state survive restart; all 12 stages are independently rerunnable and publication is idempotent
 - AI abstraction (Null + OpenAI-compatible), proposals never auto-publish
 - ERPNext HTTP adapter with stub fallback when unconfigured
 - Fitment-constrained recommendations + NL search keyword fallback
@@ -38,7 +39,7 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - `dotnet build src/NopCommerce.sln -c Release`
 - `dotnet test src/Tests/Nop.Tests/Nop.Tests.csproj -c Release` (1,044 pass; 8 skip)
 - Run: `bash CheckEngine/scripts/build-checkengine.sh`
-- Check Engine suite: 491/491; GMaster suite: 19/19
+- Check Engine suite: 512/512; GMaster suite: 19/19
 - SQL Server lifecycle: install produced 25 `TP_CE_*` tables and 26 migration rows; uninstall left zero
   Check Engine tables, migration rows and permissions; backup restore returned all baseline counts
 
@@ -47,5 +48,5 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - The disposable SQL Server rehearsal uses Docker and is not part of the automatic dependency refresh.
 - Check Engine health is intentionally `degraded` when no commercial licence is active; database,
   search-index and ERP probes can still all report `ok`.
-- An upstream checkout-model test failed once under full-suite parallel execution, then passed in
-  isolation and on the complete rerun; treat recurrence as a flake unless reproducible.
+- Two upstream checkout-model assertions can fail under full-suite parallel shared-state pollution;
+  the complete 12-test fixture passes in isolation. They do not exercise Check Engine code.

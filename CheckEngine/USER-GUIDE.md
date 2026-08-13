@@ -210,7 +210,7 @@ designed to be driven from the dashboard, scripts, or your own tooling.
 | **Vehicle catalog** | `/Admin/CheckEngine/VehicleAdmin/{Makes,Models,Generations,Bodies,Engines,Markets,Configurations,Aliases}` and `Create*/Update*/Delete*`; `Seed` | Full brand-agnostic hierarchy CRUD |
 | **OEM registry** | `/Admin/CheckEngine/OemAdmin/{Manufacturers,OemNumbers,Relations}` and `Create*/Update*/Delete*` | Manufacturer-qualified numbers, cross-reference and supersession relations |
 | **Fitment review** | `/Admin/CheckEngine/FitmentAdmin/Queue`, `Approve`, `Reject` | Approvals/rejections are written to the audit trail; safety-critical categories can't be force-published below threshold |
-| **Import** | `/Admin/CheckEngine/ImportAdmin/{Run,Batch,SetReviewStatus,Publish}` | See [section 8](#8-the-product-import-pipeline) |
+| **Import** | `/Admin/CheckEngine/ImportAdmin/{Run,Batch,RerunStage,SetReviewStatus,Publish}` | See [section 8](#8-the-product-import-pipeline) |
 | **Search index** | `/Admin/CheckEngine/SearchAdmin/Rebuild` | Rebuilds/refreshes the search index health |
 | **Garage support** | `/Admin/CheckEngine/GarageAdmin/CustomerGarage` | Read a customer's garage for support |
 | **Images** | `/Admin/CheckEngine/ImageAdmin/Replace` | Replace a placeholder image with a professional asset |
@@ -242,6 +242,12 @@ oem,name,sku,price,vehicleConfigurationId,category,image
 
 ### 8.2 Review and publish
 
+- Each batch is durable. The uploaded source, run options, stage cursor, completed-stage set, errors,
+  and complete row state live in SQL, so `Batch`, review, rerun, and publish continue after an
+  application restart.
+- To repeat one corrected stage without replaying the whole import, call
+  `POST /Admin/CheckEngine/ImportAdmin/RerunStage` with the batch id and an
+  `ImportPipelineStage` value (`Extract` through `Publish`). Upstream results remain unchanged.
 - Low-confidence or ambiguous rows are flagged for review. Set a row's decision with
   `POST /Admin/CheckEngine/ImportAdmin/SetReviewStatus` (`Approved` / `Rejected` / `Pending`).
 - Call `POST /Admin/CheckEngine/ImportAdmin/Publish` with `dryRun=false` to commit. Publishing is

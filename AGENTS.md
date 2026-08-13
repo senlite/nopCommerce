@@ -12,8 +12,9 @@ only cloud-specific caveats.
   `dotnet test src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj -c Release`.
 - Host regression: `dotnet test src/Tests/Nop.Tests/Nop.Tests.csproj -c Release`.
 - There is no separate linter; build plus `.editorconfig`/Roslyn analyzers is the lint gate.
-- A full host run produced 1,044 passes and 8 intentional skips. `CanPreparePaymentMethodModel` failed
-  once under full-suite parallelism but passed in isolation and on the complete rerun.
+- A full host baseline produced 1,044 passes and 8 intentional skips. The checkout-model fixture can
+  inherit polluted shared settings under full-suite parallelism (`CanPreparePaymentMethodModel` and
+  `PreparePaymentMethodModelShouldDependOnSettings`); all 12 fixture tests pass together in isolation.
 
 ### Databases
 - **SQL Server is the validated Check Engine lifecycle provider.** A disposable SQL Server 2022 run
@@ -62,6 +63,8 @@ only cloud-specific caveats.
 - New locale resources reach existing stores through `UpdateAsync`, which runs when `plugin.json`'s
   version changes. Adding a string without bumping the version leaves upgraded stores rendering raw
   resource keys.
+- Check Engine migration timestamps must be at or before the current UTC time when testing an update;
+  nopCommerce excludes future-dated migrations. Bump `plugin.json` when shipping a new migration.
 - Guest garage data intentionally stays in browser `localStorage` until sign-in. The authenticated
   migration request carries the payload inline (not only a process-local key), so migration survives
   app restarts and multi-node routing. Do not reintroduce anonymous guest-key read/write endpoints.
@@ -73,6 +76,9 @@ only cloud-specific caveats.
   do not add a second sitemap XML endpoint or restore the old process-local sitemap service.
 - SEO indexability is fitment-gated: a page with no active published Fits claim remains public but
   emits `noindex, follow` and is excluded from `/sitemap.xml`.
+- Import batches are SQL-authoritative, not process-local. The source bytes and full row state are
+  intentionally persisted so `/ImportAdmin/Batch`, review, publish and `RerunStage` survive restarts.
+  Do not restore best-effort persistence or a singleton batch dictionary.
 
 ### Frontend assets (optional)
 - Prebuilt assets ship in `wwwroot`; Node is not required to run. To rebuild them:
