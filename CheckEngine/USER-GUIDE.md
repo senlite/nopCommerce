@@ -339,6 +339,10 @@ Both are **off/unconfigured by default** and degrade safely.
   Configure the base URL and credentials (via host settings / user secrets, never committed) to enable
   order/inventory sync, retries, conflict handling, and the daily reconciliation report.
 
+Audit entries are append-only from the application and linked with a deployment-secret-salted SHA-256
+chain. A daily retention task removes entries older than seven years while retaining a cryptographic
+anchor, so integrity verification remains continuous across the retention boundary.
+
 ---
 
 ## 12. Troubleshooting
