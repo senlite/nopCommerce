@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Images;
@@ -79,14 +80,15 @@ public sealed class ProductImageService
             CreatedUtc = DateTime.UtcNow
         }, cancellationToken);
 
-        var cdnUrl = await _deliveryService.GetVariantUrlAsync(pictureId.Value, ImageVariant.Product, cancellationToken);
+        var variants = await GenerateVariantsAsync(pictureId.Value, cancellationToken);
 
         return new ImageImportResult
         {
             Success = true,
             PictureId = pictureId,
             UsedPlaceholder = usedPlaceholder,
-            CdnUrl = cdnUrl
+            CdnUrl = variants.GetValueOrDefault(ImageVariant.Product),
+            VariantUrls = variants
         };
     }
 
@@ -120,12 +122,29 @@ public sealed class ProductImageService
         existing.QuarantineStatus = QuarantineStatus.None;
         await _repository.UpsertPrimaryAsync(existing, cancellationToken);
 
+        var variants = await GenerateVariantsAsync(existing.PictureId, cancellationToken);
         return new ImageImportResult
         {
             Success = true,
             PictureId = existing.PictureId,
             UsedPlaceholder = false,
-            CdnUrl = await _deliveryService.GetVariantUrlAsync(existing.PictureId, ImageVariant.Product, cancellationToken)
+            CdnUrl = variants.GetValueOrDefault(ImageVariant.Product),
+            VariantUrls = variants
         };
+    }
+
+    private async Task<IReadOnlyDictionary<ImageVariant, string>> GenerateVariantsAsync(
+        int pictureId,
+        CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<ImageVariant, string>();
+        foreach (var variant in Enum.GetValues<ImageVariant>())
+        {
+            var url = await _deliveryService.GetVariantUrlAsync(pictureId, variant, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(url))
+                result[variant] = url;
+        }
+
+        return result;
     }
 }
