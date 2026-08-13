@@ -411,10 +411,15 @@ Accessibility and layout behaviour built into the components:
 
 ## 14. Uninstalling
 
-1. Back up any Check Engine data you want to keep (the `TP_CE_*` tables).
-2. In **Configuration → Local plugins**, click **Uninstall** on Check Engine, then **Restart application
-   to apply changes**.
-3. On uninstall, the plugin reverses its migrations and drops its `TP_CE_*` tables. Verify the storefront
+1. Open `/Admin/CheckEngine/UninstallAdmin/Status`. It lists every data domain that uninstall deletes
+   and reports whether a fresh export has been prepared.
+2. Download `/Admin/CheckEngine/UninstallAdmin/Export`. Keep the timestamped JSON safely; it contains
+   the vehicle hierarchy/aliases, OEM registry/relations, and fitment claims including qualifiers and
+   provenance. This authorizes destructive uninstall for 24 hours.
+3. In **Configuration → Local plugins**, click **Uninstall** on Check Engine, then **Restart application
+   to apply changes**. Without a fresh export, Check Engine throws an explicit guard error before any
+   permission, setting, locale, or schema deletion occurs.
+4. On uninstall, the plugin reverses migrations and drops its `TP_CE_*` tables. Verify the storefront
    still serves catalog pages normally afterward.
 
 ---

@@ -154,7 +154,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | ID | Task | Status | Gap |
 |---|---|---|---|
 | H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | done | Live SQL Server rehearsal left zero `TP_CE_*` tables, migration versions and permissions |
-| H1.2 | Add uninstall confirmation and export-before-drop workflow | pending | Uninstall currently applies down migrations immediately |
+| H1.2 | Add uninstall confirmation and export-before-drop workflow | partial | Authenticated status warns of all destructive domains, export downloads complete vehicle/OEM/fitment JSON with claim provenance/qualifiers, and uninstall is blocked unless export was prepared within 24h. Live export verified; nopCommerce plugin-list confirmation UI integration and guarded disposable uninstall rehearsal remain |
 | H1.3 | Align plugin version, system name and supported platform metadata with the release contract | done | `plugin.json`, assembly/file/package version, architecture source of truth and public packaging table now agree on `TwinParticles.CheckEngine` / `0.12.0` / nopCommerce 4.90; architecture test prevents drift |
 | H1.3b | Bind plugin admin routes to the Admin area | done | Admin `{action}` routes omitted the area value and 404'd; every admin route now sets `area = Admin`, verified live via the vehicle seed endpoint |
 | H1.3a | Deliver migrations and locale resources on plugin update, not only on install | done | `UpdateAsync` applies pending migrations and re-applies locale resources; verified by a live `0.2.0`→`0.3.0` upgrade |

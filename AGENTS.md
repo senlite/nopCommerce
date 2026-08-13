@@ -72,6 +72,9 @@ only cloud-specific caveats.
 - New locale resources reach existing stores through `UpdateAsync`, which runs when `plugin.json`'s
   version changes. Adding a string without bumping the version leaves upgraded stores rendering raw
   resource keys.
+- Uninstall is intentionally blocked until `/Admin/CheckEngine/UninstallAdmin/Export` has produced a
+  fresh (<24h) vehicle/OEM/fitment JSON export. Never bypass or move this guard after destructive
+  permission/settings/locale/migration-down operations.
 - Check Engine migration timestamps must be at or before the current UTC time when testing an update;
   nopCommerce excludes future-dated migrations. Bump `plugin.json` when shipping a new migration.
 - Guest garage data intentionally stays in browser `localStorage` until sign-in. The authenticated
