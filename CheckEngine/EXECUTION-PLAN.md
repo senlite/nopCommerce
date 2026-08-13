@@ -312,10 +312,20 @@ The following are **not missing implementation** and must not be counted as defe
 
 ## Immediate next actions
 
-Work follows dependency order rather than skipping to later roadmap features:
+Work follows dependency order rather than skipping to later roadmap features. Remaining Horizon 1
+items fall into two classes:
 
-1. Build the 40k-configuration reference environment (remaining H1.4), import production-scale catalog
-   + provenanced fitment data (H1.11), then run the ~250k-product search/fitment latency and accuracy
-   gates (remaining H1.10/H1.14).
-2. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
-3. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
+**Autonomously completable (code + local/live verification):**
+
+1. Regional companion plugins: Paymob payment (H1.37) and Bosta shipping (H1.38).
+2. Theme completeness: mega menu component (H1.25) and full Arabic resource parity (H1.26).
+3. Image derivatives generation/storage (H1.23) and bidirectional ERP entity flows (H1.31).
+4. Production-scale catalog + fitment dataset generation (H1.11), then the ~250k-product search
+   latency/accuracy gate (H1.14) and the reference-environment capacity proof (H1.4).
+
+**Blocked on external authorities (cannot be closed by code alone):**
+
+- H1.35 / G8 security assessment sign-off; H1.36 / G11 production licence activation authority and
+  vendor signing key; G7 product-owner sign-off; G12 Marketplace submission.
+- H1.6 / H1.7 authoritative BMW VDS→generation corpus (must not be fabricated for a safety-relevant
+  decode); H1.20 OCR engine licensing for scanned PDFs; H1.27/H1.28/G6 full browser/CWV device matrix.
