@@ -169,13 +169,19 @@ public sealed class UnifiedSearchService
     private async Task<IReadOnlyList<SearchHit>> SearchVinAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)
     {
         var decode = await _vinDecodeService.DecodeAsync(normalizedText, cancellationToken);
-        var nextVehicleConfigurationId = query.VehicleConfigurationId;
+        if (decode.Candidates.Count != 1)
+            return [];
 
-        if (decode.Candidates.Count > 0)
-            nextVehicleConfigurationId = decode.Candidates[0].VehicleConfigurationId;
+        // A VIN is vehicle context, not a product keyword. Search the published fitment projection
+        // for the one decoded configuration; passing the 17-character VIN into keyword search
+        // cannot match a catalog title and previously fell through to invented demo products.
+        var vehicleQuery = CloneQuery(
+            query,
+            string.Empty,
+            SearchMode.VehicleTree,
+            decode.Candidates[0].VehicleConfigurationId);
 
-        var keywordQuery = CloneQuery(query, normalizedText, SearchMode.Keyword, nextVehicleConfigurationId);
-        return await _productSearchReadRepository.SearchKeywordAsync(keywordQuery, cancellationToken);
+        return await _productSearchReadRepository.SearchByVehicleTreeAsync(vehicleQuery, cancellationToken);
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchOemAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)

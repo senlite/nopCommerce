@@ -195,6 +195,8 @@ public class GarageContextSearchServiceTests
     {
         public Task<bool> IsHealthyAsync(CancellationToken cancellationToken) => Task.FromResult(true);
 
+        public Task ReportDegradedAsync(string reason, CancellationToken cancellationToken) => Task.CompletedTask;
+
         public Task RebuildAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 

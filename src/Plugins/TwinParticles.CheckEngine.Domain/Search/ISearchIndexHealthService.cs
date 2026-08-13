@@ -7,5 +7,7 @@ public interface ISearchIndexHealthService
 {
     Task<bool> IsHealthyAsync(CancellationToken cancellationToken);
 
+    Task ReportDegradedAsync(string reason, CancellationToken cancellationToken);
+
     Task RebuildAsync(CancellationToken cancellationToken);
 }

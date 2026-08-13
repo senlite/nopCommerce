@@ -4,25 +4,34 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using LinqToDB.Data;
+using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Data;
+using Nop.Services.Catalog;
 using TwinParticles.CheckEngine.Domain.Search;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Search;
 
 public sealed class SqlProductSearchReadRepository : IProductSearchReadRepository
 {
-    private static readonly IReadOnlyList<SearchHit> SeededCatalog =
-    [
-        new SearchHit { ProductId = 1001, Name = "BMW Oil Filter", CategoryId = 10, Brand = "BMW", Score = 0.95m },
-        new SearchHit { ProductId = 1002, Name = "Radiator Hose", CategoryId = 20, Brand = "Conti", Score = 0.80m },
-        new SearchHit { ProductId = 1003, Name = "Cabin Filter", CategoryId = 10, Brand = "Mann", Score = 0.75m }
-    ];
-
     private readonly INopDataProvider _dataProvider;
+    private readonly ISearchIndexHealthService _healthService;
+    private readonly IProductService _productService;
+    private readonly IStoreContext _storeContext;
+    private readonly IWorkContext _workContext;
 
-    public SqlProductSearchReadRepository(INopDataProvider dataProvider)
+    public SqlProductSearchReadRepository(
+        INopDataProvider dataProvider,
+        IProductService productService,
+        IStoreContext storeContext,
+        IWorkContext workContext,
+        ISearchIndexHealthService healthService)
     {
         _dataProvider = dataProvider;
+        _productService = productService;
+        _storeContext = storeContext;
+        _workContext = workContext;
+        _healthService = healthService;
     }
 
     public async Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -31,68 +40,15 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
         if (string.IsNullOrWhiteSpace(text))
             return [];
 
-        try
-        {
-            var rows = await _dataProvider.QueryAsync<ProductSearchRow>(@"
-SELECT ProductId, Name, CategoryId, Brand, Score
-FROM (
-    SELECT DISTINCT m.ProductId,
-           CONCAT('Product ', m.ProductId) AS Name,
-           CAST(NULL AS INT) AS CategoryId,
-           CAST(NULL AS NVARCHAR(64)) AS Brand,
-           CASE WHEN MAX(CAST(m.IsPrimary AS INT)) = 1 THEN 1.0 ELSE 0.7 END AS Score
-    FROM TP_CE_ProductOemMap m
-    GROUP BY m.ProductId
-) x
-WHERE x.Name LIKE @like
-ORDER BY x.Score DESC, x.ProductId",
-                new DataParameter("like", "%" + EscapeLike(text) + "%"));
-
-            var hits = rows.Select(Map).ToList();
-            if (query.Filters.CategoryId.HasValue)
-                hits = hits.Where(x => x.CategoryId == query.Filters.CategoryId).ToList();
-
-            if (hits.Count > 0)
-                return hits;
-        }
-        catch
-        {
-            // Degraded: fall through to seeded catalog.
-        }
-
-        return FilterSeeded(text, query.Filters.CategoryId);
+        return await SearchNopCatalogAsync(query, text, cancellationToken);
     }
 
     public async Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken)
     {
-        try
-        {
-            var rows = await _dataProvider.QueryAsync<ProductSearchRow>(@"
-SELECT ProductId, Name, CategoryId, Brand, Score
-FROM (
-    SELECT DISTINCT m.ProductId,
-           CONCAT('Product ', m.ProductId) AS Name,
-           CAST(NULL AS INT) AS CategoryId,
-           CAST(NULL AS NVARCHAR(64)) AS Brand,
-           CASE WHEN MAX(CAST(m.IsPrimary AS INT)) = 1 THEN 1.0 ELSE 0.7 END AS Score
-    FROM TP_CE_ProductOemMap m
-    GROUP BY m.ProductId
-) x
-ORDER BY x.Score DESC, x.ProductId");
+        if (!query.Filters.CategoryId.HasValue || query.Filters.CategoryId.Value <= 0)
+            return [];
 
-            var hits = rows.Select(Map).ToList();
-            if (query.Filters.CategoryId.HasValue)
-                hits = hits.Where(x => x.CategoryId == query.Filters.CategoryId).ToList();
-
-            if (hits.Count > 0)
-                return hits;
-        }
-        catch
-        {
-            // Degraded: fall through to seeded catalog.
-        }
-
-        return FilterSeeded(text: null, query.Filters.CategoryId);
+        return await SearchNopCatalogAsync(query, keywords: null, cancellationToken);
     }
 
     public async Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -111,17 +67,14 @@ WHERE VehicleConfigurationId = @vehicleConfigurationId
 ORDER BY ProductId",
                 new DataParameter("vehicleConfigurationId", query.VehicleConfigurationId.Value));
 
-            return rows
-                .Select(row => new SearchHit
-                {
-                    ProductId = row.ProductId,
-                    Name = $"Product {row.ProductId}",
-                    Score = 0.9m
-                })
-                .ToList();
+            return await HydrateProductsAsync(
+                rows.Select(row => (row.ProductId, Score: 0.9m)).ToList(),
+                query.Filters.CategoryId,
+                cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
+            await _healthService.ReportDegradedAsync(exception.GetType().Name, cancellationToken);
             return [];
         }
     }
@@ -140,70 +93,115 @@ WHERE OemNumberId = @oemNumberId
 ORDER BY IsPrimary DESC, ProductId",
                 new DataParameter("oemNumberId", oemNumberId));
 
-            return rows
-                .Select(row => new SearchHit
-                {
-                    ProductId = row.ProductId,
-                    Name = $"Product {row.ProductId}",
-                    Score = row.IsPrimary ? 1.0m : 0.7m
-                })
-                .ToList();
+            return await HydrateProductsAsync(
+                rows.Select(row => (row.ProductId, Score: row.IsPrimary ? 1.0m : 0.7m)).ToList(),
+                query.Filters.CategoryId,
+                cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
+            await _healthService.ReportDegradedAsync(exception.GetType().Name, cancellationToken);
             return [];
         }
     }
 
-    private static IReadOnlyList<SearchHit> FilterSeeded(string? text, int? categoryId)
+    private async Task<IReadOnlyList<SearchHit>> SearchNopCatalogAsync(
+        SearchQuery query,
+        string? keywords,
+        CancellationToken cancellationToken)
     {
-        return SeededCatalog
-            .Where(x => string.IsNullOrWhiteSpace(text) || x.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
-            .Where(x => !categoryId.HasValue || x.CategoryId == categoryId)
-            .Select(Clone)
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var store = await _storeContext.GetCurrentStoreAsync();
+            var language = await _workContext.GetWorkingLanguageAsync();
+            var categories = query.Filters.CategoryId.HasValue
+                ? new List<int> { query.Filters.CategoryId.Value }
+                : null;
+
+            // The application layer applies fitment and final paging after this projection. Cap the
+            // candidate set to prevent an unbounded allocation while leaving enough room for the
+            // fitment filter to remove non-matching products.
+            var products = await _productService.SearchProductsAsync(
+                pageIndex: 0,
+                pageSize: 5000,
+                categoryIds: categories,
+                storeId: store.Id,
+                visibleIndividuallyOnly: true,
+                priceMin: query.Filters.PriceMin,
+                priceMax: query.Filters.PriceMax,
+                keywords: keywords,
+                searchDescriptions: true,
+                searchManufacturerPartNumber: true,
+                searchSku: true,
+                languageId: language.Id,
+                showHidden: false,
+                overridePublished: true);
+
+            return products
+                .Where(product => product.Published && !product.Deleted && product.VisibleIndividually)
+                .Select(product => MapProduct(product, query.Filters.CategoryId, keywords))
+                .ToList();
+        }
+        catch (Exception exception)
+        {
+            // Honest degradation: return no invented products and let UnifiedSearchService expose
+            // IsDegraded. The previous fallback returned synthetic IDs 1001-1003 that did not exist
+            // in the nopCommerce catalog.
+            await _healthService.ReportDegradedAsync(exception.GetType().Name, cancellationToken);
+            return [];
+        }
+    }
+
+    private async Task<IReadOnlyList<SearchHit>> HydrateProductsAsync(
+        IReadOnlyList<(int ProductId, decimal Score)> candidates,
+        int? categoryId,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (candidates.Count == 0)
+            return [];
+
+        var scoreById = candidates
+            .GroupBy(candidate => candidate.ProductId)
+            .ToDictionary(group => group.Key, group => group.Max(candidate => candidate.Score));
+        var products = await _productService.GetProductsByIdsAsync(scoreById.Keys.ToArray());
+
+        return products
+            .Where(product => product.Published && !product.Deleted && product.VisibleIndividually)
+            .Select(product => new SearchHit
+            {
+                ProductId = product.Id,
+                Name = product.Name,
+                CategoryId = categoryId,
+                Brand = null,
+                Score = scoreById[product.Id]
+            })
+            .OrderByDescending(hit => hit.Score)
+            .ThenBy(hit => hit.ProductId)
             .ToList();
     }
 
-    private static SearchHit Map(ProductSearchRow row)
+    private static SearchHit MapProduct(Product product, int? categoryId, string? keywords)
     {
+        var score = 0.75m;
+        if (!string.IsNullOrWhiteSpace(keywords))
+        {
+            if (string.Equals(product.Sku, keywords, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(product.ManufacturerPartNumber, keywords, StringComparison.OrdinalIgnoreCase))
+                score = 1.0m;
+            else if (product.Name.Contains(keywords, StringComparison.OrdinalIgnoreCase))
+                score = 0.9m;
+        }
+
         return new SearchHit
         {
-            ProductId = row.ProductId,
-            Name = string.IsNullOrWhiteSpace(row.Name) ? $"Product {row.ProductId}" : row.Name,
-            CategoryId = row.CategoryId,
-            Brand = row.Brand,
-            Score = row.Score
+            ProductId = product.Id,
+            Name = product.Name,
+            CategoryId = categoryId,
+            Brand = null,
+            Score = score
         };
-    }
-
-    private static SearchHit Clone(SearchHit hit)
-    {
-        return new SearchHit
-        {
-            ProductId = hit.ProductId,
-            Name = hit.Name,
-            CategoryId = hit.CategoryId,
-            Brand = hit.Brand,
-            Score = hit.Score
-        };
-    }
-
-    private static string EscapeLike(string value)
-        => value.Replace("[", "[[]", StringComparison.Ordinal)
-            .Replace("%", "[%]", StringComparison.Ordinal)
-            .Replace("_", "[_]", StringComparison.Ordinal);
-
-    private sealed class ProductSearchRow
-    {
-        public int ProductId { get; set; }
-
-        public string Name { get; set; } = string.Empty;
-
-        public int? CategoryId { get; set; }
-
-        public string? Brand { get; set; }
-
-        public decimal Score { get; set; }
     }
 
     private sealed class ProductIdRow

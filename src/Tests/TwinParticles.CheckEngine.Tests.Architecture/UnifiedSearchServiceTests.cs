@@ -21,7 +21,8 @@ public class UnifiedSearchServiceTests
     [Test]
     public async Task SearchAsync_Should_Use_Vin_Mode_For_Valid_Vin_Input()
     {
-        var service = CreateService();
+        var repository = new VinRecordingRepository();
+        var service = CreateService(repository: repository);
 
         var result = await service.SearchAsync(new SearchQuery
         {
@@ -32,6 +33,10 @@ public class UnifiedSearchServiceTests
 
         result.ModeUsed.Should().Be(SearchMode.Vin);
         result.Hits.Should().NotBeEmpty();
+        repository.VehicleTreeCalls.Should().Be(1,
+            "a VIN resolves vehicle context and must search the fitment projection");
+        repository.KeywordCalls.Should().Be(0,
+            "a 17-character VIN is not a product keyword");
     }
 
     [Test]
@@ -157,6 +162,8 @@ public class UnifiedSearchServiceTests
 
         public Task<bool> IsHealthyAsync(CancellationToken cancellationToken) => Task.FromResult(_healthy);
 
+        public Task ReportDegradedAsync(string reason, CancellationToken cancellationToken) => Task.CompletedTask;
+
         public Task RebuildAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
@@ -189,6 +196,33 @@ public class UnifiedSearchServiceTests
 
         public Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<SearchHit>>([]);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByOemIdAsync(int oemNumberId, SearchQuery query, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<SearchHit>>([]);
+    }
+
+    private sealed class VinRecordingRepository : IProductSearchReadRepository
+    {
+        public int KeywordCalls { get; private set; }
+        public int VehicleTreeCalls { get; private set; }
+
+        public Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
+        {
+            KeywordCalls++;
+            return Task.FromResult<IReadOnlyList<SearchHit>>([]);
+        }
+
+        public Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<SearchHit>>([]);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken)
+        {
+            VehicleTreeCalls++;
+            query.VehicleConfigurationId.Should().Be(444);
+            return Task.FromResult<IReadOnlyList<SearchHit>>([
+                new SearchHit { ProductId = 1, Name = "VIN-fit product", Score = 1m }
+            ]);
+        }
 
         public Task<IReadOnlyList<SearchHit>> SearchByOemIdAsync(int oemNumberId, SearchQuery query, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<SearchHit>>([]);
