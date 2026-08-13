@@ -62,6 +62,12 @@ only cloud-specific caveats.
 - New locale resources reach existing stores through `UpdateAsync`, which runs when `plugin.json`'s
   version changes. Adding a string without bumping the version leaves upgraded stores rendering raw
   resource keys.
+- Guest garage data intentionally stays in browser `localStorage` until sign-in. The authenticated
+  migration request carries the payload inline (not only a process-local key), so migration survives
+  app restarts and multi-node routing. Do not reintroduce anonymous guest-key read/write endpoints.
+- Check Engine keyword/category search delegates to nopCommerce's `IProductService`, while OEM and
+  vehicle-tree candidate IDs come from Check Engine SQL and are hydrated through the real catalog.
+  Production search must never fall back to invented demo product IDs.
 
 ### Frontend assets (optional)
 - Prebuilt assets ship in `wwwroot`; Node is not required to run. To rebuild them:
