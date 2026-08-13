@@ -19,7 +19,7 @@ This plan has three accounting levels. They must not be conflated:
 1. **Engineering scaffold: 40 / 40 enumerated tasks done** (37 legacy `T0`–`T7` rows plus three
    baseline E2E rows). Earlier revisions claimed “52 / 52,” but did not identify the other twelve
    tasks; that unauditable total is retired. The scaffold builds and its architecture/behavior tests pass.
-2. **Documented product vision (`EP-01`–`EP-28`): 0 / 28 epics fully closed, 20 partial, 8 pending.**
+2. **Documented product vision (`EP-01`–`EP-28`): 1 / 28 epics closed, 19 partial, 8 pending.**
    An epic is only closed when every exit criterion in
    [38 Epics](docs/38-epics.md) is evidenced.
 3. **Horizon 1 / v1.0 release gate: 0 / 12 checklist items fully evidenced.** See
@@ -35,8 +35,8 @@ all remaining work in the larger documented vision explicit.
 - CSV and Excel import, best-effort PDF extraction, review and nopCommerce product publication exist.
 - OpenAI-compatible and ERPNext HTTP adapters exist with disabled/stub fallbacks.
 - Audit schema, health/diagnostics, convention tests, microbenchmarks and build scripts exist.
-- Decisions: MySQL is used for the local 4.70 host; SQL Server remains the documented production OLTP
-  target; AI and ERP default to disabled/unconfigured.
+- Platform: nopCommerce 4.90.6 and .NET 9; SQL Server 2022 lifecycle and rollback rehearsal completed.
+- AI and ERP default to disabled/unconfigured.
 
 ## Completed baseline (already done)
 - `done` E2E.1: Permanent Playwright harness added (`src/Tests/TwinParticles.CheckEngine.Tests.E2E`)
@@ -126,25 +126,26 @@ and the code as of 2026-08-12.
 
 | Horizon | Epic status |
 |---|---|
-| 0 | `EP-01` partial |
+| 0 | `EP-01` done |
 | 1 | `EP-02`–`EP-16` partial; `EP-17` pending |
 | 2 | `EP-18`–`EP-21` partial |
 | 3 | `EP-22`–`EP-24` pending |
 | 4 | `EP-25`–`EP-27` pending |
 | 5 | `EP-28` pending |
-| **Total** | **0 done, 20 partial, 8 pending** |
+| **Total** | **1 done, 19 partial, 8 pending** |
 
 ### Horizon 0 — Platform prerequisite (`EP-01`)
 
 | ID | Task | Status | Completion evidence required |
 |---|---|---|---|
-| H0.1 | Upgrade host and plugin from nopCommerce 4.70 / .NET 8 to 4.90.6 / .NET 9 | pending | Host version, plugin metadata and all projects target the documented platform |
-| H0.2 | Pass the full host regression suite on 4.90.6 | pending | Stock host build and regression report |
-| H0.3 | Install, upgrade and uninstall the plugin on stock 4.90.6 | blocked | Disposable SQL Server instance and clean lifecycle report |
-| H0.4 | Rehearse populated-database rollback | blocked | Restore and rollback evidence from a disposable clone |
+| H0.1 | Upgrade host and plugin from nopCommerce 4.70 / .NET 8 to 4.90.6 / .NET 9 | done | Full upstream 4.90.6 host; custom projects and manifests retargeted to `net9.0` / `4.90` |
+| H0.2 | Pass the full host regression suite on 4.90.6 | done | Full solution build; 1,044 host tests passed, 8 intentionally skipped |
+| H0.3 | Install, upgrade and uninstall the plugin on stock 4.90.6 | done | SQL Server 2022: 25 tables/26 migrations installed; `0.1.0`→`0.2.0`; uninstall left zero tables, versions and permissions |
+| H0.4 | Rehearse populated-database rollback | done | Checksum-verified backup restored after uninstall; product/category/schema metrics matched byte-for-byte |
 
-Current evidence: this repository and `plugin.json` target nopCommerce 4.70 and `net8.0`; therefore
-`EP-01` is not complete.
+Horizon 0 completed on 2026-08-13. The rehearsal used a disposable SQL Server 2022 database populated
+with 426 products, 13 categories and the full Check Engine schema. The restored store, health endpoint,
+configuration and dashboard were manually verified on nopCommerce 4.90.6.
 
 ### Horizon 1 — Foundation / v1.0 (`EP-02`–`EP-17`)
 
@@ -152,7 +153,7 @@ Current evidence: this repository and `plugin.json` target nopCommerce 4.70 and 
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | partial | Static migration tests pass; live SQL Server apply/down rehearsal is outstanding |
+| H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | done | Live SQL Server rehearsal left zero `TP_CE_*` tables, migration versions and permissions |
 | H1.2 | Add uninstall confirmation and export-before-drop workflow | pending | Uninstall currently applies down migrations immediately |
 | H1.3 | Align plugin version, system name and supported platform metadata with the release contract | partial | Package remains `0.1.0` for nopCommerce 4.70 |
 
@@ -286,7 +287,7 @@ The following are **not missing implementation** and must not be counted as defe
 | G2 | Real line coverage thresholds (not convention/name checks) | pending |
 | G3 | Fitment accuracy corpus Must set at 100% | pending |
 | G4 | Search, import and fitment performance at reference scale | pending |
-| G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | blocked |
+| G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | done |
 | G6 | Complete browser accessibility, RTL and CWV evidence | pending |
 | G7 | Product owner sign-off | blocked |
 | G8 | Security sign-off | blocked |
@@ -299,9 +300,8 @@ The following are **not missing implementation** and must not be counted as defe
 
 Work follows dependency order rather than skipping to later roadmap features:
 
-1. Complete Horizon 0: upgrade and validate nopCommerce 4.90.6 / .NET 9.
-2. Load the reference BMW vehicle/fitment corpus and make G3 measurable.
-3. Replace Horizon 1 in-memory/stub production paths in search, import, garage, SEO, ERP and licensing.
-4. Run SQL Server lifecycle, reference-scale performance, accessibility/RTL/CWV and security gates.
-5. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
-6. Resume unfinished Horizon 2 work only after the Horizon 1 release gate is evidenced.
+1. Load the reference BMW vehicle/fitment corpus and make G3 measurable.
+2. Replace Horizon 1 in-memory/stub production paths in search, import, garage, SEO, ERP and licensing.
+3. Run reference-scale performance, accessibility/RTL/CWV and security gates.
+4. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
+5. Resume unfinished Horizon 2 work only after the Horizon 1 release gate is evidenced.
