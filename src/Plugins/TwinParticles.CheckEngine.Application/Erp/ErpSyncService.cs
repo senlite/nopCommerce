@@ -11,18 +11,24 @@ public sealed class ErpSyncService
 {
     private const int MaxAttempts = 5;
 
+    // Money reconciles to the cent; counts must match exactly.
+    private const decimal PaymentTolerance = 0.01m;
+
     private readonly IErpClientAdapter _clientAdapter;
     private readonly IErpConflictResolutionService _conflictResolutionService;
     private readonly IErpSyncQueueRepository _queueRepository;
+    private readonly IErpReconciliationDataSource? _reconciliationDataSource;
 
     public ErpSyncService(
         IErpSyncQueueRepository queueRepository,
         IErpClientAdapter clientAdapter,
-        IErpConflictResolutionService conflictResolutionService)
+        IErpConflictResolutionService conflictResolutionService,
+        IErpReconciliationDataSource? reconciliationDataSource = null)
     {
         _queueRepository = queueRepository;
         _clientAdapter = clientAdapter;
         _conflictResolutionService = conflictResolutionService;
+        _reconciliationDataSource = reconciliationDataSource;
     }
 
     public async Task<Guid> QueueSyncAsync(ErpSyncEntityType entityType, ErpSyncDirection direction, string localId, string payload, CancellationToken cancellationToken)
@@ -86,10 +92,47 @@ public sealed class ErpSyncService
         return successCount;
     }
 
-    public async Task<ErpReconciliationReport> BuildReconciliationReportAsync(CancellationToken cancellationToken)
+    public Task<ErpReconciliationReport> BuildReconciliationReportAsync(CancellationToken cancellationToken)
+        => BuildReconciliationReportAsync(null, null, cancellationToken);
+
+    /// <summary>
+    /// Builds the queue summary and, when a data source is configured and both sides are available,
+    /// compares order count, payment total and inventory units across systems for the given window
+    /// (default: the trailing 24 hours) per FR-825.
+    /// </summary>
+    public async Task<ErpReconciliationReport> BuildReconciliationReportAsync(
+        DateTime? windowFromUtc,
+        DateTime? windowToUtc,
+        CancellationToken cancellationToken)
     {
         var all = await _queueRepository.GetAllAsync(cancellationToken);
         var failed = all.Where(x => x.Status == "Failed").ToList();
+        var issues = failed.Select(x => $"{x.EntityType}:{x.ConflictCode ?? "unknown"}").ToList();
+
+        var toUtc = windowToUtc ?? DateTime.UtcNow;
+        var fromUtc = windowFromUtc ?? toUtc.AddDays(-1);
+
+        var variances = new List<ErpReconciliationVariance>();
+        var hasDiscrepancy = false;
+
+        if (_reconciliationDataSource is not null)
+        {
+            var local = await _reconciliationDataSource.GetLocalTotalsAsync(fromUtc, toUtc, cancellationToken);
+            var erp = await _reconciliationDataSource.GetErpTotalsAsync(fromUtc, toUtc, cancellationToken);
+
+            if (!local.IsAvailable)
+                issues.Add("reconciliation:local_unavailable");
+            if (!erp.IsAvailable)
+                issues.Add("reconciliation:erp_unavailable");
+
+            if (local.IsAvailable && erp.IsAvailable)
+            {
+                variances.Add(BuildVariance("order.count", local.OrderCount, erp.OrderCount, 0m));
+                variances.Add(BuildVariance("payment.total", local.PaymentTotal, erp.PaymentTotal, PaymentTolerance));
+                variances.Add(BuildVariance("inventory.units", local.InventoryUnits, erp.InventoryUnits, 0m));
+                hasDiscrepancy = variances.Any(v => !v.WithinTolerance);
+            }
+        }
 
         return new ErpReconciliationReport
         {
@@ -97,7 +140,24 @@ public sealed class ErpSyncService
             TotalJobs = all.Count,
             SuccessfulJobs = all.Count(x => x.Status == "Succeeded"),
             FailedJobs = failed.Count,
-            Issues = failed.Select(x => $"{x.EntityType}:{x.ConflictCode ?? "unknown"}").ToList()
+            Issues = issues,
+            Variances = variances,
+            HasFinancialDiscrepancy = hasDiscrepancy,
+            WindowFromUtc = variances.Count > 0 ? fromUtc : null,
+            WindowToUtc = variances.Count > 0 ? toUtc : null
+        };
+    }
+
+    private static ErpReconciliationVariance BuildVariance(string metric, decimal local, decimal erp, decimal tolerance)
+    {
+        var absolute = Math.Abs(local - erp);
+        return new ErpReconciliationVariance
+        {
+            Metric = metric,
+            Local = local,
+            Erp = erp,
+            AbsoluteVariance = absolute,
+            WithinTolerance = absolute <= tolerance
         };
     }
 

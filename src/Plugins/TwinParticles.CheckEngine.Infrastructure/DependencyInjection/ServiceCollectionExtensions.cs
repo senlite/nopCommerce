@@ -111,6 +111,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IErpSyncQueueRepository, SqlErpSyncQueueRepository>();
         services.AddSingleton<IErpClientAdapter, ErpNextHttpClientAdapter>();
         services.AddSingleton<IErpConflictResolutionService, DefaultErpConflictResolutionService>();
+        services.AddScoped<IErpReconciliationDataSource, NopErpReconciliationDataSource>();
 
         services.AddSingleton(_ => CheckEngineAiOptions.Current);
         services.AddSingleton<IAiCompletionPort, OpenAiCompatibleCompletionPort>();

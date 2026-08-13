@@ -50,7 +50,8 @@ public sealed class ErpAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        return Json(await _service.BuildReconciliationReportAsync(cancellationToken));
+        var toUtc = System.DateTime.UtcNow;
+        return Json(await _service.BuildReconciliationReportAsync(toUtc.AddDays(-1), toUtc, cancellationToken));
     }
 
     [HttpGet]
