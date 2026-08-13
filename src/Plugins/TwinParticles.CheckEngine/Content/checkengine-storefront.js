@@ -104,6 +104,15 @@
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     }, options.headers || {});
+
+    var method = String(options.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      var token = document.querySelector('input[name="__RequestVerificationToken"]');
+      if (token && token.value) {
+        options.headers.RequestVerificationToken = token.value;
+      }
+    }
+
     return window.fetch(url, options);
   }
 
@@ -639,24 +648,44 @@
   /* ------------------------------------------------------------------ */
 
   function maybeMigrateGuestOnLogin() {
-    var path = (window.location.pathname || '').toLowerCase();
-    if (path.indexOf('login') === -1 && path.indexOf('customer/info') === -1) {
+    var payload = getGuestPayload();
+    var hasPayload = (payload.vehicles && payload.vehicles.length) ||
+      (payload.oems && payload.oems.length);
+    if (!hasPayload) {
       return;
     }
+
     var guestKey = ensureGuestKey();
-    jsonFetch('/check-engine/garage/Migrate', {
-      method: 'POST',
-      body: JSON.stringify({ guestKey: guestKey })
-    }).then(function (response) {
-      if (response.ok) {
-        try {
-          window.localStorage.removeItem(GUEST_PAYLOAD_KEY);
-        } catch (e) {
-          /* ignore */
-        }
+
+    // Guest data lives in browser storage until sign-in. First establish that this browser is now
+    // authenticated, then send the payload itself with the merge request. Sending only a key to a
+    // process-local server dictionary loses data after restart and on multi-node deployments.
+    loadGarageContext().then(function (ctx) {
+      if (ctx.guest) {
+        return;
       }
+
+      return jsonFetch('/check-engine/garage/Migrate', {
+        method: 'POST',
+        body: JSON.stringify({ guestKey: guestKey, payload: payload })
+      }).then(function (response) {
+        if (response.ok) {
+          try {
+            window.localStorage.removeItem(GUEST_PAYLOAD_KEY);
+          } catch (e) {
+            /* ignore */
+          }
+          return;
+        }
+
+        // Retain the browser copy and retry on the next authenticated page. Surface the state to
+        // assistive technology without blocking navigation with an alert.
+        document.documentElement.setAttribute('data-ce-garage-migration', 'pending');
+        announce(TEXT.garageAddFailed);
+      });
     }).catch(function () {
-      /* migration is best-effort */
+      // Keep localStorage intact. A later page load retries the stateless migration.
+      document.documentElement.setAttribute('data-ce-garage-migration', 'pending');
     });
   }
 

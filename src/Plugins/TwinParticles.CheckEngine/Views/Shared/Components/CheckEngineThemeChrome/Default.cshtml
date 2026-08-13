@@ -22,6 +22,7 @@ else if (zone == "header_after")
 {
     @* Search rail: unified query + vehicle context chip + submit, per the design system layout regions. *@
     <div class="ce-root ce-rail" data-ce-theme="sticky-search" role="search">
+        <span hidden data-ce-antiforgery>@Html.AntiForgeryToken()</span>
         <div class="ce-rail__inner">
             <button type="button"
                     class="ce-chip"

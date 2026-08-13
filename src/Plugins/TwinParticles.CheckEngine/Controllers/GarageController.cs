@@ -14,6 +14,9 @@ namespace TwinParticles.CheckEngine.Controllers;
 
 public sealed class GarageController : BasePublicController
 {
+    private const int MaxGuestVehicles = 20;
+    private const int MaxGuestOems = 50;
+
     private readonly GarageService _garageService;
     private readonly ICustomerService _customerService;
     private readonly IWorkContext _workContext;
@@ -97,7 +100,7 @@ public sealed class GarageController : BasePublicController
     }
 
     [HttpPost]
-    [IgnoreAntiforgeryToken]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Migrate([FromBody] GarageMigrateRequestModel model, CancellationToken cancellationToken)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
@@ -107,45 +110,34 @@ public sealed class GarageController : BasePublicController
         if (model is null || string.IsNullOrWhiteSpace(model.GuestKey))
             return BadRequest(new { reasonCode = "garage.invalid_guest_key" });
 
-        var ok = await _garageService.MigrateGuestAsync(customer.Id, model.GuestKey.Trim(), cancellationToken);
-        return ok ? Ok() : NotFound();
-    }
-
-    [HttpGet]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> Guest(string guestKey, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(guestKey))
-            return BadRequest(new { reasonCode = "garage.invalid_guest_key" });
-
-        var payload = await _garageService.GetGuestAsync(guestKey.Trim(), cancellationToken);
-        return Json(payload);
-    }
-
-    [HttpPost]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> Guest(string guestKey, [FromBody] GarageGuestPayloadModel model, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(guestKey) || model is null)
+        if (model.Payload is null ||
+            model.Payload.Vehicles.Count > MaxGuestVehicles ||
+            model.Payload.Oems.Count > MaxGuestOems ||
+            model.Payload.Vehicles.Any(x =>
+                (!x.VehicleConfigurationId.HasValue && string.IsNullOrWhiteSpace(x.Vin)) ||
+                x.Vin?.Length > 64 ||
+                x.Label?.Length > 256))
             return BadRequest(new { reasonCode = "garage.invalid_guest_payload" });
 
         var payload = new GarageGuestPayload
         {
-            ActiveVehicleId = model.ActiveVehicleId,
-            Vehicles = model.Vehicles.Select(x => new GarageVehicle
+            ActiveVehicleId = model.Payload.ActiveVehicleId,
+            Vehicles = model.Payload.Vehicles.Select((x, index) => new GarageVehicle
             {
+                Id = x.Id > 0 ? x.Id : index + 1,
                 VehicleConfigurationId = x.VehicleConfigurationId,
                 Vin = x.Vin,
                 Label = x.Label
             }).ToList(),
-            Oems = model.Oems.Select(x => new GarageOem
+            Oems = model.Payload.Oems.Select((x, index) => new GarageOem
             {
+                Id = x.Id > 0 ? x.Id : index + 1,
                 OemNumberId = x.OemNumberId,
                 DisplayNumber = x.DisplayNumber
             }).ToList()
         };
 
-        await _garageService.SetGuestAsync(guestKey.Trim(), payload, cancellationToken);
-        return Ok();
+        var ok = await _garageService.MigrateGuestAsync(customer.Id, model.GuestKey.Trim(), payload, cancellationToken);
+        return ok ? Ok() : BadRequest(new { reasonCode = "garage.invalid_guest_payload" });
     }
 }
