@@ -1,5 +1,8 @@
-﻿using System.Threading;
+﻿using System;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Web.Framework;
@@ -16,6 +19,11 @@ namespace TwinParticles.CheckEngine.Controllers;
 [AutoValidateAntiforgeryToken]
 public sealed class VehicleAdminController : BasePluginController
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly VehicleAdminService _service;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
     private readonly IWorkContext _workContext;
@@ -71,22 +79,23 @@ public sealed class VehicleAdminController : BasePluginController
     }
 
     [HttpPost]
-    public async Task<IActionResult> ArchiveMake(
-        [FromBody] VehicleAdminDtos.ArchiveRequestModel model,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> ArchiveMake(int id = 0, CancellationToken cancellationToken = default)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        var result = await _service.ArchiveMakeAsync(model.Id, await GetActorAsync(), cancellationToken);
+        id = await ResolveIdAsync(id, cancellationToken);
+        var result = await _service.ArchiveMakeAsync(id, await GetActorAsync(), cancellationToken);
         return LifecycleResult(result);
     }
 
     [HttpPost]
     public async Task<IActionResult> MergeMake(
-        [FromBody] VehicleAdminDtos.MergeRequestModel model,
-        CancellationToken cancellationToken)
+        int sourceId = 0,
+        int targetId = 0,
+        CancellationToken cancellationToken = default)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        var result = await _service.MergeMakeAsync(model.SourceId, model.TargetId, await GetActorAsync(), cancellationToken);
+        (sourceId, targetId) = await ResolveMergeIdsAsync(sourceId, targetId, cancellationToken);
+        var result = await _service.MergeMakeAsync(sourceId, targetId, await GetActorAsync(), cancellationToken);
         return LifecycleResult(result);
     }
 
@@ -129,22 +138,23 @@ public sealed class VehicleAdminController : BasePluginController
     }
 
     [HttpPost]
-    public async Task<IActionResult> ArchiveModel(
-        [FromBody] VehicleAdminDtos.ArchiveRequestModel model,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> ArchiveModel(int id = 0, CancellationToken cancellationToken = default)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        var result = await _service.ArchiveModelAsync(model.Id, await GetActorAsync(), cancellationToken);
+        id = await ResolveIdAsync(id, cancellationToken);
+        var result = await _service.ArchiveModelAsync(id, await GetActorAsync(), cancellationToken);
         return LifecycleResult(result);
     }
 
     [HttpPost]
     public async Task<IActionResult> MergeModel(
-        [FromBody] VehicleAdminDtos.MergeRequestModel model,
-        CancellationToken cancellationToken)
+        int sourceId = 0,
+        int targetId = 0,
+        CancellationToken cancellationToken = default)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        var result = await _service.MergeModelAsync(model.SourceId, model.TargetId, await GetActorAsync(), cancellationToken);
+        (sourceId, targetId) = await ResolveMergeIdsAsync(sourceId, targetId, cancellationToken);
+        var result = await _service.MergeModelAsync(sourceId, targetId, await GetActorAsync(), cancellationToken);
         return LifecycleResult(result);
     }
 
@@ -369,5 +379,51 @@ public sealed class VehicleAdminController : BasePluginController
         };
 
         return result.Success ? Json(model) : StatusCode(409, model);
+    }
+
+    // Lifecycle actions accept form/query (browser FormData + antiforgery field) and JSON bodies.
+    // [FromBody]-only binding rejects multipart/form-data with 415 before the action runs.
+    private async Task<int> ResolveIdAsync(int id, CancellationToken cancellationToken)
+    {
+        if (id > 0)
+            return id;
+
+        var model = await TryReadJsonAsync<VehicleAdminDtos.ArchiveRequestModel>(cancellationToken);
+        return model?.Id ?? 0;
+    }
+
+    private async Task<(int SourceId, int TargetId)> ResolveMergeIdsAsync(
+        int sourceId,
+        int targetId,
+        CancellationToken cancellationToken)
+    {
+        if (sourceId > 0 && targetId > 0)
+            return (sourceId, targetId);
+
+        var model = await TryReadJsonAsync<VehicleAdminDtos.MergeRequestModel>(cancellationToken);
+        return (model?.SourceId ?? sourceId, model?.TargetId ?? targetId);
+    }
+
+    private async Task<T?> TryReadJsonAsync<T>(CancellationToken cancellationToken)
+        where T : class
+    {
+        if (Request.ContentType is null
+            || Request.ContentType.IndexOf("application/json", StringComparison.OrdinalIgnoreCase) < 0)
+            return null;
+
+        if (!Request.Body.CanSeek)
+            Request.EnableBuffering();
+
+        if (Request.Body.CanSeek)
+            Request.Body.Position = 0;
+
+        try
+        {
+            return await JsonSerializer.DeserializeAsync<T>(Request.Body, JsonOptions, cancellationToken);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

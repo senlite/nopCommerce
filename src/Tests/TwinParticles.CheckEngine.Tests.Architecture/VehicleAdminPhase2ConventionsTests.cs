@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -7,6 +8,19 @@ namespace TwinParticles.CheckEngine.Tests.Architecture;
 [TestFixture]
 public class VehicleAdminPhase2ConventionsTests
 {
+    private static string ReadPluginFile(params string[] relativePath)
+    {
+        var start = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        for (var dir = start; dir is not null; dir = dir.Parent)
+        {
+            var candidate = Path.Combine([dir.FullName, "src", "Plugins", "TwinParticles.CheckEngine", .. relativePath]);
+            if (File.Exists(candidate))
+                return File.ReadAllText(candidate);
+        }
+
+        throw new FileNotFoundException($"Unable to locate {string.Join('/', relativePath)}");
+    }
+
     [Test]
     public void VehicleAdminService_Should_Expose_Crud_For_All_Phase2_Entities()
     {
@@ -59,6 +73,19 @@ public class VehicleAdminPhase2ConventionsTests
         methods.Should().Contain("MergeMakeAsync");
         methods.Should().Contain("ArchiveModelAsync");
         methods.Should().Contain("MergeModelAsync");
+    }
+
+    [Test]
+    public void VehicleAdminLifecycleActions_Should_Bind_Form_Or_Json_Not_FromBody_Only()
+    {
+        // Browser FormData (multipart) must bind like DeleteModel(int id).
+        // [FromBody]-only actions reject multipart with 415 before the action runs.
+        var controller = ReadPluginFile("Controllers", "VehicleAdminController.cs");
+
+        controller.Should().Contain("ResolveMergeIdsAsync");
+        controller.Should().Contain("TryReadJsonAsync");
+        controller.Should().NotContain("[FromBody] VehicleAdminDtos.ArchiveRequestModel");
+        controller.Should().NotContain("[FromBody] VehicleAdminDtos.MergeRequestModel");
     }
 
     [Test]
