@@ -163,7 +163,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | done | Incremental curated seed now covers 10 models / 32 generations / 284 current configurations; live upgrade preserved 10 legacy leaves for 294 total, all with unique fingerprints and EN/AR configuration aliases. Second seed inserts zero and operator edits/unrelated makes are preserved |
+| H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | partial | Incremental priority seed now covers 10 models / 32 generations / 284 current configurations; live upgrade preserved 10 legacy leaves for 294 total, all with unique fingerprints and EN/AR aliases. Idempotency and operator preservation are proven; the documented 40,000-configuration reference-environment capacity/load proof remains |
 | H1.5 | Support make/model merge and archive while preserving fitment and audit history | pending | CRUD exists; merge/archive workflow is absent |
 | H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | partial | ISO validation exists, but decoder mappings cover only a small hard-coded set |
 | H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | partial | Candidate contracts exist; production corpus and log audit do not |
@@ -314,7 +314,8 @@ The following are **not missing implementation** and must not be counted as defe
 
 Work follows dependency order rather than skipping to later roadmap features:
 
-1. Import production-scale catalog + provenanced fitment data (H1.11), then run the ~250k-product
-   search/fitment latency and accuracy gates (remaining H1.10/H1.14).
+1. Build the 40k-configuration reference environment (remaining H1.4), import production-scale catalog
+   + provenanced fitment data (H1.11), then run the ~250k-product search/fitment latency and accuracy
+   gates (remaining H1.10/H1.14).
 2. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
 3. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
