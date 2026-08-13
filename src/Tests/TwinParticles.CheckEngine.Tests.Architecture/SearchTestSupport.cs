@@ -29,7 +29,8 @@ internal static class SearchTestSupport
         IProductSearchReadRepository? repository = null,
         Dictionary<int, FitmentStatus>? fitmentMap = null,
         IReadOnlyList<OemNumber>? oemMatches = null,
-        bool indexHealthy = true)
+        bool indexHealthy = true,
+        ISearchAnalyticsService? analyticsService = null)
     {
         var vinService = new VinDecodeApplicationService(new EmptyVinRegistry(), new NoopTelemetry());
         var oemService = new OemResolveService(
@@ -45,7 +46,9 @@ internal static class SearchTestSupport
             oemService,
             fitmentService,
             new FakeSearchIndexHealthService(indexHealthy),
-            new DefaultBilingualSearchTextNormalizer());
+            new DefaultBilingualSearchTextNormalizer(),
+            aiCompletionPort: null,
+            searchAnalyticsService: analyticsService);
     }
 
     public static SearchAutocompleteService BuildAutocompleteService(

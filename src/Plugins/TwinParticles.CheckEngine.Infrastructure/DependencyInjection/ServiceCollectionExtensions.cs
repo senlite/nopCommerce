@@ -79,7 +79,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IVinDecodeRateLimiter, InMemoryVinDecodeRateLimiter>();
 
         services.AddSingleton<IBilingualSearchTextNormalizer, DefaultBilingualSearchTextNormalizer>();
+        services.AddSingleton<ISearchQueryFingerprintService, HmacSearchQueryFingerprintService>();
         services.AddScoped<IProductSearchReadRepository, SqlProductSearchReadRepository>();
+        services.AddScoped<ISearchAnalyticsService, SqlSearchAnalyticsService>();
         services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
         services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 

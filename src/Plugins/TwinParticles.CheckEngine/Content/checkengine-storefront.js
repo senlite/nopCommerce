@@ -283,6 +283,21 @@
         handleRecovery(button.getAttribute('data-ce-recovery'));
       });
     });
+    panel.querySelectorAll('[data-ce-search-click]').forEach(function (link) {
+      link.addEventListener('click', function () {
+        var analyticsId = parseInt(link.getAttribute('data-ce-analytics-id'), 10);
+        var productId = parseInt(link.getAttribute('data-ce-product-id'), 10);
+        if (analyticsId > 0 && productId > 0) {
+          jsonFetch('/check-engine/search/click', {
+            method: 'POST',
+            keepalive: true,
+            body: JSON.stringify({ analyticsId: analyticsId, productId: productId })
+          }).catch(function () {
+            /* click analytics never blocks navigation */
+          });
+        }
+      });
+    });
   }
 
   function handleRecovery(kind) {
@@ -310,6 +325,7 @@
     var hits = (payload && (payload.hits || payload.Hits)) || [];
     var modeUsed = payload && (payload.modeUsed || payload.ModeUsed);
     var degraded = payload && (payload.isDegraded || payload.IsDegraded);
+    var analyticsId = payload && (payload.analyticsId || payload.AnalyticsId);
     var total = payload && (payload.total != null ? payload.total : payload.Total);
     var recovery = (payload && (payload.recovery || payload.Recovery)) || [];
 
@@ -351,7 +367,9 @@
       var href = '/search?q=' + encodeURIComponent(name);
 
       list += '<li class="ce-results__item">' +
-        '<a class="ce-results__link" href="' + href + '">' +
+        '<a class="ce-results__link" data-ce-search-click data-ce-analytics-id="' +
+        escapeHtml(String(analyticsId || '')) + '" data-ce-product-id="' + escapeHtml(String(id)) +
+        '" href="' + href + '">' +
         '<span class="ce-results__body">' +
         '<span class="ce-results__name">' + escapeHtml(name) + '</span>' +
         '<span class="ce-results__meta">' +

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ public sealed class UnifiedSearchService
     private readonly OemResolveService _oemResolveService;
     private readonly IProductSearchReadRepository _productSearchReadRepository;
     private readonly ISearchIndexHealthService _searchIndexHealthService;
+    private readonly ISearchAnalyticsService? _searchAnalyticsService;
     private readonly VinDecodeApplicationService _vinDecodeService;
 
     public UnifiedSearchService(
@@ -28,7 +30,8 @@ public sealed class UnifiedSearchService
         FitmentEvaluationService fitmentEvaluationService,
         ISearchIndexHealthService searchIndexHealthService,
         IBilingualSearchTextNormalizer bilingualNormalizer,
-        IAiCompletionPort? aiCompletionPort = null)
+        IAiCompletionPort? aiCompletionPort = null,
+        ISearchAnalyticsService? searchAnalyticsService = null)
     {
         _productSearchReadRepository = productSearchReadRepository;
         _vinDecodeService = vinDecodeService;
@@ -37,10 +40,12 @@ public sealed class UnifiedSearchService
         _searchIndexHealthService = searchIndexHealthService;
         _bilingualNormalizer = bilingualNormalizer;
         _aiCompletionPort = aiCompletionPort;
+        _searchAnalyticsService = searchAnalyticsService;
     }
 
     public async Task<SearchResult> SearchAsync(SearchQuery query, CancellationToken cancellationToken)
     {
+        var stopwatch = Stopwatch.StartNew();
         var normalizedText = _bilingualNormalizer.Normalize(query.RawText, query.Locale);
         var mode = await ResolveModeAsync(query, normalizedText, cancellationToken);
 
@@ -105,6 +110,33 @@ public sealed class UnifiedSearchService
 
         var recovery = total == 0 ? BuildRecovery(query) : [];
 
+        long? analyticsId = null;
+        if (_searchAnalyticsService is not null)
+        {
+            try
+            {
+                stopwatch.Stop();
+                analyticsId = await _searchAnalyticsService.RecordSearchAsync(
+                    normalizedText,
+                    modeUsed,
+                    query.Locale,
+                    total,
+                    query.VehicleConfigurationId.HasValue,
+                    query.WidenFitment,
+                    degraded,
+                    stopwatch.ElapsedMilliseconds,
+                    cancellationToken);
+            }
+            catch (System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Analytics is non-critical: search results must remain available if its store fails.
+            }
+        }
+
         return new SearchResult
         {
             ModeUsed = modeUsed,
@@ -113,7 +145,8 @@ public sealed class UnifiedSearchService
             Facets = facets,
             Suggestions = recovery.Select(action => action.Label).ToList(),
             Recovery = recovery,
-            IsDegraded = degraded
+            IsDegraded = degraded,
+            AnalyticsId = analyticsId
         };
     }
 

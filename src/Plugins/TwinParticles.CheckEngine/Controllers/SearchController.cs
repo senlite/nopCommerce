@@ -19,6 +19,7 @@ public sealed class SearchController : BasePublicController
     private readonly ICustomerService _customerService;
     private readonly RecommendationService _recommendationService;
     private readonly SearchAutocompleteService _autocompleteService;
+    private readonly ISearchAnalyticsService _searchAnalyticsService;
     private readonly ISearchRateLimiter _searchRateLimiter;
     private readonly IWorkContext _workContext;
 
@@ -29,7 +30,8 @@ public sealed class SearchController : BasePublicController
         ISearchRateLimiter searchRateLimiter,
         IWorkContext workContext,
         RecommendationService recommendationService,
-        SearchAutocompleteService autocompleteService)
+        SearchAutocompleteService autocompleteService,
+        ISearchAnalyticsService searchAnalyticsService)
     {
         _garageContextSearchService = garageContextSearchService;
         _garageService = garageService;
@@ -38,6 +40,7 @@ public sealed class SearchController : BasePublicController
         _workContext = workContext;
         _recommendationService = recommendationService;
         _autocompleteService = autocompleteService;
+        _searchAnalyticsService = searchAnalyticsService;
     }
 
     [HttpPost]
@@ -105,6 +108,22 @@ public sealed class SearchController : BasePublicController
 
         var result = await _autocompleteService.SuggestAsync(term ?? string.Empty, locale ?? "en", take, cancellationToken);
         return Json(result);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Click(
+        [FromBody] SearchClickModel model,
+        CancellationToken cancellationToken)
+    {
+        if (model is null || model.AnalyticsId <= 0 || model.ProductId <= 0)
+            return BadRequest(new { reasonCode = "search.analytics.invalid_click" });
+
+        await _searchAnalyticsService.RecordClickAsync(
+            model.AnalyticsId,
+            model.ProductId,
+            cancellationToken);
+        return Ok();
     }
 
     [HttpGet]

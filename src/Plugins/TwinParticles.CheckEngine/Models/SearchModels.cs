@@ -26,3 +26,10 @@ public sealed class SearchRequestModel
 
     public string Locale { get; set; } = "en";
 }
+
+public sealed class SearchClickModel
+{
+    public long AnalyticsId { get; set; }
+
+    public int ProductId { get; set; }
+}

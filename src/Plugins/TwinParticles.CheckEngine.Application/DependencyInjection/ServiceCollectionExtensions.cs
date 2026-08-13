@@ -58,6 +58,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<GarageContextSearchService>();
         services.AddScoped<RecommendationService>();
         services.AddScoped<SearchAutocompleteService>();
+        services.AddScoped<SearchAnalyticsAdminService>();
 
         services.AddScoped<GarageService>();
         services.AddScoped<GaragePrivacyService>();

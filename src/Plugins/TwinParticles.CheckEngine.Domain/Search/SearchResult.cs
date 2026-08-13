@@ -17,4 +17,6 @@ public sealed class SearchResult
     public IReadOnlyList<SearchRecoveryAction> Recovery { get; init; } = [];
 
     public bool IsDegraded { get; init; }
+
+    public long? AnalyticsId { get; init; }
 }
