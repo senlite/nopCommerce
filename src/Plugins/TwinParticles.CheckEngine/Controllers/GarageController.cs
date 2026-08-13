@@ -6,24 +6,32 @@ using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Services.Customers;
 using Nop.Web.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Domain.Garage;
 using TwinParticles.CheckEngine.Models;
 
 namespace TwinParticles.CheckEngine.Controllers;
 
+[AutoValidateAntiforgeryToken]
 public sealed class GarageController : BasePublicController
 {
     private const int MaxGuestVehicles = 20;
     private const int MaxGuestOems = 50;
 
     private readonly GarageService _garageService;
+    private readonly GaragePrivacyService _privacyService;
     private readonly ICustomerService _customerService;
     private readonly IWorkContext _workContext;
 
-    public GarageController(GarageService garageService, ICustomerService customerService, IWorkContext workContext)
+    public GarageController(
+        GarageService garageService,
+        GaragePrivacyService privacyService,
+        ICustomerService customerService,
+        IWorkContext workContext)
     {
         _garageService = garageService;
+        _privacyService = privacyService;
         _customerService = customerService;
         _workContext = workContext;
     }
@@ -97,6 +105,37 @@ public sealed class GarageController : BasePublicController
 
         var ok = await _garageService.SaveOemAsync(customer.Id, model.OemNumber, model.ManufacturerId, cancellationToken);
         return ok ? Ok() : BadRequest(new { reasonCode = "garage.oem_save_failed" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Export(CancellationToken cancellationToken)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (await _customerService.IsGuestAsync(customer))
+            return Unauthorized();
+
+        return Json(await _privacyService.ExportAsync(
+            customer.Id,
+            $"customer:{customer.Id}",
+            cancellationToken));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Erase(
+        [FromBody] GarageEraseRequestModel model,
+        CancellationToken cancellationToken)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (await _customerService.IsGuestAsync(customer))
+            return Unauthorized();
+        if (model is null || !model.Confirmed)
+            return BadRequest(new { reasonCode = "garage.erase_not_confirmed" });
+
+        await _privacyService.EraseAsync(
+            customer.Id,
+            $"customer:{customer.Id}",
+            cancellationToken);
+        return Ok();
     }
 
     [HttpPost]

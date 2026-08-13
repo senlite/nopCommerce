@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SearchAutocompleteService>();
 
         services.AddScoped<GarageService>();
+        services.AddScoped<GaragePrivacyService>();
 
         services.AddScoped<ProductImageService>();
         services.AddScoped<ImageImportOrchestrationService>();

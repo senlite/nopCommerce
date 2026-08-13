@@ -33,6 +33,11 @@ public sealed class GarageSaveOemRequestModel
     public int? ManufacturerId { get; set; }
 }
 
+public sealed class GarageEraseRequestModel
+{
+    public bool Confirmed { get; set; }
+}
+
 public sealed class GarageMigrateRequestModel
 {
     public string GuestKey { get; set; } = string.Empty;

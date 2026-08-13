@@ -83,6 +83,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
         services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 
+        services.AddScoped<IGarageVinProtector, NopGarageVinProtector>();
         services.AddScoped<IGarageRepository, SqlGarageRepository>();
         services.AddSingleton<IGarageGuestStore, InMemoryGarageGuestStore>();
         services.AddSingleton<IGarageAuditService, InMemoryGarageAuditService>();

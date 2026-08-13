@@ -12,10 +12,12 @@ namespace TwinParticles.CheckEngine.Infrastructure.Garage;
 public sealed class SqlGarageRepository : IGarageRepository
 {
     private readonly INopDataProvider _dataProvider;
+    private readonly IGarageVinProtector _vinProtector;
 
-    public SqlGarageRepository(INopDataProvider dataProvider)
+    public SqlGarageRepository(INopDataProvider dataProvider, IGarageVinProtector vinProtector)
     {
         _dataProvider = dataProvider;
+        _vinProtector = vinProtector;
     }
 
     public async Task<Domain.Garage.Garage> GetOrCreateAsync(int customerId, CancellationToken cancellationToken)
@@ -57,6 +59,23 @@ FROM TP_CE_Garage WHERE CustomerId = @customerId",
             @"SELECT Id, GarageId, VehicleConfigurationId, Vin, Label, IsActive, CreatedUtc
 FROM TP_CE_GarageVehicle WHERE GarageId = @garageId ORDER BY Id",
             new DataParameter("garageId", garageRow.Id));
+        foreach (var vehicle in vehicles)
+        {
+            var storedVin = vehicle.Vin;
+            vehicle.Vin = _vinProtector.Unprotect(storedVin);
+
+            // Opportunistically migrate legacy plaintext on first authenticated read/export. New and
+            // subsequently saved VINs are always protected before INSERT.
+            var protectedVin = _vinProtector.Protect(storedVin);
+            if (!string.IsNullOrWhiteSpace(storedVin) &&
+                !string.Equals(storedVin, protectedVin, StringComparison.Ordinal))
+            {
+                await _dataProvider.ExecuteNonQueryAsync(
+                    "UPDATE TP_CE_GarageVehicle SET Vin=@vin WHERE Id=@id",
+                    new DataParameter("vin", protectedVin),
+                    new DataParameter("id", vehicle.Id));
+            }
+        }
 
         var oems = await _dataProvider.QueryAsync<GarageOem>(
             @"SELECT Id, GarageId, OemNumberId, DisplayNumber, CreatedUtc
@@ -121,7 +140,7 @@ VALUES
 SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
                 new DataParameter("garageId", garage.Id),
                 new DataParameter("vehicleConfigurationId", vehicle.VehicleConfigurationId),
-                new DataParameter("vin", vehicle.Vin),
+                new DataParameter("vin", _vinProtector.Protect(vehicle.Vin)),
                 new DataParameter("label", vehicle.Label),
                 new DataParameter("isActive", vehicle.IsActive),
                 new DataParameter("createdUtc", vehicle.CreatedUtc == default ? garage.UpdatedUtc : vehicle.CreatedUtc));
@@ -157,6 +176,31 @@ SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
             oem.Id = insertedOem.Single().Value;
             oem.GarageId = garage.Id;
         }
+    }
+
+    public async Task<bool> DeleteByCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<ScalarIntRow>(@"
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+
+DECLARE @garageId int = (SELECT Id FROM TP_CE_Garage WHERE CustomerId=@customerId);
+IF @garageId IS NULL
+BEGIN
+    COMMIT TRANSACTION;
+    SELECT 0 AS Value;
+    RETURN;
+END;
+
+DELETE FROM TP_CE_GarageOem WHERE GarageId=@garageId;
+DELETE FROM TP_CE_GarageVehicle WHERE GarageId=@garageId;
+DELETE FROM TP_CE_Garage WHERE Id=@garageId;
+
+COMMIT TRANSACTION;
+SELECT 1 AS Value;",
+            new DataParameter("customerId", customerId));
+
+        return rows.Single().Value == 1;
     }
 
     private sealed class ScalarIntRow

@@ -295,6 +295,9 @@ public class GarageServiceTests
             _state[garage.CustomerId] = garage;
             return Task.CompletedTask;
         }
+
+        public Task<bool> DeleteByCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+            => Task.FromResult(_state.Remove(customerId));
     }
 
     private sealed class FakeGarageGuestStore : IGarageGuestStore
