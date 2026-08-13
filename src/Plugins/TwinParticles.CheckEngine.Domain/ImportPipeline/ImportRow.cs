@@ -23,4 +23,10 @@ public sealed class ImportRow
     public string ReviewStatus { get; set; } = "Pending";
 
     public string? ReviewNote { get; set; }
+
+    public string? PipelineStateJson { get; set; }
+
+    public string? CompletedStagesCsv { get; set; }
+
+    public string? LastStageError { get; set; }
 }

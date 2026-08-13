@@ -22,7 +22,8 @@ public sealed class SqlImportPipelineRepository : IImportPipelineRepository
     public async Task<ImportBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
-            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc
+            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary,
+       SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc
 FROM TP_CE_ImportBatch WHERE Id = @id",
             new DataParameter("id", batchId));
 
@@ -32,7 +33,8 @@ FROM TP_CE_ImportBatch WHERE Id = @id",
     public async Task<ImportBatch?> GetBatchByCorrelationIdAsync(Guid correlationId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
-            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc
+            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary,
+       SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc
 FROM TP_CE_ImportBatch WHERE CorrelationId = @correlationId",
             new DataParameter("correlationId", correlationId));
 
@@ -52,6 +54,10 @@ SET CorrelationId = @correlationId,
     UploadedByCustomerId = @uploadedByCustomerId,
     RowCount = @rowCount,
     ErrorSummary = @errorSummary,
+    SourceContent = @sourceContent,
+    RunOptionsJson = @runOptionsJson,
+    CurrentStage = @currentStage,
+    CompletedStagesCsv = @completedStagesCsv,
     UpdatedUtc = @updatedUtc
 WHERE Id = @id",
                 new DataParameter("correlationId", batch.CorrelationId),
@@ -61,6 +67,10 @@ WHERE Id = @id",
                 new DataParameter("uploadedByCustomerId", batch.UploadedByCustomerId),
                 new DataParameter("rowCount", batch.RowCount),
                 new DataParameter("errorSummary", batch.ErrorSummary),
+                new DataParameter("sourceContent", batch.SourceContent),
+                new DataParameter("runOptionsJson", batch.RunOptionsJson),
+                new DataParameter("currentStage", batch.CurrentStage),
+                new DataParameter("completedStagesCsv", batch.CompletedStagesCsv),
                 new DataParameter("updatedUtc", batch.UpdatedUtc),
                 new DataParameter("id", batch.Id));
 
@@ -70,9 +80,9 @@ WHERE Id = @id",
 
         var inserted = await _dataProvider.QueryAsync<ScalarIntRow>(
             @"INSERT INTO TP_CE_ImportBatch
-(CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, CreatedUtc, UpdatedUtc)
+(CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc)
 VALUES
-(@correlationId, @fileName, @sourceFormatId, @status, @uploadedByCustomerId, @rowCount, @errorSummary, @createdUtc, @updatedUtc);
+(@correlationId, @fileName, @sourceFormatId, @status, @uploadedByCustomerId, @rowCount, @errorSummary, @sourceContent, @runOptionsJson, @currentStage, @completedStagesCsv, @createdUtc, @updatedUtc);
 SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
             new DataParameter("correlationId", batch.CorrelationId),
             new DataParameter("fileName", batch.FileName),
@@ -81,6 +91,10 @@ SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
             new DataParameter("uploadedByCustomerId", batch.UploadedByCustomerId),
             new DataParameter("rowCount", batch.RowCount),
             new DataParameter("errorSummary", batch.ErrorSummary),
+            new DataParameter("sourceContent", batch.SourceContent),
+            new DataParameter("runOptionsJson", batch.RunOptionsJson),
+            new DataParameter("currentStage", batch.CurrentStage),
+            new DataParameter("completedStagesCsv", batch.CompletedStagesCsv),
             new DataParameter("createdUtc", batch.CreatedUtc),
             new DataParameter("updatedUtc", batch.UpdatedUtc));
 
@@ -90,7 +104,8 @@ SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
     public async Task<IReadOnlyList<ImportRow>> GetRowsAsync(int batchId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportRow>(
-            @"SELECT Id, BatchId, RowNumber, RawPayload, NormalizedOem, MatchedOemNumberId, ProposedProductId, ProposedFitmentJson, Confidence, ReviewStatus, ReviewNote
+            @"SELECT Id, BatchId, RowNumber, RawPayload, NormalizedOem, MatchedOemNumberId, ProposedProductId, ProposedFitmentJson, Confidence, ReviewStatus, ReviewNote,
+       PipelineStateJson, CompletedStagesCsv, LastStageError
 FROM TP_CE_ImportRow
 WHERE BatchId = @batchId
 ORDER BY RowNumber",
@@ -101,17 +116,15 @@ ORDER BY RowNumber",
 
     public async Task ReplaceRowsAsync(int batchId, IReadOnlyList<ImportRow> rows, CancellationToken cancellationToken)
     {
-        await _dataProvider.ExecuteNonQueryAsync(
-            "DELETE FROM TP_CE_ImportRow WHERE BatchId = @batchId",
+        var existing = await _dataProvider.QueryAsync<ImportRowNumber>(
+            "SELECT RowNumber FROM TP_CE_ImportRow WHERE BatchId = @batchId",
             new DataParameter("batchId", batchId));
+        var retained = rows.Select(row => row.RowNumber).ToHashSet();
 
         foreach (var row in rows)
         {
-            await _dataProvider.ExecuteNonQueryAsync(
-                @"INSERT INTO TP_CE_ImportRow
-(BatchId, RowNumber, RawPayload, NormalizedOem, MatchedOemNumberId, ProposedProductId, ProposedFitmentJson, Confidence, ReviewStatus, ReviewNote)
-VALUES
-(@batchId, @rowNumber, @rawPayload, @normalizedOem, @matchedOemNumberId, @proposedProductId, @proposedFitmentJson, @confidence, @reviewStatus, @reviewNote)",
+            var parameters = new[]
+            {
                 new DataParameter("batchId", batchId),
                 new DataParameter("rowNumber", row.RowNumber),
                 new DataParameter("rawPayload", row.RawPayload ?? JsonSerializer.Serialize(new { })),
@@ -121,7 +134,45 @@ VALUES
                 new DataParameter("proposedFitmentJson", row.ProposedFitmentJson),
                 new DataParameter("confidence", row.Confidence),
                 new DataParameter("reviewStatus", row.ReviewStatus),
-                new DataParameter("reviewNote", row.ReviewNote));
+                new DataParameter("reviewNote", row.ReviewNote),
+                new DataParameter("pipelineStateJson", row.PipelineStateJson),
+                new DataParameter("completedStagesCsv", row.CompletedStagesCsv),
+                new DataParameter("lastStageError", row.LastStageError)
+            };
+
+            var updated = await _dataProvider.ExecuteNonQueryAsync(
+                @"UPDATE TP_CE_ImportRow
+SET RawPayload = @rawPayload,
+    NormalizedOem = @normalizedOem,
+    MatchedOemNumberId = @matchedOemNumberId,
+    ProposedProductId = @proposedProductId,
+    ProposedFitmentJson = @proposedFitmentJson,
+    Confidence = @confidence,
+    ReviewStatus = @reviewStatus,
+    ReviewNote = @reviewNote,
+    PipelineStateJson = @pipelineStateJson,
+    CompletedStagesCsv = @completedStagesCsv,
+    LastStageError = @lastStageError
+WHERE BatchId = @batchId AND RowNumber = @rowNumber",
+                parameters);
+
+            if (updated > 0)
+                continue;
+
+            await _dataProvider.ExecuteNonQueryAsync(
+                @"INSERT INTO TP_CE_ImportRow
+(BatchId, RowNumber, RawPayload, NormalizedOem, MatchedOemNumberId, ProposedProductId, ProposedFitmentJson, Confidence, ReviewStatus, ReviewNote, PipelineStateJson, CompletedStagesCsv, LastStageError)
+VALUES
+(@batchId, @rowNumber, @rawPayload, @normalizedOem, @matchedOemNumberId, @proposedProductId, @proposedFitmentJson, @confidence, @reviewStatus, @reviewNote, @pipelineStateJson, @completedStagesCsv, @lastStageError)",
+                parameters);
+        }
+
+        foreach (var stale in existing.Where(item => !retained.Contains(item.RowNumber)))
+        {
+            await _dataProvider.ExecuteNonQueryAsync(
+                "DELETE FROM TP_CE_ImportRow WHERE BatchId = @batchId AND RowNumber = @rowNumber",
+                new DataParameter("batchId", batchId),
+                new DataParameter("rowNumber", stale.RowNumber));
         }
     }
 
@@ -136,6 +187,10 @@ VALUES
             UploadedByCustomerId = row.UploadedByCustomerId,
             RowCount = row.RowCount,
             ErrorSummary = row.ErrorSummary,
+            SourceContent = row.SourceContent ?? [],
+            RunOptionsJson = row.RunOptionsJson,
+            CurrentStage = row.CurrentStage,
+            CompletedStagesCsv = row.CompletedStagesCsv,
             CreatedUtc = row.CreatedUtc,
             UpdatedUtc = row.UpdatedUtc
         };
@@ -143,6 +198,11 @@ VALUES
     private sealed class ScalarIntRow
     {
         public int Value { get; set; }
+    }
+
+    private sealed class ImportRowNumber
+    {
+        public int RowNumber { get; set; }
     }
 
     private sealed class ImportBatchRow
@@ -155,6 +215,10 @@ VALUES
         public int? UploadedByCustomerId { get; set; }
         public int RowCount { get; set; }
         public string? ErrorSummary { get; set; }
+        public byte[]? SourceContent { get; set; }
+        public string? RunOptionsJson { get; set; }
+        public string? CurrentStage { get; set; }
+        public string? CompletedStagesCsv { get; set; }
         public DateTime CreatedUtc { get; set; }
         public DateTime UpdatedUtc { get; set; }
     }

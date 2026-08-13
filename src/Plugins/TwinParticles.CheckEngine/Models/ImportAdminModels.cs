@@ -37,3 +37,10 @@ public sealed class ImportAdminPublishModel
 
     public bool DryRun { get; set; }
 }
+
+public sealed class ImportAdminRerunStageModel
+{
+    public Guid BatchId { get; set; }
+
+    public ImportPipelineStage Stage { get; set; }
+}

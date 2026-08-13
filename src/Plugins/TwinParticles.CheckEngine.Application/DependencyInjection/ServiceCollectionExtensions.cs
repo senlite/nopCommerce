@@ -45,7 +45,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ImportImageAssignmentService>();
         services.AddScoped<ImportReviewService>();
         services.AddScoped<ImportPublicationService>();
-        services.AddSingleton<ImportPipelineOrchestratorService>();
+        // Scoped because SQL is the authoritative pipeline state. A singleton would capture scoped
+        // repositories and reintroduce process-local mutable batch ownership.
+        services.AddScoped<ImportPipelineOrchestratorService>();
 
         services.AddScoped<FitmentEvaluationService>();
         services.AddScoped<FitmentPublicationPolicyService>();

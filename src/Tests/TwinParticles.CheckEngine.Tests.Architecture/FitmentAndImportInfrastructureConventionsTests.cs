@@ -32,6 +32,19 @@ public class FitmentAndImportInfrastructureConventionsTests
     }
 
     [Test]
+    public void ImportPipelineDurableStateMigration_Should_Be_Installation_Migration_With_Explicit_Down()
+    {
+        var migrationType = typeof(TwinParticles.CheckEngine.Infrastructure.Migrations.ImportPipelineDurableStateMigration);
+        migrationType.IsSubclassOf(typeof(Migration)).Should().BeTrue();
+        migrationType.IsSubclassOf(typeof(AutoReversingMigration)).Should().BeFalse();
+
+        var attribute = Attribute.GetCustomAttribute(migrationType, typeof(NopMigrationAttribute)) as NopMigrationAttribute;
+        attribute.Should().NotBeNull();
+        attribute!.TargetMigrationProcess.Should().Be(MigrationProcessType.Installation);
+        migrationType.GetMethod(nameof(Migration.Down))!.DeclaringType.Should().Be(migrationType);
+    }
+
+    [Test]
     public void ProductOemMapSchemaMigration_Should_Be_Installation_AutoReversing_Migration()
     {
         var migrationType = typeof(TwinParticles.CheckEngine.Infrastructure.Migrations.ProductOemMapSchemaMigration);

@@ -4,7 +4,7 @@ namespace TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
 
 public sealed class ImportPipelineRowState
 {
-    public int RowNumber { get; init; }
+    public int RowNumber { get; set; }
 
     public IReadOnlyDictionary<string, string?> Fields { get; set; } = new Dictionary<string, string?>();
 
@@ -31,4 +31,8 @@ public sealed class ImportPipelineRowState
     public bool IsPublished { get; set; }
 
     public string? PublishError { get; set; }
+
+    public HashSet<string> CompletedStages { get; set; } = new(System.StringComparer.Ordinal);
+
+    public string? LastStageError { get; set; }
 }

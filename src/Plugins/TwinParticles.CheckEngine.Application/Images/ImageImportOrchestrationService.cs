@@ -19,9 +19,17 @@ public sealed class ImageImportOrchestrationService
         if (!row.IsPublished)
             return;
 
+        if (!row.Fields.TryGetValue("publishedProductId", out var productIdRaw) ||
+            !int.TryParse(productIdRaw, out var productId) ||
+            productId <= 0)
+        {
+            row.PublishError = "import.image.product_missing";
+            return;
+        }
+
         var result = await _productImageService.AssignFromImportAsync(new ImageImportRequest
         {
-            ProductId = row.RowNumber,
+            ProductId = productId,
             SourceUrl = row.ImageUrl,
             FallbackSeoName = row.Fields.TryGetValue("name", out var name) && !string.IsNullOrWhiteSpace(name)
                 ? name!
