@@ -68,6 +68,11 @@ only cloud-specific caveats.
 - Check Engine keyword/category search delegates to nopCommerce's `IProductService`, while OEM and
   vehicle-tree candidate IDs come from Check Engine SQL and are hydrated through the real catalog.
   Production search must never fall back to invented demo product IDs.
+- Public SEO landings use `/vehicles/config-{id}` and `/parts/product-{id}/for/config-{id}` with
+  `/ar/` counterparts. They contribute SQL-backed URLs through nopCommerce's `SitemapCreatedEvent`;
+  do not add a second sitemap XML endpoint or restore the old process-local sitemap service.
+- SEO indexability is fitment-gated: a page with no active published Fits claim remains public but
+  emits `noindex, follow` and is excluded from `/sitemap.xml`.
 
 ### Frontend assets (optional)
 - Prebuilt assets ship in `wwwroot`; Node is not required to run. To rebuild them:

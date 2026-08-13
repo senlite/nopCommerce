@@ -215,8 +215,8 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.26 | Provide full Arabic/English localisation parity | partial | Logical RTL CSS exists; complete Arabic resource dictionaries do not |
 | H1.27 | Validate RTL/LTR, keyboard and screen-reader behavior from 320–2,560 px | partial | Smoke specs are soft when widgets are absent; no complete browser matrix |
 | H1.28 | Meet Core Web Vitals on throttled mid-range mobile hardware | pending | No Lighthouse/CWV gate exists |
-| H1.29 | Expose public vehicle/part SEO landing routes with stable localized URLs and hreflang | partial | Landing records can be generated, but public landing routes are absent |
-| H1.30 | Integrate incremental sitemap generation and thin-page noindex policy | partial | Sitemap is process-local and performance policy is a permissive stub |
+| H1.29 | Expose public vehicle/part SEO landing routes with stable localized URLs and hreflang | done | Public EN/AR vehicle and part-for-vehicle HTML pages render canonical, reciprocal hreflang, JSON-LD and verified-fit products |
+| H1.30 | Integrate incremental sitemap generation and thin-page noindex policy | partial | SQL-backed URLs survive restart and join nopCommerce `/sitemap.xml`; zero-Fits pages emit noindex and are excluded. Event-driven generation on fitment publication remains |
 
 #### ERPNext, security, licensing and regional plugins
 
@@ -316,7 +316,7 @@ Work follows dependency order rather than skipping to later roadmap features:
 
 1. Grow the BMW dataset (H1.4) from the curated launch slice toward the documented generation priority
    list and reference-scale volume.
-2. Expose public vehicle/part SEO landing routes and replace the process-local sitemap (H1.29–H1.30).
+2. Make landing generation event-driven when fitment publication changes (remaining H1.30).
 3. Make the import pipeline durably SQL-authoritative and independently rerunnable (H1.19).
 4. Complete search facets/autocomplete and build the reference accuracy/performance benchmark (H1.14–H1.15).
 5. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
