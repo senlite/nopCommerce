@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -122,6 +123,36 @@ public class ImportPipelineOrchestratorServiceTests
             "rerunning vehicle-match must not execute OEM-match again");
     }
 
+    [Test]
+    public async Task Ten_Thousand_High_Confidence_Rows_Should_Reach_Published_State_Above_50_Rows_Per_Second()
+    {
+        var csv = new StringBuilder("oem,name,sku,vehicleConfigurationId,category\n");
+        for (var i = 1; i <= 10_000; i++)
+            csv.Append("OEM-").Append(i).Append(",Part ").Append(i).Append(",SKU-").Append(i)
+                .Append(",1001,Engine\n");
+
+        var orchestrator = CreateOrchestrator();
+        var stopwatch = Stopwatch.StartNew();
+        var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
+        {
+            Format = ImportSourceFormat.Csv,
+            FileName = "reference-10000.csv",
+            Content = Encoding.UTF8.GetBytes(csv.ToString()),
+            DryRun = false
+        }, CancellationToken.None);
+        var publish = await orchestrator.PublishAsync(run.BatchId, dryRun: false, CancellationToken.None);
+        stopwatch.Stop();
+
+        var throughput = run.TotalRows / stopwatch.Elapsed.TotalSeconds;
+        TestContext.WriteLine(
+            $"10,000-row import+publication: {stopwatch.Elapsed.TotalSeconds:F3}s, {throughput:F1} rows/s");
+        run.TotalRows.Should().Be(10_000);
+        run.ReviewRows.Should().Be(0, "above-threshold rows require no manual data entry");
+        publish.PublishedRows.Should().Be(10_000);
+        publish.FailedRows.Should().Be(0);
+        throughput.Should().BeGreaterThanOrEqualTo(50, "NFR-009 structured import throughput");
+    }
+
     [TestCase(ImportPipelineStage.Extract)]
     [TestCase(ImportPipelineStage.Normalize)]
     [TestCase(ImportPipelineStage.Deduplicate)]
@@ -208,9 +239,12 @@ public class ImportPipelineOrchestratorServiceTests
         public Task<IReadOnlyList<OemNumber>> FindByNormalizedNumberAsync(string normalizedNumber, int? manufacturerId, CancellationToken cancellationToken)
         {
             CallCount++;
+            var id = normalizedNumber == "11517586925"
+                ? 10
+                : Math.Abs(StringComparer.Ordinal.GetHashCode(normalizedNumber)) + 100;
             IReadOnlyList<OemNumber> rows = [new OemNumber
             {
-                Id = 10,
+                Id = id,
                 ManufacturerId = 1,
                 DisplayNumber = "11-51-7-586-925",
                 NormalizedNumber = "11517586925",
