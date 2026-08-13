@@ -223,7 +223,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | ID | Task | Status | Gap |
 |---|---|---|---|
 | H1.31 | Synchronize products, inventory, customers, orders, invoices, returns and shipments bidirectionally | partial | HTTP adapter and queue exist; no complete event-driven entity flows |
-| H1.32 | Add scheduled processing and nopCommerce order/customer event consumers | pending | ERP operations are manually triggered through admin endpoints |
+| H1.32 | Add scheduled processing and nopCommerce order/customer event consumers | done | Plugin install/update now registers a 60-second ERP queue task and uninstall removes it. OrderPlacedEvent and CustomerRegisteredEvent consumers enqueue PII-minimized durable push jobs. Queue enqueue is atomically idempotent, work claiming uses SQL UPDLOCK/READPAST to prevent overlapping workers, stale claims recover after 10 minutes, and failures retry with bounded exponential delay before terminal failure |
 | H1.33 | Reconcile ERP order, payment and inventory totals daily | partial | Current report summarizes queue jobs, not cross-system financial totals |
 | H1.34 | Complete GDPR export/erasure, tamper-evident audit and retention workflows | partial | Garage export/erasure and permanent-customer deletion integration are complete; cross-domain subject export, tamper-evident audit chaining and retention automation remain |
 | H1.35 | Pass an independent security assessment with no high/critical findings | blocked | Security stakeholder review and sign-off are external gates |
