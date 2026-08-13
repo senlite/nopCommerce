@@ -1,0 +1,6848 @@
+{
+  "version": "1.0",
+  "description": "Check Engine fitment accuracy corpus. The Must set must pass at 100% on a release candidate (AC-35.3).",
+  "fitsConfidenceThreshold": 0.6,
+  "caseCount": 209,
+  "cases": [
+    {
+      "id": "CE-FIT-0001",
+      "name": "no_claims_is_unknown",
+      "tier": "Must",
+      "description": "A product with no fitment claim resolves to Unknown, never Fits.",
+      "tags": [
+        "fail-closed",
+        "visibility"
+      ],
+      "claims": [],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0002",
+      "name": "unpublished_claim_is_invisible",
+      "tier": "Must",
+      "description": "An unpublished positive claim must not reach the customer.",
+      "tags": [
+        "fail-closed",
+        "visibility"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": false,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0003",
+      "name": "inactive_claim_is_invisible",
+      "tier": "Must",
+      "description": "A deactivated claim is retained but ignored during evaluation (FR-326).",
+      "tags": [
+        "fail-closed",
+        "visibility"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": false,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0004",
+      "name": "rejected_claim_is_invisible",
+      "tier": "Must",
+      "description": "A rejected claim never produces a positive verdict.",
+      "tags": [
+        "fail-closed",
+        "visibility"
+      ],
+      "claims": [
+        {
+          "status": "Rejected",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0005",
+      "name": "unpublished_high_confidence_claim_is_invisible",
+      "tier": "Must",
+      "description": "Confidence does not bypass the publication gate.",
+      "tags": [
+        "fail-closed",
+        "visibility"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": false,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0006",
+      "name": "negative_beats_higher_confidence_positive_standard",
+      "tier": "Must",
+      "description": "A published DoesNotFit claim must win even when a positive claim is more confident.",
+      "tags": [
+        "fail-closed",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.7,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0007",
+      "name": "low_confidence_negative_still_wins_standard",
+      "tier": "Must",
+      "description": "Even a low-confidence negative claim suppresses a near-certain positive.",
+      "tags": [
+        "fail-closed",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.3,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.98,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0008",
+      "name": "negative_alone_standard",
+      "tier": "Must",
+      "description": "A single negative claim resolves to DoesNotFit.",
+      "tags": [
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0009",
+      "name": "negative_beats_higher_confidence_positive_elevated",
+      "tier": "Must",
+      "description": "A published DoesNotFit claim must win even when a positive claim is more confident.",
+      "tags": [
+        "fail-closed",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.7,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0010",
+      "name": "low_confidence_negative_still_wins_elevated",
+      "tier": "Must",
+      "description": "Even a low-confidence negative claim suppresses a near-certain positive.",
+      "tags": [
+        "fail-closed",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.3,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.98,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0011",
+      "name": "negative_alone_elevated",
+      "tier": "Must",
+      "description": "A single negative claim resolves to DoesNotFit.",
+      "tags": [
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0012",
+      "name": "negative_beats_higher_confidence_positive_safetycritical",
+      "tier": "Must",
+      "description": "A published DoesNotFit claim must win even when a positive claim is more confident.",
+      "tags": [
+        "fail-closed",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.7,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0013",
+      "name": "low_confidence_negative_still_wins_safetycritical",
+      "tier": "Must",
+      "description": "Even a low-confidence negative claim suppresses a near-certain positive.",
+      "tags": [
+        "fail-closed",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.3,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.98,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0014",
+      "name": "negative_alone_safetycritical",
+      "tier": "Must",
+      "description": "A single negative claim resolves to DoesNotFit.",
+      "tags": [
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0015",
+      "name": "confidence_very_low_standard",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.10 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.1,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0016",
+      "name": "confidence_low_standard",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.45 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.45,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0017",
+      "name": "confidence_just_below_threshold_standard",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.59 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.59,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0018",
+      "name": "confidence_at_threshold_standard",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.60 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0019",
+      "name": "confidence_above_threshold_standard",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.75 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.75,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0020",
+      "name": "confidence_near_certain_standard",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.99 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0021",
+      "name": "confidence_very_low_elevated",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.10 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.1,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0022",
+      "name": "confidence_low_elevated",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.45 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.45,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0023",
+      "name": "confidence_just_below_threshold_elevated",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.59 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.59,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0024",
+      "name": "confidence_at_threshold_elevated",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.60 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0025",
+      "name": "confidence_above_threshold_elevated",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.75 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.75,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0026",
+      "name": "confidence_near_certain_elevated",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.99 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0027",
+      "name": "confidence_very_low_safetycritical",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.10 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.1,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0028",
+      "name": "confidence_low_safetycritical",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.45 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.45,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0029",
+      "name": "confidence_just_below_threshold_safetycritical",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.59 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.59,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0030",
+      "name": "confidence_at_threshold_safetycritical",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.60 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0031",
+      "name": "confidence_above_threshold_safetycritical",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.75 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.75,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0032",
+      "name": "confidence_near_certain_safetycritical",
+      "tier": "Must",
+      "description": "A positive claim at confidence 0.99 must respect the Fits threshold.",
+      "tags": [
+        "confidence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0033",
+      "name": "year_inside_window_standard",
+      "tier": "Must",
+      "description": "A vehicle inside the claim's production window fits.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2015
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0034",
+      "name": "year_after_window_standard",
+      "tier": "Must",
+      "description": "A vehicle built after the window must not be reported as fitting.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2020
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0035",
+      "name": "year_before_window_standard",
+      "tier": "Must",
+      "description": "A vehicle built before the window must not be reported as fitting.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2009
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0036",
+      "name": "year_boundary_start_standard",
+      "tier": "Must",
+      "description": "The first year of the window is inclusive.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "boundary",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2012
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0037",
+      "name": "year_boundary_end_standard",
+      "tier": "Must",
+      "description": "The last year of the window is inclusive.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "boundary",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2018
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0038",
+      "name": "year_missing_context_standard",
+      "tier": "Must",
+      "description": "An unknown build year must prompt for detail rather than assume a fit (FR-307).",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.production_year_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0039",
+      "name": "year_open_ended_start_standard",
+      "tier": "Must",
+      "description": "An open start bound only constrains the upper year.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionToYear": 2016
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 1998
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0040",
+      "name": "year_open_ended_end_standard",
+      "tier": "Must",
+      "description": "An open end bound only constrains the lower year.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2030
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0041",
+      "name": "year_inside_window_elevated",
+      "tier": "Must",
+      "description": "A vehicle inside the claim's production window fits.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2015
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0042",
+      "name": "year_after_window_elevated",
+      "tier": "Must",
+      "description": "A vehicle built after the window must not be reported as fitting.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2020
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0043",
+      "name": "year_before_window_elevated",
+      "tier": "Must",
+      "description": "A vehicle built before the window must not be reported as fitting.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2009
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0044",
+      "name": "year_boundary_start_elevated",
+      "tier": "Must",
+      "description": "The first year of the window is inclusive.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "boundary",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2012
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0045",
+      "name": "year_boundary_end_elevated",
+      "tier": "Must",
+      "description": "The last year of the window is inclusive.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "boundary",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2018
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0046",
+      "name": "year_missing_context_elevated",
+      "tier": "Must",
+      "description": "An unknown build year must prompt for detail rather than assume a fit (FR-307).",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.production_year_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0047",
+      "name": "year_open_ended_start_elevated",
+      "tier": "Must",
+      "description": "An open start bound only constrains the upper year.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionToYear": 2016
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 1998
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0048",
+      "name": "year_open_ended_end_elevated",
+      "tier": "Must",
+      "description": "An open end bound only constrains the lower year.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2030
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0049",
+      "name": "year_inside_window_safetycritical",
+      "tier": "Must",
+      "description": "A vehicle inside the claim's production window fits.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2015
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0050",
+      "name": "year_after_window_safetycritical",
+      "tier": "Must",
+      "description": "A vehicle built after the window must not be reported as fitting.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2020
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0051",
+      "name": "year_before_window_safetycritical",
+      "tier": "Must",
+      "description": "A vehicle built before the window must not be reported as fitting.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2009
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0052",
+      "name": "year_boundary_start_safetycritical",
+      "tier": "Must",
+      "description": "The first year of the window is inclusive.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "boundary",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2012
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0053",
+      "name": "year_boundary_end_safetycritical",
+      "tier": "Must",
+      "description": "The last year of the window is inclusive.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "boundary",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2018
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0054",
+      "name": "year_missing_context_safetycritical",
+      "tier": "Must",
+      "description": "An unknown build year must prompt for detail rather than assume a fit (FR-307).",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2018
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.production_year_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0055",
+      "name": "year_open_ended_start_safetycritical",
+      "tier": "Must",
+      "description": "An open start bound only constrains the upper year.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionToYear": 2016
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 1998
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0056",
+      "name": "year_open_ended_end_safetycritical",
+      "tier": "Must",
+      "description": "An open end bound only constrains the lower year.",
+      "tags": [
+        "qualifier",
+        "production-year",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2030
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0057",
+      "name": "steeringSide_matches_standard",
+      "tier": "Must",
+      "description": "A claim qualified to steeringSide=LHD fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0058",
+      "name": "steeringSide_conflicts_standard",
+      "tier": "Must",
+      "description": "A claim qualified to steeringSide=LHD must not fit a RHD vehicle.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0059",
+      "name": "steeringSide_unknown_context_standard",
+      "tier": "Must",
+      "description": "An unknown steeringSide must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.steering_side_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0060",
+      "name": "steeringSide_negative_claim_conflict_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to steeringSide=LHD does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0061",
+      "name": "steeringSide_negative_claim_unknown_context_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to steeringSide still suppresses when steeringSide is unknown.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0062",
+      "name": "steeringSide_matches_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to steeringSide=LHD fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0063",
+      "name": "steeringSide_conflicts_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to steeringSide=LHD must not fit a RHD vehicle.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0064",
+      "name": "steeringSide_unknown_context_elevated",
+      "tier": "Must",
+      "description": "An unknown steeringSide must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.steering_side_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0065",
+      "name": "steeringSide_negative_claim_conflict_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to steeringSide=LHD does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0066",
+      "name": "steeringSide_negative_claim_unknown_context_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to steeringSide still suppresses when steeringSide is unknown.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0067",
+      "name": "steeringSide_matches_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to steeringSide=LHD fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0068",
+      "name": "steeringSide_conflicts_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to steeringSide=LHD must not fit a RHD vehicle.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0069",
+      "name": "steeringSide_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "An unknown steeringSide must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.steering_side_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0070",
+      "name": "steeringSide_negative_claim_conflict_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to steeringSide=LHD does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0071",
+      "name": "steeringSide_negative_claim_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to steeringSide still suppresses when steeringSide is unknown.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0072",
+      "name": "marketRegion_matches_standard",
+      "tier": "Must",
+      "description": "A claim qualified to marketRegion=ECE fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0073",
+      "name": "marketRegion_conflicts_standard",
+      "tier": "Must",
+      "description": "A claim qualified to marketRegion=ECE must not fit a USDM vehicle.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.market_region_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0074",
+      "name": "marketRegion_unknown_context_standard",
+      "tier": "Must",
+      "description": "An unknown marketRegion must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.market_region_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0075",
+      "name": "marketRegion_negative_claim_conflict_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to marketRegion=ECE does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0076",
+      "name": "marketRegion_negative_claim_unknown_context_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to marketRegion still suppresses when marketRegion is unknown.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0077",
+      "name": "marketRegion_matches_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to marketRegion=ECE fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0078",
+      "name": "marketRegion_conflicts_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to marketRegion=ECE must not fit a USDM vehicle.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.market_region_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0079",
+      "name": "marketRegion_unknown_context_elevated",
+      "tier": "Must",
+      "description": "An unknown marketRegion must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.market_region_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0080",
+      "name": "marketRegion_negative_claim_conflict_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to marketRegion=ECE does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0081",
+      "name": "marketRegion_negative_claim_unknown_context_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to marketRegion still suppresses when marketRegion is unknown.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0082",
+      "name": "marketRegion_matches_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to marketRegion=ECE fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0083",
+      "name": "marketRegion_conflicts_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to marketRegion=ECE must not fit a USDM vehicle.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.market_region_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0084",
+      "name": "marketRegion_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "An unknown marketRegion must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.market_region_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0085",
+      "name": "marketRegion_negative_claim_conflict_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to marketRegion=ECE does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0086",
+      "name": "marketRegion_negative_claim_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to marketRegion still suppresses when marketRegion is unknown.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0087",
+      "name": "driveType_matches_standard",
+      "tier": "Must",
+      "description": "A claim qualified to driveType=RWD fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0088",
+      "name": "driveType_conflicts_standard",
+      "tier": "Must",
+      "description": "A claim qualified to driveType=RWD must not fit a AWD vehicle.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.drive_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0089",
+      "name": "driveType_unknown_context_standard",
+      "tier": "Must",
+      "description": "An unknown driveType must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.drive_type_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0090",
+      "name": "driveType_negative_claim_conflict_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to driveType=RWD does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0091",
+      "name": "driveType_negative_claim_unknown_context_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to driveType still suppresses when driveType is unknown.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0092",
+      "name": "driveType_matches_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to driveType=RWD fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0093",
+      "name": "driveType_conflicts_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to driveType=RWD must not fit a AWD vehicle.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.drive_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0094",
+      "name": "driveType_unknown_context_elevated",
+      "tier": "Must",
+      "description": "An unknown driveType must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.drive_type_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0095",
+      "name": "driveType_negative_claim_conflict_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to driveType=RWD does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0096",
+      "name": "driveType_negative_claim_unknown_context_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to driveType still suppresses when driveType is unknown.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0097",
+      "name": "driveType_matches_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to driveType=RWD fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0098",
+      "name": "driveType_conflicts_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to driveType=RWD must not fit a AWD vehicle.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.drive_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0099",
+      "name": "driveType_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "An unknown driveType must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.drive_type_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0100",
+      "name": "driveType_negative_claim_conflict_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to driveType=RWD does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0101",
+      "name": "driveType_negative_claim_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to driveType still suppresses when driveType is unknown.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0102",
+      "name": "transmissionType_matches_standard",
+      "tier": "Must",
+      "description": "A claim qualified to transmissionType=AT fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "AT"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0103",
+      "name": "transmissionType_conflicts_standard",
+      "tier": "Must",
+      "description": "A claim qualified to transmissionType=AT must not fit a MT vehicle.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "MT"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.transmission_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0104",
+      "name": "transmissionType_unknown_context_standard",
+      "tier": "Must",
+      "description": "An unknown transmissionType must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.transmission_type_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0105",
+      "name": "transmissionType_negative_claim_conflict_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to transmissionType=AT does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "MT"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0106",
+      "name": "transmissionType_negative_claim_unknown_context_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to transmissionType still suppresses when transmissionType is unknown.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0107",
+      "name": "transmissionType_matches_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to transmissionType=AT fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "AT"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0108",
+      "name": "transmissionType_conflicts_elevated",
+      "tier": "Must",
+      "description": "A claim qualified to transmissionType=AT must not fit a MT vehicle.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "MT"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.transmission_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0109",
+      "name": "transmissionType_unknown_context_elevated",
+      "tier": "Must",
+      "description": "An unknown transmissionType must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.transmission_type_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0110",
+      "name": "transmissionType_negative_claim_conflict_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to transmissionType=AT does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "MT"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0111",
+      "name": "transmissionType_negative_claim_unknown_context_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to transmissionType still suppresses when transmissionType is unknown.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0112",
+      "name": "transmissionType_matches_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to transmissionType=AT fits a matching vehicle.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "AT"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0113",
+      "name": "transmissionType_conflicts_safetycritical",
+      "tier": "Must",
+      "description": "A claim qualified to transmissionType=AT must not fit a MT vehicle.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "MT"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.transmission_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0114",
+      "name": "transmissionType_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "An unknown transmissionType must prompt for detail rather than assume a fit.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.transmission_type_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0115",
+      "name": "transmissionType_negative_claim_conflict_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to transmissionType=AT does not apply to other vehicles.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "MT"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0116",
+      "name": "transmissionType_negative_claim_unknown_context_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to transmissionType still suppresses when transmissionType is unknown.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0117",
+      "name": "combined_all_satisfied_standard",
+      "tier": "Must",
+      "description": "Every stated qualifier is satisfied, so the claim applies.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0118",
+      "name": "combined_one_conflict_standard",
+      "tier": "Must",
+      "description": "A single conflicting qualifier disqualifies the claim.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "marketRegion": "ECE",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0119",
+      "name": "combined_one_unknown_standard",
+      "tier": "Must",
+      "description": "A single unknown qualifier makes the claim indeterminate.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.market_region_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0120",
+      "name": "combined_conflict_outranks_unknown_standard",
+      "tier": "Must",
+      "description": "A definite conflict is reported ahead of an unknown qualifier.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0121",
+      "name": "combined_all_satisfied_elevated",
+      "tier": "Must",
+      "description": "Every stated qualifier is satisfied, so the claim applies.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0122",
+      "name": "combined_one_conflict_elevated",
+      "tier": "Must",
+      "description": "A single conflicting qualifier disqualifies the claim.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "marketRegion": "ECE",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0123",
+      "name": "combined_one_unknown_elevated",
+      "tier": "Must",
+      "description": "A single unknown qualifier makes the claim indeterminate.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.market_region_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0124",
+      "name": "combined_conflict_outranks_unknown_elevated",
+      "tier": "Must",
+      "description": "A definite conflict is reported ahead of an unknown qualifier.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0125",
+      "name": "combined_all_satisfied_safetycritical",
+      "tier": "Must",
+      "description": "Every stated qualifier is satisfied, so the claim applies.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0126",
+      "name": "combined_one_conflict_safetycritical",
+      "tier": "Must",
+      "description": "A single conflicting qualifier disqualifies the claim.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "marketRegion": "ECE",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0127",
+      "name": "combined_one_unknown_safetycritical",
+      "tier": "Must",
+      "description": "A single unknown qualifier makes the claim indeterminate.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.market_region_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0128",
+      "name": "combined_conflict_outranks_unknown_safetycritical",
+      "tier": "Must",
+      "description": "A definite conflict is reported ahead of an unknown qualifier.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "marketRegion": "ECE",
+            "productionFromYear": 2014
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "productionYear": 2019
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0129",
+      "name": "best_matching_positive_wins_standard",
+      "tier": "Must",
+      "description": "The most confident applicable claim decides the verdict.",
+      "tags": [
+        "multi-claim",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.62,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0130",
+      "name": "applicable_claim_preferred_over_conflicting_standard",
+      "tier": "Must",
+      "description": "A claim that matches the vehicle is used even when a conflicting claim is more confident.",
+      "tags": [
+        "multi-claim",
+        "qualifier",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.8,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0131",
+      "name": "all_positives_conflict_standard",
+      "tier": "Must",
+      "description": "When every positive claim conflicts, the part must not be shown as fitting.",
+      "tags": [
+        "multi-claim",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0132",
+      "name": "applicable_claim_preferred_over_indeterminate_standard",
+      "tier": "Must",
+      "description": "A fully matching claim resolves the verdict even when another claim lacks context.",
+      "tags": [
+        "multi-claim",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "AWD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0133",
+      "name": "low_confidence_match_with_indeterminate_standard",
+      "tier": "Must",
+      "description": "A matching but under-threshold claim still fails closed to Unknown.",
+      "tags": [
+        "multi-claim",
+        "confidence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.2,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "GCC"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0134",
+      "name": "best_matching_positive_wins_elevated",
+      "tier": "Must",
+      "description": "The most confident applicable claim decides the verdict.",
+      "tags": [
+        "multi-claim",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.62,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0135",
+      "name": "applicable_claim_preferred_over_conflicting_elevated",
+      "tier": "Must",
+      "description": "A claim that matches the vehicle is used even when a conflicting claim is more confident.",
+      "tags": [
+        "multi-claim",
+        "qualifier",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.8,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0136",
+      "name": "all_positives_conflict_elevated",
+      "tier": "Must",
+      "description": "When every positive claim conflicts, the part must not be shown as fitting.",
+      "tags": [
+        "multi-claim",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0137",
+      "name": "applicable_claim_preferred_over_indeterminate_elevated",
+      "tier": "Must",
+      "description": "A fully matching claim resolves the verdict even when another claim lacks context.",
+      "tags": [
+        "multi-claim",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "AWD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0138",
+      "name": "low_confidence_match_with_indeterminate_elevated",
+      "tier": "Must",
+      "description": "A matching but under-threshold claim still fails closed to Unknown.",
+      "tags": [
+        "multi-claim",
+        "confidence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.2,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "GCC"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0139",
+      "name": "best_matching_positive_wins_safetycritical",
+      "tier": "Must",
+      "description": "The most confident applicable claim decides the verdict.",
+      "tags": [
+        "multi-claim",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.62,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0140",
+      "name": "applicable_claim_preferred_over_conflicting_safetycritical",
+      "tier": "Must",
+      "description": "A claim that matches the vehicle is used even when a conflicting claim is more confident.",
+      "tags": [
+        "multi-claim",
+        "qualifier",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.8,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0141",
+      "name": "all_positives_conflict_safetycritical",
+      "tier": "Must",
+      "description": "When every positive claim conflicts, the part must not be shown as fitting.",
+      "tags": [
+        "multi-claim",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0142",
+      "name": "applicable_claim_preferred_over_indeterminate_safetycritical",
+      "tier": "Must",
+      "description": "A fully matching claim resolves the verdict even when another claim lacks context.",
+      "tags": [
+        "multi-claim",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "AWD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0143",
+      "name": "low_confidence_match_with_indeterminate_safetycritical",
+      "tier": "Must",
+      "description": "A matching but under-threshold claim still fails closed to Unknown.",
+      "tags": [
+        "multi-claim",
+        "confidence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.2,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "GCC"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0144",
+      "name": "ai_claim_unpublished_is_invisible_standard",
+      "tier": "Must",
+      "description": "An unreviewed AI inference must never reach the customer (INV-006).",
+      "tags": [
+        "provenance",
+        "ai",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": false,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "AiInference",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0145",
+      "name": "reviewed_ai_claim_is_visible_standard",
+      "tier": "Must",
+      "description": "An AI-sourced claim that passed human review is evaluated like any other claim.",
+      "tags": [
+        "provenance",
+        "ai",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.92,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "AiInference",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0146",
+      "name": "suppliercatalog_published_claim_standard",
+      "tier": "Must",
+      "description": "A published SupplierCatalog claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "SupplierCatalog",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0147",
+      "name": "customerreport_published_claim_standard",
+      "tier": "Must",
+      "description": "A published CustomerReport claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CustomerReport",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0148",
+      "name": "vindecode_published_claim_standard",
+      "tier": "Must",
+      "description": "A published VinDecode claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "VinDecode",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0149",
+      "name": "importedfeed_published_claim_standard",
+      "tier": "Must",
+      "description": "A published ImportedFeed claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "ImportedFeed",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0150",
+      "name": "ai_claim_unpublished_is_invisible_elevated",
+      "tier": "Must",
+      "description": "An unreviewed AI inference must never reach the customer (INV-006).",
+      "tags": [
+        "provenance",
+        "ai",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": false,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "AiInference",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0151",
+      "name": "reviewed_ai_claim_is_visible_elevated",
+      "tier": "Must",
+      "description": "An AI-sourced claim that passed human review is evaluated like any other claim.",
+      "tags": [
+        "provenance",
+        "ai",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.92,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "AiInference",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0152",
+      "name": "suppliercatalog_published_claim_elevated",
+      "tier": "Must",
+      "description": "A published SupplierCatalog claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "SupplierCatalog",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0153",
+      "name": "customerreport_published_claim_elevated",
+      "tier": "Must",
+      "description": "A published CustomerReport claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CustomerReport",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0154",
+      "name": "vindecode_published_claim_elevated",
+      "tier": "Must",
+      "description": "A published VinDecode claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "VinDecode",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0155",
+      "name": "importedfeed_published_claim_elevated",
+      "tier": "Must",
+      "description": "A published ImportedFeed claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "ImportedFeed",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0156",
+      "name": "ai_claim_unpublished_is_invisible_safetycritical",
+      "tier": "Must",
+      "description": "An unreviewed AI inference must never reach the customer (INV-006).",
+      "tags": [
+        "provenance",
+        "ai",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": false,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "AiInference",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.no_published_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0157",
+      "name": "reviewed_ai_claim_is_visible_safetycritical",
+      "tier": "Must",
+      "description": "An AI-sourced claim that passed human review is evaluated like any other claim.",
+      "tags": [
+        "provenance",
+        "ai",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.92,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "AiInference",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0158",
+      "name": "suppliercatalog_published_claim_safetycritical",
+      "tier": "Must",
+      "description": "A published SupplierCatalog claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "SupplierCatalog",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0159",
+      "name": "customerreport_published_claim_safetycritical",
+      "tier": "Must",
+      "description": "A published CustomerReport claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CustomerReport",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0160",
+      "name": "vindecode_published_claim_safetycritical",
+      "tier": "Must",
+      "description": "A published VinDecode claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "VinDecode",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0161",
+      "name": "importedfeed_published_claim_safetycritical",
+      "tier": "Must",
+      "description": "A published ImportedFeed claim participates in evaluation.",
+      "tags": [
+        "provenance",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.91,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "ImportedFeed",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0162",
+      "name": "negative_window_applies_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to a build window applies to vehicles inside it.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {
+        "productionYear": 2016
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0163",
+      "name": "negative_window_does_not_apply_standard",
+      "tier": "Must",
+      "description": "A negative claim scoped to a build window leaves other vehicles unaffected.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {
+        "productionYear": 2021
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0164",
+      "name": "negative_window_unknown_year_standard",
+      "tier": "Must",
+      "description": "An unknown build year cannot clear a windowed negative claim.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0165",
+      "name": "negative_window_applies_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to a build window applies to vehicles inside it.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {
+        "productionYear": 2016
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0166",
+      "name": "negative_window_does_not_apply_elevated",
+      "tier": "Must",
+      "description": "A negative claim scoped to a build window leaves other vehicles unaffected.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {
+        "productionYear": 2021
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0167",
+      "name": "negative_window_unknown_year_elevated",
+      "tier": "Must",
+      "description": "An unknown build year cannot clear a windowed negative claim.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0168",
+      "name": "negative_window_applies_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to a build window applies to vehicles inside it.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {
+        "productionYear": 2016
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0169",
+      "name": "negative_window_does_not_apply_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim scoped to a build window leaves other vehicles unaffected.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {
+        "productionYear": 2021
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0170",
+      "name": "negative_window_unknown_year_safetycritical",
+      "tier": "Must",
+      "description": "An unknown build year cannot clear a windowed negative claim.",
+      "tags": [
+        "negative-precedence",
+        "production-year",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.85,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2015,
+            "productionToYear": 2017
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0171",
+      "name": "steeringSide_matches_but_low_confidence_standard",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "confidence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0172",
+      "name": "steeringSide_matches_but_low_confidence_elevated",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "confidence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0173",
+      "name": "steeringSide_matches_but_low_confidence_safetycritical",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "steeringSide",
+        "confidence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0174",
+      "name": "marketRegion_matches_but_low_confidence_standard",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "confidence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0175",
+      "name": "marketRegion_matches_but_low_confidence_elevated",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "confidence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0176",
+      "name": "marketRegion_matches_but_low_confidence_safetycritical",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "marketRegion",
+        "confidence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0177",
+      "name": "driveType_matches_but_low_confidence_standard",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "confidence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0178",
+      "name": "driveType_matches_but_low_confidence_elevated",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "confidence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0179",
+      "name": "driveType_matches_but_low_confidence_safetycritical",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "driveType",
+        "confidence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0180",
+      "name": "transmissionType_matches_but_low_confidence_standard",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "confidence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "AT"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0181",
+      "name": "transmissionType_matches_but_low_confidence_elevated",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "confidence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "AT"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0182",
+      "name": "transmissionType_matches_but_low_confidence_safetycritical",
+      "tier": "Must",
+      "description": "A matching qualifier does not rescue a claim below the confidence threshold.",
+      "tags": [
+        "qualifier",
+        "transmissionType",
+        "confidence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.35,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "transmissionType": "AT"
+          }
+        }
+      ],
+      "context": {
+        "transmissionType": "AT"
+      },
+      "expected": {
+        "outcome": "Unknown",
+        "reasonCode": "fitment.insufficient_confidence"
+      }
+    },
+    {
+      "id": "CE-FIT-0183",
+      "name": "pair_both_match_standard",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where both match.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0184",
+      "name": "pair_both_match_elevated",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where both match.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0185",
+      "name": "pair_both_match_safetycritical",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where both match.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0186",
+      "name": "pair_first_conflicts_standard",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where first conflicts.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0187",
+      "name": "pair_first_conflicts_elevated",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where first conflicts.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0188",
+      "name": "pair_first_conflicts_safetycritical",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where first conflicts.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0189",
+      "name": "pair_second_conflicts_standard",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where second conflicts.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.drive_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0190",
+      "name": "pair_second_conflicts_elevated",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where second conflicts.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.drive_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0191",
+      "name": "pair_second_conflicts_safetycritical",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where second conflicts.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.drive_type_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0192",
+      "name": "pair_both_conflict_standard",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where both conflict.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0193",
+      "name": "pair_both_conflict_elevated",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where both conflict.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0194",
+      "name": "pair_both_conflict_safetycritical",
+      "tier": "Must",
+      "description": "Two-qualifier claim evaluated where both conflict.",
+      "tags": [
+        "qualifier",
+        "combined",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.93,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD",
+            "driveType": "RWD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD",
+        "driveType": "AWD"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.steering_side_mismatch"
+      }
+    },
+    {
+      "id": "CE-FIT-0195",
+      "name": "scoped_negative_and_scoped_positive_disjoint_standard",
+      "tier": "Must",
+      "description": "A negative claim for another market leaves a matching positive claim intact.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0196",
+      "name": "scoped_negative_and_scoped_positive_overlap_standard",
+      "tier": "Must",
+      "description": "When both claims apply to the vehicle, the negative claim wins.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.65,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0197",
+      "name": "scoped_negative_unknown_market_standard",
+      "tier": "Must",
+      "description": "An unknown market cannot clear a market-scoped negative claim.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.65,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0198",
+      "name": "scoped_negative_and_scoped_positive_disjoint_elevated",
+      "tier": "Must",
+      "description": "A negative claim for another market leaves a matching positive claim intact.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0199",
+      "name": "scoped_negative_and_scoped_positive_overlap_elevated",
+      "tier": "Must",
+      "description": "When both claims apply to the vehicle, the negative claim wins.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.65,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0200",
+      "name": "scoped_negative_unknown_market_elevated",
+      "tier": "Must",
+      "description": "An unknown market cannot clear a market-scoped negative claim.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.65,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0201",
+      "name": "scoped_negative_and_scoped_positive_disjoint_safetycritical",
+      "tier": "Must",
+      "description": "A negative claim for another market leaves a matching positive claim intact.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.9,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0202",
+      "name": "scoped_negative_and_scoped_positive_overlap_safetycritical",
+      "tier": "Must",
+      "description": "When both claims apply to the vehicle, the negative claim wins.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.65,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0203",
+      "name": "scoped_negative_unknown_market_safetycritical",
+      "tier": "Must",
+      "description": "An unknown market cannot clear a market-scoped negative claim.",
+      "tags": [
+        "multi-claim",
+        "negative-precedence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.65,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0204",
+      "name": "duplicate_identical_claims_standard",
+      "tier": "Must",
+      "description": "Duplicated identical claims do not change the verdict.",
+      "tags": [
+        "multi-claim",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0205",
+      "name": "many_claims_single_applicable_standard",
+      "tier": "Must",
+      "description": "One applicable claim among many inapplicable ones still resolves correctly.",
+      "tags": [
+        "multi-claim",
+        "qualifier",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.98,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "AWD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.72,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0206",
+      "name": "duplicate_identical_claims_elevated",
+      "tier": "Must",
+      "description": "Duplicated identical claims do not change the verdict.",
+      "tags": [
+        "multi-claim",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0207",
+      "name": "many_claims_single_applicable_elevated",
+      "tier": "Must",
+      "description": "One applicable claim among many inapplicable ones still resolves correctly.",
+      "tags": [
+        "multi-claim",
+        "qualifier",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.98,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "AWD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.72,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0208",
+      "name": "duplicate_identical_claims_safetycritical",
+      "tier": "Must",
+      "description": "Duplicated identical claims do not change the verdict.",
+      "tags": [
+        "multi-claim",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.88,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {}
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0209",
+      "name": "many_claims_single_applicable_safetycritical",
+      "tier": "Must",
+      "description": "One applicable claim among many inapplicable ones still resolves correctly.",
+      "tags": [
+        "multi-claim",
+        "qualifier",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.99,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.98,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.97,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "driveType": "AWD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.72,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD",
+        "marketRegion": "ECE",
+        "driveType": "RWD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    }
+  ]
+}

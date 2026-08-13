@@ -32,6 +32,9 @@
     unfitHint: 'This part is not compatible with your active vehicle.',
     unknownLabel: 'Fitment unknown',
     unknownHint: 'We could not verify this part against your vehicle.',
+    detailLabel: 'More vehicle detail needed',
+    detailHint: 'This part fits some versions of your vehicle. Add the missing details to confirm.',
+    detailCta: 'Complete vehicle details',
     selectLabel: 'Select your vehicle',
     selectHint: 'Choose a vehicle to check whether this part fits.',
     fitmentCta: 'Add your vehicle'
@@ -45,6 +48,7 @@
     fits: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/>',
     unfit: '<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6" stroke-linecap="round"/>',
     unknown: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12h7" stroke-linecap="round"/>',
+    detail: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3 2.45V14" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 17h.01" stroke-linecap="round"/>',
     select: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4" stroke-linecap="round"/><path d="M12 16h.01" stroke-linecap="round"/>'
   };
 
@@ -527,6 +531,7 @@
       fits: [TEXT.fitsLabel, TEXT.fitsHint],
       unfit: [TEXT.unfitLabel, TEXT.unfitHint],
       unknown: [TEXT.unknownLabel, TEXT.unknownHint],
+      detail: [TEXT.detailLabel, TEXT.detailHint],
       select: [TEXT.selectLabel, TEXT.selectHint]
     };
     var copy = map[state] || map.unknown;
@@ -540,11 +545,11 @@
       '<span class="ce-fitment__detail">' + escapeHtml(copy[1]) + '</span>' +
       '</span>';
 
-    if (state === 'select') {
+    if (state === 'select' || state === 'detail') {
       var action = document.createElement('button');
       action.type = 'button';
       action.className = 'ce-btn ce-btn--quiet ce-fitment__action';
-      action.textContent = TEXT.fitmentCta;
+      action.textContent = state === 'detail' ? TEXT.detailCta : TEXT.fitmentCta;
       action.addEventListener('click', function () {
         promptForVin();
       });
@@ -587,6 +592,9 @@
             setFitmentState(band, 'fits');
           } else if (outcome === 2 || outcome === 'DoesNotFit') {
             setFitmentState(band, 'unfit');
+          } else if (outcome === 5 || outcome === 'NeedsDisambiguation') {
+            // Not a fit: the claim depends on vehicle details we do not have yet.
+            setFitmentState(band, 'detail');
           } else {
             // Fail closed: anything we cannot verify is reported as unknown, never as a fit.
             setFitmentState(band, 'unknown');

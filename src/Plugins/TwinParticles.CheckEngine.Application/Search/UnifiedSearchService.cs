@@ -205,7 +205,11 @@ public sealed class UnifiedSearchService
 
             hit.FitsActiveContext = fitment.Outcome == FitmentStatus.Fits;
 
-            if (fitment.Outcome == FitmentStatus.Fits || (widenFitment && fitment.Outcome == FitmentStatus.Unknown))
+            // The widened lane carries unverified results only; they stay unbadged because
+            // FitsActiveContext is false, so a part is never presented as a confirmed fit.
+            var unverified = fitment.Outcome is FitmentStatus.Unknown or FitmentStatus.NeedsDisambiguation;
+
+            if (fitment.Outcome == FitmentStatus.Fits || (widenFitment && unverified))
                 filtered.Add(hit);
         }
 
