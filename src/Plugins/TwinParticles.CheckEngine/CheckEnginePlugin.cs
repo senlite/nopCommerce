@@ -77,7 +77,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.Installation);
 
         await _settingService.SaveSettingAsync(new CheckEnginePluginSettings());
-        await EnsureErpScheduleTaskAsync();
+        await EnsureScheduleTasksAsync();
 
         await AddOrUpdateLocaleResourcesAsync();
 
@@ -165,7 +165,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         // so a version bump that ships new schema would otherwise apply nothing. NoMatter runs all
         // unapplied migrations regardless of process type.
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.NoMatter);
-        await EnsureErpScheduleTaskAsync();
+        await EnsureScheduleTasksAsync();
         await AddOrUpdateLocaleResourcesAsync();
         await base.UpdateAsync(currentVersion, targetVersion);
     }
@@ -184,6 +184,9 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         var erpTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.ErpSyncQueueTask).FullName!);
         if (erpTask is not null)
             await _scheduleTaskService.DeleteTaskAsync(erpTask);
+        var auditTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.AuditRetentionTask).FullName!);
+        if (auditTask is not null)
+            await _scheduleTaskService.DeleteTaskAsync(auditTask);
 
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
@@ -194,17 +197,28 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await base.UninstallAsync();
     }
 
-    private async Task EnsureErpScheduleTaskAsync()
+    private async Task EnsureScheduleTasksAsync()
     {
-        var type = typeof(Tasks.ErpSyncQueueTask).FullName!;
+        await EnsureScheduleTaskAsync(
+            typeof(Tasks.ErpSyncQueueTask).FullName!,
+            "Check Engine ERP synchronization queue",
+            60);
+        await EnsureScheduleTaskAsync(
+            typeof(Tasks.AuditRetentionTask).FullName!,
+            "Check Engine audit retention",
+            24 * 60 * 60);
+    }
+
+    private async Task EnsureScheduleTaskAsync(string type, string name, int seconds)
+    {
         if (await _scheduleTaskService.GetTaskByTypeAsync(type) is not null)
             return;
 
         await _scheduleTaskService.InsertTaskAsync(new ScheduleTask
         {
-            Name = "Check Engine ERP synchronization queue",
+            Name = name,
             Type = type,
-            Seconds = 60,
+            Seconds = seconds,
             Enabled = true,
             LastEnabledUtc = DateTime.UtcNow
         });

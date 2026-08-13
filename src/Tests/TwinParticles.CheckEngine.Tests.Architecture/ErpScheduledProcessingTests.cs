@@ -93,7 +93,7 @@ public class ErpScheduledProcessingTests
         consumer.Should().NotContain("customer.Email");
         task.Should().Contain("IScheduleTask");
         task.Should().Contain("ProcessPendingAsync");
-        plugin.Should().Contain("EnsureErpScheduleTaskAsync");
+        plugin.Should().Contain("EnsureScheduleTasksAsync");
         plugin.Should().Contain("GetTaskByTypeAsync(typeof(Tasks.ErpSyncQueueTask).FullName!)");
     }
 

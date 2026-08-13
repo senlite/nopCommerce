@@ -46,7 +46,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICheckEngineInputSanitizer, DefaultCheckEngineInputSanitizer>();
         services.AddSingleton<InMemoryCheckEngineAuditService>();
         // Prefer SQL audit when INopDataProvider is available; InMemory remains registered above for tests/local.
-        services.AddScoped<ICheckEngineAuditService, SqlCheckEngineAuditService>();
+        services.AddScoped<SqlCheckEngineAuditService>();
+        services.AddScoped<ICheckEngineAuditService>(sp => sp.GetRequiredService<SqlCheckEngineAuditService>());
+        services.AddScoped<IAuditIntegrityService>(sp => sp.GetRequiredService<SqlCheckEngineAuditService>());
         services.AddSingleton<IOemNormalizationService, DefaultOemNormalizationService>();
         services.AddScoped<IOemAdminRepository, SqlOemAdminRepository>();
         services.AddScoped<IOemRelationReadRepository, SqlOemAdminRepository>();
