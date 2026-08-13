@@ -9,8 +9,9 @@ using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 namespace TwinParticles.CheckEngine.Infrastructure.Vehicle.Admin;
 
 /// <summary>
-/// Seeds the curated BMW reference dataset (H1.4). Idempotent: if any make already exists the loader
-/// does nothing, so it is safe to run repeatedly and never overwrites operator edits.
+/// Seeds the curated BMW reference dataset (H1.4). Incrementally idempotent: each node is inserted
+/// only when its stable natural key is absent, so later plugin versions can expand an already-seeded
+/// store without overwriting operator edits or duplicating existing rows.
 ///
 /// The repository's create methods do not return generated identities, so each hierarchy level is
 /// inserted and then re-read once to resolve parent identifiers before inserting its children.
@@ -29,16 +30,16 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
         var result = new VehicleSeedLoadResult();
 
         var existingMakes = await _repository.GetMakesAsync(cancellationToken);
-        if (existingMakes.Count > 0)
-            return result;
-
-        await _repository.CreateMakeAsync(
-            new VehicleMake { Code = BmwReferenceCatalog.MakeCode, Name = BmwReferenceCatalog.MakeName, IsActive = true },
-            cancellationToken);
-        result.MakesInserted++;
-
-        var make = (await _repository.GetMakesAsync(cancellationToken))
-            .Single(x => x.Code == BmwReferenceCatalog.MakeCode);
+        var make = existingMakes.FirstOrDefault(x => x.Code == BmwReferenceCatalog.MakeCode);
+        if (make is null)
+        {
+            await _repository.CreateMakeAsync(
+                new VehicleMake { Code = BmwReferenceCatalog.MakeCode, Name = BmwReferenceCatalog.MakeName, IsActive = true },
+                cancellationToken);
+            result.MakesInserted++;
+            make = (await _repository.GetMakesAsync(cancellationToken))
+                .Single(x => x.Code == BmwReferenceCatalog.MakeCode);
+        }
 
         await SeedMarketsAsync(result, cancellationToken);
         var marketsByCode = (await _repository.GetMarketsAsync(cancellationToken))
@@ -63,15 +64,31 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
 
         await SeedConfigurationsAsync(modelsByCode, generationsByKey, bodiesByKey, enginesByKey, marketsByCode, result, cancellationToken);
 
-        await SeedAliasesAsync(make.Id, modelsByCode, generationsByKey, result, cancellationToken);
+        var configurationsByFingerprint = (await _repository.GetConfigurationsAsync(cancellationToken))
+            .ToDictionary(x => x.Fingerprint, x => x.Id);
+
+        await SeedAliasesAsync(
+            make.Id,
+            modelsByCode,
+            generationsByKey,
+            configurationsByFingerprint,
+            result,
+            cancellationToken);
 
         return result;
     }
 
     private async Task SeedMarketsAsync(VehicleSeedLoadResult result, CancellationToken cancellationToken)
     {
+        var existing = (await _repository.GetMarketsAsync(cancellationToken))
+            .Select(x => x.Code)
+            .ToHashSet();
+
         foreach (var market in BmwReferenceCatalog.Markets)
         {
+            if (existing.Contains(market.Code))
+                continue;
+
             await _repository.CreateMarketAsync(
                 new VehicleMarket { Code = market.Code, Name = market.Name, IsActive = true }, cancellationToken);
             result.MarketsInserted++;
@@ -80,8 +97,16 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
 
     private async Task SeedModelsAsync(int makeId, VehicleSeedLoadResult result, CancellationToken cancellationToken)
     {
+        var existing = (await _repository.GetModelsAsync(cancellationToken))
+            .Where(x => x.MakeId == makeId)
+            .Select(x => x.Code)
+            .ToHashSet();
+
         foreach (var model in BmwReferenceCatalog.Models)
         {
+            if (existing.Contains(model.Code))
+                continue;
+
             await _repository.CreateModelAsync(
                 new VehicleModel { MakeId = makeId, Code = model.Code, Name = model.Name, IsActive = true }, cancellationToken);
             result.ModelsInserted++;
@@ -93,11 +118,18 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
         VehicleSeedLoadResult result,
         CancellationToken cancellationToken)
     {
+        var existing = (await _repository.GetGenerationsAsync(cancellationToken))
+            .Select(x => (x.ModelId, x.Code))
+            .ToHashSet();
+
         foreach (var model in BmwReferenceCatalog.Models)
         {
             var modelId = modelsByCode[model.Code];
             foreach (var generation in model.Generations)
             {
+                if (existing.Contains((modelId, generation.Code)))
+                    continue;
+
                 await _repository.CreateGenerationAsync(new VehicleGeneration
                 {
                     ModelId = modelId,
@@ -118,6 +150,10 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
         VehicleSeedLoadResult result,
         CancellationToken cancellationToken)
     {
+        var existing = (await _repository.GetBodiesAsync(cancellationToken))
+            .Select(x => (x.GenerationId, x.Code))
+            .ToHashSet();
+
         foreach (var model in BmwReferenceCatalog.Models)
         {
             var modelId = modelsByCode[model.Code];
@@ -126,6 +162,9 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
                 var generationId = generationsByKey[(modelId, generation.Code)];
                 foreach (var body in generation.Bodies)
                 {
+                    if (existing.Contains((generationId, body.Code)))
+                        continue;
+
                     await _repository.CreateBodyAsync(new VehicleBody
                     {
                         GenerationId = generationId,
@@ -147,6 +186,10 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
         VehicleSeedLoadResult result,
         CancellationToken cancellationToken)
     {
+        var existing = (await _repository.GetEnginesAsync(cancellationToken))
+            .Select(x => (x.BodyId, x.Code))
+            .ToHashSet();
+
         foreach (var model in BmwReferenceCatalog.Models)
         {
             var modelId = modelsByCode[model.Code];
@@ -163,10 +206,14 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
 
                 foreach (var (bodyCode, engineCode) in requiredPairs)
                 {
+                    var bodyId = bodiesByKey[(generationId, bodyCode)];
+                    if (existing.Contains((bodyId, engineCode)))
+                        continue;
+
                     var engine = engineByCode[engineCode];
                     await _repository.CreateEngineAsync(new VehicleEngine
                     {
-                        BodyId = bodiesByKey[(generationId, bodyCode)],
+                        BodyId = bodyId,
                         Code = engine.Code,
                         Name = engine.Name,
                         FuelType = engine.FuelType,
@@ -189,6 +236,10 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
         VehicleSeedLoadResult result,
         CancellationToken cancellationToken)
     {
+        var existingFingerprints = (await _repository.GetConfigurationsAsync(cancellationToken))
+            .Select(x => x.Fingerprint)
+            .ToHashSet();
+
         foreach (var model in BmwReferenceCatalog.Models)
         {
             var modelId = modelsByCode[model.Code];
@@ -202,14 +253,9 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
 
                     foreach (var market in BmwReferenceCatalog.Markets)
                     {
-                        var fingerprint = string.Join('-',
-                            BmwReferenceCatalog.MakeCode,
-                            model.Code,
-                            generation.Code,
-                            trim.BodyCode,
-                            trim.EngineCode,
-                            market.Code,
-                            Slug(trim.TrimName));
+                        var fingerprint = BuildFingerprint(model, generation, trim, market);
+                        if (existingFingerprints.Contains(fingerprint))
+                            continue;
 
                         await _repository.CreateConfigurationAsync(new VehicleConfiguration
                         {
@@ -224,6 +270,7 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
                             IsActive = true
                         }, cancellationToken);
                         result.ConfigurationsInserted++;
+                        existingFingerprints.Add(fingerprint);
                     }
                 }
             }
@@ -234,44 +281,85 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
         int makeId,
         IReadOnlyDictionary<string, int> modelsByCode,
         IReadOnlyDictionary<(int ModelId, string Code), int> generationsByKey,
+        IReadOnlyDictionary<string, int> configurationsByFingerprint,
         VehicleSeedLoadResult result,
         CancellationToken cancellationToken)
     {
-        await AddAliasAsync("make", makeId, "en", BmwReferenceCatalog.MakeName, result, cancellationToken);
-        await AddAliasAsync("make", makeId, "ar", BmwReferenceCatalog.MakeArabicAlias, result, cancellationToken);
+        var existingNormalized = (await _repository.GetAliasesAsync(cancellationToken))
+            .Select(alias => (alias.NodeType, alias.NormalizedAlias))
+            .ToHashSet();
+
+        await AddAliasIfMissingAsync("make", makeId, "en", BmwReferenceCatalog.MakeName, existingNormalized, result, cancellationToken);
+        await AddAliasIfMissingAsync("make", makeId, "ar", BmwReferenceCatalog.MakeArabicAlias, existingNormalized, result, cancellationToken);
 
         foreach (var model in BmwReferenceCatalog.Models)
         {
             var modelId = modelsByCode[model.Code];
-            await AddAliasAsync("model", modelId, "en", model.Name, result, cancellationToken);
-            await AddAliasAsync("model", modelId, "ar", model.ArabicAlias, result, cancellationToken);
+            await AddAliasIfMissingAsync("model", modelId, "en", model.Name, existingNormalized, result, cancellationToken);
+            await AddAliasIfMissingAsync("model", modelId, "ar", model.ArabicAlias, existingNormalized, result, cancellationToken);
 
             // The generation code (e.g. F30) is a first-class searchable alias (AC-014.1).
             foreach (var generation in model.Generations)
             {
                 var generationId = generationsByKey[(modelId, generation.Code)];
-                await AddAliasAsync("generation", generationId, "en", generation.Code, result, cancellationToken);
+                await AddAliasIfMissingAsync("generation", generationId, "en", generation.Code, existingNormalized, result, cancellationToken);
+
+                foreach (var trim in generation.Trims)
+                {
+                    foreach (var market in BmwReferenceCatalog.Markets)
+                    {
+                        var fingerprint = BuildFingerprint(model, generation, trim, market);
+                        var configurationId = configurationsByFingerprint[fingerprint];
+                        var en = $"{BmwReferenceCatalog.MakeName} {model.Name} {generation.Code} {trim.TrimName} {market.Code}";
+                        var ar = $"{BmwReferenceCatalog.MakeArabicAlias} {model.ArabicAlias} {generation.Code} {trim.TrimName} {market.ArabicAlias}";
+
+                        await AddAliasIfMissingAsync("configuration", configurationId, "en", en, existingNormalized, result, cancellationToken);
+                        await AddAliasIfMissingAsync("configuration", configurationId, "ar", ar, existingNormalized, result, cancellationToken);
+                    }
+                }
             }
         }
     }
 
-    private async Task AddAliasAsync(
+    private async Task AddAliasIfMissingAsync(
         string nodeType,
         int nodeId,
         string locale,
         string aliasText,
+        HashSet<(string NodeType, string NormalizedAlias)> existingNormalized,
         VehicleSeedLoadResult result,
         CancellationToken cancellationToken)
     {
+        var normalizedAlias = aliasText.Trim().ToLowerInvariant();
+        if (existingNormalized.Contains((nodeType, normalizedAlias)))
+            return;
+
         await _repository.CreateAliasAsync(new VehicleAlias
         {
             NodeType = nodeType,
             NodeId = nodeId,
             Locale = locale,
             AliasText = aliasText,
-            NormalizedAlias = aliasText.Trim().ToLowerInvariant()
+            NormalizedAlias = normalizedAlias
         }, cancellationToken);
         result.AliasesInserted++;
+        existingNormalized.Add((nodeType, normalizedAlias));
+    }
+
+    private static string BuildFingerprint(
+        BmwReferenceCatalog.ModelSpec model,
+        BmwReferenceCatalog.GenerationSpec generation,
+        BmwReferenceCatalog.TrimSpec trim,
+        BmwReferenceCatalog.MarketSpec market)
+    {
+        return string.Join('-',
+            BmwReferenceCatalog.MakeCode,
+            model.Code,
+            generation.Code,
+            trim.BodyCode,
+            trim.EngineCode,
+            market.Code,
+            Slug(trim.TrimName));
     }
 
     private static string Slug(string value)

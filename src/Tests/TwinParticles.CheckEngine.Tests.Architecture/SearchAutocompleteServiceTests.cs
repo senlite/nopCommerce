@@ -55,4 +55,27 @@ public class SearchAutocompleteServiceTests
 
         result.Products.Count.Should().BeLessThanOrEqualTo(1);
     }
+
+    [Test]
+    public async Task SuggestAsync_Should_Surface_Seeded_Configuration_Alias_With_Configuration_Id()
+    {
+        var service = SearchTestSupport.BuildAutocompleteService(
+            aliases:
+            [
+                new VehicleAlias
+                {
+                    NodeType = "configuration",
+                    NodeId = 9001,
+                    Locale = "en",
+                    AliasText = "BMW 3 Series F30 320i ECE",
+                    NormalizedAlias = "bmw 3 series f30 320i ece"
+                }
+            ]);
+
+        var result = await service.SuggestAsync("F30 320i", "en", take: 5, CancellationToken.None);
+
+        result.Vehicles.Should().ContainSingle();
+        result.Vehicles[0].VehicleConfigurationId.Should().Be(9001);
+        result.Vehicles[0].Label.Should().Contain("F30 320i");
+    }
 }

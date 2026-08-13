@@ -101,6 +101,60 @@ public class BmwReferenceSeedLoaderTests
     }
 
     [Test]
+    public async Task Reference_Catalog_Should_Meet_Expanded_Launch_Scale_And_Priority_Coverage()
+    {
+        var repository = new InMemoryVehicleAdminRepository();
+        await new BmwReferenceVehicleSeedLoader(repository).SeedAsync(CancellationToken.None);
+
+        var expectedGenerations = BmwReferenceCatalog.Models.Sum(model => model.Generations.Count);
+        var expectedConfigurations = BmwReferenceCatalog.Models
+            .SelectMany(model => model.Generations)
+            .Sum(generation => generation.Trims.Count * BmwReferenceCatalog.Markets.Count);
+
+        var models = await repository.GetModelsAsync(CancellationToken.None);
+        var generations = await repository.GetGenerationsAsync(CancellationToken.None);
+        var configurations = await repository.GetConfigurationsAsync(CancellationToken.None);
+
+        using var scope = new FluentAssertions.Execution.AssertionScope();
+        models.Should().HaveCount(BmwReferenceCatalog.Models.Count).And.HaveCountGreaterThanOrEqualTo(10);
+        generations.Should().HaveCount(expectedGenerations).And.HaveCountGreaterThanOrEqualTo(30);
+        configurations.Should().HaveCount(expectedConfigurations).And.HaveCountGreaterThanOrEqualTo(250);
+
+        var generationCodes = generations.Select(generation => generation.Code).ToHashSet();
+        generationCodes.Should().Contain(
+            ["E46", "E90", "F30", "G20", "E39", "E60", "F10", "G30", "E70", "F15", "G05"],
+            "the commercially important launch-region generation priority slice must stay covered");
+    }
+
+    [Test]
+    public async Task Every_Configuration_Should_Carry_English_And_Arabic_Search_Aliases()
+    {
+        var repository = new InMemoryVehicleAdminRepository();
+        await new BmwReferenceVehicleSeedLoader(repository).SeedAsync(CancellationToken.None);
+
+        var configurations = await repository.GetConfigurationsAsync(CancellationToken.None);
+        var aliases = await repository.GetAliasesAsync(CancellationToken.None);
+
+        using var scope = new FluentAssertions.Execution.AssertionScope();
+        foreach (var configuration in configurations)
+        {
+            aliases.Should().Contain(alias =>
+                alias.NodeType == "configuration" &&
+                alias.NodeId == configuration.Id &&
+                alias.Locale == "en");
+            aliases.Should().Contain(alias =>
+                alias.NodeType == "configuration" &&
+                alias.NodeId == configuration.Id &&
+                alias.Locale == "ar");
+        }
+
+        aliases.Where(alias => alias.NodeType == "configuration")
+            .Should().HaveCount(configurations.Count * 2);
+        aliases.Select(alias => (alias.NodeType, alias.NormalizedAlias))
+            .Should().OnlyHaveUniqueItems("the SQL alias index is unique by node type and normalized alias");
+    }
+
+    [Test]
     public async Task Catalog_Should_Not_Introduce_Manufacturer_Specific_Schema()
     {
         // BMW is data. The loader only ever writes the generic vehicle entities; there is no BMW-typed
@@ -124,7 +178,49 @@ public class BmwReferenceSeedLoaderTests
         var secondRun = await loader.SeedAsync(CancellationToken.None);
 
         secondRun.MakesInserted.Should().Be(0, "an already-seeded store must not be reseeded");
+        (secondRun.ModelsInserted + secondRun.GenerationsInserted + secondRun.BodiesInserted +
+         secondRun.EnginesInserted + secondRun.MarketsInserted + secondRun.ConfigurationsInserted +
+         secondRun.AliasesInserted).Should().Be(0, "every hierarchy level is incrementally idempotent");
         (await repository.GetConfigurationsAsync(CancellationToken.None)).Count.Should().Be(configurationsAfterFirst);
+    }
+
+    [Test]
+    public async Task Seeding_Should_Not_Be_Blocked_By_An_Unrelated_Existing_Make()
+    {
+        var repository = new InMemoryVehicleAdminRepository();
+        await repository.CreateMakeAsync(
+            new VehicleMake { Code = "OTHER", Name = "Operator make", IsActive = true },
+            CancellationToken.None);
+
+        var result = await new BmwReferenceVehicleSeedLoader(repository).SeedAsync(CancellationToken.None);
+
+        result.MakesInserted.Should().Be(1);
+        (await repository.GetMakesAsync(CancellationToken.None)).Should().Contain(make => make.Code == "OTHER");
+        (await repository.GetMakesAsync(CancellationToken.None)).Should().Contain(make => make.Code == "BMW");
+        (await repository.GetConfigurationsAsync(CancellationToken.None)).Should().HaveCountGreaterThanOrEqualTo(250);
+    }
+
+    [Test]
+    public async Task Seeding_Should_Expand_A_Partial_Bmw_Catalog_Without_Overwriting_Operator_Edits()
+    {
+        var repository = new InMemoryVehicleAdminRepository();
+        await repository.CreateMakeAsync(
+            new VehicleMake { Code = "BMW", Name = "Operator BMW", IsActive = true },
+            CancellationToken.None);
+        var make = (await repository.GetMakesAsync(CancellationToken.None)).Single();
+        await repository.CreateModelAsync(
+            new VehicleModel { MakeId = make.Id, Code = "3ER", Name = "Operator 3 Series", IsActive = true },
+            CancellationToken.None);
+
+        var result = await new BmwReferenceVehicleSeedLoader(repository).SeedAsync(CancellationToken.None);
+
+        using var scope = new FluentAssertions.Execution.AssertionScope();
+        result.MakesInserted.Should().Be(0);
+        result.ModelsInserted.Should().Be(BmwReferenceCatalog.Models.Count - 1);
+        (await repository.GetModelsAsync(CancellationToken.None))
+            .Single(model => model.Code == "3ER")
+            .Name.Should().Be("Operator 3 Series", "seed upgrades never overwrite curated operator data");
+        (await repository.GetConfigurationsAsync(CancellationToken.None)).Should().HaveCountGreaterThanOrEqualTo(250);
     }
 
     private sealed class InMemoryVehicleAdminRepository : IVehicleAdminRepository
