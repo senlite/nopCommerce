@@ -62,6 +62,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<GarageService>();
         services.AddScoped<GaragePrivacyService>();
+        services.AddScoped<TwinParticles.CheckEngine.Application.Privacy.CheckEngineSubjectDataService>();
 
         services.AddScoped<ProductImageService>();
         services.AddScoped<ImageImportOrchestrationService>();

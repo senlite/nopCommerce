@@ -21,17 +21,20 @@ public sealed class GarageController : BasePublicController
 
     private readonly GarageService _garageService;
     private readonly GaragePrivacyService _privacyService;
+    private readonly TwinParticles.CheckEngine.Application.Privacy.CheckEngineSubjectDataService _subjectDataService;
     private readonly ICustomerService _customerService;
     private readonly IWorkContext _workContext;
 
     public GarageController(
         GarageService garageService,
         GaragePrivacyService privacyService,
+        TwinParticles.CheckEngine.Application.Privacy.CheckEngineSubjectDataService subjectDataService,
         ICustomerService customerService,
         IWorkContext workContext)
     {
         _garageService = garageService;
         _privacyService = privacyService;
+        _subjectDataService = subjectDataService;
         _customerService = customerService;
         _workContext = workContext;
     }
@@ -125,7 +128,7 @@ public sealed class GarageController : BasePublicController
         if (await _customerService.IsGuestAsync(customer))
             return Unauthorized();
 
-        return Json(await _privacyService.ExportAsync(
+        return Json(await _subjectDataService.ExportAsync(
             customer.Id,
             $"customer:{customer.Id}",
             cancellationToken));
