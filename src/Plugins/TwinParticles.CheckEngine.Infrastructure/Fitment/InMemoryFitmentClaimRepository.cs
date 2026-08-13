@@ -31,6 +31,9 @@ public sealed class InMemoryFitmentClaimRepository : IFitmentClaimReadRepository
         return Task.FromResult<IReadOnlyList<FitmentClaim>>(queue);
     }
 
+    public Task<IReadOnlyList<FitmentClaim>> GetAllClaimsAsync(CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<FitmentClaim>>(_claims.ToList());
+
     public Task UpsertAsync(FitmentClaim claim, CancellationToken cancellationToken)
     {
         var existing = _claims.FirstOrDefault(x => x.Id == claim.Id);

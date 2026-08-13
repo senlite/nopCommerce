@@ -166,6 +166,15 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
     public override async Task UninstallAsync()
     {
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        if (!settings.UninstallExportPreparedUtc.HasValue ||
+            DateTime.UtcNow - settings.UninstallExportPreparedUtc.Value > TimeSpan.FromHours(24))
+        {
+            throw new InvalidOperationException(
+                "Check Engine uninstall blocked: download a fresh export from " +
+                "/Admin/CheckEngine/UninstallAdmin/Export before retrying. The export authorization expires after 24 hours.");
+        }
+
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.TwinParticles.CheckEngine");
