@@ -3,7 +3,7 @@ using Nop.Data.Migrations;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Migrations;
 
-[NopMigration("2026-08-13 15:00:00", "TwinParticles.CheckEngine durable import pipeline state", MigrationProcessType.Installation)]
+[NopMigration("2026-08-13 06:30:00", "TwinParticles.CheckEngine durable import pipeline state", MigrationProcessType.Installation)]
 public sealed class ImportPipelineDurableStateMigration : Migration
 {
     public override void Up()
