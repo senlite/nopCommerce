@@ -21,6 +21,7 @@ namespace TwinParticles.CheckEngine;
 public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 {
     private readonly ILocalizationService _localizationService;
+    private readonly ILanguageService _languageService;
     private readonly IMigrationManager _migrationManager;
     private readonly IPermissionService _permissionService;
     private readonly IScheduleTaskService _scheduleTaskService;
@@ -28,6 +29,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     private readonly IWebHelper _webHelper;
 
     public CheckEnginePlugin(ILocalizationService localizationService,
+        ILanguageService languageService,
         IMigrationManager migrationManager,
         IPermissionService permissionService,
         IScheduleTaskService scheduleTaskService,
@@ -35,6 +37,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         IWebHelper webHelper)
     {
         _localizationService = localizationService;
+        _languageService = languageService;
         _migrationManager = migrationManager;
         _permissionService = permissionService;
         _scheduleTaskService = scheduleTaskService;
@@ -89,9 +92,9 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     /// added by a release only exist on stores that installed the plugin fresh, and upgraded stores
     /// render raw resource keys.
     /// </summary>
-    private Task AddOrUpdateLocaleResourcesAsync()
+    private async Task AddOrUpdateLocaleResourcesAsync()
     {
-        return _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
+        var englishResources = new Dictionary<string, string>
         {
             ["Plugins.TwinParticles.CheckEngine.General"] = "Check Engine",
             ["Plugins.TwinParticles.CheckEngine.General.Enabled"] = "Enabled",
@@ -163,8 +166,93 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Licence.Status"] = "Licence status",
             ["Plugins.TwinParticles.CheckEngine.Licence.LastHeartbeat"] = "Last heartbeat",
             ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "Activation key"
-        });
+        };
+
+        // English is the safe default for every installed language. Arabic-specific values then
+        // override the complete key set for every Arabic culture configured in the store.
+        await _localizationService.AddOrUpdateLocaleResourceAsync(englishResources);
+        var arabicResources = ArabicResources();
+        var languages = await _languageService.GetAllLanguagesAsync(showHidden: true);
+        foreach (var language in languages.Where(language =>
+                     language.LanguageCulture.StartsWith("ar", StringComparison.OrdinalIgnoreCase)))
+        {
+            await _localizationService.AddOrUpdateLocaleResourceAsync(arabicResources, language.Id);
+        }
     }
+
+    private static Dictionary<string, string> ArabicResources() => new()
+    {
+        ["Plugins.TwinParticles.CheckEngine.General"] = "توافق قطع السيارات",
+        ["Plugins.TwinParticles.CheckEngine.General.Enabled"] = "مفعّل",
+        ["Plugins.TwinParticles.CheckEngine.General.Enabled.Hint"] = "يحدد ما إذا كانت خدمات توافق قطع السيارات مفعّلة.",
+        ["Plugins.TwinParticles.CheckEngine.Configuration"] = "الإعدادات",
+        ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.Enabled"] = "مفعّل",
+        ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.Enabled.Hint"] = "تفعيل أو تعطيل إضافة توافق قطع السيارات.",
+        ["Plugins.TwinParticles.CheckEngine.Dashboard"] = "لوحة تحكم توافق قطع السيارات",
+        ["Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks"] = "واجهات إدارة JSON",
+        ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload"] = "رفع ملف الاستيراد",
+        ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Hint"] = "اختر ملف المورد وشغّل مسار الاستيراد.",
+        ["Plugins.TwinParticles.CheckEngine.Garage.Label"] = "مرآبي",
+        ["Plugins.TwinParticles.CheckEngine.Garage.SelectVehicle"] = "اختر السيارة",
+        ["Plugins.TwinParticles.CheckEngine.Garage.Empty"] = "لم يتم اختيار سيارة",
+        ["Plugins.TwinParticles.CheckEngine.Garage.AddVehicle"] = "أضف سيارة برقم الهيكل…",
+        ["Plugins.TwinParticles.CheckEngine.Garage.VehicleSelector"] = "اختر السيارة للتحقق من توافق القطع",
+        ["Plugins.TwinParticles.CheckEngine.Garage.VinPrompt"] = "أدخل رقم الهيكل لإضافة سيارة",
+        ["Plugins.TwinParticles.CheckEngine.Garage.AddFailed"] = "تعذرت إضافة هذه السيارة.",
+        ["Plugins.TwinParticles.CheckEngine.Search.Label"] = "ابحث عن قطعة أو رقم OEM أو رقم هيكل",
+        ["Plugins.TwinParticles.CheckEngine.Search.Placeholder"] = "ابحث عن قطعة أو OEM أو VIN",
+        ["Plugins.TwinParticles.CheckEngine.Search.Submit"] = "بحث",
+        ["Plugins.TwinParticles.CheckEngine.Search.Widen"] = "تضمين التوافق غير المؤكد",
+        ["Plugins.TwinParticles.CheckEngine.Search.Hint"] = "أدخل كلمة بحث أو رقم قطعة OEM أو رقم هيكل من 17 خانة.",
+        ["Plugins.TwinParticles.CheckEngine.Search.ResultsLabel"] = "نتائج بحث توافق القطع",
+        ["Plugins.TwinParticles.CheckEngine.Search.ResultsCount"] = "نتيجة",
+        ["Plugins.TwinParticles.CheckEngine.Search.Mode"] = "الوضع",
+        ["Plugins.TwinParticles.CheckEngine.Search.Empty.Title"] = "لم يتم العثور على قطع مطابقة",
+        ["Plugins.TwinParticles.CheckEngine.Search.Empty.Hint"] = "تحقق من رقم OEM أو VIN أو وسّع نطاق التوافق.",
+        ["Plugins.TwinParticles.CheckEngine.Search.Unavailable"] = "البحث غير متاح حالياً.",
+        ["Plugins.TwinParticles.CheckEngine.Search.Facets.Title"] = "تصفية",
+        ["Plugins.TwinParticles.CheckEngine.Search.Facets.Category"] = "الفئة",
+        ["Plugins.TwinParticles.CheckEngine.Search.Facets.Brand"] = "العلامة التجارية",
+        ["Plugins.TwinParticles.CheckEngine.Search.Facets.Price"] = "السعر",
+        ["Plugins.TwinParticles.CheckEngine.Search.Facets.Fitment"] = "التوافق",
+        ["Plugins.TwinParticles.CheckEngine.Search.Facets.Clear"] = "مسح عوامل التصفية",
+        ["Plugins.TwinParticles.CheckEngine.Search.Recovery.Title"] = "جرّب أحد هذه الخيارات",
+        ["Plugins.TwinParticles.CheckEngine.Search.Suggest.Vehicles"] = "السيارات",
+        ["Plugins.TwinParticles.CheckEngine.Search.Suggest.Oems"] = "أرقام OEM",
+        ["Plugins.TwinParticles.CheckEngine.Search.Suggest.Products"] = "المنتجات",
+        ["Plugins.TwinParticles.CheckEngine.Menu.AriaLabel"] = "تصفح قطع الغيار",
+        ["Plugins.TwinParticles.CheckEngine.Menu.AllParts"] = "كل قطع الغيار",
+        ["Plugins.TwinParticles.CheckEngine.Menu.Eyebrow"] = "كتالوج القطع",
+        ["Plugins.TwinParticles.CheckEngine.Menu.Title"] = "تصفح حسب الفئة",
+        ["Plugins.TwinParticles.CheckEngine.Menu.Hint"] = "اختر فئة أو أضف سيارتك لعرض القطع المتوافقة أولاً.",
+        ["Plugins.TwinParticles.CheckEngine.Menu.Empty"] = "ستظهر الفئات هنا عند نشر الكتالوج.",
+        ["Plugins.TwinParticles.CheckEngine.Menu.AddVehicle"] = "أضف سيارتك",
+        ["Plugins.TwinParticles.CheckEngine.Menu.SearchByOem"] = "ابحث برقم OEM",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.Fits"] = "متوافق مع سيارتك",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.Fits.Hint"] = "تم التحقق من التوافق مع سيارتك النشطة.",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.DoesNotFit"] = "غير متوافق",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.DoesNotFit.Hint"] = "هذه القطعة غير متوافقة مع سيارتك النشطة.",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.Unknown"] = "التوافق غير معروف",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.Unknown.Hint"] = "لم نتمكن من التحقق من توافق هذه القطعة مع سيارتك.",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.NeedsDetail"] = "نحتاج تفاصيل إضافية عن السيارة",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.NeedsDetail.Hint"] = "القطعة تناسب بعض فئات سيارتك. أضف التفاصيل الناقصة للتأكيد.",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.NeedsDetail.Cta"] = "أكمل تفاصيل السيارة",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle"] = "اختر سيارتك",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle.Hint"] = "اختر سيارة للتحقق من توافق هذه القطعة.",
+        ["Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle.Cta"] = "أضف سيارتك",
+        ["Plugins.TwinParticles.CheckEngine.Hero.Eyebrow"] = "توافق قطع السيارات",
+        ["Plugins.TwinParticles.CheckEngine.Hero.Title"] = "اعثر على القطعة المناسبة لسيارتك",
+        ["Plugins.TwinParticles.CheckEngine.Hero.Lead"] = "ابحث برقم الهيكل أو OEM أو كلمة بحث. احفظ سيارتك وسنتحقق من كل نتيجة.",
+        ["Plugins.TwinParticles.CheckEngine.Hero.PrimaryCta"] = "ابحث عن قطع",
+        ["Plugins.TwinParticles.CheckEngine.Hero.SecondaryCta"] = "أضف سيارتك",
+        ["Plugins.TwinParticles.CheckEngine.L10n.Number"] = "تنسيق الأرقام",
+        ["Plugins.TwinParticles.CheckEngine.L10n.Date"] = "تنسيق التاريخ",
+        ["Plugins.TwinParticles.CheckEngine.L10n.Unit"] = "تنسيق الوحدات",
+        ["Plugins.TwinParticles.CheckEngine.L10n.Preview"] = "معاينة الترجمة",
+        ["Plugins.TwinParticles.CheckEngine.Licence.Status"] = "حالة الترخيص",
+        ["Plugins.TwinParticles.CheckEngine.Licence.LastHeartbeat"] = "آخر تحقق",
+        ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "مفتاح التفعيل"
+    };
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)
     {

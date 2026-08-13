@@ -78,7 +78,11 @@ public class PluginUpgradeContractTests
     {
         var source = ReadPluginSource();
 
-        Regex.Matches(source, @"AddOrUpdateLocaleResourceAsync\(new Dictionary")
+        Regex.Matches(source, @"var englishResources = new Dictionary")
             .Should().HaveCount(1, "duplicating the resource list lets install and update drift apart");
+        ExtractMethodBody(source, "public override async Task InstallAsync")
+            .Should().Contain("AddOrUpdateLocaleResourcesAsync");
+        ExtractMethodBody(source, "public override async Task UpdateAsync")
+            .Should().Contain("AddOrUpdateLocaleResourcesAsync");
     }
 }
