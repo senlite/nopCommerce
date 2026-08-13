@@ -207,7 +207,7 @@ designed to be driven from the dashboard, scripts, or your own tooling.
 
 | Workflow | Endpoint(s) | Notes |
 |---|---|---|
-| **Vehicle catalog** | `/Admin/CheckEngine/VehicleAdmin/{Makes,Models,Generations,Bodies,Engines,Markets,Configurations,Aliases}` and `Create*/Update*/Delete*`; `Seed` | Full brand-agnostic hierarchy CRUD. `Seed` incrementally adds the bundled BMW priority slice and EN/AR leaf aliases; it does not overwrite operator edits or delete legacy data |
+| **Vehicle catalog** | `/Admin/CheckEngine/VehicleAdmin/{Makes,Models,Generations,Bodies,Engines,Markets,Configurations,Aliases}`; `ArchiveMake`, `ArchiveModel`, `MergeMake`, `MergeModel`; `Seed` | Full brand-agnostic hierarchy CRUD/lifecycle. Merge is conflict-checked and audited; archive is soft. Hard delete with descendants returns `archive_required`. `Seed` incrementally adds the BMW priority slice without overwriting operator edits |
 | **OEM registry** | `/Admin/CheckEngine/OemAdmin/{Manufacturers,OemNumbers,Relations}` and `Create*/Update*/Delete*` | Manufacturer-qualified numbers, cross-reference and supersession relations |
 | **Fitment review** | `/Admin/CheckEngine/FitmentAdmin/Queue`, `Approve`, `Reject` | Approvals/rejections are written to the audit trail; safety-critical categories can't be force-published below threshold |
 | **Import** | `/Admin/CheckEngine/ImportAdmin/{Run,Batch,RerunStage,SetReviewStatus,Publish}` | See [section 8](#8-the-product-import-pipeline) |

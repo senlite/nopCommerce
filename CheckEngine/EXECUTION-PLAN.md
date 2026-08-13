@@ -164,7 +164,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | ID | Task | Status | Gap |
 |---|---|---|---|
 | H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | partial | Incremental priority seed now covers 10 models / 32 generations / 284 current configurations; live upgrade preserved 10 legacy leaves for 294 total, all with unique fingerprints and EN/AR aliases. Idempotency and operator preservation are proven; the documented 40,000-configuration reference-environment capacity/load proof remains |
-| H1.5 | Support make/model merge and archive while preserving fitment and audit history | pending | CRUD exists; merge/archive workflow is absent |
+| H1.5 | Support make/model merge and archive while preserving fitment and audit history | done | Secured make/model archive + merge workflows use atomic conflict-checked SQL; model merge keeps generation/configuration ids stable, preserving fitment/garage/SEO references. Hard delete with descendants returns archive-required; aliases, cache invalidation and attributed audit verified live |
 | H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | partial | ISO validation exists, but decoder mappings cover only a small hard-coded set |
 | H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | partial | Candidate contracts exist; production corpus and log audit do not |
 | H1.8 | Validate OEM normalization/supersession against 500,000 entries | partial | SQL implementation exists; scale and conflict benchmarks do not |
