@@ -16,6 +16,12 @@ public sealed class ImportPipelineRowState
 
     public bool IsDuplicate { get; set; }
 
+    /// <summary>Operator decision for a detected duplicate: None, Pending, Merge, Link, KeepSeparate.</summary>
+    public string DuplicateDecision { get; set; } = "None";
+
+    /// <summary>The earlier row this row duplicates, when detected.</summary>
+    public int? DuplicateOfRowNumber { get; set; }
+
     public int? VehicleConfigurationId { get; set; }
 
     public decimal VehicleMatchConfidence { get; set; }

@@ -44,3 +44,13 @@ public sealed class ImportAdminRerunStageModel
 
     public ImportPipelineStage Stage { get; set; }
 }
+
+public sealed class ImportAdminDuplicateDecisionModel
+{
+    public Guid BatchId { get; set; }
+
+    public int RowNumber { get; set; }
+
+    /// <summary>One of: Merge, Link, KeepSeparate.</summary>
+    public string Decision { get; set; } = string.Empty;
+}

@@ -38,6 +38,15 @@ public sealed class ImportPublicationService
 
         foreach (var row in rows)
         {
+            // A row merged into its duplicate original does not become a distinct product; it is a
+            // resolved decision, not a failure.
+            if (row.DuplicateDecision == "Merge")
+            {
+                row.IsPublished = false;
+                row.PublishError = null;
+                continue;
+            }
+
             if (row.ReviewStatus == "Rejected")
             {
                 row.IsPublished = false;

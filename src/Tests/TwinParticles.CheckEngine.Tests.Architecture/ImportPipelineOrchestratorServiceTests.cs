@@ -124,6 +124,79 @@ public class ImportPipelineOrchestratorServiceTests
     }
 
     [Test]
+    public async Task Keep_Separate_Decision_Should_Clear_Duplicate_Review_And_Publish_Both_Rows()
+    {
+        var orchestrator = CreateOrchestrator();
+        var csv = "oem,name,vehicleConfigurationId,category\n11-51-7-586-925,Oil Filter,1001,Engine\n11-51-7-586-925,Oil Filter,1001,Engine\n";
+        var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
+        {
+            Format = ImportSourceFormat.Csv,
+            FileName = "dupes.csv",
+            Content = Encoding.UTF8.GetBytes(csv),
+            DryRun = false
+        }, CancellationToken.None);
+
+        run.ReviewRows.Should().Be(1, "the second identical row is flagged as an undecided duplicate");
+
+        var decided = await orchestrator.SetDuplicateDecisionAsync(
+            run.BatchId, rowNumber: 2, decision: "KeepSeparate", actor: "admin", CancellationToken.None);
+        decided.Should().BeTrue();
+
+        var batch = await orchestrator.GetBatchAsync(run.BatchId, CancellationToken.None);
+        var duplicateRow = batch!.Rows.Single(r => r.RowNumber == 2);
+        duplicateRow.DuplicateDecision.Should().Be("KeepSeparate");
+        duplicateRow.DuplicateOfRowNumber.Should().Be(1);
+        duplicateRow.ReviewStatus.Should().Be("Approved", "a kept-separate duplicate no longer needs review");
+
+        var publish = await orchestrator.PublishAsync(run.BatchId, dryRun: false, CancellationToken.None);
+        publish.PublishedRows.Should().Be(2);
+        publish.FailedRows.Should().Be(0);
+    }
+
+    [Test]
+    public async Task Merge_Decision_Should_Fold_Duplicate_Into_Original_Without_Publishing_It()
+    {
+        var orchestrator = CreateOrchestrator();
+        var csv = "oem,name,vehicleConfigurationId,category\n11-51-7-586-925,Oil Filter,1001,Engine\n11-51-7-586-925,Oil Filter,1001,Engine\n";
+        var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
+        {
+            Format = ImportSourceFormat.Csv,
+            FileName = "dupes.csv",
+            Content = Encoding.UTF8.GetBytes(csv),
+            DryRun = false
+        }, CancellationToken.None);
+
+        (await orchestrator.SetDuplicateDecisionAsync(
+            run.BatchId, rowNumber: 2, decision: "Merge", actor: "admin", CancellationToken.None)).Should().BeTrue();
+
+        var publish = await orchestrator.PublishAsync(run.BatchId, dryRun: false, CancellationToken.None);
+        publish.PublishedRows.Should().Be(1, "only the original publishes; the merged row does not become a new product");
+        publish.FailedRows.Should().Be(0, "a merge is a resolved decision, not a failure");
+
+        var batch = await orchestrator.GetBatchAsync(run.BatchId, CancellationToken.None);
+        batch!.Rows.Single(r => r.RowNumber == 2).IsPublished.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task SetDuplicateDecision_Should_Reject_Invalid_Decision_And_NonDuplicate_Rows()
+    {
+        var orchestrator = CreateOrchestrator();
+        var csv = "oem,name,vehicleConfigurationId,category\n11-51-7-586-925,Oil Filter,1001,Engine\n11-51-7-586-925,Oil Filter,1001,Engine\n";
+        var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
+        {
+            Format = ImportSourceFormat.Csv,
+            FileName = "dupes.csv",
+            Content = Encoding.UTF8.GetBytes(csv),
+            DryRun = false
+        }, CancellationToken.None);
+
+        (await orchestrator.SetDuplicateDecisionAsync(
+            run.BatchId, 2, "Nonsense", "admin", CancellationToken.None)).Should().BeFalse();
+        (await orchestrator.SetDuplicateDecisionAsync(
+            run.BatchId, 1, "Merge", "admin", CancellationToken.None)).Should().BeFalse("row 1 is the original, not a duplicate");
+    }
+
+    [Test]
     public async Task Ten_Thousand_High_Confidence_Rows_Should_Reach_Published_State_Above_50_Rows_Per_Second()
     {
         var csv = new StringBuilder("oem,name,sku,vehicleConfigurationId,category\n");

@@ -90,6 +90,23 @@ public sealed class ImportAdminController : BasePluginController
     }
 
     [HttpPost]
+    public async Task<IActionResult> SetDuplicateDecision([FromBody] ImportAdminDuplicateDecisionModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var updated = await _orchestrator.SetDuplicateDecisionAsync(
+            model.BatchId,
+            model.RowNumber,
+            model.Decision,
+            actor: "admin",
+            cancellationToken: cancellationToken);
+        if (!updated)
+            return BadRequest(new { reasonCode = "import.duplicate_decision.invalid" });
+
+        return Ok();
+    }
+
+    [HttpPost]
     public async Task<IActionResult> RerunStage([FromBody] ImportAdminRerunStageModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();

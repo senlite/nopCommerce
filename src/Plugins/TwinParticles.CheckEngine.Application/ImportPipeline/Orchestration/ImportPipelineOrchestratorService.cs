@@ -176,6 +176,45 @@ public sealed class ImportPipelineOrchestratorService
         return true;
     }
 
+    public async Task<bool> SetDuplicateDecisionAsync(
+        Guid batchId,
+        int rowNumber,
+        string decision,
+        string actor,
+        CancellationToken cancellationToken)
+    {
+        var normalized = decision?.Trim();
+        if (normalized is not ("Merge" or "Link" or "KeepSeparate"))
+            return false;
+
+        var batch = await LoadBatchAsync(batchId, cancellationToken);
+        var row = batch?.Rows.FirstOrDefault(x => x.RowNumber == rowNumber);
+        if (batch is null || row is null || !row.IsDuplicate)
+            return false;
+
+        var before = row.DuplicateDecision;
+        row.DuplicateDecision = normalized;
+
+        // Re-run review gating for this row so a resolved duplicate can leave the review queue while
+        // any other outstanding reason (OEM error, low vehicle confidence) still holds it.
+        _reviewService.Apply([row]);
+
+        if (_auditService is not null)
+        {
+            await _auditService.AppendAsync(
+                actor,
+                "import.duplicate_decision",
+                "ImportRow",
+                $"{batchId}:{rowNumber}",
+                beforeJson: $"{{\"decision\":\"{before}\"}}",
+                afterJson: $"{{\"decision\":\"{normalized}\",\"duplicateOfRow\":{(row.DuplicateOfRowNumber?.ToString() ?? "null")}}}",
+                cancellationToken);
+        }
+
+        await PersistBatchAsync(batch, cancellationToken);
+        return true;
+    }
+
     public ImportPublicationResult Publish(Guid batchId, bool dryRun)
     {
         return PublishAsync(batchId, dryRun, CancellationToken.None).GetAwaiter().GetResult();
@@ -368,9 +407,20 @@ public sealed class ImportPipelineOrchestratorService
                 break;
 
             case ImportPipelineStage.Deduplicate:
-                var duplicates = _duplicateDetectionService.DetectDuplicateRowNumbers(ToNormalizedRows(batch.Rows));
+                var duplicateMap = _duplicateDetectionService.DetectDuplicateMap(ToNormalizedRows(batch.Rows));
                 foreach (var row in batch.Rows)
-                    row.IsDuplicate = duplicates.Contains(row.RowNumber);
+                {
+                    var isDuplicate = duplicateMap.TryGetValue(row.RowNumber, out var originalRowNumber);
+                    row.IsDuplicate = isDuplicate;
+                    row.DuplicateOfRowNumber = isDuplicate ? originalRowNumber : null;
+                    // Re-detecting resets an undecided flag but preserves an operator decision already made.
+                    if (isDuplicate)
+                        row.DuplicateDecision = row.DuplicateDecision is "Merge" or "Link" or "KeepSeparate"
+                            ? row.DuplicateDecision
+                            : "Pending";
+                    else
+                        row.DuplicateDecision = "None";
+                }
                 break;
 
             case ImportPipelineStage.OemMatch:
