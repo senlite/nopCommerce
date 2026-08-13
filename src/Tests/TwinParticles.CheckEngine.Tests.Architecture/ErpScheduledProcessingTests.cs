@@ -87,13 +87,25 @@ public class ErpScheduledProcessingTests
         var plugin = ReadPluginFile("CheckEnginePlugin.cs");
 
         consumer.Should().Contain("IConsumer<OrderPlacedEvent>");
+        consumer.Should().Contain("IConsumer<OrderPaidEvent>");
+        consumer.Should().Contain("IConsumer<OrderRefundedEvent>");
+        consumer.Should().Contain("IConsumer<OrderStatusChangedEvent>");
         consumer.Should().Contain("IConsumer<CustomerRegisteredEvent>");
+        consumer.Should().Contain("IConsumer<EntityUpdatedEvent<Customer>>");
+        consumer.Should().Contain("IConsumer<EntityUpdatedEvent<Product>>");
+        consumer.Should().Contain("IConsumer<ShipmentCreatedEvent>");
+        consumer.Should().Contain("IConsumer<ShipmentSentEvent>");
         consumer.Should().Contain("ErpSyncEntityType.Order");
         consumer.Should().Contain("ErpSyncEntityType.Customer");
+        consumer.Should().Contain("ErpSyncEntityType.Product");
+        consumer.Should().Contain("ErpSyncEntityType.Inventory");
+        consumer.Should().Contain("ErpSyncEntityType.Invoice");
+        consumer.Should().Contain("ErpSyncEntityType.Return");
+        consumer.Should().Contain("ErpSyncEntityType.Shipment");
         consumer.Should().NotContain("customer.Email");
         consumer.Should().Contain("_settings.Value.Erp.Enabled");
         consumer.Should().Contain("catch (System.Exception exception)");
-        consumer.Should().Contain("must never roll back checkout");
+        consumer.Should().Contain("must never roll back");
         task.Should().Contain("IScheduleTask");
         task.Should().Contain("ProcessPendingAsync");
         task.Should().Contain("_settings.Value.Erp.Enabled");
