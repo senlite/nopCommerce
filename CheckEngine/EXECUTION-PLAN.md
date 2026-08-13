@@ -194,7 +194,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.15 | Add facets, autocomplete and zero-result recovery UX | done | Category/brand/price/fitment facets aggregate over the full result (pre-paging) with real catalog metadata; `/check-engine/search/suggest` typeahead composes vehicle/OEM/product sources; structured recovery actions render in the rail. Verified live on SQL Server |
 | H1.16 | Add privacy-safe search analytics | pending | No production analytics pipeline exists |
 | H1.17 | Persist guest garage safely and migrate on sign-in | done | Browser-local payload survives app restarts and migrates inline into the authenticated SQL garage with antiforgery protection; verified live with normalized VIN and active vehicle |
-| H1.18 | Add garage VIN encryption, data export and erasure | pending | Required privacy workflows are absent |
+| H1.18 | Add garage VIN encryption, data export and erasure | done | VINs use nopCommerce-key encryption at the SQL boundary (`enc:v1`), legacy plaintext migrates on authenticated read, export returns subject data without VIN in audit, confirmed erase atomically removes garage rows, and permanent customer deletion consumes the same erasure path; verified live |
 
 #### Import and image management
 
@@ -225,7 +225,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.31 | Synchronize products, inventory, customers, orders, invoices, returns and shipments bidirectionally | partial | HTTP adapter and queue exist; no complete event-driven entity flows |
 | H1.32 | Add scheduled processing and nopCommerce order/customer event consumers | pending | ERP operations are manually triggered through admin endpoints |
 | H1.33 | Reconcile ERP order, payment and inventory totals daily | partial | Current report summarizes queue jobs, not cross-system financial totals |
-| H1.34 | Complete GDPR export/erasure, tamper-evident audit and retention workflows | partial | Permission/audit baseline exists; complete privacy lifecycle does not |
+| H1.34 | Complete GDPR export/erasure, tamper-evident audit and retention workflows | partial | Garage export/erasure and permanent-customer deletion integration are complete; cross-domain subject export, tamper-evident audit chaining and retention automation remain |
 | H1.35 | Pass an independent security assessment with no high/critical findings | blocked | Security stakeholder review and sign-off are external gates |
 | H1.36 | Implement online/offline licence activation and expiry read-only behavior | partial | Licence service uses an in-memory state store; no production activation authority |
 | H1.37 | Build the separate Paymob reference payment plugin | pending | Required by `EP-17`; absent from the repository |

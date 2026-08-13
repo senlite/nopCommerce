@@ -77,6 +77,9 @@ only cloud-specific caveats.
 - Guest garage data intentionally stays in browser `localStorage` until sign-in. The authenticated
   migration request carries the payload inline (not only a process-local key), so migration survives
   app restarts and multi-node routing. Do not reintroduce anonymous guest-key read/write endpoints.
+- Signed-in garage VINs are plaintext only in domain/application memory and subject export; the SQL
+  repository must protect them through `IGarageVinProtector` (`enc:v1:`). Never log/copy VINs into
+  audit JSON. Garage erasure is atomic and also runs on `CustomerPermanentlyDeleted`.
 - Check Engine keyword/category search delegates to nopCommerce's `IProductService`, while OEM and
   vehicle-tree candidate IDs come from Check Engine SQL and are hydrated through the real catalog.
   Production search must never fall back to invented demo product IDs.

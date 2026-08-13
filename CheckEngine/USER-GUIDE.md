@@ -178,6 +178,10 @@ Behaviour worth knowing:
   search and on product pages.
 - Guests get a local (browser) garage that is **merged into their account** when they sign in or register.
 - The vehicle selector in the header lets shoppers switch the active vehicle or add a new one.
+- Signed-in VINs are encrypted with the host encryption key before SQL storage. `Garage/Export`
+  returns the subject's decrypted garage data; confirmed `Garage/Erase` removes vehicles, OEM saves
+  and the garage atomically. Permanent nopCommerce customer deletion invokes the same erasure path.
+- All garage writes require an antiforgery token; privacy audit events contain counts, never full VINs.
 
 ### 6.4 The product fitment band
 
@@ -293,7 +297,7 @@ These are called by the storefront widgets and can also be used directly. Bodies
 | `POST` | `/check-engine/vin/decode` | `vin` |
 | `POST` | `/check-engine/oem/resolve` | `number`, `manufacturerId?` |
 | `POST` | `/check-engine/fitment/evaluate` | `productId`, `vehicleConfigurationId`, `productionYear?`, `steeringSide?`, `marketRegion?` |
-| `GET/POST` | `/check-engine/garage/...` | `Current`, `AddVehicle`, `SetActive`, `ClearActive`, `RemoveVehicle`, `SaveOem`, `Migrate`, `Guest` (garage account endpoints require sign-in) |
+| `GET/POST` | `/check-engine/garage/...` | `Current`, `AddVehicle`, `SetActive`, `ClearActive`, `RemoveVehicle`, `SaveOem`, `Migrate`, `Export`, `Erase` (account endpoints require sign-in; all unsafe methods require antiforgery) |
 | `POST` | `/check-engine/l10n/preview` | localization preview payload |
 | `GET` | `/check-engine/health` | — |
 
