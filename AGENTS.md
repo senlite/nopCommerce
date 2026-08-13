@@ -6,6 +6,15 @@ This repo is **nopCommerce 4.90.6 on .NET 9** (ASP.NET Core storefront/admin plu
 GMaster). Standard commands are in the root solution and `CheckEngine/scripts`; the notes below cover
 only cloud-specific caveats.
 
+### Never modify host application code
+- **Keep all changes inside plugins (`src/Plugins/**`) or themes.** Do not edit or add code in the
+  nopCommerce host (`src/Libraries/**`, `src/Presentation/Nop.Web/**`,
+  `src/Presentation/Nop.Web.Framework/**`, host `src/Tests/Nop.Tests/**`). This keeps future
+  nopCommerce upgrades a clean drop-in.
+- If something appears to need a host change, solve it from a plugin instead: register services,
+  widgets, routes, view components, event consumers, or plugin-local views/overrides. If a host edit
+  seems unavoidable, stop and confirm rather than editing host code.
+
 ### Build and test
 - The full solution is valid: `dotnet build src/NopCommerce.sln -c Release`.
 - Check Engine gate:
