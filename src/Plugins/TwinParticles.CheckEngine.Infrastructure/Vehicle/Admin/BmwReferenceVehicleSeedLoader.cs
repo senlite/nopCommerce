@@ -64,14 +64,10 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
 
         await SeedConfigurationsAsync(modelsByCode, generationsByKey, bodiesByKey, enginesByKey, marketsByCode, result, cancellationToken);
 
-        var configurationsByFingerprint = (await _repository.GetConfigurationsAsync(cancellationToken))
-            .ToDictionary(x => x.Fingerprint, x => x.Id);
-
         await SeedAliasesAsync(
             make.Id,
             modelsByCode,
             generationsByKey,
-            configurationsByFingerprint,
             result,
             cancellationToken);
 
@@ -281,7 +277,6 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
         int makeId,
         IReadOnlyDictionary<string, int> modelsByCode,
         IReadOnlyDictionary<(int ModelId, string Code), int> generationsByKey,
-        IReadOnlyDictionary<string, int> configurationsByFingerprint,
         VehicleSeedLoadResult result,
         CancellationToken cancellationToken)
     {
@@ -303,21 +298,58 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
             {
                 var generationId = generationsByKey[(modelId, generation.Code)];
                 await AddAliasIfMissingAsync("generation", generationId, "en", generation.Code, existingNormalized, result, cancellationToken);
-
-                foreach (var trim in generation.Trims)
-                {
-                    foreach (var market in BmwReferenceCatalog.Markets)
-                    {
-                        var fingerprint = BuildFingerprint(model, generation, trim, market);
-                        var configurationId = configurationsByFingerprint[fingerprint];
-                        var en = $"{BmwReferenceCatalog.MakeName} {model.Name} {generation.Code} {trim.TrimName} {market.Code}";
-                        var ar = $"{BmwReferenceCatalog.MakeArabicAlias} {model.ArabicAlias} {generation.Code} {trim.TrimName} {market.ArabicAlias}";
-
-                        await AddAliasIfMissingAsync("configuration", configurationId, "en", en, existingNormalized, result, cancellationToken);
-                        await AddAliasIfMissingAsync("configuration", configurationId, "ar", ar, existingNormalized, result, cancellationToken);
-                    }
-                }
             }
+        }
+
+        await SeedConfigurationAliasesAsync(makeId, existingNormalized, result, cancellationToken);
+    }
+
+    private async Task SeedConfigurationAliasesAsync(
+        int makeId,
+        HashSet<(string NodeType, string NormalizedAlias)> existingNormalized,
+        VehicleSeedLoadResult result,
+        CancellationToken cancellationToken)
+    {
+        var models = (await _repository.GetModelsAsync(cancellationToken))
+            .Where(model => model.MakeId == makeId)
+            .ToDictionary(model => model.Id);
+        var generations = (await _repository.GetGenerationsAsync(cancellationToken))
+            .Where(generation => models.ContainsKey(generation.ModelId))
+            .ToDictionary(generation => generation.Id);
+        var bodies = (await _repository.GetBodiesAsync(cancellationToken)).ToDictionary(body => body.Id);
+        var engines = (await _repository.GetEnginesAsync(cancellationToken)).ToDictionary(engine => engine.Id);
+        var markets = (await _repository.GetMarketsAsync(cancellationToken)).ToDictionary(market => market.Id);
+
+        var modelArabicByCode = BmwReferenceCatalog.Models
+            .ToDictionary(model => model.Code, model => model.ArabicAlias);
+        var marketArabicByCode = BmwReferenceCatalog.Markets
+            .ToDictionary(market => market.Code, market => market.ArabicAlias);
+
+        foreach (var configuration in (await _repository.GetConfigurationsAsync(cancellationToken))
+                     .Where(configuration => generations.ContainsKey(configuration.GenerationId)))
+        {
+            var generation = generations[configuration.GenerationId];
+            var model = models[generation.ModelId];
+            var bodyCode = configuration.BodyId.HasValue && bodies.TryGetValue(configuration.BodyId.Value, out var body)
+                ? body.Code
+                : "ANY";
+            var engineCode = configuration.EngineId.HasValue && engines.TryGetValue(configuration.EngineId.Value, out var engine)
+                ? engine.Code
+                : "ANY";
+            var marketCode = configuration.MarketId.HasValue && markets.TryGetValue(configuration.MarketId.Value, out var market)
+                ? market.Code
+                : "ALL";
+            var modelArabic = modelArabicByCode.GetValueOrDefault(model.Code, model.Name);
+            var marketArabic = marketArabicByCode.GetValueOrDefault(marketCode, marketCode);
+            var trim = string.IsNullOrWhiteSpace(configuration.TrimName) ? bodyCode : configuration.TrimName;
+
+            // Engine code is part of the customer-visible disambiguation label: preserved legacy
+            // configurations can share model/generation/trim/market while differing by engine.
+            var en = $"{BmwReferenceCatalog.MakeName} {model.Name} {generation.Code} {trim} {bodyCode} {engineCode} {marketCode}";
+            var ar = $"{BmwReferenceCatalog.MakeArabicAlias} {modelArabic} {generation.Code} {trim} {bodyCode} {engineCode} {marketArabic}";
+
+            await AddAliasIfMissingAsync("configuration", configuration.Id, "en", en, existingNormalized, result, cancellationToken);
+            await AddAliasIfMissingAsync("configuration", configuration.Id, "ar", ar, existingNormalized, result, cancellationToken);
         }
     }
 

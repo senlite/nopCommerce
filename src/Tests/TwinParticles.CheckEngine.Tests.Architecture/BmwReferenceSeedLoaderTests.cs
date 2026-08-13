@@ -223,6 +223,51 @@ public class BmwReferenceSeedLoaderTests
         (await repository.GetConfigurationsAsync(CancellationToken.None)).Should().HaveCountGreaterThanOrEqualTo(250);
     }
 
+    [Test]
+    public async Task Seeding_Should_Add_Search_Aliases_To_Preserved_Legacy_Configurations()
+    {
+        var repository = new InMemoryVehicleAdminRepository();
+        await repository.CreateMakeAsync(new VehicleMake { Code = "BMW", Name = "BMW", IsActive = true }, CancellationToken.None);
+        var make = (await repository.GetMakesAsync(CancellationToken.None)).Single();
+        await repository.CreateModelAsync(new VehicleModel { MakeId = make.Id, Code = "LEGACY", Name = "Legacy Model", IsActive = true }, CancellationToken.None);
+        var model = (await repository.GetModelsAsync(CancellationToken.None)).Single();
+        await repository.CreateGenerationAsync(new VehicleGeneration { ModelId = model.Id, Code = "Z99", Name = "Z99", StartYear = 2000, EndYear = 2001, IsActive = true }, CancellationToken.None);
+        var generation = (await repository.GetGenerationsAsync(CancellationToken.None)).Single();
+        await repository.CreateBodyAsync(new VehicleBody { GenerationId = generation.Id, Code = "SEDAN", Name = "Sedan", Doors = 4, IsActive = true }, CancellationToken.None);
+        var body = (await repository.GetBodiesAsync(CancellationToken.None)).Single();
+        await repository.CreateEngineAsync(new VehicleEngine { BodyId = body.Id, Code = "LEGACY20", Name = "Legacy 2.0", FuelType = "Petrol", DisplacementCc = 2000, PowerHp = 150, IsActive = true }, CancellationToken.None);
+        var engine = (await repository.GetEnginesAsync(CancellationToken.None)).Single();
+        await repository.CreateMarketAsync(new VehicleMarket { Code = "ECE", Name = "Europe", IsActive = true }, CancellationToken.None);
+        var market = (await repository.GetMarketsAsync(CancellationToken.None)).Single();
+        await repository.CreateConfigurationAsync(new VehicleConfiguration
+        {
+            GenerationId = generation.Id,
+            BodyId = body.Id,
+            EngineId = engine.Id,
+            MarketId = market.Id,
+            TrimName = "Legacy 20i",
+            ProductionFromYear = 2000,
+            ProductionToYear = 2001,
+            Fingerprint = "operator-preserved-legacy-configuration",
+            IsActive = true
+        }, CancellationToken.None);
+        var legacy = (await repository.GetConfigurationsAsync(CancellationToken.None)).Single();
+
+        await new BmwReferenceVehicleSeedLoader(repository).SeedAsync(CancellationToken.None);
+
+        var aliases = await repository.GetAliasesAsync(CancellationToken.None);
+        aliases.Should().Contain(alias =>
+            alias.NodeType == "configuration" &&
+            alias.NodeId == legacy.Id &&
+            alias.Locale == "en" &&
+            alias.AliasText.Contains("Z99") &&
+            alias.AliasText.Contains("LEGACY20"));
+        aliases.Should().Contain(alias =>
+            alias.NodeType == "configuration" &&
+            alias.NodeId == legacy.Id &&
+            alias.Locale == "ar");
+    }
+
     private sealed class InMemoryVehicleAdminRepository : IVehicleAdminRepository
     {
         private readonly List<VehicleMake> _makes = [];
