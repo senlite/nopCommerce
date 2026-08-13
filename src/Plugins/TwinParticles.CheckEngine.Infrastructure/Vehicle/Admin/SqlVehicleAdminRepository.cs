@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
@@ -32,6 +33,53 @@ public sealed class SqlVehicleAdminRepository : IVehicleAdminRepository
     public Task DeleteMakeAsync(int id, CancellationToken cancellationToken)
         => _dataProvider.ExecuteNonQueryAsync("DELETE FROM TP_CE_VehicleMake WHERE Id=@id", new LinqToDB.Data.DataParameter("id", id));
 
+    public async Task<VehicleMergeRepositoryResult> MergeMakeAsync(
+        int sourceMakeId,
+        int targetMakeId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<MergeRow>(@"
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+
+IF EXISTS (
+    SELECT 1
+    FROM TP_CE_VehicleModel sourceModel
+    INNER JOIN TP_CE_VehicleModel targetModel
+        ON targetModel.MakeId = @targetMakeId
+       AND targetModel.Code = sourceModel.Code
+    WHERE sourceModel.MakeId = @sourceMakeId
+)
+BEGIN
+    ROLLBACK TRANSACTION;
+    SELECT CAST(0 AS bit) AS Success,
+           CAST('vehicle.make.merge.model_code_conflict' AS nvarchar(128)) AS ErrorCode,
+           0 AS MovedChildren,
+           0 AS MovedAliases;
+    RETURN;
+END;
+
+DECLARE @movedChildren int;
+DECLARE @movedAliases int;
+
+UPDATE TP_CE_VehicleModel SET MakeId=@targetMakeId WHERE MakeId=@sourceMakeId;
+SET @movedChildren = @@ROWCOUNT;
+
+UPDATE TP_CE_VehicleAlias SET NodeId=@targetMakeId WHERE NodeType='make' AND NodeId=@sourceMakeId;
+SET @movedAliases = @@ROWCOUNT;
+
+UPDATE TP_CE_VehicleMake SET IsActive=0 WHERE Id=@sourceMakeId;
+
+COMMIT TRANSACTION;
+SELECT CAST(1 AS bit) AS Success,
+       CAST(NULL AS nvarchar(128)) AS ErrorCode,
+       @movedChildren AS MovedChildren,
+       @movedAliases AS MovedAliases;",
+            new DataParameter("sourceMakeId", sourceMakeId),
+            new DataParameter("targetMakeId", targetMakeId));
+        return MapMerge(rows.Single());
+    }
+
     public async Task<IReadOnlyList<VehicleModel>> GetModelsAsync(CancellationToken cancellationToken)
         => (await _dataProvider.QueryAsync<VehicleModel>("SELECT Id, MakeId, Code, Name, IsActive FROM TP_CE_VehicleModel ORDER BY Name")).ToList();
 
@@ -46,6 +94,56 @@ public sealed class SqlVehicleAdminRepository : IVehicleAdminRepository
 
     public Task DeleteModelAsync(int id, CancellationToken cancellationToken)
         => _dataProvider.ExecuteNonQueryAsync("DELETE FROM TP_CE_VehicleModel WHERE Id=@id", new LinqToDB.Data.DataParameter("id", id));
+
+    public async Task<VehicleMergeRepositoryResult> MergeModelAsync(
+        int sourceModelId,
+        int targetModelId,
+        CancellationToken cancellationToken)
+    {
+        // Only Generation.ModelId and model-scoped aliases move. Every generation/configuration id
+        // stays stable, so fitment claims, garage rows, SEO landings, and historical records retain
+        // their existing foreign keys.
+        var rows = await _dataProvider.QueryAsync<MergeRow>(@"
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+
+IF EXISTS (
+    SELECT 1
+    FROM TP_CE_VehicleGeneration sourceGeneration
+    INNER JOIN TP_CE_VehicleGeneration targetGeneration
+        ON targetGeneration.ModelId = @targetModelId
+       AND targetGeneration.Code = sourceGeneration.Code
+    WHERE sourceGeneration.ModelId = @sourceModelId
+)
+BEGIN
+    ROLLBACK TRANSACTION;
+    SELECT CAST(0 AS bit) AS Success,
+           CAST('vehicle.model.merge.generation_code_conflict' AS nvarchar(128)) AS ErrorCode,
+           0 AS MovedChildren,
+           0 AS MovedAliases;
+    RETURN;
+END;
+
+DECLARE @movedChildren int;
+DECLARE @movedAliases int;
+
+UPDATE TP_CE_VehicleGeneration SET ModelId=@targetModelId WHERE ModelId=@sourceModelId;
+SET @movedChildren = @@ROWCOUNT;
+
+UPDATE TP_CE_VehicleAlias SET NodeId=@targetModelId WHERE NodeType='model' AND NodeId=@sourceModelId;
+SET @movedAliases = @@ROWCOUNT;
+
+UPDATE TP_CE_VehicleModel SET IsActive=0 WHERE Id=@sourceModelId;
+
+COMMIT TRANSACTION;
+SELECT CAST(1 AS bit) AS Success,
+       CAST(NULL AS nvarchar(128)) AS ErrorCode,
+       @movedChildren AS MovedChildren,
+       @movedAliases AS MovedAliases;",
+            new DataParameter("sourceModelId", sourceModelId),
+            new DataParameter("targetModelId", targetModelId));
+        return MapMerge(rows.Single());
+    }
 
     public async Task<IReadOnlyList<VehicleGeneration>> GetGenerationsAsync(CancellationToken cancellationToken)
         => (await _dataProvider.QueryAsync<VehicleGeneration>("SELECT Id, ModelId, Code, Name, StartYear, EndYear, IsActive FROM TP_CE_VehicleGeneration ORDER BY Name")).ToList();
@@ -136,4 +234,17 @@ public sealed class SqlVehicleAdminRepository : IVehicleAdminRepository
 
     public Task DeleteAliasAsync(int id, CancellationToken cancellationToken)
         => _dataProvider.ExecuteNonQueryAsync("DELETE FROM TP_CE_VehicleAlias WHERE Id=@id", new LinqToDB.Data.DataParameter("id", id));
+
+    private static VehicleMergeRepositoryResult MapMerge(MergeRow row)
+        => row.Success
+            ? VehicleMergeRepositoryResult.Ok(row.MovedChildren, row.MovedAliases)
+            : VehicleMergeRepositoryResult.Fail(row.ErrorCode ?? "vehicle.merge.failed");
+
+    private sealed class MergeRow
+    {
+        public bool Success { get; set; }
+        public string? ErrorCode { get; set; }
+        public int MovedChildren { get; set; }
+        public int MovedAliases { get; set; }
+    }
 }

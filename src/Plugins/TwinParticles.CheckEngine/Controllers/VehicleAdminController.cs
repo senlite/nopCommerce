@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
@@ -17,11 +18,16 @@ public sealed class VehicleAdminController : BasePluginController
 {
     private readonly VehicleAdminService _service;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
+    private readonly IWorkContext _workContext;
 
-    public VehicleAdminController(VehicleAdminService service, Nop.Services.Security.IPermissionService permissionService)
+    public VehicleAdminController(
+        VehicleAdminService service,
+        Nop.Services.Security.IPermissionService permissionService,
+        IWorkContext workContext)
     {
         _service = service;
         _permissionService = permissionService;
+        _workContext = workContext;
     }
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
@@ -53,8 +59,35 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> DeleteMake(int id, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.DeleteMakeAsync(id, cancellationToken);
-        return Ok();
+        try
+        {
+            await _service.DeleteMakeAsync(id, cancellationToken);
+            return Ok();
+        }
+        catch (System.InvalidOperationException exception)
+        {
+            return Conflict(new { reasonCode = exception.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ArchiveMake(
+        [FromBody] VehicleAdminDtos.ArchiveRequestModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var result = await _service.ArchiveMakeAsync(model.Id, await GetActorAsync(), cancellationToken);
+        return LifecycleResult(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> MergeMake(
+        [FromBody] VehicleAdminDtos.MergeRequestModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var result = await _service.MergeMakeAsync(model.SourceId, model.TargetId, await GetActorAsync(), cancellationToken);
+        return LifecycleResult(result);
     }
 
     [HttpGet]
@@ -84,8 +117,35 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> DeleteModel(int id, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.DeleteModelAsync(id, cancellationToken);
-        return Ok();
+        try
+        {
+            await _service.DeleteModelAsync(id, cancellationToken);
+            return Ok();
+        }
+        catch (System.InvalidOperationException exception)
+        {
+            return Conflict(new { reasonCode = exception.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ArchiveModel(
+        [FromBody] VehicleAdminDtos.ArchiveRequestModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var result = await _service.ArchiveModelAsync(model.Id, await GetActorAsync(), cancellationToken);
+        return LifecycleResult(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> MergeModel(
+        [FromBody] VehicleAdminDtos.MergeRequestModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var result = await _service.MergeModelAsync(model.SourceId, model.TargetId, await GetActorAsync(), cancellationToken);
+        return LifecycleResult(result);
     }
 
     [HttpGet]
@@ -290,5 +350,24 @@ public sealed class VehicleAdminController : BasePluginController
             ConfigurationsInserted = result.ConfigurationsInserted,
             AliasesInserted = result.AliasesInserted
         });
+    }
+
+    private async Task<string> GetActorAsync()
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        return $"customer:{customer.Id}";
+    }
+
+    private IActionResult LifecycleResult(VehicleLifecycleResult result)
+    {
+        var model = new VehicleAdminDtos.LifecycleResultModel
+        {
+            Success = result.Success,
+            ErrorCode = result.ErrorCode,
+            MovedChildren = result.MovedChildren,
+            MovedAliases = result.MovedAliases
+        };
+
+        return result.Success ? Json(model) : StatusCode(409, model);
     }
 }

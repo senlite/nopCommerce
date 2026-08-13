@@ -55,6 +55,10 @@ public class VehicleAdminPhase2ConventionsTests
         methods.Should().Contain("DeleteAliasAsync");
 
         methods.Should().Contain("SeedAsync");
+        methods.Should().Contain("ArchiveMakeAsync");
+        methods.Should().Contain("MergeMakeAsync");
+        methods.Should().Contain("ArchiveModelAsync");
+        methods.Should().Contain("MergeModelAsync");
     }
 
     [Test]

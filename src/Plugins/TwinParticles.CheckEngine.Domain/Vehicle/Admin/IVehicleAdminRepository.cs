@@ -12,12 +12,14 @@ public interface IVehicleAdminRepository
     Task CreateMakeAsync(VehicleMake entity, CancellationToken cancellationToken);
     Task UpdateMakeAsync(VehicleMake entity, CancellationToken cancellationToken);
     Task DeleteMakeAsync(int id, CancellationToken cancellationToken);
+    Task<VehicleMergeRepositoryResult> MergeMakeAsync(int sourceMakeId, int targetMakeId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<VehicleModel>> GetModelsAsync(CancellationToken cancellationToken);
     Task<VehicleModel?> GetModelByIdAsync(int id, CancellationToken cancellationToken);
     Task CreateModelAsync(VehicleModel entity, CancellationToken cancellationToken);
     Task UpdateModelAsync(VehicleModel entity, CancellationToken cancellationToken);
     Task DeleteModelAsync(int id, CancellationToken cancellationToken);
+    Task<VehicleMergeRepositoryResult> MergeModelAsync(int sourceModelId, int targetModelId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<VehicleGeneration>> GetGenerationsAsync(CancellationToken cancellationToken);
     Task<VehicleGeneration?> GetGenerationByIdAsync(int id, CancellationToken cancellationToken);

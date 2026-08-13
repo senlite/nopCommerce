@@ -287,12 +287,16 @@ public class BmwReferenceSeedLoaderTests
         public Task CreateMakeAsync(VehicleMake entity, CancellationToken cancellationToken) => Add(_makes, entity, e => e.Id = ++_sequence);
         public Task UpdateMakeAsync(VehicleMake entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteMakeAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VehicleMergeRepositoryResult> MergeMakeAsync(int sourceMakeId, int targetMakeId, CancellationToken cancellationToken)
+            => Task.FromResult(VehicleMergeRepositoryResult.Fail("not_supported"));
 
         public Task<IReadOnlyList<VehicleModel>> GetModelsAsync(CancellationToken cancellationToken) => List(_models);
         public Task<VehicleModel?> GetModelByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult(_models.FirstOrDefault(x => x.Id == id));
         public Task CreateModelAsync(VehicleModel entity, CancellationToken cancellationToken) => Add(_models, entity, e => e.Id = ++_sequence);
         public Task UpdateModelAsync(VehicleModel entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteModelAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VehicleMergeRepositoryResult> MergeModelAsync(int sourceModelId, int targetModelId, CancellationToken cancellationToken)
+            => Task.FromResult(VehicleMergeRepositoryResult.Fail("not_supported"));
 
         public Task<IReadOnlyList<VehicleGeneration>> GetGenerationsAsync(CancellationToken cancellationToken) => List(_generations);
         public Task<VehicleGeneration?> GetGenerationByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult(_generations.FirstOrDefault(x => x.Id == id));
