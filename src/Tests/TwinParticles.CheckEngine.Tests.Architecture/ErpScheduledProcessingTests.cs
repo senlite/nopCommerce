@@ -91,10 +91,16 @@ public class ErpScheduledProcessingTests
         consumer.Should().Contain("ErpSyncEntityType.Order");
         consumer.Should().Contain("ErpSyncEntityType.Customer");
         consumer.Should().NotContain("customer.Email");
+        consumer.Should().Contain("_settings.Value.Erp.Enabled");
+        consumer.Should().Contain("catch (System.Exception exception)");
+        consumer.Should().Contain("must never roll back checkout");
         task.Should().Contain("IScheduleTask");
         task.Should().Contain("ProcessPendingAsync");
+        task.Should().Contain("_settings.Value.Erp.Enabled");
         plugin.Should().Contain("EnsureScheduleTasksAsync");
         plugin.Should().Contain("GetTaskByTypeAsync(typeof(Tasks.ErpSyncQueueTask).FullName!)");
+        plugin.Should().Contain("5 * 60");
+        plugin.Should().Contain("typeof(Tasks.LicenceHeartbeatTask).FullName!");
     }
 
     private static ErpSyncService CreateService(IErpSyncQueueRepository queue)

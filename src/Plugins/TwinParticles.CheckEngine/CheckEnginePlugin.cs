@@ -187,6 +187,9 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         var auditTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.AuditRetentionTask).FullName!);
         if (auditTask is not null)
             await _scheduleTaskService.DeleteTaskAsync(auditTask);
+        var licenceTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.LicenceHeartbeatTask).FullName!);
+        if (licenceTask is not null)
+            await _scheduleTaskService.DeleteTaskAsync(licenceTask);
 
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
@@ -202,10 +205,14 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await EnsureScheduleTaskAsync(
             typeof(Tasks.ErpSyncQueueTask).FullName!,
             "Check Engine ERP synchronization queue",
-            60);
+            5 * 60);
         await EnsureScheduleTaskAsync(
             typeof(Tasks.AuditRetentionTask).FullName!,
             "Check Engine audit retention",
+            24 * 60 * 60);
+        await EnsureScheduleTaskAsync(
+            typeof(Tasks.LicenceHeartbeatTask).FullName!,
+            "Check Engine licence heartbeat",
             24 * 60 * 60);
     }
 
