@@ -6,7 +6,7 @@
     var isArabic = Model.CanonicalUrl.Contains("/ar/", StringComparison.OrdinalIgnoreCase);
 
     NopHtml.AddTitleParts(Model.Title);
-    NopHtml.AddCanonicalUrlParts(Model.CanonicalUrl, queryStringInCanonicalUrlsEnabled: false);
+    NopHtml.AddCanonicalUrlParts(Model.CanonicalUrl, withQueryString: false);
     NopHtml.AddHeadCustomParts($"<link rel=\"alternate\" hreflang=\"en\" href=\"{WebUtility.HtmlEncode(Model.HreflangUrlEn)}\" />");
     NopHtml.AddHeadCustomParts($"<link rel=\"alternate\" hreflang=\"ar\" href=\"{WebUtility.HtmlEncode(Model.HreflangUrlAr)}\" />");
     NopHtml.AddHeadCustomParts($"<link rel=\"alternate\" hreflang=\"x-default\" href=\"{WebUtility.HtmlEncode(Model.HreflangUrlEn)}\" />");
