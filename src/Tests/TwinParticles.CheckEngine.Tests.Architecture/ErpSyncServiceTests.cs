@@ -43,10 +43,14 @@ public class ErpSyncServiceTests
     {
         private readonly System.Collections.Generic.List<ErpSyncJob> _jobs = [];
 
-        public Task EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
+        public Task<System.Guid> EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
         {
+            var existing = _jobs.Find(x => x.IdempotencyKey == job.IdempotencyKey);
+            if (existing is not null)
+                return Task.FromResult(existing.JobId);
+
             _jobs.Add(job);
-            return Task.CompletedTask;
+            return Task.FromResult(job.JobId);
         }
 
         public Task<System.Collections.Generic.IReadOnlyList<ErpSyncJob>> GetPendingAsync(CancellationToken cancellationToken)

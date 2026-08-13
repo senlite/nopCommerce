@@ -21,4 +21,8 @@ public sealed class ErpSyncJob
     public string? ConflictCode { get; set; }
 
     public DateTime CreatedUtc { get; set; }
+
+    public DateTime? LastAttemptUtc { get; set; }
+
+    public DateTime? NextAttemptUtc { get; set; }
 }

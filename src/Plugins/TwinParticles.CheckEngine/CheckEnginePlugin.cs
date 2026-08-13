@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Core.Domain.ScheduleTasks;
 using Nop.Data.Migrations;
 using Nop.Services.Cms;
 using Nop.Services.Common;
@@ -22,18 +23,21 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     private readonly ILocalizationService _localizationService;
     private readonly IMigrationManager _migrationManager;
     private readonly IPermissionService _permissionService;
+    private readonly IScheduleTaskService _scheduleTaskService;
     private readonly ISettingService _settingService;
     private readonly IWebHelper _webHelper;
 
     public CheckEnginePlugin(ILocalizationService localizationService,
         IMigrationManager migrationManager,
         IPermissionService permissionService,
+        IScheduleTaskService scheduleTaskService,
         ISettingService settingService,
         IWebHelper webHelper)
     {
         _localizationService = localizationService;
         _migrationManager = migrationManager;
         _permissionService = permissionService;
+        _scheduleTaskService = scheduleTaskService;
         _settingService = settingService;
         _webHelper = webHelper;
     }
@@ -73,6 +77,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.Installation);
 
         await _settingService.SaveSettingAsync(new CheckEnginePluginSettings());
+        await EnsureErpScheduleTaskAsync();
 
         await AddOrUpdateLocaleResourcesAsync();
 
@@ -160,6 +165,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         // so a version bump that ships new schema would otherwise apply nothing. NoMatter runs all
         // unapplied migrations regardless of process type.
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.NoMatter);
+        await EnsureErpScheduleTaskAsync();
         await AddOrUpdateLocaleResourcesAsync();
         await base.UpdateAsync(currentVersion, targetVersion);
     }
@@ -175,6 +181,10 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
                 "/Admin/CheckEngine/UninstallAdmin/Export before retrying. The export authorization expires after 24 hours.");
         }
 
+        var erpTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.ErpSyncQueueTask).FullName!);
+        if (erpTask is not null)
+            await _scheduleTaskService.DeleteTaskAsync(erpTask);
+
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.TwinParticles.CheckEngine");
@@ -182,5 +192,21 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _migrationManager.ApplyDownMigrations(MigrationAssembly);
 
         await base.UninstallAsync();
+    }
+
+    private async Task EnsureErpScheduleTaskAsync()
+    {
+        var type = typeof(Tasks.ErpSyncQueueTask).FullName!;
+        if (await _scheduleTaskService.GetTaskByTypeAsync(type) is not null)
+            return;
+
+        await _scheduleTaskService.InsertTaskAsync(new ScheduleTask
+        {
+            Name = "Check Engine ERP synchronization queue",
+            Type = type,
+            Seconds = 60,
+            Enabled = true,
+            LastEnabledUtc = DateTime.UtcNow
+        });
     }
 }

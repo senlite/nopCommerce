@@ -9,6 +9,8 @@ namespace TwinParticles.CheckEngine.Application.Erp;
 
 public sealed class ErpSyncService
 {
+    private const int MaxAttempts = 5;
+
     private readonly IErpClientAdapter _clientAdapter;
     private readonly IErpConflictResolutionService _conflictResolutionService;
     private readonly IErpSyncQueueRepository _queueRepository;
@@ -36,8 +38,7 @@ public sealed class ErpSyncService
             CreatedUtc = DateTime.UtcNow
         };
 
-        await _queueRepository.EnqueueAsync(job, cancellationToken);
-        return job.JobId;
+        return await _queueRepository.EnqueueAsync(job, cancellationToken);
     }
 
     public async Task<int> ProcessPendingAsync(CancellationToken cancellationToken)
@@ -48,26 +49,35 @@ public sealed class ErpSyncService
         foreach (var job in pending)
         {
             job.AttemptCount++;
+            job.LastAttemptUtc = DateTime.UtcNow;
 
-            var success = await _clientAdapter.PushAsync(job, cancellationToken);
+            var success = await TryPushAsync(job, cancellationToken);
             if (success)
             {
                 job.Status = "Succeeded";
+                job.ConflictCode = null;
+                job.NextAttemptUtc = null;
                 successCount++;
             }
             else
             {
-                job.Status = "Failed";
                 job.ConflictCode = "erp.push_failed";
 
                 if (_conflictResolutionService.CanAutoResolve(job))
                 {
                     _conflictResolutionService.ApplyAutoResolution(job);
-                    var retried = await _clientAdapter.PushAsync(job, cancellationToken);
-                    job.Status = retried ? "Succeeded" : "Failed";
+                    var retried = await TryPushAsync(job, cancellationToken);
                     if (retried)
+                    {
+                        job.Status = "Succeeded";
+                        job.ConflictCode = null;
+                        job.NextAttemptUtc = null;
                         successCount++;
+                    }
                 }
+
+                if (job.Status != "Succeeded")
+                    ScheduleRetryOrFail(job);
             }
 
             await _queueRepository.UpdateAsync(job, cancellationToken);
@@ -99,5 +109,34 @@ public sealed class ErpSyncService
     private static string BuildIdempotencyKey(ErpSyncEntityType entityType, ErpSyncDirection direction, string localId)
     {
         return $"ce:{entityType}:{direction}:{localId.Trim().ToLowerInvariant()}";
+    }
+
+    private async Task<bool> TryPushAsync(ErpSyncJob job, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _clientAdapter.PushAsync(job, cancellationToken);
+        }
+        catch when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
+    private static void ScheduleRetryOrFail(ErpSyncJob job)
+    {
+        if (job.AttemptCount >= MaxAttempts)
+        {
+            job.Status = "Failed";
+            job.NextAttemptUtc = null;
+            return;
+        }
+
+        // 2, 4, 8, 16 minute backoff. The schedule task may run more frequently, but the SQL claim
+        // excludes jobs until this timestamp and recovers processing claims stale for ten minutes.
+        var delayMinutes = Math.Min(1 << job.AttemptCount, 60);
+        job.Status = "Queued";
+        job.NextAttemptUtc = DateTime.UtcNow.AddMinutes(delayMinutes);
+        job.ConflictCode = "erp.retry_scheduled";
     }
 }
