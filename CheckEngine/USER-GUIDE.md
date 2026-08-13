@@ -215,8 +215,8 @@ designed to be driven from the dashboard, scripts, or your own tooling.
 | **OEM registry** | `/Admin/CheckEngine/OemAdmin/{Manufacturers,OemNumbers,Relations}` and `Create*/Update*/Delete*` | Manufacturer-qualified numbers, cross-reference and supersession relations |
 | **Fitment review** | `/Admin/CheckEngine/FitmentAdmin/Queue`, `Approve`, `Reject` | Approvals/rejections are written to the audit trail; safety-critical categories can't be force-published below threshold |
 | **Import** | `/Admin/CheckEngine/ImportAdmin/{Run,Batch,RerunStage,SetReviewStatus,Publish}` | See [section 8](#8-the-product-import-pipeline) |
-| **Search (storefront)** | `check-engine/search/query`, `check-engine/search/suggest`, `check-engine/search/recommend` | `query` returns hits, `total`, facets (category/brand/price/fitment) and structured recovery; `suggest` is rate-limited typeahead over vehicles, OEM numbers and products |
-| **Search index** | `/Admin/CheckEngine/SearchAdmin/Rebuild` | Rebuilds/refreshes the search index health |
+| **Search (storefront)** | `check-engine/search/query`, `check-engine/search/suggest`, `check-engine/search/recommend`, `check-engine/search/click` | `query` returns hits/facets/recovery plus anonymous analytics id; `click` records product click-through with antiforgery. Analytics persists a keyed fingerprint, never raw query/VIN/customer/IP |
+| **Search admin** | `/Admin/CheckEngine/SearchAdmin/{Rebuild,Analytics,PruneAnalytics}` | Rebuilds index health; returns aggregate search/zero-result/click/CTR summary; prunes analytics with bounded 30–730 day retention |
 | **Garage support** | `/Admin/CheckEngine/GarageAdmin/CustomerGarage` | Read a customer's garage for support |
 | **Images** | `/Admin/CheckEngine/ImageAdmin/Replace` | Replace a placeholder image with a professional asset |
 | **SEO** | `/Admin/CheckEngine/SeoAdmin/{Sitemap,GenerateVehicle,GeneratePartForVehicle,RebuildSitemap}` | Landing-page and sitemap helpers |

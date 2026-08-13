@@ -83,6 +83,9 @@ only cloud-specific caveats.
 - Check Engine keyword/category search delegates to nopCommerce's `IProductService`, while OEM and
   vehicle-tree candidate IDs come from Check Engine SQL and are hydrated through the real catalog.
   Production search must never fall back to invented demo product IDs.
+- Search analytics may receive normalized text only to compute a deployment-keyed HMAC fingerprint.
+  Never add raw query/VIN/OEM, customer id, or IP columns/logs. Click-through is anonymous by analytics
+  event id; retention must remain bounded and explicitly pruneable.
 - Public SEO landings use `/vehicles/config-{id}` and `/parts/product-{id}/for/config-{id}` with
   `/ar/` counterparts. They contribute SQL-backed URLs through nopCommerce's `SitemapCreatedEvent`;
   do not add a second sitemap XML endpoint or restore the old process-local sitemap service.
