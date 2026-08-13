@@ -74,6 +74,24 @@ public class FitmentAndImportInfrastructureConventionsTests
     }
 
     [Test]
+    public void SqlImportPipelineRepository_Should_Bracket_SqlServer_Reserved_RowCount_Column()
+    {
+        // SQL Server rejects unquoted RowCount (error 156) in SELECT/INSERT/UPDATE column lists.
+        var path = System.IO.Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "..", "..", "..", "..", "..",
+            "Plugins", "TwinParticles.CheckEngine.Infrastructure", "ImportPipeline", "SqlImportPipelineRepository.cs");
+        path = System.IO.Path.GetFullPath(path);
+        System.IO.File.Exists(path).Should().BeTrue();
+
+        var source = System.IO.File.ReadAllText(path);
+        source.Should().Contain("[RowCount], ErrorSummary");
+        source.Should().Contain("[RowCount] = @rowCount");
+        source.Should().NotContain(", RowCount, ErrorSummary");
+        source.Should().NotContain("    RowCount = @rowCount");
+    }
+
+    [Test]
     public void OemInfrastructure_Should_Expose_ProductOemMap_Sql_Repository()
     {
         typeof(TwinParticles.CheckEngine.Infrastructure.Oem.SqlProductOemMapRepository).IsClass.Should().BeTrue();

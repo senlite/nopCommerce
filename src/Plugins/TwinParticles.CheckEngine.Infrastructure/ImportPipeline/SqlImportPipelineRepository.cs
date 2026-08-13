@@ -22,7 +22,7 @@ public sealed class SqlImportPipelineRepository : IImportPipelineRepository
     public async Task<ImportBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
-            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary,
+            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, [RowCount], ErrorSummary,
        SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc
 FROM TP_CE_ImportBatch WHERE Id = @id",
             new DataParameter("id", batchId));
@@ -33,7 +33,7 @@ FROM TP_CE_ImportBatch WHERE Id = @id",
     public async Task<ImportBatch?> GetBatchByCorrelationIdAsync(Guid correlationId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
-            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary,
+            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, [RowCount], ErrorSummary,
        SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc
 FROM TP_CE_ImportBatch WHERE CorrelationId = @correlationId",
             new DataParameter("correlationId", correlationId));
@@ -52,7 +52,7 @@ SET CorrelationId = @correlationId,
     SourceFormatId = @sourceFormatId,
     Status = @status,
     UploadedByCustomerId = @uploadedByCustomerId,
-    RowCount = @rowCount,
+    [RowCount] = @rowCount,
     ErrorSummary = @errorSummary,
     SourceContent = @sourceContent,
     RunOptionsJson = @runOptionsJson,
@@ -80,7 +80,7 @@ WHERE Id = @id",
 
         var inserted = await _dataProvider.QueryAsync<ScalarIntRow>(
             @"INSERT INTO TP_CE_ImportBatch
-(CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, RowCount, ErrorSummary, SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc)
+(CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, [RowCount], ErrorSummary, SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc)
 VALUES
 (@correlationId, @fileName, @sourceFormatId, @status, @uploadedByCustomerId, @rowCount, @errorSummary, @sourceContent, @runOptionsJson, @currentStage, @completedStagesCsv, @createdUtc, @updatedUtc);
 SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
