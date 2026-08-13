@@ -97,9 +97,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILicenceStateStore, InMemoryLicenceStateStore>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
+        services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();
         services.AddSingleton<ISeoUrlService, DefaultSeoUrlService>();
         services.AddSingleton<ISeoStructuredDataService, DefaultSeoStructuredDataService>();
-        services.AddSingleton<ISeoSitemapService, InMemorySeoSitemapService>();
+        services.AddScoped<ISeoSitemapService, SqlBackedSeoSitemapService>();
         services.AddSingleton<ISeoPerformanceBudgetService, DefaultSeoPerformanceBudgetService>();
 
         services.AddScoped<IErpSyncQueueRepository, SqlErpSyncQueueRepository>();

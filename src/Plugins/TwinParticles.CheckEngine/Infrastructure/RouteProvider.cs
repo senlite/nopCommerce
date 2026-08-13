@@ -25,6 +25,26 @@ public sealed class RouteProvider : IRouteProvider
             defaults: new { area = AreaNames.ADMIN, controller = "CheckEngine", action = "Dashboard" });
 
         endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SeoVehicleAr",
+            pattern: "ar/vehicles/config-{vehicleConfigurationId:int}",
+            defaults: new { controller = "SeoLanding", action = "Vehicle", locale = "ar" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SeoVehicleEn",
+            pattern: "vehicles/config-{vehicleConfigurationId:int}",
+            defaults: new { controller = "SeoLanding", action = "Vehicle", locale = "en" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SeoPartVehicleAr",
+            pattern: "ar/parts/product-{productId:int}/for/config-{vehicleConfigurationId:int}",
+            defaults: new { controller = "SeoLanding", action = "PartForVehicle", locale = "ar" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SeoPartVehicleEn",
+            pattern: "parts/product-{productId:int}/for/config-{vehicleConfigurationId:int}",
+            defaults: new { controller = "SeoLanding", action = "PartForVehicle", locale = "en" });
+
+        endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.VehicleAdmin",
             pattern: "Admin/CheckEngine/VehicleAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "VehicleAdmin", action = "Makes" });
