@@ -56,8 +56,19 @@ public sealed class GarageController : BasePublicController
         if (model is null || (!model.VehicleConfigurationId.HasValue && string.IsNullOrWhiteSpace(model.Vin)))
             return BadRequest(new { reasonCode = "garage.invalid_vehicle" });
 
-        var saved = await _garageService.AddVehicleAsync(customer.Id, model.VehicleConfigurationId, model.Vin, model.Label, cancellationToken);
-        return Json(saved);
+        try
+        {
+            var saved = await _garageService.AddVehicleAsync(customer.Id, model.VehicleConfigurationId, model.Vin, model.Label, cancellationToken);
+            return Json(saved);
+        }
+        catch (GarageVinDisambiguationException exception)
+        {
+            return Conflict(new
+            {
+                reasonCode = exception.Message,
+                candidates = exception.Candidates
+            });
+        }
     }
 
     [HttpPut]

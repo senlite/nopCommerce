@@ -46,8 +46,18 @@ public sealed class GarageService
         if (!string.IsNullOrWhiteSpace(normalizedVin))
         {
             var decode = await _vinDecodeService.DecodeAsync(normalizedVin, cancellationToken);
-            if (decode.Candidates.Count > 0)
-                resolvedConfigurationId ??= decode.Candidates[0].VehicleConfigurationId;
+            if (!resolvedConfigurationId.HasValue &&
+                string.Equals(decode.Outcome, "NeedsDisambiguation", StringComparison.Ordinal))
+            {
+                throw new GarageVinDisambiguationException(decode.Candidates);
+            }
+
+            if (!resolvedConfigurationId.HasValue &&
+                string.Equals(decode.Outcome, "SingleMatch", StringComparison.Ordinal) &&
+                decode.Candidates.Count == 1)
+            {
+                resolvedConfigurationId = decode.Candidates[0].VehicleConfigurationId;
+            }
         }
 
         var id = garage.Vehicles.Count == 0 ? 1 : garage.Vehicles.Max(x => x.Id) + 1;

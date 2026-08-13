@@ -60,6 +60,23 @@ public class GaragePrivacyContractTests
         source.Should().NotContain(".AsString(64)");
     }
 
+    [Test]
+    public void Ambiguous_Vin_Should_Never_Silently_Select_First_Garage_Candidate()
+    {
+        var service = ReadPluginFile(
+            "TwinParticles.CheckEngine.Application", "Garage", "GarageService.cs");
+        var controller = ReadPluginFile(
+            "TwinParticles.CheckEngine", "Controllers", "GarageController.cs");
+
+        service.Should().Contain("\"NeedsDisambiguation\"");
+        service.Should().Contain("throw new GarageVinDisambiguationException(decode.Candidates)");
+        service.Should().Contain("decode.Candidates.Count == 1");
+        service.Should().NotContain("resolvedConfigurationId ??= decode.Candidates[0]");
+        controller.Should().Contain("GarageVinDisambiguationException");
+        controller.Should().Contain("return Conflict");
+        controller.Should().Contain("candidates = exception.Candidates");
+    }
+
     private static string ReadPluginFile(string project, params string[] relativePath)
     {
         var start = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);

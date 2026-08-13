@@ -83,6 +83,8 @@ only cloud-specific caveats.
 - Signed-in garage VINs are plaintext only in domain/application memory and subject export; the SQL
   repository must protect them through `IGarageVinProtector` (`enc:v1:`). Never log/copy VINs into
   audit JSON. Garage erasure is atomic and also runs on `CustomerPermanentlyDeleted`.
+- VIN consumers must honor `NeedsDisambiguation`; never bind `Candidates[0]` unless the decode outcome
+  is a true single match or the customer supplied an explicit configuration selection.
 - Check Engine keyword/category search delegates to nopCommerce's `IProductService`, while OEM and
   vehicle-tree candidate IDs come from Check Engine SQL and are hydrated through the real catalog.
   Production search must never fall back to invented demo product IDs.

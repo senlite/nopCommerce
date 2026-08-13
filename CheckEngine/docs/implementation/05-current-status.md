@@ -32,6 +32,7 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - Guest garage survives app restart and migrates inline to the authenticated SQL garage on sign-in
 - Garage VINs are encrypted at the repository boundary; authenticated subject export, confirmed
   erasure and permanent-customer-delete cleanup are audited without copying VIN into audit JSON
+- Ambiguous VIN garage adds return conflict + ranked candidates and never silently bind candidate 0
 - Incremental BMW reference seed: 10 models, 32 generations, 284 current configuration definitions;
   live upgraded store has 294 unique preserved/current leaves and EN/AR aliases for every leaf
 - Atomic make/model merge and soft archive preserve configuration/fitment ids, move aliases, invalidate
@@ -55,7 +56,7 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - `dotnet build src/NopCommerce.sln -c Release`
 - `dotnet test src/Tests/Nop.Tests/Nop.Tests.csproj -c Release` (1,044 pass; 8 skip)
 - Run: `bash CheckEngine/scripts/build-checkengine.sh`
-- Check Engine suite: 555/555; GMaster suite: 19/19
+- Check Engine suite: 556/556; GMaster suite: 19/19
 - SQL Server lifecycle: install produced 25 `TP_CE_*` tables and 26 migration rows; uninstall left zero
   Check Engine tables, migration rows and permissions; backup restore returned all baseline counts
 
