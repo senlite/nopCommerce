@@ -21,7 +21,11 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - Real catalog keyword/category search via nopCommerce; OEM/vehicle projections hydrate real products
 - Search facets (category/brand/price/fitment), `/search/suggest` typeahead, and structured zero-result recovery; verified live on SQL Server
 - Search benchmark corpus with precision@10 and first-page latency budget gate CI (production-scale proof pending)
+- Live SQL search at 426 products / 294 vehicle leaves: keyword query p95 43.8ms and configuration
+  autocomplete p95 11.1ms over 20 warm requests; ~250k-product load proof remains
 - Guest garage survives app restart and migrates inline to the authenticated SQL garage on sign-in
+- Incremental BMW reference seed: 10 models, 32 generations, 284 current configuration definitions;
+  live upgraded store has 294 unique preserved/current leaves and EN/AR aliases for every leaf
 - Fitment corpus: 233 Must cases; qualifier variants and context-aware caching verified live
 - Public EN/AR vehicle and part-for-vehicle SEO landings with canonical/hreflang/JSON-LD
 - SQL-backed fitment-gated URLs integrated into nopCommerce `/sitemap.xml`; thin pages are noindex
@@ -41,7 +45,7 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - `dotnet build src/NopCommerce.sln -c Release`
 - `dotnet test src/Tests/Nop.Tests/Nop.Tests.csproj -c Release` (1,044 pass; 8 skip)
 - Run: `bash CheckEngine/scripts/build-checkengine.sh`
-- Check Engine suite: 524/524; GMaster suite: 19/19
+- Check Engine suite: 531/531; GMaster suite: 19/19
 - SQL Server lifecycle: install produced 25 `TP_CE_*` tables and 26 migration rows; uninstall left zero
   Check Engine tables, migration rows and permissions; backup restore returned all baseline counts
 

@@ -88,6 +88,9 @@ only cloud-specific caveats.
 - Import batches are SQL-authoritative, not process-local. The source bytes and full row state are
   intentionally persisted so `/ImportAdmin/Batch`, review, publish and `RerunStage` survive restarts.
   Do not restore best-effort persistence or a singleton batch dictionary.
+- The bundled BMW seed is an incremental reference-data upgrade. Re-running `VehicleAdmin/Seed` must
+  add only missing natural keys/aliases, preserve unrelated makes and operator edits, and never
+  delete legacy configurations. Fitment authority remains in separate provenanced claims.
 
 ### Frontend assets (optional)
 - Prebuilt assets ship in `wwwroot`; Node is not required to run. To rebuild them:

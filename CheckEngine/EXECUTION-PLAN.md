@@ -163,7 +163,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | partial | Curated BMW launch slice (`BmwReferenceVehicleSeedLoader`): 5 models, 9 generations, 46 configurations, bilingual aliases, seeded live on SQL Server. Reference-scale volume and the full generation priority list remain |
+| H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | done | Incremental curated seed now covers 10 models / 32 generations / 284 current configurations; live upgrade preserved 10 legacy leaves for 294 total, all with unique fingerprints and EN/AR configuration aliases. Second seed inserts zero and operator edits/unrelated makes are preserved |
 | H1.5 | Support make/model merge and archive while preserving fitment and audit history | pending | CRUD exists; merge/archive workflow is absent |
 | H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | partial | ISO validation exists, but decoder mappings cover only a small hard-coded set |
 | H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | partial | Candidate contracts exist; production corpus and log audit do not |
@@ -190,7 +190,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 |---|---|---|---|
 | H1.12 | Complete VIN, OEM, vehicle-tree, category and keyword search against production data | partial | Keyword/category now use nopCommerce's real published catalog; OEM/tree projections hydrate real product records; VIN searches the decoded vehicle tree. Brand facet filtering now works across lanes; production-scale coverage remains |
 | H1.13 | Add production full-text/external index with incremental rebuild and SQL degradation | partial | Repository failures now mark health degraded and return honest empties; full-text/external indexing and a real rebuild remain |
-| H1.14 | Meet first-page latency and accuracy budgets on the published benchmark set | partial | A benchmark corpus (`src/Tests/corpus/search`) with precision@10 and a first-page latency budget now gate CI; production-scale proof against the seeded reference catalog remains |
+| H1.14 | Meet first-page latency and accuracy budgets on the published benchmark set | partial | Precision@10 corpus and first-page latency gate CI; live SQL store (426 products / 294 vehicle configurations) measured query p95 43.8ms and configuration-suggest p95 11.1ms. The documented ~250k-product reference-scale load test remains |
 | H1.15 | Add facets, autocomplete and zero-result recovery UX | done | Category/brand/price/fitment facets aggregate over the full result (pre-paging) with real catalog metadata; `/check-engine/search/suggest` typeahead composes vehicle/OEM/product sources; structured recovery actions render in the rail. Verified live on SQL Server |
 | H1.16 | Add privacy-safe search analytics | pending | No production analytics pipeline exists |
 | H1.17 | Persist guest garage safely and migrate on sign-in | done | Browser-local payload survives app restarts and migrates inline into the authenticated SQL garage with antiforgery protection; verified live with normalized VIN and active vehicle |
@@ -314,7 +314,7 @@ The following are **not missing implementation** and must not be counted as defe
 
 Work follows dependency order rather than skipping to later roadmap features:
 
-1. Grow the BMW dataset (H1.4) from the curated launch slice toward the documented generation priority
-   list and reference-scale volume, then run the search benchmark at reference scale (remaining H1.14).
+1. Import production-scale catalog + provenanced fitment data (H1.11), then run the ~250k-product
+   search/fitment latency and accuracy gates (remaining H1.10/H1.14).
 2. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
 3. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
