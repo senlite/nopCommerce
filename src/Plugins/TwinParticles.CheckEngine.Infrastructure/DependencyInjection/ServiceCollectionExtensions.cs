@@ -72,7 +72,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVehicleAliasWriteRepository, SqlVehicleAliasRepository>();
 
         services.AddScoped<IVehicleAdminRepository, SqlVehicleAdminRepository>();
-        services.AddScoped<IVehicleSeedLoader, BasicVehicleSeedLoader>();
+        services.AddScoped<IVehicleSeedLoader, BmwReferenceVehicleSeedLoader>();
 
         services.AddSingleton<IManufacturerVinDecoder, BmwVinDecoder>();
         services.AddSingleton<IVinDecoderRegistry, VinDecoderRegistry>();

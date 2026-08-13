@@ -155,14 +155,15 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 |---|---|---|---|
 | H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | done | Live SQL Server rehearsal left zero `TP_CE_*` tables, migration versions and permissions |
 | H1.2 | Add uninstall confirmation and export-before-drop workflow | pending | Uninstall currently applies down migrations immediately |
-| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | partial | Now `0.3.0` for nopCommerce 4.90; the system name still differs from the documented packaging table |
+| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | partial | Now `0.5.0` for nopCommerce 4.90; the system name still differs from the documented packaging table |
+| H1.3b | Bind plugin admin routes to the Admin area | done | Admin `{action}` routes omitted the area value and 404'd; every admin route now sets `area = Admin`, verified live via the vehicle seed endpoint |
 | H1.3a | Deliver migrations and locale resources on plugin update, not only on install | done | `UpdateAsync` applies pending migrations and re-applies locale resources; verified by a live `0.2.0`→`0.3.0` upgrade |
 
 #### Vehicle, VIN, OEM and fitment data
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.4 | Load a reference-scale BMW vehicle hierarchy without third-party runtime dependency | pending | Default seed is generic scaffolding, not the launch dataset |
+| H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | partial | Curated BMW launch slice (`BmwReferenceVehicleSeedLoader`): 5 models, 9 generations, 46 configurations, bilingual aliases, seeded live on SQL Server. Reference-scale volume and the full generation priority list remain |
 | H1.5 | Support make/model merge and archive while preserving fitment and audit history | pending | CRUD exists; merge/archive workflow is absent |
 | H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | partial | ISO validation exists, but decoder mappings cover only a small hard-coded set |
 | H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | partial | Candidate contracts exist; production corpus and log audit do not |
@@ -180,7 +181,8 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.9c | Give negative claims precedence over positive claims | done | A published `DoesNotFit` claim now wins regardless of confidence, and still applies when its qualifiers cannot be checked |
 | H1.9d | Make the publish threshold configurable with a safety-critical hard stop | done | `FitmentPublicationOptions` is tunable; safety-critical publication cannot be lowered past a fixed floor |
 | H1.9e | Bind the storefront fitment band to the product being viewed | done | The band previously shipped with an empty product id, leaving it inert on every product page |
-| H1.9f | Allow qualifier-scoped claim variants for one product and vehicle | pending | A unique index on `(ProductId, VehicleConfigurationId)` permits only one claim per pair, so left- and right-hand-drive variants cannot coexist |
+| H1.9f | Allow qualifier-scoped claim variants for one product and vehicle | done | The unique index is relaxed to non-unique; two drive-side variant claims coexist and resolve per side, verified live |
+| H1.9g | Key the fitment cache on the full evaluation context | done | The cache keyed only on product and vehicle, serving one verdict to every context; now keyed on all qualifier inputs |
 
 #### Search and customer garage
 
@@ -312,10 +314,9 @@ The following are **not missing implementation** and must not be counted as defe
 
 Work follows dependency order rather than skipping to later roadmap features:
 
-1. Relax the single-claim-per-product/vehicle index (H1.9f) so qualifier-scoped variants can coexist,
-   then extend the corpus with multi-claim cases that the schema currently cannot represent.
-2. Load the reference BMW vehicle dataset (H1.4) so evaluation runs against production-scale data.
-3. Replace Horizon 1 in-memory/stub production paths in search, import, garage, SEO, ERP and licensing.
-4. Run reference-scale performance, accessibility/RTL/CWV and security gates.
-5. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
-6. Resume unfinished Horizon 2 work only after the Horizon 1 release gate is evidenced.
+1. Grow the BMW dataset (H1.4) from the curated launch slice toward the documented generation priority
+   list and reference-scale volume.
+2. Replace Horizon 1 in-memory/stub production paths in search, import, garage, SEO, ERP and licensing.
+3. Run reference-scale performance, accessibility/RTL/CWV and security gates.
+4. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
+5. Resume unfinished Horizon 2 work only after the Horizon 1 release gate is evidenced.
