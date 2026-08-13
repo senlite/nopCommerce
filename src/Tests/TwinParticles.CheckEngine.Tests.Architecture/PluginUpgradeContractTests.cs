@@ -49,13 +49,19 @@ public class PluginUpgradeContractTests
     }
 
     [Test]
-    public void Update_Should_Apply_Pending_Migrations()
+    public void Update_Should_Apply_Every_Pending_Migration()
     {
         var body = ExtractMethodBody(ReadPluginSource(), "public override async Task UpdateAsync");
 
         body.Should().Contain("ApplyUpMigrations",
             "migrations live in a separate assembly that nopCommerce does not scan on update");
-        body.Should().Contain("MigrationProcessType.Update");
+
+        // Every Check Engine migration is Installation-typed, and ApplyUpMigrations(..., Update)
+        // filters those out. NoMatter applies all unapplied migrations regardless of type.
+        body.Should().Contain("MigrationProcessType.NoMatter",
+            "an Update-typed apply skips the Installation-typed schema migrations this plugin ships");
+        body.Should().NotContain("MigrationProcessType.Update",
+            "Update-typed apply would leave new schema unapplied on upgrade");
     }
 
     [Test]

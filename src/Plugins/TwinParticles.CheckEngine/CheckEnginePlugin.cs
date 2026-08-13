@@ -145,7 +145,11 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)
     {
-        _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.Update);
+        // Apply every pending migration, not only Update-typed ones. All Check Engine migrations are
+        // tagged Installation (per convention), and ApplyUpMigrations(..., Update) filters those out,
+        // so a version bump that ships new schema would otherwise apply nothing. NoMatter runs all
+        // unapplied migrations regardless of process type.
+        _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.NoMatter);
         await AddOrUpdateLocaleResourcesAsync();
         await base.UpdateAsync(currentVersion, targetVersion);
     }

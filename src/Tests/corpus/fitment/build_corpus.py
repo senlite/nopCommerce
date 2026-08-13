@@ -582,6 +582,74 @@ def build() -> dict:
             tags=["multi-claim", "qualifier", safety.lower()],
         )
 
+    # --- Variant claims: two qualified positives for the same product and vehicle ---
+    # These require more than one claim per (product, vehicle), which the schema now permits (H1.9f).
+    for safety in SAFETY_CLASSES:
+        lhd = claim(safety=safety, confidence=0.95, qualifier={"steeringSide": "LHD"})
+        rhd = claim(safety=safety, confidence=0.95, qualifier={"steeringSide": "RHD"})
+        builder.add(
+            f"variant_lhd_rhd_selects_matching_lhd_{safety.lower()}",
+            "With left- and right-hand-drive variants, a left-hand-drive car uses the LHD claim.",
+            [lhd, rhd],
+            {"steeringSide": "LHD"},
+            tags=["variant", "qualifier", safety.lower()],
+        )
+        builder.add(
+            f"variant_lhd_rhd_selects_matching_rhd_{safety.lower()}",
+            "With left- and right-hand-drive variants, a right-hand-drive car uses the RHD claim.",
+            [lhd, rhd],
+            {"steeringSide": "RHD"},
+            tags=["variant", "qualifier", safety.lower()],
+        )
+        builder.add(
+            f"variant_lhd_rhd_unknown_side_{safety.lower()}",
+            "With drive-side variants and no known side, the customer is asked for detail.",
+            [lhd, rhd],
+            {},
+            tags=["variant", "qualifier", "disambiguation", safety.lower()],
+        )
+
+        early = claim(safety=safety, confidence=0.94, qualifier={"productionFromYear": 2012, "productionToYear": 2015})
+        late = claim(safety=safety, confidence=0.94, qualifier={"productionFromYear": 2016, "productionToYear": 2019})
+        builder.add(
+            f"variant_year_split_selects_early_{safety.lower()}",
+            "Facelift split by build year: an early car matches the early claim.",
+            [early, late],
+            {"productionYear": 2013},
+            tags=["variant", "production-year", safety.lower()],
+        )
+        builder.add(
+            f"variant_year_split_selects_late_{safety.lower()}",
+            "Facelift split by build year: a late car matches the late claim.",
+            [early, late],
+            {"productionYear": 2018},
+            tags=["variant", "production-year", safety.lower()],
+        )
+        builder.add(
+            f"variant_year_split_gap_{safety.lower()}",
+            "A car built outside both windows matches neither variant.",
+            [early, late],
+            {"productionYear": 2021},
+            tags=["variant", "production-year", "fail-closed", safety.lower()],
+        )
+
+        positive_variant = claim(status="Fits", safety=safety, confidence=0.96, qualifier={"marketRegion": "ECE"})
+        negative_variant = claim(status="DoesNotFit", safety=safety, confidence=0.60, qualifier={"marketRegion": "USDM"})
+        builder.add(
+            f"variant_positive_and_negative_by_market_positive_{safety.lower()}",
+            "Market-split variants: a European car uses the positive ECE claim.",
+            [positive_variant, negative_variant],
+            {"marketRegion": "ECE"},
+            tags=["variant", "qualifier", "negative-precedence", safety.lower()],
+        )
+        builder.add(
+            f"variant_positive_and_negative_by_market_negative_{safety.lower()}",
+            "Market-split variants: a US car hits the negative USDM claim.",
+            [positive_variant, negative_variant],
+            {"marketRegion": "USDM"},
+            tags=["variant", "qualifier", "negative-precedence", "fail-closed", safety.lower()],
+        )
+
     cases = builder.cases
     return {
         "version": "1.0",

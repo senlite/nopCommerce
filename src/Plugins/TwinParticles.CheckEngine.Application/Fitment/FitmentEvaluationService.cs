@@ -31,14 +31,14 @@ public sealed class FitmentEvaluationService
 
     public async Task<FitmentEvaluationResult> EvaluateAsync(FitmentEvaluationContext context, CancellationToken cancellationToken)
     {
-        var cached = await _cache.GetAsync(context.ProductId, context.VehicleConfigurationId, cancellationToken);
+        var cached = await _cache.GetAsync(context, cancellationToken);
         if (cached is not null)
             return cached;
 
         var claims = await _readRepository.GetClaimsAsync(context.ProductId, context.VehicleConfigurationId, cancellationToken);
         var result = Resolve(claims, context);
 
-        await _cache.SetAsync(context.ProductId, context.VehicleConfigurationId, result, cancellationToken);
+        await _cache.SetAsync(context, result, cancellationToken);
         return result;
     }
 

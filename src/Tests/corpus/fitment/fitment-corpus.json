@@ -2,7 +2,7 @@
   "version": "1.0",
   "description": "Check Engine fitment accuracy corpus. The Must set must pass at 100% on a release candidate (AC-35.3).",
   "fitsConfidenceThreshold": 0.6,
-  "caseCount": 209,
+  "caseCount": 233,
   "cases": [
     {
       "id": "CE-FIT-0001",
@@ -6842,6 +6842,1041 @@
       "expected": {
         "outcome": "Fits",
         "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0210",
+      "name": "variant_lhd_rhd_selects_matching_lhd_standard",
+      "tier": "Must",
+      "description": "With left- and right-hand-drive variants, a left-hand-drive car uses the LHD claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0211",
+      "name": "variant_lhd_rhd_selects_matching_rhd_standard",
+      "tier": "Must",
+      "description": "With left- and right-hand-drive variants, a right-hand-drive car uses the RHD claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0212",
+      "name": "variant_lhd_rhd_unknown_side_standard",
+      "tier": "Must",
+      "description": "With drive-side variants and no known side, the customer is asked for detail.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "disambiguation",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.steering_side_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0213",
+      "name": "variant_year_split_selects_early_standard",
+      "tier": "Must",
+      "description": "Facelift split by build year: an early car matches the early claim.",
+      "tags": [
+        "variant",
+        "production-year",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2013
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0214",
+      "name": "variant_year_split_selects_late_standard",
+      "tier": "Must",
+      "description": "Facelift split by build year: a late car matches the late claim.",
+      "tags": [
+        "variant",
+        "production-year",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2018
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0215",
+      "name": "variant_year_split_gap_standard",
+      "tier": "Must",
+      "description": "A car built outside both windows matches neither variant.",
+      "tags": [
+        "variant",
+        "production-year",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2021
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0216",
+      "name": "variant_positive_and_negative_by_market_positive_standard",
+      "tier": "Must",
+      "description": "Market-split variants: a European car uses the positive ECE claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "negative-precedence",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0217",
+      "name": "variant_positive_and_negative_by_market_negative_standard",
+      "tier": "Must",
+      "description": "Market-split variants: a US car hits the negative USDM claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "negative-precedence",
+        "fail-closed",
+        "standard"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Standard",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0218",
+      "name": "variant_lhd_rhd_selects_matching_lhd_elevated",
+      "tier": "Must",
+      "description": "With left- and right-hand-drive variants, a left-hand-drive car uses the LHD claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0219",
+      "name": "variant_lhd_rhd_selects_matching_rhd_elevated",
+      "tier": "Must",
+      "description": "With left- and right-hand-drive variants, a right-hand-drive car uses the RHD claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0220",
+      "name": "variant_lhd_rhd_unknown_side_elevated",
+      "tier": "Must",
+      "description": "With drive-side variants and no known side, the customer is asked for detail.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "disambiguation",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.steering_side_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0221",
+      "name": "variant_year_split_selects_early_elevated",
+      "tier": "Must",
+      "description": "Facelift split by build year: an early car matches the early claim.",
+      "tags": [
+        "variant",
+        "production-year",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2013
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0222",
+      "name": "variant_year_split_selects_late_elevated",
+      "tier": "Must",
+      "description": "Facelift split by build year: a late car matches the late claim.",
+      "tags": [
+        "variant",
+        "production-year",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2018
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0223",
+      "name": "variant_year_split_gap_elevated",
+      "tier": "Must",
+      "description": "A car built outside both windows matches neither variant.",
+      "tags": [
+        "variant",
+        "production-year",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2021
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0224",
+      "name": "variant_positive_and_negative_by_market_positive_elevated",
+      "tier": "Must",
+      "description": "Market-split variants: a European car uses the positive ECE claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "negative-precedence",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0225",
+      "name": "variant_positive_and_negative_by_market_negative_elevated",
+      "tier": "Must",
+      "description": "Market-split variants: a US car hits the negative USDM claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "negative-precedence",
+        "fail-closed",
+        "elevated"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "Elevated",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
+      }
+    },
+    {
+      "id": "CE-FIT-0226",
+      "name": "variant_lhd_rhd_selects_matching_lhd_safetycritical",
+      "tier": "Must",
+      "description": "With left- and right-hand-drive variants, a left-hand-drive car uses the LHD claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "LHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0227",
+      "name": "variant_lhd_rhd_selects_matching_rhd_safetycritical",
+      "tier": "Must",
+      "description": "With left- and right-hand-drive variants, a right-hand-drive car uses the RHD claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {
+        "steeringSide": "RHD"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0228",
+      "name": "variant_lhd_rhd_unknown_side_safetycritical",
+      "tier": "Must",
+      "description": "With drive-side variants and no known side, the customer is asked for detail.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "disambiguation",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "LHD"
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.95,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "steeringSide": "RHD"
+          }
+        }
+      ],
+      "context": {},
+      "expected": {
+        "outcome": "NeedsDisambiguation",
+        "reasonCode": "fitment.steering_side_required"
+      }
+    },
+    {
+      "id": "CE-FIT-0229",
+      "name": "variant_year_split_selects_early_safetycritical",
+      "tier": "Must",
+      "description": "Facelift split by build year: an early car matches the early claim.",
+      "tags": [
+        "variant",
+        "production-year",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2013
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0230",
+      "name": "variant_year_split_selects_late_safetycritical",
+      "tier": "Must",
+      "description": "Facelift split by build year: a late car matches the late claim.",
+      "tags": [
+        "variant",
+        "production-year",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2018
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0231",
+      "name": "variant_year_split_gap_safetycritical",
+      "tier": "Must",
+      "description": "A car built outside both windows matches neither variant.",
+      "tags": [
+        "variant",
+        "production-year",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2012,
+            "productionToYear": 2015
+          }
+        },
+        {
+          "status": "Fits",
+          "confidence": 0.94,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "productionFromYear": 2016,
+            "productionToYear": 2019
+          }
+        }
+      ],
+      "context": {
+        "productionYear": 2021
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.production_year_out_of_range"
+      }
+    },
+    {
+      "id": "CE-FIT-0232",
+      "name": "variant_positive_and_negative_by_market_positive_safetycritical",
+      "tier": "Must",
+      "description": "Market-split variants: a European car uses the positive ECE claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "negative-precedence",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "ECE"
+      },
+      "expected": {
+        "outcome": "Fits",
+        "reasonCode": null
+      }
+    },
+    {
+      "id": "CE-FIT-0233",
+      "name": "variant_positive_and_negative_by_market_negative_safetycritical",
+      "tier": "Must",
+      "description": "Market-split variants: a US car hits the negative USDM claim.",
+      "tags": [
+        "variant",
+        "qualifier",
+        "negative-precedence",
+        "fail-closed",
+        "safetycritical"
+      ],
+      "claims": [
+        {
+          "status": "Fits",
+          "confidence": 0.96,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "ECE"
+          }
+        },
+        {
+          "status": "DoesNotFit",
+          "confidence": 0.6,
+          "isPublished": true,
+          "isActive": true,
+          "safetyClass": "SafetyCritical",
+          "sourceKind": "CuratorManual",
+          "qualifier": {
+            "marketRegion": "USDM"
+          }
+        }
+      ],
+      "context": {
+        "marketRegion": "USDM"
+      },
+      "expected": {
+        "outcome": "DoesNotFit",
+        "reasonCode": "fitment.negative_claim"
       }
     }
   ]

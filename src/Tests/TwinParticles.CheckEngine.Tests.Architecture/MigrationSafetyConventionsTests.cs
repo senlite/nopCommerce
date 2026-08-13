@@ -89,7 +89,7 @@ public class MigrationSafetyConventionsTests
 
         versions.Should().OnlyHaveUniqueItems("duplicate FluentMigrator versions block forward/rollback ordering");
         versions.Should().BeInAscendingOrder();
-        versions.Count.Should().BeGreaterThanOrEqualTo(23);
+        versions.Count.Should().BeGreaterThanOrEqualTo(24);
     }
 
     [Test]
