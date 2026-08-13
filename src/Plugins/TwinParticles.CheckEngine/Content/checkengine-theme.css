@@ -49,6 +49,156 @@
 }
 
 /* ============================================================
+   Catalog mega menu (host zone: header_menu_after)
+   ============================================================ */
+
+.ce-mega-nav {
+  position: relative;
+  z-index: calc(var(--ce-rail-z) + 1);
+  font-family: var(--ce-font-ui);
+}
+
+.ce-mega {
+  position: relative;
+  max-inline-size: var(--ce-max-content-width);
+  margin-inline: auto;
+}
+
+.ce-mega__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ce-space-2);
+  min-block-size: var(--ce-control-height);
+  padding-inline: var(--ce-space-4);
+  font-weight: var(--ce-weight-semibold);
+  color: var(--ce-text-primary);
+  background: var(--ce-surface-raised);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-md);
+  cursor: pointer;
+  list-style: none;
+}
+
+.ce-mega__trigger::-webkit-details-marker {
+  display: none;
+}
+
+.ce-mega__trigger:hover {
+  border-color: var(--ce-action-primary-hover);
+}
+
+.ce-mega[open] .ce-mega__trigger {
+  color: var(--ce-text-primary);
+  background: color-mix(in srgb, var(--ce-action-primary) 18%, var(--ce-surface-raised));
+  border-color: var(--ce-action-primary-hover);
+}
+
+.ce-mega__caret {
+  margin-inline-start: var(--ce-space-1);
+  transition: transform var(--ce-duration-fast) var(--ce-ease-standard);
+}
+
+.ce-mega[open] .ce-mega__caret {
+  transform: rotate(180deg);
+}
+
+.ce-mega__panel {
+  position: absolute;
+  inset-block-start: calc(100% + var(--ce-space-2));
+  inset-inline: 0;
+  display: grid;
+  gap: var(--ce-space-5);
+  padding: var(--ce-space-5);
+  color: var(--ce-text-primary);
+  background: var(--ce-surface-canvas);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-lg);
+  box-shadow: 0 20px 50px rgba(11, 14, 19, 0.42);
+}
+
+.ce-mega__heading {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--ce-space-1) var(--ce-space-3);
+  align-items: baseline;
+  padding-block-end: var(--ce-space-4);
+  border-block-end: 1px solid var(--ce-border-hairline);
+}
+
+.ce-mega__heading strong {
+  font-family: var(--ce-font-display);
+  font-size: var(--ce-font-size-xl);
+}
+
+.ce-mega__heading > span:last-child {
+  grid-column: 2;
+  color: var(--ce-text-muted);
+}
+
+.ce-mega__eyebrow {
+  padding: var(--ce-space-1) var(--ce-space-2);
+  font-size: var(--ce-font-size-xs);
+  font-weight: var(--ce-weight-semibold);
+  color: var(--ce-action-primary-hover);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  background: color-mix(in srgb, var(--ce-action-primary) 18%, transparent);
+  border-radius: var(--ce-radius-pill);
+}
+
+.ce-mega__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ce-space-5);
+}
+
+.ce-mega__group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ce-space-2);
+  padding-block-end: var(--ce-space-2);
+  font-weight: var(--ce-weight-semibold);
+  color: var(--ce-text-primary);
+  text-decoration: none;
+  border-block-end: 1px solid var(--ce-border-hairline);
+}
+
+.ce-mega__group-title:hover,
+.ce-mega__links a:hover {
+  color: var(--ce-action-primary-hover);
+}
+
+.ce-mega__links {
+  display: grid;
+  gap: var(--ce-space-2);
+  margin: var(--ce-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ce-mega__links a {
+  color: var(--ce-text-muted);
+  text-decoration: none;
+}
+
+.ce-mega__footer {
+  display: flex;
+  gap: var(--ce-space-3);
+  align-items: center;
+  justify-content: flex-end;
+  padding-block-start: var(--ce-space-4);
+  border-block-start: 1px solid var(--ce-border-hairline);
+}
+
+.ce-mega__empty {
+  margin: 0;
+  padding: var(--ce-space-5);
+  color: var(--ce-text-muted);
+  text-align: center;
+}
+
+/* ============================================================
    Search rail  (region: below header, above main)
    ============================================================ */
 
@@ -603,6 +753,10 @@
  * field collapsing, so the search takes a full row of its own and the context controls sit above it.
  */
 @media (max-width: 1199px) {
+  .ce-mega__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .ce-rail__inner {
     flex-wrap: wrap;
     row-gap: var(--ce-space-2);
@@ -621,6 +775,47 @@
 /* Mobile: compact rail; the query field leads and stays reachable. */
 @media (max-width: 767px) {
   :root { --ce-control-height: 40px; }
+
+  .ce-mega {
+    margin-inline: var(--ce-space-3);
+  }
+
+  .ce-mega__trigger {
+    inline-size: 100%;
+    justify-content: center;
+  }
+
+  .ce-mega__panel {
+    position: fixed;
+    inset-block-start: auto;
+    inset-block-end: var(--ce-space-3);
+    inset-inline: var(--ce-space-3);
+    max-block-size: min(76vh, 42rem);
+    overflow-y: auto;
+    padding: var(--ce-space-4);
+  }
+
+  .ce-mega__heading {
+    grid-template-columns: 1fr;
+  }
+
+  .ce-mega__heading > span:last-child {
+    grid-column: 1;
+  }
+
+  .ce-mega__grid {
+    grid-template-columns: 1fr;
+    gap: var(--ce-space-4);
+  }
+
+  .ce-mega__footer {
+    position: sticky;
+    inset-block-end: calc(-1 * var(--ce-space-4));
+    flex-direction: column;
+    align-items: stretch;
+    padding-block: var(--ce-space-4);
+    background: var(--ce-surface-canvas);
+  }
 
   .ce-rail__inner {
     gap: var(--ce-space-2);

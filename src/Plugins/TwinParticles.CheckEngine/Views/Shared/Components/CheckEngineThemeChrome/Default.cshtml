@@ -20,6 +20,68 @@
 }
 else if (zone == "header_after")
 {
+    @* Keyboard-native mega menu: details/summary provides Enter/Space toggle, focus order and
+       Escape-free progressive enhancement without a JavaScript dependency. *@
+    <nav class="ce-root ce-mega-nav" aria-label="@Model.MenuText.AriaLabel">
+        <details class="ce-mega">
+            <summary class="ce-mega__trigger" tabindex="0" aria-expanded="false">
+                <svg class="ce-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+                </svg>
+                <span>@Model.MenuText.AllParts</span>
+                <svg class="ce-icon ce-mega__caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </summary>
+            <div class="ce-mega__panel">
+                <div class="ce-mega__heading">
+                    <span class="ce-mega__eyebrow">@Model.MenuText.Eyebrow</span>
+                    <strong>@Model.MenuText.Title</strong>
+                    <span>@Model.MenuText.Hint</span>
+                </div>
+                @if (Model.MenuGroups.Count > 0)
+                {
+                    <div class="ce-mega__grid">
+                        @foreach (var group in Model.MenuGroups)
+                        {
+                            <section class="ce-mega__group">
+                                <a class="ce-mega__group-title" href="@Url.RouteUrl("Category", new { SeName = group.SeName })">
+                                    @group.Name
+                                    <svg class="ce-icon ce-icon--directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                        <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </a>
+                                @if (group.Children.Count > 0)
+                                {
+                                    <ul class="ce-mega__links">
+                                        @foreach (var child in group.Children)
+                                        {
+                                            <li>
+                                                <a href="@Url.RouteUrl("Category", new { SeName = child.SeName })">@child.Name</a>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </section>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="ce-mega__empty">@Model.MenuText.Empty</p>
+                }
+                <div class="ce-mega__footer">
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-action="add-vehicle">
+                        @Model.MenuText.AddVehicle
+                    </button>
+                    <button type="button" class="ce-btn ce-btn--quiet" data-ce-action="focus-search">
+                        @Model.MenuText.SearchByOem
+                    </button>
+                </div>
+            </div>
+        </details>
+    </nav>
+
     @* Search rail: unified query + vehicle context chip + submit, per the design system layout regions. *@
     <div class="ce-root ce-rail" data-ce-theme="sticky-search" role="search">
         <span hidden data-ce-antiforgery>@Html.AntiForgeryToken()</span>

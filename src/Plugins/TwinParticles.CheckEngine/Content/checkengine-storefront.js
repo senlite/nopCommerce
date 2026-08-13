@@ -888,6 +888,53 @@
   }
 
   /* ------------------------------------------------------------------
+   * Catalog mega menu
+   * ------------------------------------------------------------------ */
+
+  function bindMegaMenu() {
+    var menu = document.querySelector('.ce-mega');
+    if (!menu) {
+      return;
+    }
+
+    var trigger = menu.querySelector('.ce-mega__trigger');
+    function setOpen(open, restoreFocus) {
+      menu.open = !!open;
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (restoreFocus) {
+          trigger.focus();
+        }
+      }
+    }
+
+    menu.addEventListener('toggle', function () {
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', menu.open ? 'true' : 'false');
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && menu.open) {
+        event.preventDefault();
+        setOpen(false, true);
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      if (menu.open && !menu.contains(event.target)) {
+        setOpen(false, false);
+      }
+    });
+
+    menu.querySelectorAll('[data-ce-action], a').forEach(function (element) {
+      element.addEventListener('click', function () {
+        setOpen(false, false);
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------
    * Hero calls to action
    * ------------------------------------------------------------------ */
 
@@ -961,6 +1008,7 @@
     bindSearch();
     bindGarage();
     bindHero();
+    bindMegaMenu();
     populateVehicleSelector();
     evaluateFitmentBand();
     maybeMigrateGuestOnLogin();

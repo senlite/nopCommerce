@@ -211,9 +211,9 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.25 | Complete the premium theme component set, including the documented mega menu | partial | Search, garage and fitment chrome exist; mega menu and full theme are absent |
+| H1.25 | Complete the premium theme component set, including the documented mega menu | done | The plugin-owned chrome now includes the documented live-category mega menu alongside search rail, garage/vehicle selector, fitment band and homepage hero. The menu renders from stock 4.90's supported `HeaderAfter` widget zone (no host patch), uses localized category names/SEO routes, keyboard-native disclosure plus Escape/outside-click dismissal, visible focus, desktop 4-column/tablet 2-column layouts and a mobile single-column bottom sheet. Browser walkthrough verified every interaction |
 | H1.26 | Provide full Arabic/English localisation parity | partial | Logical RTL CSS exists; complete Arabic resource dictionaries do not |
-| H1.27 | Validate RTL/LTR, keyboard and screen-reader behavior from 320–2,560 px | partial | Smoke specs are soft when widgets are absent; no complete browser matrix |
+| H1.27 | Validate RTL/LTR, keyboard and screen-reader behavior from 320–2,560 px | partial | Desktop/mobile mega-menu keyboard behavior, Escape/focus restoration, outside-click dismissal and 390px no-overflow bottom sheet are browser-verified; search/garage/fitment have labelled native controls and logical-direction CSS. Full Arabic RTL + screen-reader matrix at 320/768/1440/2560 remains |
 | H1.28 | Meet Core Web Vitals on throttled mid-range mobile hardware | pending | No Lighthouse/CWV gate exists |
 | H1.29 | Expose public vehicle/part SEO landing routes with stable localized URLs and hreflang | done | Public EN/AR vehicle and part-for-vehicle HTML pages render canonical, reciprocal hreflang, JSON-LD and verified-fit products |
 | H1.30 | Integrate incremental sitemap generation and thin-page noindex policy | done | SQL-backed URLs survive restart and join nopCommerce `/sitemap.xml`; zero-Fits pages emit noindex and are excluded. Publishing, approving or rejecting a fitment claim now regenerates the affected vehicle and part-for-vehicle landings (EN/AR) so indexability flips immediately |
