@@ -1,0 +1,11 @@
+{
+  "Group": "Payment methods",
+  "FriendlyName": "Paymob (Egypt)",
+  "SystemName": "Payments.Paymob",
+  "Version": "1.0.0",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "Twin Particles",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Payments.Paymob.dll",
+  "Description": "Reference Paymob (Accept) redirect payment integration for the Egyptian market. Independent of the Check Engine core plugin."
+}
