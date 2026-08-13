@@ -516,11 +516,20 @@
         return fromInput;
       }
     }
-    var tile = document.querySelector('.product-item[data-productid]');
-    if (tile) {
-      var fromTile = parseInt(tile.getAttribute('data-productid'), 10);
-      if (fromTile > 0) {
-        return fromTile;
+    // Fall back to the host theme's own markers so the band keeps working if the widget zone
+    // ever renders without a product id.
+    var marked = document.querySelector('#product-details-form [data-productid], .product-item[data-productid], [data-productid]');
+    if (marked) {
+      var fromMarked = parseInt(marked.getAttribute('data-productid'), 10);
+      if (fromMarked > 0) {
+        return fromMarked;
+      }
+    }
+    var addToCart = document.querySelector('[id^="addtocart_"]');
+    if (addToCart) {
+      var fromAddToCart = parseInt(addToCart.id.replace('addtocart_', ''), 10);
+      if (fromAddToCart > 0) {
+        return fromAddToCart;
       }
     }
     return 0;

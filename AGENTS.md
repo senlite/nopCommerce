@@ -48,6 +48,20 @@ only cloud-specific caveats.
 - GMaster tests should be fully green (19 pass).
 - Check Engine health is intentionally `degraded` when its commercial licence is inactive even when
   database, search-index and ERP probes all report `ok`.
+- The fitment accuracy corpus lives in `src/Tests/corpus/fitment`. Regenerate it with
+  `python3 build_corpus.py` after changing evaluation semantics; the runner is part of the Check
+  Engine suite and its Must set is a release gate.
+
+### Storefront gotchas
+- Publishing `Nop.Web` does **not** rebuild the plugins. Build the plugin project first, otherwise the
+  running site silently keeps the previous plugin assembly:
+  `dotnet build src/Plugins/TwinParticles.CheckEngine/TwinParticles.CheckEngine.csproj -c Release`
+- Check Engine renders through widget zones, so uninstalling it removes it from
+  `widgetsettings.activewidgetsystemnames`. Restoring a database backup does not always restore that
+  entry; if the storefront chrome is missing entirely, re-add the plugin to that setting.
+- New locale resources reach existing stores through `UpdateAsync`, which runs when `plugin.json`'s
+  version changes. Adding a string without bumping the version leaves upgraded stores rendering raw
+  resource keys.
 
 ### Frontend assets (optional)
 - Prebuilt assets ship in `wwwroot`; Node is not required to run. To rebuild them:

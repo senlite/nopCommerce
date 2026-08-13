@@ -117,7 +117,7 @@ else if (zone == "productdetails_top")
     <section class="ce-root ce-fitment"
              data-ce-theme="fitment-band"
              data-ce-fit="select"
-             data-ce-product-id=""
+             data-ce-product-id="@(Model.ProductId > 0 ? Model.ProductId.ToString() : string.Empty)"
              aria-live="polite">
         <svg class="ce-icon ce-fitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
             <circle cx="12" cy="12" r="9" />

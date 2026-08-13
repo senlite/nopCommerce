@@ -74,7 +74,19 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
         await _settingService.SaveSettingAsync(new CheckEnginePluginSettings());
 
-        await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
+        await AddOrUpdateLocaleResourcesAsync();
+
+        await base.InstallAsync();
+    }
+
+    /// <summary>
+    /// Applies the plugin's locale resources. Run on update as well as install, otherwise strings
+    /// added by a release only exist on stores that installed the plugin fresh, and upgraded stores
+    /// render raw resource keys.
+    /// </summary>
+    private Task AddOrUpdateLocaleResourcesAsync()
+    {
+        return _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
         {
             ["Plugins.TwinParticles.CheckEngine.General"] = "Check Engine",
             ["Plugins.TwinParticles.CheckEngine.General.Enabled"] = "Enabled",
@@ -129,13 +141,12 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Licence.LastHeartbeat"] = "Last heartbeat",
             ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "Activation key"
         });
-
-        await base.InstallAsync();
     }
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)
     {
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.Update);
+        await AddOrUpdateLocaleResourcesAsync();
         await base.UpdateAsync(currentVersion, targetVersion);
     }
 

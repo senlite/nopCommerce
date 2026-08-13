@@ -155,7 +155,8 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 |---|---|---|---|
 | H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | done | Live SQL Server rehearsal left zero `TP_CE_*` tables, migration versions and permissions |
 | H1.2 | Add uninstall confirmation and export-before-drop workflow | pending | Uninstall currently applies down migrations immediately |
-| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | partial | Package remains `0.1.0` for nopCommerce 4.70 |
+| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | partial | Now `0.3.0` for nopCommerce 4.90; the system name still differs from the documented packaging table |
+| H1.3a | Deliver migrations and locale resources on plugin update, not only on install | done | `UpdateAsync` applies pending migrations and re-applies locale resources; verified by a live `0.2.0`→`0.3.0` upgrade |
 
 #### Vehicle, VIN, OEM and fitment data
 
@@ -166,9 +167,20 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | partial | ISO validation exists, but decoder mappings cover only a small hard-coded set |
 | H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | partial | Candidate contracts exist; production corpus and log audit do not |
 | H1.8 | Validate OEM normalization/supersession against 500,000 entries | partial | SQL implementation exists; scale and conflict benchmarks do not |
-| H1.9 | Build and pass the fitment accuracy corpus Must set at 100% | pending | Policy/unit tests exist; the required accuracy corpus does not |
+| H1.9 | Build and pass the fitment accuracy corpus Must set at 100% | done | 209 cases in `src/Tests/corpus/fitment`; Must set passes at 100% and runs in the Check Engine suite |
 | H1.10 | Validate cached and uncached fitment latency at reference scale | partial | In-process microbenchmarks exist; production-scale data does not |
 | H1.11 | Import production-scale catalog and fitment provenance data | pending | No reference-scale BMW fitment dataset is bundled or loaded |
+
+#### Fitment evaluation correctness
+
+| ID | Task | Status | Gap |
+|---|---|---|---|
+| H1.9a | Report the four documented evaluation verdicts | done | `NeedsDisambiguation` added and surfaced in the storefront with its own localised prompt |
+| H1.9b | Evaluate every claim qualifier | done | Steering side, market region, drive type and transmission are now enforced; previously parsed and ignored |
+| H1.9c | Give negative claims precedence over positive claims | done | A published `DoesNotFit` claim now wins regardless of confidence, and still applies when its qualifiers cannot be checked |
+| H1.9d | Make the publish threshold configurable with a safety-critical hard stop | done | `FitmentPublicationOptions` is tunable; safety-critical publication cannot be lowered past a fixed floor |
+| H1.9e | Bind the storefront fitment band to the product being viewed | done | The band previously shipped with an empty product id, leaving it inert on every product page |
+| H1.9f | Allow qualifier-scoped claim variants for one product and vehicle | pending | A unique index on `(ProductId, VehicleConfigurationId)` permits only one claim per pair, so left- and right-hand-drive variants cannot coexist |
 
 #### Search and customer garage
 
@@ -285,7 +297,7 @@ The following are **not missing implementation** and must not be counted as defe
 |---|---|---|
 | G1 | Legacy scaffold build and architecture suite green | done |
 | G2 | Real line coverage thresholds (not convention/name checks) | pending |
-| G3 | Fitment accuracy corpus Must set at 100% | pending |
+| G3 | Fitment accuracy corpus Must set at 100% | done |
 | G4 | Search, import and fitment performance at reference scale | pending |
 | G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | done |
 | G6 | Complete browser accessibility, RTL and CWV evidence | pending |
@@ -300,8 +312,10 @@ The following are **not missing implementation** and must not be counted as defe
 
 Work follows dependency order rather than skipping to later roadmap features:
 
-1. Load the reference BMW vehicle/fitment corpus and make G3 measurable.
-2. Replace Horizon 1 in-memory/stub production paths in search, import, garage, SEO, ERP and licensing.
-3. Run reference-scale performance, accessibility/RTL/CWV and security gates.
-4. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
-5. Resume unfinished Horizon 2 work only after the Horizon 1 release gate is evidenced.
+1. Relax the single-claim-per-product/vehicle index (H1.9f) so qualifier-scoped variants can coexist,
+   then extend the corpus with multi-claim cases that the schema currently cannot represent.
+2. Load the reference BMW vehicle dataset (H1.4) so evaluation runs against production-scale data.
+3. Replace Horizon 1 in-memory/stub production paths in search, import, garage, SEO, ERP and licensing.
+4. Run reference-scale performance, accessibility/RTL/CWV and security gates.
+5. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
+6. Resume unfinished Horizon 2 work only after the Horizon 1 release gate is evidenced.
