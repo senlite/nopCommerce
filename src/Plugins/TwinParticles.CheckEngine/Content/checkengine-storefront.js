@@ -148,6 +148,7 @@
   // Active facet drill-down selection carried across re-runs of the current query.
   var currentFilters = {};
   var suggestTimer = null;
+  var selectedSuggestionVehicleId = null;
 
   function resultsPanel() {
     return document.getElementById('ce-search-results');
@@ -389,6 +390,8 @@
         brand: currentFilters.brand || null,
         priceMin: currentFilters.priceMin != null ? currentFilters.priceMin : null,
         priceMax: currentFilters.priceMax != null ? currentFilters.priceMax : null,
+        mode: selectedSuggestionVehicleId ? 4 : 1,
+        vehicleConfigurationId: selectedSuggestionVehicleId || null,
         locale: document.documentElement.lang || 'en'
       })
     }).then(function (response) {
@@ -434,8 +437,10 @@
       group.items.forEach(function (item) {
         var value = item.value || item.Value || '';
         var productId = item.productId || item.ProductId || '';
+        var vehicleId = item.vehicleConfigurationId || item.VehicleConfigurationId || '';
         html += '<li><button type="button" class="ce-suggest__item" role="option" data-ce-suggest-value="' + escapeHtml(value) +
-          '" data-ce-suggest-product="' + escapeHtml(String(productId)) + '">' + escapeHtml(value) + '</button></li>';
+          '" data-ce-suggest-product="' + escapeHtml(String(productId)) +
+          '" data-ce-suggest-vehicle="' + escapeHtml(String(vehicleId)) + '">' + escapeHtml(value) + '</button></li>';
       });
       html += '</ul></div>';
     });
@@ -448,6 +453,7 @@
         button.addEventListener('click', function () {
           var value = button.getAttribute('data-ce-suggest-value');
           var productId = parseInt(button.getAttribute('data-ce-suggest-product'), 10);
+          var vehicleId = parseInt(button.getAttribute('data-ce-suggest-vehicle'), 10);
           if (productId > 0) {
             window.location.href = '/search?q=' + encodeURIComponent(value);
             return;
@@ -456,6 +462,7 @@
           if (input) {
             input.value = value;
           }
+          selectedSuggestionVehicleId = vehicleId > 0 ? vehicleId : null;
           currentFilters = {};
           runSearch();
         });
@@ -496,6 +503,9 @@
     var searchInput = document.getElementById('ce-sticky-search-input');
     if (searchInput) {
       searchInput.addEventListener('input', function () {
+        // Manual edits detach a previously selected vehicle leaf; only choosing a typed suggestion
+        // may set explicit vehicle-tree mode.
+        selectedSuggestionVehicleId = null;
         var term = searchInput.value.trim();
         if (suggestTimer) {
           window.clearTimeout(suggestTimer);

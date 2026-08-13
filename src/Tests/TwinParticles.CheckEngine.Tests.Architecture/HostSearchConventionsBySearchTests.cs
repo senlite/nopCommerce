@@ -30,4 +30,21 @@ public class HostSearchConventionsBySearchTests
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.SearchAdmin");
         routes.Should().Contain("Admin/CheckEngine/SearchAdmin/{action}");
     }
+
+    [Test]
+    public void Configuration_Autocomplete_Selection_Should_Search_The_Vehicle_Tree_Not_Product_Text()
+    {
+        var scriptPath = System.IO.Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "..", "..", "..", "..", "..",
+            "Plugins", "TwinParticles.CheckEngine", "Content", "checkengine-storefront.js");
+        scriptPath = System.IO.Path.GetFullPath(scriptPath);
+        var script = System.IO.File.ReadAllText(scriptPath);
+
+        script.Should().Contain("data-ce-suggest-vehicle");
+        script.Should().Contain("selectedSuggestionVehicleId");
+        script.Should().Contain("mode: selectedSuggestionVehicleId ? 4 : 1",
+            "a selected configuration is vehicle context, not a product keyword");
+        script.Should().Contain("vehicleConfigurationId: selectedSuggestionVehicleId || null");
+    }
 }
