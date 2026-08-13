@@ -303,6 +303,8 @@ public class BmwReferenceSeedLoaderTests
         public Task CreateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Add(_generations, entity, e => e.Id = ++_sequence);
         public Task UpdateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteGenerationAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VehicleMergeRepositoryResult> MergeGenerationAsync(int sourceGenerationId, int targetGenerationId, CancellationToken cancellationToken)
+            => Task.FromResult(VehicleMergeRepositoryResult.Fail("not_supported"));
 
         public Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken) => List(_bodies);
         public Task<VehicleBody?> GetBodyByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult(_bodies.FirstOrDefault(x => x.Id == id));

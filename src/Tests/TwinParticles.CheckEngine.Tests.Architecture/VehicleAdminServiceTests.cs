@@ -177,6 +177,8 @@ public class VehicleAdminServiceTests
         public Task CreateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task UpdateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteGenerationAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VehicleMergeRepositoryResult> MergeGenerationAsync(int sourceGenerationId, int targetGenerationId, CancellationToken cancellationToken)
+            => Task.FromResult(VehicleMergeRepositoryResult.Ok(0, 0));
 
         public Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<VehicleBody>>([]);
         public Task<VehicleBody?> GetBodyByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<VehicleBody?>(null);

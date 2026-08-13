@@ -90,7 +90,15 @@ public sealed class VehicleAdminService
         return _repository.UpdateGenerationAsync(entity, cancellationToken);
     }
 
-    public Task DeleteGenerationAsync(int id, CancellationToken cancellationToken) => _repository.DeleteGenerationAsync(id, cancellationToken);
+    public async Task DeleteGenerationAsync(int id, CancellationToken cancellationToken)
+    {
+        var hasBodies = (await _repository.GetBodiesAsync(cancellationToken)).Any(body => body.GenerationId == id);
+        var hasConfigurations = (await _repository.GetConfigurationsAsync(cancellationToken)).Any(configuration => configuration.GenerationId == id);
+        if (hasBodies || hasConfigurations)
+            throw new InvalidOperationException("vehicle.generation.archive_required");
+
+        await _repository.DeleteGenerationAsync(id, cancellationToken);
+    }
 
     public Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken) => _repository.GetBodiesAsync(cancellationToken);
     public Task<VehicleBody?> GetBodyByIdAsync(int id, CancellationToken cancellationToken) => _repository.GetBodyByIdAsync(id, cancellationToken);
@@ -292,6 +300,65 @@ public sealed class VehicleAdminService
             cancellationToken);
         await InvalidateAliasLocalesAsync("model", sourceModelId, cancellationToken);
         await InvalidateAliasLocalesAsync("model", targetModelId, cancellationToken);
+        return VehicleLifecycleResult.Ok(result.MovedChildren, result.MovedAliases);
+    }
+
+    public async Task<VehicleLifecycleResult> ArchiveGenerationAsync(
+        int generationId,
+        string actor,
+        CancellationToken cancellationToken)
+    {
+        var generation = await _repository.GetGenerationByIdAsync(generationId, cancellationToken);
+        if (generation is null)
+            return VehicleLifecycleResult.Fail("vehicle.generation.not_found");
+
+        if (!generation.IsActive)
+            return VehicleLifecycleResult.Ok();
+
+        var before = JsonSerializer.Serialize(new { generation.Id, generation.ModelId, generation.Code, generation.IsActive });
+        generation.IsActive = false;
+        await _repository.UpdateGenerationAsync(generation, cancellationToken);
+        await AppendAuditAsync(actor, "vehicle.generation.archive", "VehicleGeneration", generation.Id, before,
+            JsonSerializer.Serialize(new { generation.Id, generation.ModelId, generation.Code, generation.IsActive }), cancellationToken);
+        await InvalidateAliasLocalesAsync("generation", generation.Id, cancellationToken);
+        return VehicleLifecycleResult.Ok();
+    }
+
+    public async Task<VehicleLifecycleResult> MergeGenerationAsync(
+        int sourceGenerationId,
+        int targetGenerationId,
+        string actor,
+        CancellationToken cancellationToken)
+    {
+        if (sourceGenerationId <= 0 || targetGenerationId <= 0 || sourceGenerationId == targetGenerationId)
+            return VehicleLifecycleResult.Fail("vehicle.generation.merge.invalid");
+
+        var source = await _repository.GetGenerationByIdAsync(sourceGenerationId, cancellationToken);
+        var target = await _repository.GetGenerationByIdAsync(targetGenerationId, cancellationToken);
+        if (source is null || target is null)
+            return VehicleLifecycleResult.Fail("vehicle.generation.merge.not_found");
+        if (source.ModelId != target.ModelId)
+            return VehicleLifecycleResult.Fail("vehicle.generation.merge.cross_model");
+        if (!target.IsActive)
+            return VehicleLifecycleResult.Fail("vehicle.generation.merge.target_inactive");
+
+        var result = await _repository.MergeGenerationAsync(sourceGenerationId, targetGenerationId, cancellationToken);
+        if (!result.Success)
+            return VehicleLifecycleResult.Fail(result.ErrorCode ?? "vehicle.generation.merge.failed");
+
+        await AppendAuditAsync(actor, "vehicle.generation.merge", "VehicleGeneration", sourceGenerationId,
+            JsonSerializer.Serialize(new { SourceGenerationId = sourceGenerationId, SourceCode = source.Code }),
+            JsonSerializer.Serialize(new
+            {
+                SourceGenerationId = sourceGenerationId,
+                TargetGenerationId = targetGenerationId,
+                TargetCode = target.Code,
+                result.MovedChildren,
+                result.MovedAliases
+            }),
+            cancellationToken);
+        await InvalidateAliasLocalesAsync("generation", sourceGenerationId, cancellationToken);
+        await InvalidateAliasLocalesAsync("generation", targetGenerationId, cancellationToken);
         return VehicleLifecycleResult.Ok(result.MovedChildren, result.MovedAliases);
     }
 

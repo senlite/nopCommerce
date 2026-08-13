@@ -26,6 +26,7 @@ public interface IVehicleAdminRepository
     Task CreateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken);
     Task UpdateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken);
     Task DeleteGenerationAsync(int id, CancellationToken cancellationToken);
+    Task<VehicleMergeRepositoryResult> MergeGenerationAsync(int sourceGenerationId, int targetGenerationId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken);
     Task<VehicleBody?> GetBodyByIdAsync(int id, CancellationToken cancellationToken);

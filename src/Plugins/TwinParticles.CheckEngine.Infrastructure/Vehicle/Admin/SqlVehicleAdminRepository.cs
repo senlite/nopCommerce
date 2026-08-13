@@ -160,6 +160,60 @@ SELECT CAST(1 AS bit) AS Success,
     public Task DeleteGenerationAsync(int id, CancellationToken cancellationToken)
         => _dataProvider.ExecuteNonQueryAsync("DELETE FROM TP_CE_VehicleGeneration WHERE Id=@id", new LinqToDB.Data.DataParameter("id", id));
 
+    public async Task<VehicleMergeRepositoryResult> MergeGenerationAsync(
+        int sourceGenerationId,
+        int targetGenerationId,
+        CancellationToken cancellationToken)
+    {
+        // Bodies and configurations reparent onto the survivor generation. Configuration ids stay
+        // stable, so every fitment claim, garage row and SEO landing that references a configuration
+        // is reassigned to the survivor without touching its foreign keys (AC-012.1 / FR-112).
+        var rows = await _dataProvider.QueryAsync<MergeRow>(@"
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+
+IF EXISTS (
+    SELECT 1
+    FROM TP_CE_VehicleBody sourceBody
+    INNER JOIN TP_CE_VehicleBody targetBody
+        ON targetBody.GenerationId = @targetGenerationId
+       AND targetBody.Code = sourceBody.Code
+    WHERE sourceBody.GenerationId = @sourceGenerationId
+)
+BEGIN
+    ROLLBACK TRANSACTION;
+    SELECT CAST(0 AS bit) AS Success,
+           CAST('vehicle.generation.merge.body_code_conflict' AS nvarchar(128)) AS ErrorCode,
+           0 AS MovedChildren,
+           0 AS MovedAliases;
+    RETURN;
+END;
+
+DECLARE @movedBodies int;
+DECLARE @movedConfigurations int;
+DECLARE @movedAliases int;
+
+UPDATE TP_CE_VehicleBody SET GenerationId=@targetGenerationId WHERE GenerationId=@sourceGenerationId;
+SET @movedBodies = @@ROWCOUNT;
+
+UPDATE TP_CE_VehicleConfiguration SET GenerationId=@targetGenerationId WHERE GenerationId=@sourceGenerationId;
+SET @movedConfigurations = @@ROWCOUNT;
+
+UPDATE TP_CE_VehicleAlias SET NodeId=@targetGenerationId WHERE NodeType='generation' AND NodeId=@sourceGenerationId;
+SET @movedAliases = @@ROWCOUNT;
+
+UPDATE TP_CE_VehicleGeneration SET IsActive=0 WHERE Id=@sourceGenerationId;
+
+COMMIT TRANSACTION;
+SELECT CAST(1 AS bit) AS Success,
+       CAST(NULL AS nvarchar(128)) AS ErrorCode,
+       (@movedBodies + @movedConfigurations) AS MovedChildren,
+       @movedAliases AS MovedAliases;",
+            new DataParameter("sourceGenerationId", sourceGenerationId),
+            new DataParameter("targetGenerationId", targetGenerationId));
+        return MapMerge(rows.Single());
+    }
+
     public async Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken)
         => (await _dataProvider.QueryAsync<VehicleBody>("SELECT Id, GenerationId, Code, Name, Doors, IsActive FROM TP_CE_VehicleBody ORDER BY Name")).ToList();
 

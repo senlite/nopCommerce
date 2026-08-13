@@ -185,8 +185,36 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> DeleteGeneration(int id, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.DeleteGenerationAsync(id, cancellationToken);
-        return Ok();
+        try
+        {
+            await _service.DeleteGenerationAsync(id, cancellationToken);
+            return Ok();
+        }
+        catch (System.InvalidOperationException exception)
+        {
+            return Conflict(new { reasonCode = exception.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ArchiveGeneration(int id = 0, CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        id = await ResolveIdAsync(id, cancellationToken);
+        var result = await _service.ArchiveGenerationAsync(id, await GetActorAsync(), cancellationToken);
+        return LifecycleResult(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> MergeGeneration(
+        int sourceId = 0,
+        int targetId = 0,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        (sourceId, targetId) = await ResolveMergeIdsAsync(sourceId, targetId, cancellationToken);
+        var result = await _service.MergeGenerationAsync(sourceId, targetId, await GetActorAsync(), cancellationToken);
+        return LifecycleResult(result);
     }
 
     [HttpGet]

@@ -73,6 +73,8 @@ public class VehicleAdminPhase2ConventionsTests
         methods.Should().Contain("MergeMakeAsync");
         methods.Should().Contain("ArchiveModelAsync");
         methods.Should().Contain("MergeModelAsync");
+        methods.Should().Contain("ArchiveGenerationAsync");
+        methods.Should().Contain("MergeGenerationAsync");
     }
 
     [Test]

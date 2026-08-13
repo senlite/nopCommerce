@@ -70,6 +70,56 @@ public class VehicleLifecycleServiceTests
     }
 
     [Test]
+    public async Task Merge_Generation_Should_Reassign_Children_And_Fitment_Claims_To_Survivor()
+    {
+        var fixture = CreateFixture();
+
+        // Configuration 31 carries fitment claims via its stable id; reassigning it to generation 20
+        // reassigns those claims to the survivor without touching claim foreign keys (AC-012.1 / FR-112).
+        var result = await fixture.Service.MergeGenerationAsync(22, 20, "customer:11", CancellationToken.None);
+
+        result.Success.Should().BeTrue();
+        result.MovedChildren.Should().Be(2, "one body and one configuration reparent to the survivor");
+        result.MovedAliases.Should().Be(1);
+        fixture.Repository.Generations.Single(generation => generation.Id == 22).IsActive.Should().BeFalse();
+        fixture.Repository.Bodies.Single(body => body.Id == 50).GenerationId.Should().Be(20);
+        fixture.Repository.Configurations.Single(configuration => configuration.Id == 31)
+            .GenerationId.Should().Be(20, "configuration ids stay stable so fitment claims follow to the survivor generation");
+        fixture.Repository.Aliases.Single(alias => alias.AliasText == "Duplicate F30").NodeId.Should().Be(20);
+        fixture.Audit.Events.Should().ContainSingle(evt =>
+            evt.Action == "vehicle.generation.merge" && evt.Actor == "customer:11");
+        fixture.Cache.InvalidatedLocales.Should().Contain("en");
+    }
+
+    [Test]
+    public async Task Merge_Generation_Should_Reject_Cross_Model_And_Body_Code_Conflicts()
+    {
+        var fixture = CreateFixture();
+
+        var crossModel = await fixture.Service.MergeGenerationAsync(21, 20, "customer:12", CancellationToken.None);
+        crossModel.Success.Should().BeFalse();
+        crossModel.ErrorCode.Should().Be("vehicle.generation.merge.cross_model");
+
+        fixture.Repository.GenerationMergeConflict = true;
+        var conflict = await fixture.Service.MergeGenerationAsync(22, 20, "customer:12", CancellationToken.None);
+        conflict.Success.Should().BeFalse();
+        conflict.ErrorCode.Should().Be("vehicle.generation.merge.body_code_conflict");
+        fixture.Repository.Configurations.Single(configuration => configuration.Id == 31).GenerationId.Should().Be(22);
+        fixture.Audit.Events.Should().BeEmpty("failed merges must not be represented as completed audit events");
+    }
+
+    [Test]
+    public void Hard_Delete_Generation_With_Descendants_Should_Require_Archive()
+    {
+        var fixture = CreateFixture();
+
+        var deleteGeneration = async () => await fixture.Service.DeleteGenerationAsync(22, CancellationToken.None);
+
+        deleteGeneration.Should().ThrowAsync<System.InvalidOperationException>()
+            .WithMessage("vehicle.generation.archive_required");
+    }
+
+    [Test]
     public async Task Merge_Make_Should_Reparent_Models_Move_Aliases_And_Archive_Source()
     {
         var fixture = CreateFixture();
@@ -133,21 +183,31 @@ public class VehicleLifecycleServiceTests
         public List<VehicleGeneration> Generations { get; } =
         [
             new() { Id = 20, ModelId = 10, Code = "F30", Name = "F30", StartYear = 2012, EndYear = 2019, IsActive = true },
-            new() { Id = 21, ModelId = 11, Code = "E90", Name = "E90", StartYear = 2005, EndYear = 2013, IsActive = true }
+            new() { Id = 21, ModelId = 11, Code = "E90", Name = "E90", StartYear = 2005, EndYear = 2013, IsActive = true },
+            new() { Id = 22, ModelId = 10, Code = "F30DUP", Name = "F30 duplicate", StartYear = 2012, EndYear = 2019, IsActive = true }
+        ];
+
+        public List<VehicleBody> Bodies { get; } =
+        [
+            new() { Id = 50, GenerationId = 22, Code = "SEDAN", Name = "Sedan", Doors = 4, IsActive = true }
         ];
 
         public List<VehicleConfiguration> Configurations { get; } =
         [
-            new() { Id = 30, GenerationId = 21, TrimName = "320i", Fingerprint = "preserved-30", IsActive = true }
+            new() { Id = 30, GenerationId = 21, TrimName = "320i", Fingerprint = "preserved-30", IsActive = true },
+            new() { Id = 31, GenerationId = 22, BodyId = 50, TrimName = "330i", Fingerprint = "preserved-31", IsActive = true }
         ];
 
         public List<VehicleAlias> Aliases { get; } =
         [
             new() { Id = 40, NodeType = "model", NodeId = 11, Locale = "en", AliasText = "Duplicate 3", NormalizedAlias = "duplicate 3" },
-            new() { Id = 41, NodeType = "make", NodeId = 2, Locale = "en", AliasText = "Duplicate make", NormalizedAlias = "duplicate make" }
+            new() { Id = 41, NodeType = "make", NodeId = 2, Locale = "en", AliasText = "Duplicate make", NormalizedAlias = "duplicate make" },
+            new() { Id = 42, NodeType = "generation", NodeId = 22, Locale = "en", AliasText = "Duplicate F30", NormalizedAlias = "duplicate f30" }
         ];
 
         public bool ModelMergeConflict { get; set; }
+
+        public bool GenerationMergeConflict { get; set; }
 
         public Task<IReadOnlyList<VehicleMake>> GetMakesAsync(CancellationToken cancellationToken) => Result(Makes);
         public Task<VehicleMake?> GetMakeByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult(Makes.FirstOrDefault(item => item.Id == id));
@@ -190,8 +250,23 @@ public class VehicleLifecycleServiceTests
         public Task<VehicleGeneration?> GetGenerationByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult(Generations.FirstOrDefault(item => item.Id == id));
         public Task CreateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task UpdateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Task.CompletedTask;
-        public Task DeleteGenerationAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
-        public Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<VehicleBody>>([]);
+        public Task DeleteGenerationAsync(int id, CancellationToken cancellationToken) { Generations.RemoveAll(item => item.Id == id); return Task.CompletedTask; }
+
+        public Task<VehicleMergeRepositoryResult> MergeGenerationAsync(int sourceGenerationId, int targetGenerationId, CancellationToken cancellationToken)
+        {
+            if (GenerationMergeConflict)
+                return Task.FromResult(VehicleMergeRepositoryResult.Fail("vehicle.generation.merge.body_code_conflict"));
+            var bodies = Bodies.Where(body => body.GenerationId == sourceGenerationId).ToList();
+            bodies.ForEach(body => body.GenerationId = targetGenerationId);
+            var configurations = Configurations.Where(configuration => configuration.GenerationId == sourceGenerationId).ToList();
+            configurations.ForEach(configuration => configuration.GenerationId = targetGenerationId);
+            var aliases = Aliases.Where(alias => alias.NodeType == "generation" && alias.NodeId == sourceGenerationId).ToList();
+            aliases.ForEach(alias => alias.NodeId = targetGenerationId);
+            Generations.Single(generation => generation.Id == sourceGenerationId).IsActive = false;
+            return Task.FromResult(VehicleMergeRepositoryResult.Ok(bodies.Count + configurations.Count, aliases.Count));
+        }
+
+        public Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken) => Result(Bodies);
         public Task<VehicleBody?> GetBodyByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<VehicleBody?>(null);
         public Task CreateBodyAsync(VehicleBody entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task UpdateBodyAsync(VehicleBody entity, CancellationToken cancellationToken) => Task.CompletedTask;
