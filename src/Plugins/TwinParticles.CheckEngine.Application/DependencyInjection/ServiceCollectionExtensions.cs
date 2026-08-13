@@ -64,6 +64,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<LocaleFormattingService>();
 
         services.AddScoped<SeoLandingService>();
+        services.AddScoped<TwinParticles.CheckEngine.Domain.Seo.ISeoLandingRegenerationTrigger, SeoLandingRegenerationTrigger>();
 
         services.AddScoped<AiProposalService>();
 

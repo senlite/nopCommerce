@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Fitment;
+using TwinParticles.CheckEngine.Domain.Seo;
 
 namespace TwinParticles.CheckEngine.Application.Fitment;
 
@@ -16,13 +17,16 @@ public sealed class FitmentPublicationPolicyService
 {
     private readonly FitmentPublicationOptions _options;
     private readonly IFitmentClaimWriteRepository _writeRepository;
+    private readonly ISeoLandingRegenerationTrigger? _seoLandingRegenerationTrigger;
 
     public FitmentPublicationPolicyService(
         IFitmentClaimWriteRepository writeRepository,
-        FitmentPublicationOptions? options = null)
+        FitmentPublicationOptions? options = null,
+        ISeoLandingRegenerationTrigger? seoLandingRegenerationTrigger = null)
     {
         _writeRepository = writeRepository;
         _options = options ?? FitmentPublicationOptions.Current;
+        _seoLandingRegenerationTrigger = seoLandingRegenerationTrigger;
     }
 
     public async Task<bool> TryPublishAsync(FitmentClaim claim, CancellationToken cancellationToken)
@@ -46,6 +50,10 @@ public sealed class FitmentPublicationPolicyService
         claim.IsPublished = true;
         await _writeRepository.UpsertAsync(claim, cancellationToken);
         await _writeRepository.SetPublishedAsync(claim.Id, true, cancellationToken);
+
+        if (_seoLandingRegenerationTrigger is not null)
+            await _seoLandingRegenerationTrigger.OnFitmentPublicationChangedAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
+
         return true;
     }
 }

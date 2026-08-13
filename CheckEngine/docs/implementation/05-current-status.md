@@ -23,6 +23,7 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - Fitment corpus: 233 Must cases; qualifier variants and context-aware caching verified live
 - Public EN/AR vehicle and part-for-vehicle SEO landings with canonical/hreflang/JSON-LD
 - SQL-backed fitment-gated URLs integrated into nopCommerce `/sitemap.xml`; thin pages are noindex
+- Publishing/approving/rejecting a fitment claim regenerates the affected EN/AR landings so indexability updates immediately
 - Storefront JS for sticky search, fitment band, garage widget
 - Garage remove-vehicle + admin Dashboard Razor view
 - Import pipeline persists to SQL (`CorrelationId`), Excel/PDF parsers, `NopImportProductPublisher`
