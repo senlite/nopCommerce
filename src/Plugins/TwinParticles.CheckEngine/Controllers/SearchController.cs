@@ -18,6 +18,7 @@ public sealed class SearchController : BasePublicController
     private readonly GarageService _garageService;
     private readonly ICustomerService _customerService;
     private readonly RecommendationService _recommendationService;
+    private readonly SearchAutocompleteService _autocompleteService;
     private readonly ISearchRateLimiter _searchRateLimiter;
     private readonly IWorkContext _workContext;
 
@@ -27,7 +28,8 @@ public sealed class SearchController : BasePublicController
         ICustomerService customerService,
         ISearchRateLimiter searchRateLimiter,
         IWorkContext workContext,
-        RecommendationService recommendationService)
+        RecommendationService recommendationService,
+        SearchAutocompleteService autocompleteService)
     {
         _garageContextSearchService = garageContextSearchService;
         _garageService = garageService;
@@ -35,6 +37,7 @@ public sealed class SearchController : BasePublicController
         _searchRateLimiter = searchRateLimiter;
         _workContext = workContext;
         _recommendationService = recommendationService;
+        _autocompleteService = autocompleteService;
     }
 
     [HttpPost]
@@ -84,6 +87,24 @@ public sealed class SearchController : BasePublicController
         }
 
         return Json(await _garageContextSearchService.SearchWithGarageContextAsync(query, activeVehicleConfigurationId, cancellationToken));
+    }
+
+    [HttpGet]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> Suggest(string? term, string? locale, int take = 6, CancellationToken cancellationToken = default)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isGuest = await _customerService.IsGuestAsync(customer);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var rateLimitKey = isGuest
+            ? $"suggest:ip:{ipAddress}"
+            : $"suggest:customer:{customer.Id}";
+
+        if (!_searchRateLimiter.TryAcquire(rateLimitKey, out var retryAfterSeconds))
+            return StatusCode(429, new { reasonCode = "search.rate_limited", retryAfterSeconds });
+
+        var result = await _autocompleteService.SuggestAsync(term ?? string.Empty, locale ?? "en", take, cancellationToken);
+        return Json(result);
     }
 
     [HttpGet]

@@ -6,9 +6,13 @@ public sealed class SearchHit
 
     public string Name { get; init; } = string.Empty;
 
-    public int? CategoryId { get; init; }
+    public int? CategoryId { get; set; }
 
-    public string? Brand { get; init; }
+    public string? CategoryName { get; set; }
+
+    public string? Brand { get; set; }
+
+    public decimal? Price { get; set; }
 
     public decimal Score { get; set; }
 

@@ -1,0 +1,15 @@
+{
+  "description": "Check Engine search benchmark query set (FR-419). Precision@10 is measured against the in-memory reference catalog. Production-scale precision requires the seeded reference dataset and is tracked separately.",
+  "precisionAtKThreshold": 0.9,
+  "k": 10,
+  "queries": [
+    { "id": "q-oil-filter", "rawText": "oil filter", "mode": "Keyword", "locale": "en", "expectedProductIds": [1001] },
+    { "id": "q-filter", "rawText": "filter", "mode": "Keyword", "locale": "en", "expectedProductIds": [1001, 1003] },
+    { "id": "q-radiator", "rawText": "radiator", "mode": "Keyword", "locale": "en", "expectedProductIds": [1002] },
+    { "id": "q-hose", "rawText": "hose", "mode": "Keyword", "locale": "en", "expectedProductIds": [1002] },
+    { "id": "q-cabin", "rawText": "cabin", "mode": "Keyword", "locale": "en", "expectedProductIds": [1003] },
+    { "id": "q-bmw", "rawText": "bmw", "mode": "Keyword", "locale": "en", "expectedProductIds": [1001] },
+    { "id": "q-cabin-filter", "rawText": "cabin filter", "mode": "Keyword", "locale": "en", "expectedProductIds": [1003] },
+    { "id": "q-radiator-hose", "rawText": "radiator hose", "mode": "Keyword", "locale": "en", "expectedProductIds": [1002] }
+  ]
+}

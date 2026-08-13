@@ -69,7 +69,6 @@ ORDER BY ProductId",
 
             return await HydrateProductsAsync(
                 rows.Select(row => (row.ProductId, Score: 0.9m)).ToList(),
-                query.Filters.CategoryId,
                 cancellationToken);
         }
         catch (Exception exception)
@@ -95,8 +94,52 @@ ORDER BY IsPrimary DESC, ProductId",
 
             return await HydrateProductsAsync(
                 rows.Select(row => (row.ProductId, Score: row.IsPrimary ? 1.0m : 0.7m)).ToList(),
-                query.Filters.CategoryId,
                 cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            await _healthService.ReportDegradedAsync(exception.GetType().Name, cancellationToken);
+            return [];
+        }
+    }
+
+    public async Task<IReadOnlyList<SearchHit>> SuggestProductsAsync(string prefix, string locale, int take, CancellationToken cancellationToken)
+    {
+        var text = prefix?.Trim() ?? string.Empty;
+        if (text.Length < 2)
+            return [];
+
+        var limit = take <= 0 ? 5 : Math.Min(take, 10);
+
+        try
+        {
+            var store = await _storeContext.GetCurrentStoreAsync();
+            var language = await _workContext.GetWorkingLanguageAsync();
+
+            var products = await _productService.SearchProductsAsync(
+                pageIndex: 0,
+                pageSize: limit,
+                storeId: store.Id,
+                visibleIndividuallyOnly: true,
+                keywords: text,
+                searchDescriptions: false,
+                searchManufacturerPartNumber: true,
+                searchSku: true,
+                languageId: language.Id,
+                showHidden: false,
+                overridePublished: true);
+
+            return products
+                .Where(product => product.Published && !product.Deleted && product.VisibleIndividually)
+                .Take(limit)
+                .Select(product => new SearchHit
+                {
+                    ProductId = product.Id,
+                    Name = product.Name,
+                    Price = product.Price,
+                    Score = 0.5m
+                })
+                .ToList();
         }
         catch (Exception exception)
         {
@@ -138,10 +181,13 @@ ORDER BY IsPrimary DESC, ProductId",
                 showHidden: false,
                 overridePublished: true);
 
-            return products
+            var hits = products
                 .Where(product => product.Published && !product.Deleted && product.VisibleIndividually)
-                .Select(product => MapProduct(product, query.Filters.CategoryId, keywords))
+                .Select(product => MapProduct(product, keywords))
                 .ToList();
+
+            await EnrichAsync(hits, cancellationToken);
+            return hits;
         }
         catch (Exception exception)
         {
@@ -155,7 +201,6 @@ ORDER BY IsPrimary DESC, ProductId",
 
     private async Task<IReadOnlyList<SearchHit>> HydrateProductsAsync(
         IReadOnlyList<(int ProductId, decimal Score)> candidates,
-        int? categoryId,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -167,22 +212,74 @@ ORDER BY IsPrimary DESC, ProductId",
             .ToDictionary(group => group.Key, group => group.Max(candidate => candidate.Score));
         var products = await _productService.GetProductsByIdsAsync(scoreById.Keys.ToArray());
 
-        return products
+        var hits = products
             .Where(product => product.Published && !product.Deleted && product.VisibleIndividually)
             .Select(product => new SearchHit
             {
                 ProductId = product.Id,
                 Name = product.Name,
-                CategoryId = categoryId,
-                Brand = null,
+                Price = product.Price,
                 Score = scoreById[product.Id]
             })
             .OrderByDescending(hit => hit.Score)
             .ThenBy(hit => hit.ProductId)
             .ToList();
+
+        await EnrichAsync(hits, cancellationToken);
+        return hits;
     }
 
-    private static SearchHit MapProduct(Product product, int? categoryId, string? keywords)
+    // Populates category, category name, and brand from nopCommerce mapping tables in two batched
+    // queries so facets reflect real catalog metadata without an N+1 per hit. Enrichment failures are
+    // non-fatal: the hits still return (facets simply carry less dimension) and health degrades.
+    private async Task EnrichAsync(List<SearchHit> hits, CancellationToken cancellationToken)
+    {
+        if (hits.Count == 0)
+            return;
+
+        var idList = string.Join(",", hits.Select(hit => hit.ProductId).Distinct());
+
+        try
+        {
+            var categoryRows = await _dataProvider.QueryAsync<ProductCategoryRow>($@"
+SELECT m.ProductId, m.CategoryId, c.Name AS CategoryName, m.DisplayOrder
+FROM Product_Category_Mapping m
+INNER JOIN Category c ON c.Id = m.CategoryId
+WHERE m.ProductId IN ({idList})");
+
+            var categoryByProduct = categoryRows
+                .GroupBy(row => row.ProductId)
+                .ToDictionary(group => group.Key, group => group.OrderBy(row => row.DisplayOrder).First());
+
+            var manufacturerRows = await _dataProvider.QueryAsync<ProductManufacturerRow>($@"
+SELECT m.ProductId, man.Name AS ManufacturerName, m.DisplayOrder
+FROM Product_Manufacturer_Mapping m
+INNER JOIN Manufacturer man ON man.Id = m.ManufacturerId
+WHERE m.ProductId IN ({idList})");
+
+            var brandByProduct = manufacturerRows
+                .GroupBy(row => row.ProductId)
+                .ToDictionary(group => group.Key, group => group.OrderBy(row => row.DisplayOrder).First().ManufacturerName);
+
+            foreach (var hit in hits)
+            {
+                if (categoryByProduct.TryGetValue(hit.ProductId, out var category))
+                {
+                    hit.CategoryId = category.CategoryId;
+                    hit.CategoryName = category.CategoryName;
+                }
+
+                if (brandByProduct.TryGetValue(hit.ProductId, out var brand))
+                    hit.Brand = brand;
+            }
+        }
+        catch (Exception exception)
+        {
+            await _healthService.ReportDegradedAsync(exception.GetType().Name, cancellationToken);
+        }
+    }
+
+    private static SearchHit MapProduct(Product product, string? keywords)
     {
         var score = 0.75m;
         if (!string.IsNullOrWhiteSpace(keywords))
@@ -198,8 +295,7 @@ ORDER BY IsPrimary DESC, ProductId",
         {
             ProductId = product.Id,
             Name = product.Name,
-            CategoryId = categoryId,
-            Brand = null,
+            Price = product.Price,
             Score = score
         };
     }
@@ -214,5 +310,25 @@ ORDER BY IsPrimary DESC, ProductId",
         public int ProductId { get; set; }
 
         public bool IsPrimary { get; set; }
+    }
+
+    private sealed class ProductCategoryRow
+    {
+        public int ProductId { get; set; }
+
+        public int CategoryId { get; set; }
+
+        public string CategoryName { get; set; } = string.Empty;
+
+        public int DisplayOrder { get; set; }
+    }
+
+    private sealed class ProductManufacturerRow
+    {
+        public int ProductId { get; set; }
+
+        public string ManufacturerName { get; set; } = string.Empty;
+
+        public int DisplayOrder { get; set; }
     }
 }

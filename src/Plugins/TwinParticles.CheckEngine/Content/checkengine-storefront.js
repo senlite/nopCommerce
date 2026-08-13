@@ -37,7 +37,17 @@
     detailCta: 'Complete vehicle details',
     selectLabel: 'Select your vehicle',
     selectHint: 'Choose a vehicle to check whether this part fits.',
-    fitmentCta: 'Add your vehicle'
+    fitmentCta: 'Add your vehicle',
+    facetsTitle: 'Refine',
+    facetCategory: 'Category',
+    facetBrand: 'Brand',
+    facetPrice: 'Price',
+    facetFitment: 'Fitment',
+    facetClear: 'Clear filters',
+    recoveryTitle: 'Try one of these',
+    suggestVehicles: 'Vehicles',
+    suggestOems: 'OEM numbers',
+    suggestProducts: 'Products'
   };
 
   var MODE_NAMES = {
@@ -135,6 +145,10 @@
    * Search
    * ------------------------------------------------------------------ */
 
+  // Active facet drill-down selection carried across re-runs of the current query.
+  var currentFilters = {};
+  var suggestTimer = null;
+
   function resultsPanel() {
     return document.getElementById('ce-search-results');
   }
@@ -176,28 +190,153 @@
     );
   }
 
+  var FACET_LABELS = {
+    category: 'facetCategory',
+    brand: 'facetBrand',
+    price: 'facetPrice',
+    fitment: 'facetFitment'
+  };
+
+  function applyFacetFilter(key, value) {
+    if (key === 'category') {
+      currentFilters.categoryId = parseInt(value, 10) || null;
+    } else if (key === 'brand') {
+      currentFilters.brand = value;
+    } else if (key === 'price') {
+      var bounds = String(value).replace('+', '-').split('-');
+      currentFilters.priceMin = bounds[0] ? parseFloat(bounds[0]) : null;
+      currentFilters.priceMax = bounds[1] ? parseFloat(bounds[1]) : null;
+    }
+    runSearch();
+  }
+
+  function renderFacets(facets) {
+    if (!facets || !facets.length) {
+      return '';
+    }
+    var groups = {};
+    facets.forEach(function (facet) {
+      var key = facet.key || facet.Key;
+      (groups[key] = groups[key] || []).push(facet);
+    });
+
+    var html = '<div class="ce-facets" role="group" aria-label="' + escapeHtml(TEXT.facetsTitle) + '">';
+    Object.keys(groups).forEach(function (key) {
+      var labelKey = FACET_LABELS[key];
+      var groupLabel = labelKey ? TEXT[labelKey] : key;
+      html += '<div class="ce-facets__group"><span class="ce-facets__label">' + escapeHtml(groupLabel) + '</span>';
+      groups[key].forEach(function (facet) {
+        var value = facet.value || facet.Value;
+        var display = facet.label || facet.Label || value;
+        var count = facet.count != null ? facet.count : facet.Count;
+        html += '<button type="button" class="ce-facet-chip" data-ce-facet-key="' + escapeHtml(key) +
+          '" data-ce-facet-value="' + escapeHtml(String(value)) + '">' +
+          escapeHtml(String(display)) + ' <span class="ce-facet-chip__count">' + escapeHtml(String(count)) + '</span>' +
+          '</button>';
+      });
+      html += '</div>';
+    });
+    var hasFilter = currentFilters.categoryId || currentFilters.brand ||
+      currentFilters.priceMin != null || currentFilters.priceMax != null;
+    if (hasFilter) {
+      html += '<button type="button" class="ce-facet-clear" data-ce-facet-clear>' + escapeHtml(TEXT.facetClear) + '</button>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderRecovery(recovery) {
+    if (!recovery || !recovery.length) {
+      return '';
+    }
+    var html = '<div class="ce-recovery"><span class="ce-recovery__title">' + escapeHtml(TEXT.recoveryTitle) + '</span><ul class="ce-recovery__list">';
+    recovery.forEach(function (action) {
+      var kind = action.kind || action.Kind;
+      var label = action.label || action.Label;
+      html += '<li><button type="button" class="ce-recovery__action" data-ce-recovery="' + escapeHtml(kind) + '">' +
+        escapeHtml(label) + '</button></li>';
+    });
+    html += '</ul></div>';
+    return html;
+  }
+
+  function bindResultActions() {
+    var panel = resultsPanel();
+    if (!panel) {
+      return;
+    }
+    panel.querySelectorAll('[data-ce-facet-key]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        applyFacetFilter(chip.getAttribute('data-ce-facet-key'), chip.getAttribute('data-ce-facet-value'));
+      });
+    });
+    var clear = panel.querySelector('[data-ce-facet-clear]');
+    if (clear) {
+      clear.addEventListener('click', function () {
+        currentFilters = {};
+        runSearch();
+      });
+    }
+    panel.querySelectorAll('[data-ce-recovery]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        handleRecovery(button.getAttribute('data-ce-recovery'));
+      });
+    });
+  }
+
+  function handleRecovery(kind) {
+    if (kind === 'widen_fitment') {
+      var widen = document.getElementById('ce-widen-fitment');
+      if (widen) {
+        widen.checked = true;
+      }
+      runSearch();
+    } else if (kind === 'select_vehicle') {
+      var select = document.getElementById('ce-vehicle-selector');
+      if (select) {
+        select.focus();
+      }
+    } else if (kind === 'broaden_keyword') {
+      var input = document.getElementById('ce-sticky-search-input');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+  }
+
   function renderSearchResults(payload) {
     var hits = (payload && (payload.hits || payload.Hits)) || [];
     var modeUsed = payload && (payload.modeUsed || payload.ModeUsed);
     var degraded = payload && (payload.isDegraded || payload.IsDegraded);
+    var total = payload && (payload.total != null ? payload.total : payload.Total);
+    var recovery = (payload && (payload.recovery || payload.Recovery)) || [];
 
     if (!hits.length) {
       openResults(
         '<div class="ce-results__empty">' +
         '<span class="ce-results__empty-title">' + escapeHtml(TEXT.searchEmptyTitle) + '</span>' +
         '<p class="ce-results__hint">' + escapeHtml(TEXT.searchEmptyHint) + '</p>' +
+        renderRecovery(recovery) +
         '</div>'
       );
+      bindResultActions();
       announce(TEXT.searchEmptyTitle);
       return;
     }
 
+    if (total == null) {
+      total = hits.length;
+    }
+
     var header = '<div class="ce-results__header">' +
-      '<span>' + hits.length + ' ' + escapeHtml(TEXT.searchResultsCount) + '</span>' +
+      '<span>' + escapeHtml(String(total)) + ' ' + escapeHtml(TEXT.searchResultsCount) + '</span>' +
       '<span class="ce-results__mode">' + escapeHtml(TEXT.searchMode) + ': ' +
       escapeHtml(MODE_NAMES[modeUsed] || String(modeUsed || '')) +
       (degraded ? ' · degraded' : '') +
       '</span></div>';
+
+    var facets = renderFacets((payload && (payload.facets || payload.Facets)) || []);
 
     var list = '<ul class="ce-results__list">';
     for (var i = 0; i < hits.length; i++) {
@@ -222,8 +361,9 @@
     }
     list += '</ul>';
 
-    openResults(header + list);
-    announce(hits.length + ' ' + TEXT.searchResultsCount);
+    openResults(header + facets + list);
+    bindResultActions();
+    announce(total + ' ' + TEXT.searchResultsCount);
   }
 
   function runSearch() {
@@ -245,6 +385,10 @@
         page: 1,
         pageSize: 24,
         widenFitment: !!(widen && widen.checked),
+        categoryId: currentFilters.categoryId || null,
+        brand: currentFilters.brand || null,
+        priceMin: currentFilters.priceMin != null ? currentFilters.priceMin : null,
+        priceMax: currentFilters.priceMax != null ? currentFilters.priceMax : null,
         locale: document.documentElement.lang || 'en'
       })
     }).then(function (response) {
@@ -264,6 +408,78 @@
     });
   }
 
+  /* ------------------------------------------------------------------
+   * Autocomplete (typeahead)
+   * ------------------------------------------------------------------ */
+
+  function renderSuggestions(result) {
+    var groups = [
+      { items: (result.vehicles || result.Vehicles) || [], label: TEXT.suggestVehicles },
+      { items: (result.oems || result.Oems) || [], label: TEXT.suggestOems },
+      { items: (result.products || result.Products) || [], label: TEXT.suggestProducts }
+    ];
+
+    var any = groups.some(function (group) { return group.items.length; });
+    if (!any) {
+      closeResults();
+      return;
+    }
+
+    var html = '<div class="ce-suggest" role="listbox">';
+    groups.forEach(function (group) {
+      if (!group.items.length) {
+        return;
+      }
+      html += '<div class="ce-suggest__group"><span class="ce-suggest__label">' + escapeHtml(group.label) + '</span><ul class="ce-suggest__list">';
+      group.items.forEach(function (item) {
+        var value = item.value || item.Value || '';
+        var productId = item.productId || item.ProductId || '';
+        html += '<li><button type="button" class="ce-suggest__item" role="option" data-ce-suggest-value="' + escapeHtml(value) +
+          '" data-ce-suggest-product="' + escapeHtml(String(productId)) + '">' + escapeHtml(value) + '</button></li>';
+      });
+      html += '</ul></div>';
+    });
+    html += '</div>';
+
+    openResults(html);
+    var panel = resultsPanel();
+    if (panel) {
+      panel.querySelectorAll('[data-ce-suggest-value]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var value = button.getAttribute('data-ce-suggest-value');
+          var productId = parseInt(button.getAttribute('data-ce-suggest-product'), 10);
+          if (productId > 0) {
+            window.location.href = '/search?q=' + encodeURIComponent(value);
+            return;
+          }
+          var input = document.getElementById('ce-sticky-search-input');
+          if (input) {
+            input.value = value;
+          }
+          currentFilters = {};
+          runSearch();
+        });
+      });
+    }
+  }
+
+  function runSuggest(term) {
+    var url = '/check-engine/search/suggest?term=' + encodeURIComponent(term) +
+      '&locale=' + encodeURIComponent(document.documentElement.lang || 'en');
+    jsonFetch(url, { method: 'GET' }).then(function (response) {
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    }).then(function (result) {
+      if (result) {
+        renderSuggestions(result);
+      }
+    }).catch(function () {
+      /* typeahead is best-effort; ignore failures */
+    });
+  }
+
   function bindSearch() {
     var form = document.getElementById('ce-search-form');
     if (!form) {
@@ -272,8 +488,27 @@
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
+      // A fresh submission starts a new facet drill-down.
+      currentFilters = {};
       runSearch();
     });
+
+    var searchInput = document.getElementById('ce-sticky-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        var term = searchInput.value.trim();
+        if (suggestTimer) {
+          window.clearTimeout(suggestTimer);
+        }
+        if (term.length < 2) {
+          closeResults();
+          return;
+        }
+        suggestTimer = window.setTimeout(function () {
+          runSuggest(term);
+        }, 200);
+      });
+    }
 
     var widen = document.getElementById('ce-widen-fitment');
     if (widen) {

@@ -113,4 +113,18 @@ public sealed class SqlOemAdminRepository : IOemAdminRepository, IOemRelationRea
             "SELECT Id, ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive FROM TP_CE_OemNumber WHERE NormalizedNumber=@normalized AND IsActive=1 ORDER BY ManufacturerId, Id",
             new DataParameter("normalized", normalizedNumber))).ToList();
     }
+
+    public async Task<IReadOnlyList<OemNumber>> FindByNormalizedPrefixAsync(string normalizedPrefix, int take, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedPrefix))
+            return [];
+
+        var limit = take <= 0 ? 5 : System.Math.Min(take, 20);
+
+        // Prefix match on the indexed normalized column. The LIKE pattern is parameterized; the caller
+        // supplies an already-normalized token so we only append the wildcard.
+        return (await _dataProvider.QueryAsync<OemNumber>(
+            $"SELECT TOP ({limit}) Id, ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive FROM TP_CE_OemNumber WHERE NormalizedNumber LIKE @prefix AND IsActive=1 ORDER BY NormalizedNumber, ManufacturerId, Id",
+            new DataParameter("prefix", normalizedPrefix + "%"))).ToList();
+    }
 }

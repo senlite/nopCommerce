@@ -8,9 +8,13 @@ public sealed class SearchResult
 
     public IReadOnlyList<SearchHit> Hits { get; init; } = [];
 
+    public int Total { get; init; }
+
     public IReadOnlyList<SearchFacet> Facets { get; init; } = [];
 
     public IReadOnlyList<string> Suggestions { get; init; } = [];
+
+    public IReadOnlyList<SearchRecoveryAction> Recovery { get; init; } = [];
 
     public bool IsDegraded { get; init; }
 }

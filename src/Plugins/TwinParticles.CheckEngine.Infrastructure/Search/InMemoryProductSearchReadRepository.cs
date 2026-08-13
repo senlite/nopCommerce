@@ -10,9 +10,9 @@ public sealed class InMemoryProductSearchReadRepository : IProductSearchReadRepo
 {
     private static readonly IReadOnlyList<SearchHit> Products =
     [
-        new SearchHit { ProductId = 1001, Name = "BMW Oil Filter", CategoryId = 10, Brand = "BMW", Score = 0.95m },
-        new SearchHit { ProductId = 1002, Name = "Radiator Hose", CategoryId = 20, Brand = "Conti", Score = 0.80m },
-        new SearchHit { ProductId = 1003, Name = "Cabin Filter", CategoryId = 10, Brand = "Mann", Score = 0.75m }
+        new SearchHit { ProductId = 1001, Name = "BMW Oil Filter", CategoryId = 10, CategoryName = "Engine", Brand = "BMW", Price = 24.90m, Score = 0.95m },
+        new SearchHit { ProductId = 1002, Name = "Radiator Hose", CategoryId = 20, CategoryName = "Cooling", Brand = "Conti", Price = 79.00m, Score = 0.80m },
+        new SearchHit { ProductId = 1003, Name = "Cabin Filter", CategoryId = 10, CategoryName = "Engine", Brand = "Mann", Price = 18.50m, Score = 0.75m }
     ];
 
     public Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -49,6 +49,21 @@ public sealed class InMemoryProductSearchReadRepository : IProductSearchReadRepo
         return Task.FromResult<IReadOnlyList<SearchHit>>(hits);
     }
 
+    public Task<IReadOnlyList<SearchHit>> SuggestProductsAsync(string prefix, string locale, int take, CancellationToken cancellationToken)
+    {
+        var text = prefix?.Trim() ?? string.Empty;
+        if (text.Length < 2)
+            return Task.FromResult<IReadOnlyList<SearchHit>>([]);
+
+        var hits = Products
+            .Where(x => x.Name.Contains(text, System.StringComparison.OrdinalIgnoreCase))
+            .Take(take <= 0 ? 5 : take)
+            .Select(Clone)
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<SearchHit>>(hits);
+    }
+
     private static SearchHit Clone(SearchHit hit)
     {
         return new SearchHit
@@ -56,7 +71,9 @@ public sealed class InMemoryProductSearchReadRepository : IProductSearchReadRepo
             ProductId = hit.ProductId,
             Name = hit.Name,
             CategoryId = hit.CategoryId,
+            CategoryName = hit.CategoryName,
             Brand = hit.Brand,
+            Price = hit.Price,
             Score = hit.Score
         };
     }

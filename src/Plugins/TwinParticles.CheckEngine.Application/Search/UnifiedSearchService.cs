@@ -88,36 +88,53 @@ public sealed class UnifiedSearchService
         if (query.VehicleConfigurationId.HasValue)
             hits = await ApplyFitmentFilterAsync(hits, query.VehicleConfigurationId.Value, query.WidenFitment, cancellationToken);
 
-        var ranked = hits
+        // Drill-down filters are applied uniformly here so facet selections work across every lane
+        // (vehicle-tree and OEM projections never saw brand/price filters at the repository).
+        var filtered = ApplyFacetFilters(hits, query.Filters);
+
+        // Facets and total describe the whole filtered result, so both are computed before paging.
+        var facets = SearchFacetAggregator.Aggregate(filtered, query.VehicleConfigurationId.HasValue);
+        var total = filtered.Count;
+
+        var ranked = filtered
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.ProductId)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToList();
 
-        var facets = ranked
-            .Where(x => x.CategoryId.HasValue)
-            .GroupBy(x => x.CategoryId!.Value)
-            .Select(group => new SearchFacet
-            {
-                Key = "categoryId",
-                Value = group.Key.ToString(),
-                Count = group.Count()
-            })
-            .ToList();
-
-        var suggestions = ranked.Count == 0
-            ? BuildZeroResultSuggestions(query)
-            : new List<string>();
+        var recovery = total == 0 ? BuildRecovery(query) : [];
 
         return new SearchResult
         {
             ModeUsed = modeUsed,
             Hits = ranked,
+            Total = total,
             Facets = facets,
-            Suggestions = suggestions,
+            Suggestions = recovery.Select(action => action.Label).ToList(),
+            Recovery = recovery,
             IsDegraded = degraded
         };
+    }
+
+    private static IReadOnlyList<SearchHit> ApplyFacetFilters(IReadOnlyList<SearchHit> hits, SearchFilters filters)
+    {
+        IEnumerable<SearchHit> filtered = hits;
+
+        if (filters.CategoryId is > 0)
+            filtered = filtered.Where(hit => hit.CategoryId == filters.CategoryId);
+
+        if (!string.IsNullOrWhiteSpace(filters.Brand))
+            filtered = filtered.Where(hit =>
+                string.Equals(hit.Brand, filters.Brand, System.StringComparison.OrdinalIgnoreCase));
+
+        if (filters.PriceMin.HasValue)
+            filtered = filtered.Where(hit => hit.Price is null || hit.Price >= filters.PriceMin.Value);
+
+        if (filters.PriceMax.HasValue)
+            filtered = filtered.Where(hit => hit.Price is null || hit.Price <= filters.PriceMax.Value);
+
+        return filtered as IReadOnlyList<SearchHit> ?? filtered.ToList();
     }
 
     public Task RebuildIndexAsync(CancellationToken cancellationToken)
@@ -222,15 +239,31 @@ public sealed class UnifiedSearchService
         return filtered;
     }
 
-    private static IReadOnlyList<string> BuildZeroResultSuggestions(SearchQuery query)
+    private static IReadOnlyList<SearchRecoveryAction> BuildRecovery(SearchQuery query)
     {
-        var suggestions = new List<string>();
+        var recovery = new List<SearchRecoveryAction>();
 
-        if (!query.WidenFitment)
-            suggestions.Add("Try widening fitment to include unknown compatibility results.");
+        // A vehicle-scoped miss is most often over-strict fitment; offer the widen lane first.
+        if (query.VehicleConfigurationId.HasValue && !query.WidenFitment)
+            recovery.Add(new SearchRecoveryAction
+            {
+                Kind = "widen_fitment",
+                Label = "Include parts with unconfirmed fit for your vehicle."
+            });
 
-        suggestions.Add("Check OEM/VIN format or use a broader keyword.");
-        return suggestions;
+        recovery.Add(new SearchRecoveryAction
+        {
+            Kind = "select_vehicle",
+            Label = "Select your vehicle to see parts that fit."
+        });
+
+        recovery.Add(new SearchRecoveryAction
+        {
+            Kind = "broaden_keyword",
+            Label = "Check the OEM/VIN format or try a broader keyword."
+        });
+
+        return recovery;
     }
 
     private static SearchQuery CloneQuery(SearchQuery query, string rawText, SearchMode mode, int? vehicleConfigurationId = null)

@@ -85,6 +85,11 @@ public sealed class RouteProvider : IRouteProvider
             defaults: new { controller = "Search", action = "Query" });
 
         endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.SearchSuggest",
+            pattern: "check-engine/search/suggest",
+            defaults: new { controller = "Search", action = "Suggest" });
+
+        endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.SearchRecommend",
             pattern: "check-engine/search/recommend",
             defaults: new { controller = "Search", action = "Recommend" });
