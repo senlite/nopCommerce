@@ -19,6 +19,8 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - SQL Server 2022 install/update/uninstall rehearsal completed
 - Populated database backup/restore rehearsed with byte-identical pre/post metrics
 - Real catalog keyword/category search via nopCommerce; OEM/vehicle projections hydrate real products
+- Search facets (category/brand/price/fitment), `/search/suggest` typeahead, and structured zero-result recovery; verified live on SQL Server
+- Search benchmark corpus with precision@10 and first-page latency budget gate CI (production-scale proof pending)
 - Guest garage survives app restart and migrates inline to the authenticated SQL garage on sign-in
 - Fitment corpus: 233 Must cases; qualifier variants and context-aware caching verified live
 - Public EN/AR vehicle and part-for-vehicle SEO landings with canonical/hreflang/JSON-LD
@@ -39,7 +41,7 @@ larger product vision remains pre-release: 1/28 epics closed, 19 partial and 8 p
 - `dotnet build src/NopCommerce.sln -c Release`
 - `dotnet test src/Tests/Nop.Tests/Nop.Tests.csproj -c Release` (1,044 pass; 8 skip)
 - Run: `bash CheckEngine/scripts/build-checkengine.sh`
-- Check Engine suite: 512/512; GMaster suite: 19/19
+- Check Engine suite: 524/524; GMaster suite: 19/19
 - SQL Server lifecycle: install produced 25 `TP_CE_*` tables and 26 migration rows; uninstall left zero
   Check Engine tables, migration rows and permissions; backup restore returned all baseline counts
 

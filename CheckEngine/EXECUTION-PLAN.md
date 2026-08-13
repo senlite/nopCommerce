@@ -188,10 +188,10 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.12 | Complete VIN, OEM, vehicle-tree, category and keyword search against production data | partial | Keyword/category now use nopCommerce's real published catalog; OEM/tree projections hydrate real product records; VIN searches the decoded vehicle tree. Brand filters and production-scale coverage remain |
+| H1.12 | Complete VIN, OEM, vehicle-tree, category and keyword search against production data | partial | Keyword/category now use nopCommerce's real published catalog; OEM/tree projections hydrate real product records; VIN searches the decoded vehicle tree. Brand facet filtering now works across lanes; production-scale coverage remains |
 | H1.13 | Add production full-text/external index with incremental rebuild and SQL degradation | partial | Repository failures now mark health degraded and return honest empties; full-text/external indexing and a real rebuild remain |
-| H1.14 | Meet first-page latency and accuracy budgets on the published benchmark set | pending | No reference-catalog search benchmark exists |
-| H1.15 | Add facets, autocomplete and zero-result recovery UX | partial | Honest zero-result recovery renders in the Check Engine rail; complete facets and autocomplete remain |
+| H1.14 | Meet first-page latency and accuracy budgets on the published benchmark set | partial | A benchmark corpus (`src/Tests/corpus/search`) with precision@10 and a first-page latency budget now gate CI; production-scale proof against the seeded reference catalog remains |
+| H1.15 | Add facets, autocomplete and zero-result recovery UX | done | Category/brand/price/fitment facets aggregate over the full result (pre-paging) with real catalog metadata; `/check-engine/search/suggest` typeahead composes vehicle/OEM/product sources; structured recovery actions render in the rail. Verified live on SQL Server |
 | H1.16 | Add privacy-safe search analytics | pending | No production analytics pipeline exists |
 | H1.17 | Persist guest garage safely and migrate on sign-in | done | Browser-local payload survives app restarts and migrates inline into the authenticated SQL garage with antiforgery protection; verified live with normalized VIN and active vehicle |
 | H1.18 | Add garage VIN encryption, data export and erasure | pending | Required privacy workflows are absent |
@@ -315,7 +315,6 @@ The following are **not missing implementation** and must not be counted as defe
 Work follows dependency order rather than skipping to later roadmap features:
 
 1. Grow the BMW dataset (H1.4) from the curated launch slice toward the documented generation priority
-   list and reference-scale volume.
-2. Complete search facets/autocomplete and build the reference accuracy/performance benchmark (H1.14–H1.15).
-3. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
-4. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.
+   list and reference-scale volume, then run the search benchmark at reference scale (remaining H1.14).
+2. Replace remaining ERP/licensing stubs, then run accessibility/RTL/CWV and security gates.
+3. Complete Paymob/Bosta companion plugins and the v1.0 private/public beta gates.

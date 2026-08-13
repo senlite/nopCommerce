@@ -211,6 +211,7 @@ designed to be driven from the dashboard, scripts, or your own tooling.
 | **OEM registry** | `/Admin/CheckEngine/OemAdmin/{Manufacturers,OemNumbers,Relations}` and `Create*/Update*/Delete*` | Manufacturer-qualified numbers, cross-reference and supersession relations |
 | **Fitment review** | `/Admin/CheckEngine/FitmentAdmin/Queue`, `Approve`, `Reject` | Approvals/rejections are written to the audit trail; safety-critical categories can't be force-published below threshold |
 | **Import** | `/Admin/CheckEngine/ImportAdmin/{Run,Batch,RerunStage,SetReviewStatus,Publish}` | See [section 8](#8-the-product-import-pipeline) |
+| **Search (storefront)** | `check-engine/search/query`, `check-engine/search/suggest`, `check-engine/search/recommend` | `query` returns hits, `total`, facets (category/brand/price/fitment) and structured recovery; `suggest` is rate-limited typeahead over vehicles, OEM numbers and products |
 | **Search index** | `/Admin/CheckEngine/SearchAdmin/Rebuild` | Rebuilds/refreshes the search index health |
 | **Garage support** | `/Admin/CheckEngine/GarageAdmin/CustomerGarage` | Read a customer's garage for support |
 | **Images** | `/Admin/CheckEngine/ImageAdmin/Replace` | Replace a placeholder image with a professional asset |
@@ -248,6 +249,10 @@ oem,name,sku,price,vehicleConfigurationId,category,image
 - To repeat one corrected stage without replaying the whole import, call
   `POST /Admin/CheckEngine/ImportAdmin/RerunStage` with the batch id and an
   `ImportPipelineStage` value (`Extract` through `Publish`). Upstream results remain unchanged.
+> The storefront search rail returns facets (category, brand, price, fitment) computed over the whole
+> result set and a typeahead dropdown as you type. When a search returns nothing, it offers concrete
+> recovery actions (widen fitment, select a vehicle, broaden the keyword) rather than a dead end.
+
 - Low-confidence or ambiguous rows are flagged for review. Set a row's decision with
   `POST /Admin/CheckEngine/ImportAdmin/SetReviewStatus` (`Approved` / `Rejected` / `Pending`).
 - Call `POST /Admin/CheckEngine/ImportAdmin/Publish` with `dryRun=false` to commit. Publishing is
