@@ -84,7 +84,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISearchQueryFingerprintService, HmacSearchQueryFingerprintService>();
         services.AddScoped<IProductSearchReadRepository, SqlProductSearchReadRepository>();
         services.AddScoped<ISearchAnalyticsService, SqlSearchAnalyticsService>();
-        services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
+        // Durable, web-farm-shared search index state + incremental catalog projection.
+        services.AddScoped<SqlSearchIndexHealthService>();
+        services.AddScoped<ISearchIndexHealthService>(sp => sp.GetRequiredService<SqlSearchIndexHealthService>());
+        services.AddScoped<ISearchIndexStateReader>(sp => sp.GetRequiredService<SqlSearchIndexHealthService>());
         services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 
         services.AddScoped<IGarageVinProtector, NopGarageVinProtector>();

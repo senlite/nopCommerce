@@ -16,6 +16,7 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
 {
     private readonly INopDataProvider _dataProvider;
     private readonly ISearchIndexHealthService _healthService;
+    private readonly ISearchIndexStateReader? _indexStateReader;
     private readonly IProductService _productService;
     private readonly IStoreContext _storeContext;
     private readonly IWorkContext _workContext;
@@ -25,13 +26,15 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
         IProductService productService,
         IStoreContext storeContext,
         IWorkContext workContext,
-        ISearchIndexHealthService healthService)
+        ISearchIndexHealthService healthService,
+        ISearchIndexStateReader? indexStateReader = null)
     {
         _dataProvider = dataProvider;
         _productService = productService;
         _storeContext = storeContext;
         _workContext = workContext;
         _healthService = healthService;
+        _indexStateReader = indexStateReader;
     }
 
     public async Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -40,8 +43,79 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
         if (string.IsNullOrWhiteSpace(text))
             return [];
 
+        // Prefer the incremental keyword projection once it has been built; otherwise, and on any
+        // projection failure, degrade to the authoritative live catalog (FR-446, ADR-014).
+        if (query.Filters.CategoryId is null or <= 0 && await IsProjectionReadyAsync(cancellationToken))
+        {
+            var projected = await SearchProjectionAsync(query, text, cancellationToken);
+            if (projected.Count > 0)
+                return projected;
+        }
+
         return await SearchNopCatalogAsync(query, text, cancellationToken);
     }
+
+    private async Task<bool> IsProjectionReadyAsync(CancellationToken cancellationToken)
+    {
+        if (_indexStateReader is null)
+            return false;
+
+        try
+        {
+            return (await _indexStateReader.GetStateAsync(cancellationToken)).IsReady;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task<IReadOnlyList<SearchHit>> SearchProjectionAsync(
+        SearchQuery query,
+        string text,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var normalized = text.ToLowerInvariant();
+            var like = "%" + EscapeLike(normalized) + "%";
+
+            var rows = await _dataProvider.QueryAsync<ProjectionRow>(@"
+SELECT TOP (5000) ProductId,
+    CASE WHEN Sku = @raw OR Mpn = @raw THEN CAST(1.0 AS decimal(5,4))
+         WHEN NormalizedText LIKE @exactWord ESCAPE '\' THEN CAST(0.9 AS decimal(5,4))
+         ELSE CAST(0.75 AS decimal(5,4)) END AS Score
+FROM TP_CE_SearchIndex
+WHERE NormalizedText LIKE @like ESCAPE '\' OR Sku = @raw OR Mpn = @raw
+ORDER BY Score DESC, ProductId",
+                new DataParameter("like", like),
+                new DataParameter("exactWord", "%" + EscapeLike(normalized) + "%"),
+                new DataParameter("raw", text));
+
+            var priceMin = query.Filters.PriceMin;
+            var priceMax = query.Filters.PriceMax;
+            var candidates = rows.Select(row => (row.ProductId, row.Score)).ToList();
+            var hits = await HydrateProductsAsync(candidates, cancellationToken);
+
+            if (priceMin.HasValue || priceMax.HasValue)
+            {
+                hits = hits
+                    .Where(hit => (!priceMin.HasValue || hit.Price >= priceMin.Value)
+                                  && (!priceMax.HasValue || hit.Price <= priceMax.Value))
+                    .ToList();
+            }
+
+            return hits;
+        }
+        catch (Exception exception)
+        {
+            await _healthService.ReportDegradedAsync(exception.GetType().Name, cancellationToken);
+            return [];
+        }
+    }
+
+    private static string EscapeLike(string value)
+        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_").Replace("[", "\\[");
 
     public async Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken)
     {
@@ -303,6 +377,13 @@ WHERE m.ProductId IN ({idList})");
     private sealed class ProductIdRow
     {
         public int ProductId { get; set; }
+    }
+
+    private sealed class ProjectionRow
+    {
+        public int ProductId { get; set; }
+
+        public decimal Score { get; set; }
     }
 
     private sealed class OemMapRow

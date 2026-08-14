@@ -289,6 +289,9 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         var reconciliationTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.ErpReconciliationTask).FullName!);
         if (reconciliationTask is not null)
             await _scheduleTaskService.DeleteTaskAsync(reconciliationTask);
+        var searchIndexTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.SearchIndexRefreshTask).FullName!);
+        if (searchIndexTask is not null)
+            await _scheduleTaskService.DeleteTaskAsync(searchIndexTask);
 
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
@@ -317,6 +320,10 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             typeof(Tasks.ErpReconciliationTask).FullName!,
             "Check Engine ERP reconciliation",
             24 * 60 * 60);
+        await EnsureScheduleTaskAsync(
+            typeof(Tasks.SearchIndexRefreshTask).FullName!,
+            "Check Engine search index refresh",
+            60);
     }
 
     private async Task EnsureScheduleTaskAsync(string type, string name, int seconds)
