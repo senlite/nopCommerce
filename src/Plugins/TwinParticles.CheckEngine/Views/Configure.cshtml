@@ -12,6 +12,8 @@
     </div>
 </div>
 
+@await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
+
 <form asp-controller="CheckEngine" asp-action="Configure" method="post">
     <div class="cards-group">
         <div class="card card-default">

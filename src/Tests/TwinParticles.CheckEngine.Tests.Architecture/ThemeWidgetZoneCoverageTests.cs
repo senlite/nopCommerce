@@ -18,5 +18,7 @@ public class ThemeWidgetZoneCoverageTests
         content.Should().Contain("PublicWidgetZones.BodyStartHtmlTagAfter");
         content.Should().Contain("PublicWidgetZones.ProductDetailsTop");
         content.Should().Contain("PublicWidgetZones.HomepageTop");
+        content.Should().Contain("AdminWidgetZones.PluginListButtons");
+        content.Should().Contain("UninstallPreparationViewComponent");
     }
 }
