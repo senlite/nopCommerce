@@ -227,12 +227,13 @@ public static class BmwReferenceCatalog
                 ]),
             new("F10", "F10", 2010, 2017,
                 [Sedan, Touring],
-                [N20B20, N47D20, N55B30, N57D30],
+                [N20B20, N47D20, N55B30, N57D30, N63B44],
                 [
                     new("520i", "SEDAN", "N20B20"),
                     new("528i", "SEDAN", "N20B20"),
                     new("520d", "SEDAN", "N47D20"),
                     new("535i", "SEDAN", "N55B30"),
+                    new("550i", "SEDAN", "N63B44"),
                     new("530d", "SEDAN", "N57D30"),
                     new("520d Touring", "TOURING", "N47D20")
                 ]),

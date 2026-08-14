@@ -1,62 +1,69 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Vehicle;
+using VinValue = TwinParticles.CheckEngine.Domain.Vehicle.Vin;
+using VinInfrastructure = TwinParticles.CheckEngine.Infrastructure.Vehicle.Vin;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Vehicle.VinDecoders;
 
 public sealed class BmwVinDecoder : IManufacturerVinDecoder
 {
-    private static readonly string[] SupportedWmis = ["WBA", "WBS", "WBX", "5UX", "5YM"];
+    private readonly VinInfrastructure.BmwVinWmiAllowList _wmiAllowList;
+    private readonly IVinSupportRepository _vinRepository;
+    private readonly VinInfrastructure.BmwVinConfigurationResolver _configurationResolver;
 
-    private static readonly Dictionary<string, VinDecodeCandidate> VdsPatternCandidates = new(StringComparer.Ordinal)
+    public BmwVinDecoder(
+        VinInfrastructure.BmwVinWmiAllowList wmiAllowList,
+        IVinSupportRepository vinRepository,
+        VinInfrastructure.BmwVinConfigurationResolver configurationResolver)
     {
-        ["8E9"] = new VinDecodeCandidate
-        {
-            VehicleConfigurationId = 10041,
-            Confidence = Confidence.Create(0.92m),
-            ModelYear = 2016
-        },
-        ["3A5"] = new VinDecodeCandidate
-        {
-            VehicleConfigurationId = 10011,
-            Confidence = Confidence.Create(0.88m),
-            ModelYear = 2013
-        }
-    };
-
-    public bool CanDecode(string wmi)
-    {
-        if (string.IsNullOrWhiteSpace(wmi))
-        {
-            return false;
-        }
-
-        var normalized = wmi.Trim().ToUpperInvariant();
-        foreach (var supportedWmi in SupportedWmis)
-        {
-            if (string.Equals(normalized, supportedWmi, StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        _wmiAllowList = wmiAllowList;
+        _vinRepository = vinRepository;
+        _configurationResolver = configurationResolver;
     }
 
-    public VinDecodeContribution Decode(Vin vin)
+    public bool CanDecode(string wmi)
+        => _wmiAllowList.Contains(wmi);
+
+    public VinDecodeContribution Decode(VinValue vin)
     {
         var segments = vin.ParseSegments();
         if (!CanDecode(segments.Wmi))
-        {
             return VinDecodeContribution.Failed("vin.wmi_unknown");
-        }
 
         var vdsPrefix = segments.Vds[..3];
-        if (VdsPatternCandidates.TryGetValue(vdsPrefix, out var candidate))
+        var patterns = _vinRepository.GetPatternsAsync(CancellationToken.None)
+            .GetAwaiter()
+            .GetResult()
+            .Where(pattern => pattern.IsActive && string.Equals(pattern.Pattern, vdsPrefix, StringComparison.Ordinal))
+            .OrderByDescending(pattern => pattern.Priority)
+            .ToList();
+
+        if (patterns.Count == 0)
+            return VinDecodeContribution.Failed("vin.decode_failed");
+
+        var modelYear = VinModelYear.DecodeFromVin(vin.Value);
+        var candidates = new List<VinDecodeCandidate>();
+
+        foreach (var pattern in patterns)
         {
-            return VinDecodeContribution.WithCandidates([candidate]);
+            var resolved = _configurationResolver.ResolveAsync(pattern, modelYear, CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+            candidates.AddRange(resolved);
         }
 
-        return VinDecodeContribution.Failed("vin.decode_failed");
+        var distinct = candidates
+            .GroupBy(candidate => candidate.VehicleConfigurationId)
+            .Select(group => group.OrderByDescending(candidate => candidate.Confidence.Value).First())
+            .OrderByDescending(candidate => candidate.Confidence.Value)
+            .ToList();
+
+        return distinct.Count == 0
+            ? VinDecodeContribution.Failed("vin.decode_failed")
+            : VinDecodeContribution.WithCandidates(distinct);
     }
 }
