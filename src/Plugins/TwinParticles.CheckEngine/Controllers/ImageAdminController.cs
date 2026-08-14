@@ -18,15 +18,18 @@ public sealed class ImageAdminController : BasePluginController
 {
     private readonly ProductImageService _service;
     private readonly BatchImageReplacementService _batchService;
+    private readonly SupplierImageSourcingService _supplierSourcingService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
     public ImageAdminController(
         ProductImageService service,
         BatchImageReplacementService batchService,
+        SupplierImageSourcingService supplierSourcingService,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _service = service;
         _batchService = batchService;
+        _supplierSourcingService = supplierSourcingService;
         _permissionService = permissionService;
     }
 
@@ -58,6 +61,28 @@ public sealed class ImageAdminController : BasePluginController
         }).ToList();
 
         var result = await _batchService.ReplaceBySkuAsync(items, actor: "admin", cancellationToken);
+        return Json(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SourceFromManifest([FromBody] ImageSupplierManifestRequestModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (string.IsNullOrWhiteSpace(model?.CsvContent))
+            return BadRequest(new { reasonCode = "image.supplier.manifest_empty" });
+
+        var result = await _supplierSourcingService.ReplaceFromManifestCsvAsync(model.CsvContent, actor: "admin", cancellationToken);
+        return Json(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SourceFromTemplate([FromBody] ImageSupplierTemplateRequestModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (model?.Skus is null || model.Skus.Count == 0)
+            return BadRequest(new { reasonCode = "image.supplier.skus_empty" });
+
+        var result = await _supplierSourcingService.ReplaceFromUrlTemplateAsync(model.Skus, actor: "admin", cancellationToken);
         return Json(result);
     }
 }

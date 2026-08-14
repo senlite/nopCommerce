@@ -29,6 +29,18 @@ public class CoreWebVitalsGateConventionsTests
         var contents = File.ReadAllText(script);
         contents.Should().Contain("lighthouse");
         contents.Should().Contain("NFR-054");
+        contents.Should().Contain("form-factor");
+        contents.Should().Contain("cpuSlowdownMultiplier");
+    }
+
+    [Test]
+    public void Repository_Should_Ship_CWV_Gate_PowerShell_Script_With_Mobile_Throttling()
+    {
+        var script = LocateRepoFile("CheckEngine", "scripts", "run-cwv-gate.ps1");
+        File.Exists(script).Should().BeTrue();
+        var contents = File.ReadAllText(script);
+        contents.Should().Contain("cpuSlowdownMultiplier");
+        contents.Should().Contain("/ar/");
     }
 
     private static string LocateRepoFile(params string[] relativePath)

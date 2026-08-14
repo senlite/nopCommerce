@@ -145,6 +145,11 @@ public sealed class RouteProvider : IRouteProvider
             defaults: new { controller = "Health", action = "Get" });
 
         endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.ErpWebhook",
+            pattern: "check-engine/erp/webhook",
+            defaults: new { controller = "ErpWebhook", action = "Receive" });
+
+        endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.ReferenceDataAdmin",
             pattern: "Admin/CheckEngine/ReferenceDataAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "ReferenceDataAdmin", action = "Status" });

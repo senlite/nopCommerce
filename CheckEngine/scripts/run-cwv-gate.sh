@@ -22,17 +22,28 @@ fi
 PAGES=(
   "/"
   "/search?q=filter"
+  "/ar/"
 )
+
+FORM_FACTOR="${CHECKENGINE_CWV_FORM_FACTOR:-mobile}"
+THROTTLE_CPU="${CHECKENGINE_CWV_CPU_SLOWDOWN:-4}"
+THROTTLE_RTT="${CHECKENGINE_CWV_RTT_MS:-150}"
+THROTTLE_THROUGHPUT="${CHECKENGINE_CWV_THROUGHPUT_KBPS:-1638.4}"
 
 failed=0
 for path in "${PAGES[@]}"; do
   url="${BASE_URL%/}${path}"
   safe_name="$(echo "$path" | tr '/?=&' '_' | sed 's/^_*//;s/_*$//')"
   [[ -z "$safe_name" ]] && safe_name="home"
-  report="${OUTPUT_DIR}/lighthouse-${safe_name}.json"
-  echo "[cwv-gate] auditing ${url}"
+  report="${OUTPUT_DIR}/lighthouse-${safe_name}-${FORM_FACTOR}.json"
+  echo "[cwv-gate] auditing ${url} (${FORM_FACTOR}, CPU x${THROTTLE_CPU})"
   lighthouse "$url" \
     --quiet \
+    --form-factor="$FORM_FACTOR" \
+    --screenEmulation.mobile=$([ "$FORM_FACTOR" = "mobile" ] && echo true || echo false) \
+    --throttling.cpuSlowdownMultiplier="$THROTTLE_CPU" \
+    --throttling.rttMs="$THROTTLE_RTT" \
+    --throttling.throughputKbps="$THROTTLE_THROUGHPUT" \
     --chrome-flags="--headless --no-sandbox" \
     --only-categories=performance \
     --output=json \

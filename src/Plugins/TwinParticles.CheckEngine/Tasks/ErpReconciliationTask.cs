@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nop.Services.ScheduleTasks;
 using TwinParticles.CheckEngine.Application.Erp;
-using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Domain.Configuration;
 using TwinParticles.CheckEngine.Domain.Security;
 
 namespace TwinParticles.CheckEngine.Tasks;

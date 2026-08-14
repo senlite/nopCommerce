@@ -67,6 +67,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ProductImageService>();
         services.AddScoped<BatchImageReplacementService>();
+        services.AddScoped<SupplierImageSourcingService>();
         services.AddScoped<ImageImportOrchestrationService>();
 
         services.AddScoped<LocaleFormattingService>();
@@ -78,6 +79,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ILicenceService, DefaultLicenceService>();
         services.AddScoped<ErpSyncService>();
+        services.AddScoped<ErpInboundWebhookService>();
         services.AddScoped<CheckEngineHealthService>();
         services.AddScoped<CheckEngineLicenceGate>();
         services.AddScoped<CheckEngineUninstallExportService>();
