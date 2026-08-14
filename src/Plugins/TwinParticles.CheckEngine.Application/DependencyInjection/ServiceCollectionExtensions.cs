@@ -12,6 +12,7 @@ using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Observability;
+using TwinParticles.CheckEngine.Application.ReferenceScale;
 using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Application.Seo;
 using TwinParticles.CheckEngine.Application.Vehicle.Admin;
@@ -80,6 +81,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CheckEngineHealthService>();
         services.AddScoped<CheckEngineLicenceGate>();
         services.AddScoped<CheckEngineUninstallExportService>();
+        services.AddScoped<ReferenceScaleCatalogService>();
 
         return services;
     }

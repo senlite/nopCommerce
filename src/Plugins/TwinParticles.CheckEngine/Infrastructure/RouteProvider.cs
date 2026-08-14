@@ -145,6 +145,11 @@ public sealed class RouteProvider : IRouteProvider
             defaults: new { controller = "Health", action = "Get" });
 
         endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.ReferenceDataAdmin",
+            pattern: "Admin/CheckEngine/ReferenceDataAdmin/{action}",
+            defaults: new { area = AreaNames.ADMIN, controller = "ReferenceDataAdmin", action = "Status" });
+
+        endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.DiagnosticsAdmin",
             pattern: "Admin/CheckEngine/DiagnosticsAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "DiagnosticsAdmin", action = "Package" });

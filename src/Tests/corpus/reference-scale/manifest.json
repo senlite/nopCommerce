@@ -1,0 +1,25 @@
+{
+  "version": "v1",
+  "description": "Synthetic NFR reference environment for BMW-scale catalog and fitment provenance rehearsals (H1.11). Not licensed third-party data.",
+  "targets": {
+    "products": 250000,
+    "fitmentClaims": 2000000,
+    "configurations": 40000,
+    "oemEntries": 500000,
+    "claimsPerProduct": 8
+  },
+  "tagging": {
+    "provenancePrefix": "ref-scale:v1",
+    "productSkuPrefix": "REF-SCALE-",
+    "oemNormalizedPrefix": "REFSCALE",
+    "configurationFingerprintPrefix": "ref-scale:v1:cfg:",
+    "createdBy": "reference-scale-loader"
+  },
+  "fitmentProvenance": {
+    "sourceKind": "ImportedFeed",
+    "status": "Fits",
+    "confidence": 0.95,
+    "safetyClass": "Standard",
+    "isPublished": true
+  }
+}
