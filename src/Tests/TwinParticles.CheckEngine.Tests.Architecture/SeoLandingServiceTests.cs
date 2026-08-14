@@ -33,7 +33,13 @@ public class SeoLandingServiceTests
     {
         var repository = new FakeSeoLandingRepository();
         var sitemap = new FakeSeoSitemapService();
-        var service = new SeoLandingService(repository, new FakeSeoUrlService(), new FakeSeoStructuredDataService(), sitemap, new FakeSeoPerformanceBudgetService(true));
+        var service = new SeoLandingService(
+            repository,
+            new FakeSeoUrlService(),
+            new FakeSeoStructuredDataService(),
+            sitemap,
+            new FakeSeoPerformanceBudgetService(true),
+            new FakeSeoIndexabilityPolicy(true));
 
         await repository.UpsertAsync(new SeoLandingPage { Type = SeoLandingPageType.Vehicle, VehicleConfigurationId = 1, Locale = "en", UrlPath = "/vehicles/config-1", CanonicalUrlPath = "/vehicles/config-1", HreflangPathEn = "/vehicles/config-1", HreflangPathAr = "/ar/vehicles/config-1", StructuredDataJsonLd = "{}", IsIndexable = true }, CancellationToken.None);
         await repository.UpsertAsync(new SeoLandingPage { Type = SeoLandingPageType.Vehicle, VehicleConfigurationId = 2, Locale = "en", UrlPath = "/vehicles/config-2", CanonicalUrlPath = "/vehicles/config-2", HreflangPathEn = "/vehicles/config-2", HreflangPathAr = "/ar/vehicles/config-2", StructuredDataJsonLd = "{}", IsIndexable = false }, CancellationToken.None);
@@ -45,6 +51,25 @@ public class SeoLandingServiceTests
         urls.Single().Should().Be("/vehicles/config-1");
     }
 
+    [Test]
+    public async Task GenerateVehicleLandingAsync_Should_Noindex_A_Vehicle_With_No_Sellable_Fits()
+    {
+        var repository = new FakeSeoLandingRepository();
+        var service = new SeoLandingService(
+            repository,
+            new FakeSeoUrlService(),
+            new FakeSeoStructuredDataService(),
+            new FakeSeoSitemapService(),
+            new FakeSeoPerformanceBudgetService(true),
+            new FakeSeoIndexabilityPolicy(false));
+
+        var result = await service.GenerateVehicleLandingAsync(77, "en", CancellationToken.None);
+
+        result.Success.Should().BeTrue("thin landings remain reachable for users");
+        result.Landing!.IsIndexable.Should().BeFalse(
+            "a vehicle with zero published, sellable Fits claims must not enter search indexes");
+    }
+
     private static SeoLandingService CreateService(FakeSeoLandingRepository repository)
     {
         return new SeoLandingService(
@@ -52,7 +77,8 @@ public class SeoLandingServiceTests
             new FakeSeoUrlService(),
             new FakeSeoStructuredDataService(),
             new FakeSeoSitemapService(),
-            new FakeSeoPerformanceBudgetService(true));
+            new FakeSeoPerformanceBudgetService(true),
+            new FakeSeoIndexabilityPolicy(true));
     }
 
     private sealed class FakeSeoLandingRepository : ISeoLandingRepository
@@ -112,5 +138,24 @@ public class SeoLandingServiceTests
         }
 
         public bool MeetsBudget() => _value;
+    }
+
+    private sealed class FakeSeoIndexabilityPolicy : ISeoIndexabilityPolicy
+    {
+        private readonly bool _value;
+
+        public FakeSeoIndexabilityPolicy(bool value)
+        {
+            _value = value;
+        }
+
+        public Task<bool> IsVehicleLandingIndexableAsync(int vehicleConfigurationId, CancellationToken cancellationToken)
+            => Task.FromResult(_value);
+
+        public Task<bool> IsPartForVehicleLandingIndexableAsync(
+            int productId,
+            int vehicleConfigurationId,
+            CancellationToken cancellationToken)
+            => Task.FromResult(_value);
     }
 }

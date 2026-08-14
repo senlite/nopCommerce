@@ -4,6 +4,25 @@ namespace TwinParticles.CheckEngine.Models;
 
 public sealed class VehicleAdminDtos
 {
+    public sealed class ArchiveRequestModel
+    {
+        public int Id { get; set; }
+    }
+
+    public sealed class MergeRequestModel
+    {
+        public int SourceId { get; set; }
+        public int TargetId { get; set; }
+    }
+
+    public sealed class LifecycleResultModel
+    {
+        public bool Success { get; set; }
+        public string? ErrorCode { get; set; }
+        public int MovedChildren { get; set; }
+        public int MovedAliases { get; set; }
+    }
+
     public sealed class SeedResultModel
     {
         public int MakesInserted { get; set; }

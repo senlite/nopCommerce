@@ -60,7 +60,7 @@ public class ResilienceBehaviorTests
     }
 
     [Test]
-    public async Task StubErp_ForceFail_Job_Should_Return_False_Without_Throwing()
+    public async Task StubErp_ForceFail_Job_Should_Schedule_Retry_Without_Throwing()
     {
         var adapter = new ForceFailErpAdapter();
         var queue = new InMemoryErpQueue();
@@ -72,7 +72,8 @@ public class ResilienceBehaviorTests
         await act.Should().NotThrowAsync();
 
         var report = await service.BuildReconciliationReportAsync(CancellationToken.None);
-        report.FailedJobs.Should().Be(1);
+        report.TotalJobs.Should().Be(1);
+        report.FailedJobs.Should().Be(0, "the first transient failure is queued for delayed retry");
         report.SuccessfulJobs.Should().Be(0);
     }
 
@@ -123,10 +124,10 @@ public class ResilienceBehaviorTests
     {
         private readonly List<ErpSyncJob> _jobs = [];
 
-        public Task EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
+        public Task<Guid> EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
         {
             _jobs.Add(job);
-            return Task.CompletedTask;
+            return Task.FromResult(job.JobId);
         }
 
         public Task<IReadOnlyList<ErpSyncJob>> GetPendingAsync(CancellationToken cancellationToken)
@@ -153,6 +154,8 @@ public class ResilienceBehaviorTests
         public FakeSearchIndexHealthService(bool healthy) => _healthy = healthy;
 
         public Task<bool> IsHealthyAsync(CancellationToken cancellationToken) => Task.FromResult(_healthy);
+
+        public Task ReportDegradedAsync(string reason, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task RebuildAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
@@ -228,10 +231,10 @@ public class ResilienceBehaviorTests
 
     private sealed class EmptyFitmentCache : IFitmentCache
     {
-        public Task<FitmentEvaluationResult?> GetAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+        public Task<FitmentEvaluationResult?> GetAsync(FitmentEvaluationContext context, CancellationToken cancellationToken)
             => Task.FromResult<FitmentEvaluationResult?>(null);
 
-        public Task SetAsync(int productId, int vehicleConfigurationId, FitmentEvaluationResult result, CancellationToken cancellationToken)
+        public Task SetAsync(FitmentEvaluationContext context, FitmentEvaluationResult result, CancellationToken cancellationToken)
             => Task.CompletedTask;
 
         public Task InvalidateAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)

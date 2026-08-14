@@ -45,7 +45,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ImportImageAssignmentService>();
         services.AddScoped<ImportReviewService>();
         services.AddScoped<ImportPublicationService>();
-        services.AddSingleton<ImportPipelineOrchestratorService>();
+        // Scoped because SQL is the authoritative pipeline state. A singleton would capture scoped
+        // repositories and reintroduce process-local mutable batch ownership.
+        services.AddScoped<ImportPipelineOrchestratorService>();
 
         services.AddScoped<FitmentEvaluationService>();
         services.AddScoped<FitmentPublicationPolicyService>();
@@ -55,21 +57,28 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SearchIndexAdminService>();
         services.AddScoped<GarageContextSearchService>();
         services.AddScoped<RecommendationService>();
+        services.AddScoped<SearchAutocompleteService>();
+        services.AddScoped<SearchAnalyticsAdminService>();
 
         services.AddScoped<GarageService>();
+        services.AddScoped<GaragePrivacyService>();
+        services.AddScoped<TwinParticles.CheckEngine.Application.Privacy.CheckEngineSubjectDataService>();
 
         services.AddScoped<ProductImageService>();
+        services.AddScoped<BatchImageReplacementService>();
         services.AddScoped<ImageImportOrchestrationService>();
 
         services.AddScoped<LocaleFormattingService>();
 
         services.AddScoped<SeoLandingService>();
+        services.AddScoped<TwinParticles.CheckEngine.Domain.Seo.ISeoLandingRegenerationTrigger, SeoLandingRegenerationTrigger>();
 
         services.AddScoped<AiProposalService>();
 
         services.AddScoped<ILicenceService, DefaultLicenceService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<CheckEngineHealthService>();
+        services.AddScoped<CheckEngineUninstallExportService>();
 
         return services;
     }

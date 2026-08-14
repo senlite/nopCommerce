@@ -33,6 +33,8 @@ public sealed class NopImportProductPublisher : IImportProductPublisher
         fields.TryGetValue("name", out var name);
         fields.TryGetValue("sku", out var sku);
         fields.TryGetValue("productId", out var productIdRaw);
+        if (string.IsNullOrWhiteSpace(productIdRaw))
+            fields.TryGetValue("publishedProductId", out productIdRaw);
         fields.TryGetValue("price", out var priceRaw);
 
         if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(sku) && !int.TryParse(productIdRaw, out _))

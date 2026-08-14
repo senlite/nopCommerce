@@ -81,12 +81,6 @@
                             <div class="col-md-9">
                                 @if (adminAreaSettings.UseRichEditorInMessageTemplates)
                                 {
-                                    //we use rich editor with BODY tag supported
-                                    //it could be a better practice to implement one more editor (similar to RichEditor.cshtml)
-                                    //with "enableFullPage" property set to "true". but we do not want to duplicate source code
-                                    //that's why we use this workaround
-                                    //we store a value into "ViewData" and then use it in the RichEditor.cshtml file
-                                    ViewData["nop.RichEditor.EnableFullPage"] = true;
                                 <div class="input-group-append input-group-required">                                    
                                     <div class="input-group">
                                         <nop-editor asp-for="Body" asp-template="RichEditor" />
@@ -101,7 +95,7 @@
                                     <nop-textarea asp-for="Body" asp-required="true"></nop-textarea>
                                     <text>
                                         <script>
-                                        $(document).ready(function () {
+                                        $(function() {
                                             $('#@Html.IdFor(model => model.Body)').height($('#@Html.IdFor(model => model.Body)')[0].scrollHeight);
                                         });
                                         </script>
@@ -157,6 +151,15 @@
                             <div class="col-md-9">
                                 <nop-select asp-for="CustomerRoleId" asp-items="Model.AvailableCustomerRoles" />
                                 <span asp-validation-for="CustomerRoleId"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="NewsLetterSubscriptionTypeId" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-select asp-for="NewsLetterSubscriptionTypeId" asp-items="Model.AvailableNewsLetterSubscriptionTypes" />
+                                <span asp-validation-for="NewsLetterSubscriptionTypeId"></span>
                             </div>
                         </div>
                     </div>

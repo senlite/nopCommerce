@@ -140,10 +140,10 @@ public class GarageContextSearchServiceTests
 
     private sealed class FakeFitmentCache : IFitmentCache
     {
-        public Task<FitmentEvaluationResult?> GetAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+        public Task<FitmentEvaluationResult?> GetAsync(FitmentEvaluationContext context, CancellationToken cancellationToken)
             => Task.FromResult<FitmentEvaluationResult?>(null);
 
-        public Task SetAsync(int productId, int vehicleConfigurationId, FitmentEvaluationResult result, CancellationToken cancellationToken)
+        public Task SetAsync(FitmentEvaluationContext context, FitmentEvaluationResult result, CancellationToken cancellationToken)
             => Task.CompletedTask;
 
         public Task InvalidateAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
@@ -194,6 +194,8 @@ public class GarageContextSearchServiceTests
     private sealed class FakeSearchIndexHealthService : ISearchIndexHealthService
     {
         public Task<bool> IsHealthyAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+
+        public Task ReportDegradedAsync(string reason, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task RebuildAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }

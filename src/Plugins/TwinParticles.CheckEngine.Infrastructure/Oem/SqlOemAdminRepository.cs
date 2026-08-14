@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LinqToDB.Data;
@@ -68,6 +70,69 @@ public sealed class SqlOemAdminRepository : IOemAdminRepository, IOemRelationRea
     public Task DeleteOemNumberAsync(int id, CancellationToken cancellationToken)
         => _dataProvider.ExecuteNonQueryAsync("DELETE FROM TP_CE_OemNumber WHERE Id=@id", new DataParameter("id", id));
 
+    // Keep row batches under the SQL Server ~2,100 parameter ceiling (4 params per row).
+    private const int BulkUpsertBatchSize = 400;
+
+    public async Task<OemBulkUpsertResult> BulkUpsertOemNumbersAsync(IReadOnlyList<OemNumber> numbers, CancellationToken cancellationToken)
+    {
+        if (numbers is null || numbers.Count == 0)
+            return OemBulkUpsertResult.Empty;
+
+        var inserted = 0;
+        var updated = 0;
+
+        for (var offset = 0; offset < numbers.Count; offset += BulkUpsertBatchSize)
+        {
+            var batch = numbers.Skip(offset).Take(BulkUpsertBatchSize).ToList();
+            var parameters = new List<DataParameter>(batch.Count * 4);
+            var values = new StringBuilder();
+
+            for (var i = 0; i < batch.Count; i++)
+            {
+                var entity = batch[i];
+                if (i > 0)
+                    values.Append(',');
+
+                values.Append($"(@m{i},@d{i},@n{i},@o{i})");
+                parameters.Add(new DataParameter($"m{i}", entity.ManufacturerId));
+                parameters.Add(new DataParameter($"d{i}", entity.DisplayNumber));
+                parameters.Add(new DataParameter($"n{i}", entity.NormalizedNumber));
+                parameters.Add(new DataParameter($"o{i}", entity.IsObsolete));
+            }
+
+            // MERGE keyed on (ManufacturerId, NormalizedNumber) per FR-236. Matched rows keep their Id so
+            // relations and product maps that reference them survive; unmatched rows are inserted active.
+            var sql = $@"
+SET NOCOUNT ON;
+DECLARE @actions TABLE(act nvarchar(10));
+MERGE INTO TP_CE_OemNumber AS T
+USING (VALUES {values}) AS S (ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete)
+    ON T.ManufacturerId = S.ManufacturerId AND T.NormalizedNumber = S.NormalizedNumber
+WHEN MATCHED THEN
+    UPDATE SET DisplayNumber = S.DisplayNumber, IsObsolete = S.IsObsolete, IsActive = 1
+WHEN NOT MATCHED THEN
+    INSERT (ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive)
+    VALUES (S.ManufacturerId, S.DisplayNumber, S.NormalizedNumber, S.IsObsolete, 1)
+OUTPUT $action INTO @actions;
+SELECT
+    SUM(CASE WHEN act = 'INSERT' THEN 1 ELSE 0 END) AS Inserted,
+    SUM(CASE WHEN act = 'UPDATE' THEN 1 ELSE 0 END) AS Updated
+FROM @actions;";
+
+            var row = (await _dataProvider.QueryAsync<BulkUpsertCountRow>(sql, parameters.ToArray())).First();
+            inserted += row.Inserted;
+            updated += row.Updated;
+        }
+
+        return new OemBulkUpsertResult { Inserted = inserted, Updated = updated };
+    }
+
+    private sealed class BulkUpsertCountRow
+    {
+        public int Inserted { get; set; }
+        public int Updated { get; set; }
+    }
+
     public async Task<IReadOnlyList<OemRelation>> GetRelationsAsync(CancellationToken cancellationToken)
         => (await _dataProvider.QueryAsync<OemRelation>("SELECT Id, FromOemNumberId, ToOemNumberId, RelationTypeId as RelationType, ValidFromUtc, ValidToUtc, IsActive FROM TP_CE_OemRelation ORDER BY Id")).ToList();
 
@@ -112,5 +177,19 @@ public sealed class SqlOemAdminRepository : IOemAdminRepository, IOemRelationRea
         return (await _dataProvider.QueryAsync<OemNumber>(
             "SELECT Id, ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive FROM TP_CE_OemNumber WHERE NormalizedNumber=@normalized AND IsActive=1 ORDER BY ManufacturerId, Id",
             new DataParameter("normalized", normalizedNumber))).ToList();
+    }
+
+    public async Task<IReadOnlyList<OemNumber>> FindByNormalizedPrefixAsync(string normalizedPrefix, int take, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedPrefix))
+            return [];
+
+        var limit = take <= 0 ? 5 : System.Math.Min(take, 20);
+
+        // Prefix match on the indexed normalized column. The LIKE pattern is parameterized; the caller
+        // supplies an already-normalized token so we only append the wildcard.
+        return (await _dataProvider.QueryAsync<OemNumber>(
+            $"SELECT TOP ({limit}) Id, ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive FROM TP_CE_OemNumber WHERE NormalizedNumber LIKE @prefix AND IsActive=1 ORDER BY NormalizedNumber, ManufacturerId, Id",
+            new DataParameter("prefix", normalizedPrefix + "%"))).ToList();
     }
 }

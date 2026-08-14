@@ -161,18 +161,24 @@ public class VehicleAdminServiceTests
 
         public Task UpdateMakeAsync(VehicleMake entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteMakeAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VehicleMergeRepositoryResult> MergeMakeAsync(int sourceMakeId, int targetMakeId, CancellationToken cancellationToken)
+            => Task.FromResult(VehicleMergeRepositoryResult.Ok(0, 0));
 
         public Task<IReadOnlyList<VehicleModel>> GetModelsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<VehicleModel>>([]);
         public Task<VehicleModel?> GetModelByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<VehicleModel?>(null);
         public Task CreateModelAsync(VehicleModel entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task UpdateModelAsync(VehicleModel entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteModelAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VehicleMergeRepositoryResult> MergeModelAsync(int sourceModelId, int targetModelId, CancellationToken cancellationToken)
+            => Task.FromResult(VehicleMergeRepositoryResult.Ok(0, 0));
 
         public Task<IReadOnlyList<VehicleGeneration>> GetGenerationsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<VehicleGeneration>>([]);
         public Task<VehicleGeneration?> GetGenerationByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<VehicleGeneration?>(null);
         public Task CreateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task UpdateGenerationAsync(VehicleGeneration entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteGenerationAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VehicleMergeRepositoryResult> MergeGenerationAsync(int sourceGenerationId, int targetGenerationId, CancellationToken cancellationToken)
+            => Task.FromResult(VehicleMergeRepositoryResult.Ok(0, 0));
 
         public Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<VehicleBody>>([]);
         public Task<VehicleBody?> GetBodyByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<VehicleBody?>(null);

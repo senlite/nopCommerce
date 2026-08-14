@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -8,6 +9,7 @@ using NUnit.Framework;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Vehicle;
+using TwinParticles.CheckEngine.Infrastructure.Fitment;
 
 namespace TwinParticles.CheckEngine.Tests.Architecture;
 
@@ -15,7 +17,7 @@ namespace TwinParticles.CheckEngine.Tests.Architecture;
 public class PerformanceBudgetTests
 {
     [Test]
-    public async Task FitmentEvaluation_Uncached_P95_Should_Stay_Under_50ms_NFR001()
+    public async Task FitmentEvaluation_Uncached_P95_Should_Stay_Under_50ms_NFR003()
     {
         var claim = new FitmentClaim
         {
@@ -58,7 +60,66 @@ public class PerformanceBudgetTests
         var p95 = samples[Math.Clamp(p95Index, 0, samples.Length - 1)];
 
         p95.Should().BeLessThan(50,
-            "NFR-001: uncached FitmentEvaluationService.EvaluateAsync p95 must stay under 50ms in CI microbench");
+            "NFR-003: uncached FitmentEvaluationService.EvaluateAsync p95 must stay under 50ms in CI microbench");
+    }
+
+    [Test]
+    public async Task FitmentEvaluation_Cached_P95_Should_Stay_Under_20ms_NFR003()
+    {
+        var claim = CreateClaim(10, 20);
+        var service = new FitmentEvaluationService(new StaticClaimsRepository(claim), new MemoryFitmentCache());
+        var context = new FitmentEvaluationContext { ProductId = 10, VehicleConfigurationId = 20 };
+        await service.EvaluateAsync(context, CancellationToken.None);
+
+        var samples = new long[500];
+        for (var i = 0; i < samples.Length; i++)
+        {
+            var sw = Stopwatch.StartNew();
+            var result = await service.EvaluateAsync(context, CancellationToken.None);
+            sw.Stop();
+            result.Outcome.Should().Be(FitmentStatus.Fits);
+            samples[i] = sw.ElapsedTicks;
+        }
+
+        Array.Sort(samples);
+        var p95Ticks = samples[(int)Math.Ceiling(samples.Length * 0.95) - 1];
+        var p95Ms = p95Ticks * 1000d / Stopwatch.Frequency;
+        TestContext.WriteLine($"NFR-003 cached single evaluation p95: {p95Ms:F4} ms ({samples.Length} samples)");
+        p95Ms.Should().BeLessThan(20, "NFR-003 cached fitment p95 budget");
+    }
+
+    [Test]
+    public async Task FitmentEvaluation_One_Vehicle_By_100_Cached_Parts_Should_Stay_Under_100ms_NFR004()
+    {
+        var claims = new List<FitmentClaim>();
+        for (var productId = 1; productId <= 100; productId++)
+            claims.Add(CreateClaim(productId, 20));
+
+        var repository = new FilteringClaimsRepository(claims);
+        var service = new FitmentEvaluationService(repository, new MemoryFitmentCache());
+        var contexts = new List<FitmentEvaluationContext>();
+        for (var productId = 1; productId <= 100; productId++)
+        {
+            var context = new FitmentEvaluationContext { ProductId = productId, VehicleConfigurationId = 20 };
+            contexts.Add(context);
+            await service.EvaluateAsync(context, CancellationToken.None);
+        }
+
+        var samples = new double[100];
+        for (var sample = 0; sample < samples.Length; sample++)
+        {
+            var sw = Stopwatch.StartNew();
+            foreach (var context in contexts)
+                await service.EvaluateAsync(context, CancellationToken.None);
+            sw.Stop();
+            samples[sample] = sw.Elapsed.TotalMilliseconds;
+        }
+
+        Array.Sort(samples);
+        var p95 = samples[(int)Math.Ceiling(samples.Length * 0.95) - 1];
+        TestContext.WriteLine($"NFR-004 cached 1 vehicle x 100 parts p95: {p95:F4} ms ({samples.Length} samples)");
+        p95
+            .Should().BeLessThan(100, "NFR-004 cached 1 vehicle x 100 parts p95 budget");
     }
 
     [Test]
@@ -95,12 +156,37 @@ public class PerformanceBudgetTests
             => Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
     }
 
+    private sealed class FilteringClaimsRepository : IFitmentClaimReadRepository
+    {
+        private readonly IReadOnlyList<FitmentClaim> _claims;
+
+        public FilteringClaimsRepository(IReadOnlyList<FitmentClaim> claims) => _claims = claims;
+
+        public Task<IReadOnlyList<FitmentClaim>> GetClaimsAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<FitmentClaim>>(
+                _claims.Where(x => x.ProductId == productId && x.VehicleConfigurationId == vehicleConfigurationId).ToList());
+
+        public Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
+    }
+
+    private static FitmentClaim CreateClaim(int productId, int configurationId) => new()
+    {
+        Id = productId,
+        ProductId = productId,
+        VehicleConfigurationId = configurationId,
+        Status = FitmentStatus.Fits,
+        Confidence = 0.95m,
+        IsPublished = true,
+        IsActive = true
+    };
+
     private sealed class NoCache : IFitmentCache
     {
-        public Task<FitmentEvaluationResult?> GetAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+        public Task<FitmentEvaluationResult?> GetAsync(FitmentEvaluationContext context, CancellationToken cancellationToken)
             => Task.FromResult<FitmentEvaluationResult?>(null);
 
-        public Task SetAsync(int productId, int vehicleConfigurationId, FitmentEvaluationResult result, CancellationToken cancellationToken)
+        public Task SetAsync(FitmentEvaluationContext context, FitmentEvaluationResult result, CancellationToken cancellationToken)
             => Task.CompletedTask;
 
         public Task InvalidateAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)

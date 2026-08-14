@@ -65,7 +65,7 @@
         </button>
         <button type="submit" id="btnRefresh" style="display: none"></button>
         <script>
-            $(document).ready(function () {
+            $(function() {
                 $('#btnRefresh').click(function () {
                     //refresh grid
                     updateTable('#checkoutattributevalues-grid');
@@ -86,6 +86,6 @@ else
 
 <script>
     function renderColumnEdit(data, type, row, meta) {
-        return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/CheckoutAttribute/ValueEditPopup/")' + data + '?btnId=btnRefresh&formId=checkoutattribute-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fas fa-pencil-alt"></i>@T("Admin.Common.Edit").Text</button>';
+        return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/CheckoutAttribute/ValueEditPopup/")' + data + '?btnId=btnRefresh&formId=checkoutattribute-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fas fa-pencil"></i>@T("Admin.Common.Edit").Text</button>';
     }
 </script>

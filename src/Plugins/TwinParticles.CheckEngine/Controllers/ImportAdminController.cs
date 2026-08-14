@@ -12,7 +12,7 @@ using TwinParticles.CheckEngine.Security;
 namespace TwinParticles.CheckEngine.Controllers;
 
 [AuthorizeAdmin]
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 [AutoValidateAntiforgeryToken]
 public sealed class ImportAdminController : BasePluginController
 {
@@ -52,11 +52,11 @@ public sealed class ImportAdminController : BasePluginController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Batch(Guid batchId)
+    public async Task<IActionResult> Batch(Guid batchId, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var batch = _orchestrator.GetBatch(batchId);
+        var batch = await _orchestrator.GetBatchAsync(batchId, cancellationToken);
         if (batch is null)
             return NotFound();
 
@@ -64,11 +64,16 @@ public sealed class ImportAdminController : BasePluginController
     }
 
     [HttpPost]
-    public async Task<IActionResult> SetReviewStatus([FromBody] ImportAdminReviewStatusModel model)
+    public async Task<IActionResult> SetReviewStatus([FromBody] ImportAdminReviewStatusModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var updated = _orchestrator.SetReviewStatus(model.BatchId, model.RowNumber, model.ReviewStatus);
+        var updated = await _orchestrator.SetReviewStatusAsync(
+            model.BatchId,
+            model.RowNumber,
+            model.ReviewStatus,
+            actor: "admin",
+            cancellationToken: cancellationToken);
         if (!updated)
             return NotFound();
 
@@ -81,6 +86,32 @@ public sealed class ImportAdminController : BasePluginController
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
         var result = await _orchestrator.PublishAsync(model.BatchId, model.DryRun, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SetDuplicateDecision([FromBody] ImportAdminDuplicateDecisionModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var updated = await _orchestrator.SetDuplicateDecisionAsync(
+            model.BatchId,
+            model.RowNumber,
+            model.Decision,
+            actor: "admin",
+            cancellationToken: cancellationToken);
+        if (!updated)
+            return BadRequest(new { reasonCode = "import.duplicate_decision.invalid" });
+
+        return Ok();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RerunStage([FromBody] ImportAdminRerunStageModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var result = await _orchestrator.RerunStageAsync(model.BatchId, model.Stage, cancellationToken);
         return Json(result);
     }
 }

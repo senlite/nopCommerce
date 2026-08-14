@@ -57,6 +57,9 @@
             @T("Admin.Catalog.Products.Multimedia.Videos.AddNew")
         </div>
         <div class="card-body">
+            <p>
+                <em>@T("Admin.Catalog.Products.Multimedia.Videos.Description")</em>
+            </p>
             <div class="form-group row">
                 <div class="col-md-3">
                     <nop-label asp-for="AddVideoModel.VideoUrl" />
@@ -82,7 +85,7 @@
             </div>
         </div>
         <script>
-            $(document).ready(function () {
+            $(function() {
                 $('#addProductVideo').click(function () {
                     $('#addProductVideo').attr('disabled', true);
                     var postData = {
@@ -103,7 +106,6 @@
 
                                 //clear input value
                                 $("#@Html.IdFor(model => model.AddVideoModel.VideoUrl)").val('');
-                                $("#@Html.IdFor(model => model.AddVideoModel.DisplayOrder)").val('');
                             } else {
                                 //display errors if returned
                                 display_nop_error(data);

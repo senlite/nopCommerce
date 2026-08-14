@@ -46,7 +46,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICheckEngineInputSanitizer, DefaultCheckEngineInputSanitizer>();
         services.AddSingleton<InMemoryCheckEngineAuditService>();
         // Prefer SQL audit when INopDataProvider is available; InMemory remains registered above for tests/local.
-        services.AddScoped<ICheckEngineAuditService, SqlCheckEngineAuditService>();
+        services.AddScoped<SqlCheckEngineAuditService>();
+        services.AddScoped<ICheckEngineAuditService>(sp => sp.GetRequiredService<SqlCheckEngineAuditService>());
+        services.AddScoped<IAuditIntegrityService>(sp => sp.GetRequiredService<SqlCheckEngineAuditService>());
         services.AddSingleton<IOemNormalizationService, DefaultOemNormalizationService>();
         services.AddScoped<IOemAdminRepository, SqlOemAdminRepository>();
         services.AddScoped<IOemRelationReadRepository, SqlOemAdminRepository>();
@@ -72,17 +74,23 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVehicleAliasWriteRepository, SqlVehicleAliasRepository>();
 
         services.AddScoped<IVehicleAdminRepository, SqlVehicleAdminRepository>();
-        services.AddScoped<IVehicleSeedLoader, BasicVehicleSeedLoader>();
+        services.AddScoped<IVehicleSeedLoader, BmwReferenceVehicleSeedLoader>();
 
         services.AddSingleton<IManufacturerVinDecoder, BmwVinDecoder>();
         services.AddSingleton<IVinDecoderRegistry, VinDecoderRegistry>();
         services.AddSingleton<IVinDecodeRateLimiter, InMemoryVinDecodeRateLimiter>();
 
         services.AddSingleton<IBilingualSearchTextNormalizer, DefaultBilingualSearchTextNormalizer>();
+        services.AddSingleton<ISearchQueryFingerprintService, HmacSearchQueryFingerprintService>();
         services.AddScoped<IProductSearchReadRepository, SqlProductSearchReadRepository>();
-        services.AddSingleton<ISearchIndexHealthService, InMemorySearchIndexHealthService>();
+        services.AddScoped<ISearchAnalyticsService, SqlSearchAnalyticsService>();
+        // Durable, web-farm-shared search index state + incremental catalog projection.
+        services.AddScoped<SqlSearchIndexHealthService>();
+        services.AddScoped<ISearchIndexHealthService>(sp => sp.GetRequiredService<SqlSearchIndexHealthService>());
+        services.AddScoped<ISearchIndexStateReader>(sp => sp.GetRequiredService<SqlSearchIndexHealthService>());
         services.AddSingleton<ISearchRateLimiter, InMemorySearchRateLimiter>();
 
+        services.AddScoped<IGarageVinProtector, NopGarageVinProtector>();
         services.AddScoped<IGarageRepository, SqlGarageRepository>();
         services.AddSingleton<IGarageGuestStore, InMemoryGarageGuestStore>();
         services.AddSingleton<IGarageAuditService, InMemoryGarageAuditService>();
@@ -91,20 +99,23 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IImageStorageService, NopPictureImageStorageService>();
         services.AddScoped<IImageDeliveryService, ConfigurableCdnImageDeliveryService>();
         services.AddScoped<IImageQuarantineService, SafeImageQuarantineService>();
+        services.AddScoped<IProductLookupService, NopProductLookupService>();
 
         services.AddSingleton<ILocaleFormattingService, DefaultLocaleFormattingService>();
 
         services.AddSingleton<ILicenceStateStore, InMemoryLicenceStateStore>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
+        services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();
         services.AddSingleton<ISeoUrlService, DefaultSeoUrlService>();
         services.AddSingleton<ISeoStructuredDataService, DefaultSeoStructuredDataService>();
-        services.AddSingleton<ISeoSitemapService, InMemorySeoSitemapService>();
+        services.AddScoped<ISeoSitemapService, SqlBackedSeoSitemapService>();
         services.AddSingleton<ISeoPerformanceBudgetService, DefaultSeoPerformanceBudgetService>();
 
         services.AddScoped<IErpSyncQueueRepository, SqlErpSyncQueueRepository>();
         services.AddSingleton<IErpClientAdapter, ErpNextHttpClientAdapter>();
         services.AddSingleton<IErpConflictResolutionService, DefaultErpConflictResolutionService>();
+        services.AddScoped<IErpReconciliationDataSource, NopErpReconciliationDataSource>();
 
         services.AddSingleton(_ => CheckEngineAiOptions.Current);
         services.AddSingleton<IAiCompletionPort, OpenAiCompatibleCompletionPort>();

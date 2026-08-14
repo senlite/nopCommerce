@@ -1,6 +1,7 @@
 ﻿@using Nop.Services.Stores
 @model CustomerModel
 @inject IStoreService storeService
+
 <div class="card-body">
     <div class="form-group row">
         <div class="col-md-3">
@@ -62,7 +63,7 @@
     })
 
     <script>
-        $(document).ready(function() {
+        $(function() {
             $('#@Html.IdFor(model => model.CustomerShoppingCartSearchModel.ShoppingCartTypeId)').change(function() {
                 updateTable('#currentshoppingcart-grid');
             });
@@ -77,7 +78,12 @@
             if (row.AttributeInfo && row.AttributeInfo.length > 0)
                 div = "<div>" + row.AttributeInfo + "</div>";
 
-            return '<a href="' + link + '">' + data + '</a>'+div;
+            if (row.CustomWishlistName && row.CustomWishlistName.length > 0)
+            {
+                div += "<div>" + "@T("Enums.Nop.Core.Domain.Orders.ShoppingCartType.Wishlist")" + ": " + $('<div/>').text(row.CustomWishlistName).html() + "</div>";
+            }
+
+            return '<a href="' + link + '">' + data + '</a>' + div;
         }
     </script>
 </div>

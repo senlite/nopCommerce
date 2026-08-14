@@ -178,6 +178,10 @@ Behaviour worth knowing:
   search and on product pages.
 - Guests get a local (browser) garage that is **merged into their account** when they sign in or register.
 - The vehicle selector in the header lets shoppers switch the active vehicle or add a new one.
+- Signed-in VINs are encrypted with the host encryption key before SQL storage. `Garage/Export`
+  returns the subject's decrypted garage data; confirmed `Garage/Erase` removes vehicles, OEM saves
+  and the garage atomically. Permanent nopCommerce customer deletion invokes the same erasure path.
+- All garage writes require an antiforgery token; privacy audit events contain counts, never full VINs.
 
 ### 6.4 The product fitment band
 
@@ -207,15 +211,16 @@ designed to be driven from the dashboard, scripts, or your own tooling.
 
 | Workflow | Endpoint(s) | Notes |
 |---|---|---|
-| **Vehicle catalog** | `/Admin/CheckEngine/VehicleAdmin/{Makes,Models,Generations,Bodies,Engines,Markets,Configurations,Aliases}` and `Create*/Update*/Delete*`; `Seed` | Full brand-agnostic hierarchy CRUD |
-| **OEM registry** | `/Admin/CheckEngine/OemAdmin/{Manufacturers,OemNumbers,Relations}` and `Create*/Update*/Delete*` | Manufacturer-qualified numbers, cross-reference and supersession relations |
+| **Vehicle catalog** | `/Admin/CheckEngine/VehicleAdmin/{Makes,Models,Generations,Bodies,Engines,Markets,Configurations,Aliases}`; `ArchiveMake`, `ArchiveModel`, `ArchiveGeneration`, `MergeMake`, `MergeModel`, `MergeGeneration`; `Seed` | Full brand-agnostic hierarchy CRUD/lifecycle. Merge is conflict-checked and audited; archive is soft. Generation merge reparents bodies and configurations onto the survivor so fitment claims follow automatically (stable configuration ids). Hard delete with descendants returns `archive_required`. `Seed` incrementally adds the BMW priority slice without overwriting operator edits |
+| **OEM registry** | `/Admin/CheckEngine/OemAdmin/{Manufacturers,OemNumbers,Relations}` and `Create*/Update*/Delete*` | Manufacturer-qualified numbers, cross-reference and supersession relations. Supersession is directed and validated at write time: a part supersedes at most one successor, and bidirectional or cyclic edges are rejected with a conflict (`oem.supersession.*`). OEM numbers bulk-upsert keyed on (manufacturer, normalized number), verified at 500,000-entry scale with sub-millisecond qualified lookups |
 | **Fitment review** | `/Admin/CheckEngine/FitmentAdmin/Queue`, `Approve`, `Reject` | Approvals/rejections are written to the audit trail; safety-critical categories can't be force-published below threshold |
-| **Import** | `/Admin/CheckEngine/ImportAdmin/{Run,Batch,SetReviewStatus,Publish}` | See [section 8](#8-the-product-import-pipeline) |
-| **Search index** | `/Admin/CheckEngine/SearchAdmin/Rebuild` | Rebuilds/refreshes the search index health |
+| **Import** | `/Admin/CheckEngine/ImportAdmin/{Run,Batch,RerunStage,SetReviewStatus,Publish}` | See [section 8](#8-the-product-import-pipeline) |
+| **Search (storefront)** | `check-engine/search/query`, `check-engine/search/suggest`, `check-engine/search/recommend`, `check-engine/search/click` | `query` returns hits/facets/recovery plus anonymous analytics id; `click` records product click-through with antiforgery. Analytics persists a keyed fingerprint, never raw query/VIN/customer/IP |
+| **Search admin** | `/Admin/CheckEngine/SearchAdmin/{Rebuild,Analytics,PruneAnalytics}` | Rebuilds index health; returns aggregate search/zero-result/click/CTR summary; prunes analytics with bounded 30–730 day retention |
 | **Garage support** | `/Admin/CheckEngine/GarageAdmin/CustomerGarage` | Read a customer's garage for support |
 | **Images** | `/Admin/CheckEngine/ImageAdmin/Replace` | Replace a placeholder image with a professional asset |
 | **SEO** | `/Admin/CheckEngine/SeoAdmin/{Sitemap,GenerateVehicle,GeneratePartForVehicle,RebuildSitemap}` | Landing-page and sitemap helpers |
-| **ERP** | `/Admin/CheckEngine/ErpAdmin/{Queue,Process,Reconcile,InventorySnapshot}` | ERPNext sync (see [section 11](#11-optional-integrations-ai-and-erp)) |
+| **ERP** | `/Admin/CheckEngine/ErpAdmin/{Queue,Process,Reconcile,InventorySnapshot}` | ERPNext sync (see [section 11](#11-optional-integrations-ai-and-erp)). When ERP is enabled, order placement and customer registration enqueue PII-minimized jobs without propagating queue failures; a plugin-owned five-minute scheduled task processes them with atomic claiming, idempotent event delivery, stale-claim recovery, and bounded delayed retries |
 
 ---
 
@@ -241,6 +246,16 @@ oem,name,sku,price,vehicleConfigurationId,category,image
 ```
 
 ### 8.2 Review and publish
+
+- Each batch is durable. The uploaded source, run options, stage cursor, completed-stage set, errors,
+  and complete row state live in SQL, so `Batch`, review, rerun, and publish continue after an
+  application restart.
+- To repeat one corrected stage without replaying the whole import, call
+  `POST /Admin/CheckEngine/ImportAdmin/RerunStage` with the batch id and an
+  `ImportPipelineStage` value (`Extract` through `Publish`). Upstream results remain unchanged.
+> The storefront search rail returns facets (category, brand, price, fitment) computed over the whole
+> result set and a typeahead dropdown as you type. When a search returns nothing, it offers concrete
+> recovery actions (widen fitment, select a vehicle, broaden the keyword) rather than a dead end.
 
 - Low-confidence or ambiguous rows are flagged for review. Set a row's decision with
   `POST /Admin/CheckEngine/ImportAdmin/SetReviewStatus` (`Approved` / `Rejected` / `Pending`).
@@ -282,7 +297,7 @@ These are called by the storefront widgets and can also be used directly. Bodies
 | `POST` | `/check-engine/vin/decode` | `vin` |
 | `POST` | `/check-engine/oem/resolve` | `number`, `manufacturerId?` |
 | `POST` | `/check-engine/fitment/evaluate` | `productId`, `vehicleConfigurationId`, `productionYear?`, `steeringSide?`, `marketRegion?` |
-| `GET/POST` | `/check-engine/garage/...` | `Current`, `AddVehicle`, `SetActive`, `ClearActive`, `RemoveVehicle`, `SaveOem`, `Migrate`, `Guest` (garage account endpoints require sign-in) |
+| `GET/POST` | `/check-engine/garage/...` | `Current`, `AddVehicle`, `SetActive`, `ClearActive`, `RemoveVehicle`, `SaveOem`, `Migrate`, `Export`, `Erase` (account endpoints require sign-in; all unsafe methods require antiforgery) |
 | `POST` | `/check-engine/l10n/preview` | localization preview payload |
 | `GET` | `/check-engine/health` | — |
 
@@ -323,6 +338,10 @@ Both are **off/unconfigured by default** and degrade safely.
 - **ERPNext** — with no ERP base URL configured, a stub adapter is used and checkout is never blocked.
   Configure the base URL and credentials (via host settings / user secrets, never committed) to enable
   order/inventory sync, retries, conflict handling, and the daily reconciliation report.
+
+Audit entries are append-only from the application and linked with a deployment-secret-salted SHA-256
+chain. A daily retention task removes entries older than seven years while retaining a cryptographic
+anchor, so integrity verification remains continuous across the retention boundary.
 
 ---
 
@@ -396,10 +415,15 @@ Accessibility and layout behaviour built into the components:
 
 ## 14. Uninstalling
 
-1. Back up any Check Engine data you want to keep (the `TP_CE_*` tables).
-2. In **Configuration → Local plugins**, click **Uninstall** on Check Engine, then **Restart application
-   to apply changes**.
-3. On uninstall, the plugin reverses its migrations and drops its `TP_CE_*` tables. Verify the storefront
+1. Open `/Admin/CheckEngine/UninstallAdmin/Status`. It lists every data domain that uninstall deletes
+   and reports whether a fresh export has been prepared.
+2. Download `/Admin/CheckEngine/UninstallAdmin/Export`. Keep the timestamped JSON safely; it contains
+   the vehicle hierarchy/aliases, OEM registry/relations, and fitment claims including qualifiers and
+   provenance. This authorizes destructive uninstall for 24 hours.
+3. In **Configuration → Local plugins**, click **Uninstall** on Check Engine, then **Restart application
+   to apply changes**. Without a fresh export, Check Engine throws an explicit guard error before any
+   permission, setting, locale, or schema deletion occurs.
+4. On uninstall, the plugin reverses migrations and drops its `TP_CE_*` tables. Verify the storefront
    still serves catalog pages normally afterward.
 
 ---

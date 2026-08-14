@@ -10,4 +10,6 @@ public interface IGarageRepository
     Task<Garage?> GetByCustomerIdAsync(int customerId, CancellationToken cancellationToken);
 
     Task SaveAsync(Garage garage, CancellationToken cancellationToken);
+
+    Task<bool> DeleteByCustomerIdAsync(int customerId, CancellationToken cancellationToken);
 }

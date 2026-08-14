@@ -380,7 +380,7 @@ to Stripe, Adyen, DHL, or Aramex. This is what makes the product market-agnostic
 
 | Artifact | Namespace | nopCommerce system name | Group |
 |---|---|---|---|
-| Check Engine | `TwinParticles.CheckEngine` | `Misc.CheckEngine` | Automotive |
+| Check Engine | `TwinParticles.CheckEngine` | `TwinParticles.CheckEngine` | Misc |
 | Paymob | `TwinParticles.Payments.Paymob` | `Payments.Paymob` | Payment methods |
 | Bosta | `TwinParticles.Shipping.Bosta` | `Shipping.Bosta` | Shipping rate computation |
 
@@ -497,10 +497,10 @@ upload time and refuses to install on mismatch:
 
 ```json
 {
-  "Group": "Automotive",
-  "FriendlyName": "Check Engine - Automotive Commerce Platform",
-  "SystemName": "Misc.CheckEngine",
-  "Version": "1.0.0",
+  "Group": "Misc",
+  "FriendlyName": "Check Engine",
+  "SystemName": "TwinParticles.CheckEngine",
+  "Version": "0.12.0",
   "SupportedVersions": [ "4.90" ],
   "Author": "Twin Particles",
   "DisplayOrder": 1,

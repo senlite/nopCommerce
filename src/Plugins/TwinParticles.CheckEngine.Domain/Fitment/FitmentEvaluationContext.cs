@@ -11,4 +11,8 @@ public sealed class FitmentEvaluationContext
     public string? SteeringSide { get; set; }
 
     public string? MarketRegion { get; set; }
+
+    public string? DriveType { get; set; }
+
+    public string? TransmissionType { get; set; }
 }

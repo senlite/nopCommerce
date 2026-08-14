@@ -24,22 +24,22 @@
                 @Model.Result
             </div>
         }
-        <form asp-route="GdprTools" method="post">
-            <div class="fieldset">
-                <div class="title">
-                    <strong>@T("Account.Gdpr.Export")</strong>
-                </div>
+        <form asp-route="@NopRouteNames.Standard.GDPR_TOOLS" method="post">
+            <section class="fieldset">
+                <h2 class="title">
+                    @T("Account.Gdpr.Export")
+                </h2>
                 <div class="form-fields">
                     @T("Account.Gdpr.Export.Hint")
                 </div>
                 <div class="buttons">
                     <button type="submit" name="export-data" class="button-1 gdpr-export-data-button">@T("Account.Gdpr.Export.Button")</button>
                 </div>
-            </div>
-            <div class="fieldset">
-                <div class="title">
-                    <strong>@T("Account.Gdpr.Delete")</strong>
-                </div>
+            </section>
+            <section class="fieldset">
+                <h2 class="title">
+                    @T("Account.Gdpr.Delete")
+                </h2>
                 <div class="form-fields">
                     @T("Account.Gdpr.Delete.Hint")
                 </div>
@@ -47,14 +47,14 @@
                     <button type="submit" id="delete-account" name="delete-account" class="button-1 gdpr-delete-account-button">@T("Account.Gdpr.Delete.Button")</button>
 
                     <script asp-location="Footer">
-                        $(document).ready(function() {
+                        $(function() {
                             $('#delete-account').on('click', function() {
                                 return confirm('@T("Common.AreYouSure")');
                             });
                         });
                     </script>
                 </div>
-            </div>
+            </section>
         </form>
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CustomerGdprToolsBottom, additionalData = Model })
     </div>

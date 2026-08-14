@@ -46,8 +46,18 @@ public sealed class GarageService
         if (!string.IsNullOrWhiteSpace(normalizedVin))
         {
             var decode = await _vinDecodeService.DecodeAsync(normalizedVin, cancellationToken);
-            if (decode.Candidates.Count > 0)
-                resolvedConfigurationId ??= decode.Candidates[0].VehicleConfigurationId;
+            if (!resolvedConfigurationId.HasValue &&
+                string.Equals(decode.Outcome, "NeedsDisambiguation", StringComparison.Ordinal))
+            {
+                throw new GarageVinDisambiguationException(decode.Candidates);
+            }
+
+            if (!resolvedConfigurationId.HasValue &&
+                string.Equals(decode.Outcome, "SingleMatch", StringComparison.Ordinal) &&
+                decode.Candidates.Count == 1)
+            {
+                resolvedConfigurationId = decode.Candidates[0].VehicleConfigurationId;
+            }
         }
 
         var id = garage.Vehicles.Count == 0 ? 1 : garage.Vehicles.Max(x => x.Id) + 1;
@@ -180,22 +190,42 @@ public sealed class GarageService
 
     public async Task<bool> MigrateGuestAsync(int customerId, string guestKey, CancellationToken cancellationToken)
     {
-        var payload = await _guestStore.GetAsync(guestKey, cancellationToken);
-        if (payload is null)
+        return await MigrateGuestAsync(customerId, guestKey, inlinePayload: null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Merges the browser-local guest garage into the authenticated customer's SQL garage.
+    /// The inline payload is authoritative when supplied; the process-local guest store remains
+    /// only as a backwards-compatible fallback for older callers and tests.
+    /// </summary>
+    public async Task<bool> MigrateGuestAsync(
+        int customerId,
+        string guestKey,
+        GarageGuestPayload? inlinePayload,
+        CancellationToken cancellationToken)
+    {
+        var payload = inlinePayload ?? await _guestStore.GetAsync(guestKey, cancellationToken);
+        if (payload is null || (payload.Vehicles.Count == 0 && payload.Oems.Count == 0))
             return false;
 
         var garage = await _repository.GetOrCreateAsync(customerId, cancellationToken);
 
         var migratedVehicleIdByGuestVehicleId = new Dictionary<int, int>();
-        foreach (var guestVehicle in payload.Vehicles)
+        for (var index = 0; index < payload.Vehicles.Count; index++)
         {
+            var guestVehicle = payload.Vehicles[index];
+            var guestVehicleId = guestVehicle.Id > 0 ? guestVehicle.Id : index + 1;
+            var normalizedVin = NormalizeVin(guestVehicle.Vin);
+
             var existingVehicle = garage.Vehicles.FirstOrDefault(x =>
-                x.VehicleConfigurationId == guestVehicle.VehicleConfigurationId &&
-                string.Equals(x.Vin, guestVehicle.Vin, StringComparison.OrdinalIgnoreCase));
+                (guestVehicle.VehicleConfigurationId.HasValue &&
+                 x.VehicleConfigurationId == guestVehicle.VehicleConfigurationId) ||
+                (!string.IsNullOrWhiteSpace(normalizedVin) &&
+                 string.Equals(NormalizeVin(x.Vin), normalizedVin, StringComparison.Ordinal)));
 
             if (existingVehicle is not null)
             {
-                migratedVehicleIdByGuestVehicleId[guestVehicle.Id] = existingVehicle.Id;
+                migratedVehicleIdByGuestVehicleId[guestVehicleId] = existingVehicle.Id;
                 continue;
             }
 
@@ -205,13 +235,15 @@ public sealed class GarageService
                 Id = nextId,
                 GarageId = garage.Id,
                 VehicleConfigurationId = guestVehicle.VehicleConfigurationId,
-                Vin = guestVehicle.Vin,
-                Label = string.IsNullOrWhiteSpace(guestVehicle.Label) ? BuildLabel(guestVehicle.VehicleConfigurationId, guestVehicle.Vin) : guestVehicle.Label,
+                Vin = normalizedVin,
+                Label = string.IsNullOrWhiteSpace(guestVehicle.Label)
+                    ? BuildLabel(guestVehicle.VehicleConfigurationId, normalizedVin)
+                    : guestVehicle.Label.Trim(),
                 IsActive = false,
                 CreatedUtc = DateTime.UtcNow
             });
 
-            migratedVehicleIdByGuestVehicleId[guestVehicle.Id] = nextId;
+            migratedVehicleIdByGuestVehicleId[guestVehicleId] = nextId;
         }
 
         foreach (var guestOem in payload.Oems)
@@ -280,4 +312,7 @@ public sealed class GarageService
 
         return "Garage Vehicle";
     }
+
+    private static string? NormalizeVin(string? vin)
+        => string.IsNullOrWhiteSpace(vin) ? null : vin.Trim().ToUpperInvariant();
 }

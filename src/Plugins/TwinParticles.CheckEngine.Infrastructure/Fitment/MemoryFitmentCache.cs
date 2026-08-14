@@ -10,23 +10,43 @@ public sealed class MemoryFitmentCache : IFitmentCache
 {
     private readonly ConcurrentDictionary<string, FitmentEvaluationResult> _cache = new(StringComparer.Ordinal);
 
-    public Task<FitmentEvaluationResult?> GetAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+    public Task<FitmentEvaluationResult?> GetAsync(FitmentEvaluationContext context, CancellationToken cancellationToken)
     {
-        _cache.TryGetValue(GetKey(productId, vehicleConfigurationId), out var result);
+        _cache.TryGetValue(GetKey(context), out var result);
         return Task.FromResult<FitmentEvaluationResult?>(result);
     }
 
-    public Task SetAsync(int productId, int vehicleConfigurationId, FitmentEvaluationResult result, CancellationToken cancellationToken)
+    public Task SetAsync(FitmentEvaluationContext context, FitmentEvaluationResult result, CancellationToken cancellationToken)
     {
-        _cache[GetKey(productId, vehicleConfigurationId)] = result;
+        _cache[GetKey(context)] = result;
         return Task.CompletedTask;
     }
 
     public Task InvalidateAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
     {
-        _cache.TryRemove(GetKey(productId, vehicleConfigurationId), out _);
+        var prefix = GetPrefix(productId, vehicleConfigurationId);
+        foreach (var key in _cache.Keys)
+        {
+            if (key.StartsWith(prefix, StringComparison.Ordinal))
+                _cache.TryRemove(key, out _);
+        }
+
         return Task.CompletedTask;
     }
 
-    private static string GetKey(int productId, int vehicleConfigurationId) => $"{productId}:{vehicleConfigurationId}";
+    private static string GetPrefix(int productId, int vehicleConfigurationId)
+        => $"{productId}:{vehicleConfigurationId}:";
+
+    private static string GetKey(FitmentEvaluationContext context)
+        => string.Join(':',
+            context.ProductId,
+            context.VehicleConfigurationId,
+            context.ProductionYear?.ToString() ?? "-",
+            Normalize(context.SteeringSide),
+            Normalize(context.MarketRegion),
+            Normalize(context.DriveType),
+            Normalize(context.TransmissionType));
+
+    private static string Normalize(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "-" : value.Trim().ToUpperInvariant();
 }

@@ -35,4 +35,7 @@ public sealed class InMemoryGarageRepository : IGarageRepository
         _garagesByCustomerId[garage.CustomerId] = garage;
         return Task.CompletedTask;
     }
+
+    public Task<bool> DeleteByCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+        => Task.FromResult(_garagesByCustomerId.TryRemove(customerId, out _));
 }

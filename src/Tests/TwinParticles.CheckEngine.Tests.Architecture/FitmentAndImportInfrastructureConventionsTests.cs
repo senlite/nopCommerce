@@ -32,6 +32,19 @@ public class FitmentAndImportInfrastructureConventionsTests
     }
 
     [Test]
+    public void ImportPipelineDurableStateMigration_Should_Be_Installation_Migration_With_Explicit_Down()
+    {
+        var migrationType = typeof(TwinParticles.CheckEngine.Infrastructure.Migrations.ImportPipelineDurableStateMigration);
+        migrationType.IsSubclassOf(typeof(Migration)).Should().BeTrue();
+        migrationType.IsSubclassOf(typeof(AutoReversingMigration)).Should().BeFalse();
+
+        var attribute = Attribute.GetCustomAttribute(migrationType, typeof(NopMigrationAttribute)) as NopMigrationAttribute;
+        attribute.Should().NotBeNull();
+        attribute!.TargetMigrationProcess.Should().Be(MigrationProcessType.Installation);
+        migrationType.GetMethod(nameof(Migration.Down))!.DeclaringType.Should().Be(migrationType);
+    }
+
+    [Test]
     public void ProductOemMapSchemaMigration_Should_Be_Installation_AutoReversing_Migration()
     {
         var migrationType = typeof(TwinParticles.CheckEngine.Infrastructure.Migrations.ProductOemMapSchemaMigration);
@@ -58,6 +71,24 @@ public class FitmentAndImportInfrastructureConventionsTests
         typeof(TwinParticles.CheckEngine.Infrastructure.ImportPipeline.SqlImportPipelineRepository).IsClass.Should().BeTrue();
         typeof(TwinParticles.CheckEngine.Infrastructure.ImportPipeline.SqlImportPipelineRepository)
             .Should().BeAssignableTo<TwinParticles.CheckEngine.Domain.ImportPipeline.IImportPipelineRepository>();
+    }
+
+    [Test]
+    public void SqlImportPipelineRepository_Should_Bracket_SqlServer_Reserved_RowCount_Column()
+    {
+        // SQL Server rejects unquoted RowCount (error 156) in SELECT/INSERT/UPDATE column lists.
+        var path = System.IO.Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "..", "..", "..", "..", "..",
+            "Plugins", "TwinParticles.CheckEngine.Infrastructure", "ImportPipeline", "SqlImportPipelineRepository.cs");
+        path = System.IO.Path.GetFullPath(path);
+        System.IO.File.Exists(path).Should().BeTrue();
+
+        var source = System.IO.File.ReadAllText(path);
+        source.Should().Contain("[RowCount], ErrorSummary");
+        source.Should().Contain("[RowCount] = @rowCount");
+        source.Should().NotContain(", RowCount, ErrorSummary");
+        source.Should().NotContain("    RowCount = @rowCount");
     }
 
     [Test]

@@ -2,21 +2,22 @@
 using Nop.Services.Messages;
 using NUnit.Framework;
 
-namespace Nop.Tests.Nop.Services.Tests.Messages
+namespace Nop.Tests.Nop.Services.Tests.Messages;
+
+[TestFixture]
+public class EmailAccountServiceTests : ServiceTest<EmailAccount>
 {
-    [TestFixture]
-    public class EmailAccountServiceTests : BaseNopTest
+    private IEmailAccountService _emailAccountService;
+
+    [OneTimeSetUp]
+    public void SetUp()
     {
-        private IEmailAccountService _emailAccountService;
+        _emailAccountService = GetService<IEmailAccountService>();
+    }
 
-        [OneTimeSetUp]
-        public void SetUp()
-        {
-            _emailAccountService = GetService<IEmailAccountService>();
-        }
-
-        [Test]
-        public async Task TestCrud()
+    protected override CrudData<EmailAccount> CrudData
+    {
+        get
         {
             var insertItem = new EmailAccount
             {
@@ -26,8 +27,7 @@ namespace Nop.Tests.Nop.Services.Tests.Messages
                 Port = 25,
                 Username = "test_user",
                 Password = "test_password",
-                EnableSsl = false,
-                UseDefaultCredentials = false
+                EnableSsl = false
             };
 
             var updateItem = new EmailAccount
@@ -38,12 +38,20 @@ namespace Nop.Tests.Nop.Services.Tests.Messages
                 Port = 430,
                 Username = "test_user",
                 Password = "test_password",
-                EnableSsl = true,
-                UseDefaultCredentials = true
+                EnableSsl = true
             };
 
-            await TestCrud(insertItem, _emailAccountService.InsertEmailAccountAsync, updateItem, _emailAccountService.UpdateEmailAccountAsync, _emailAccountService.GetEmailAccountByIdAsync, (item, other) => item.UseDefaultCredentials.Equals(other.UseDefaultCredentials) && item.Port.Equals(other.Port) && item.EnableSsl.Equals(other.EnableSsl), _emailAccountService.DeleteEmailAccountAsync);
+            return new CrudData<EmailAccount>
+            {
+                BaseEntity = insertItem,
+                UpdatedEntity = updateItem,
+                Insert = _emailAccountService.InsertEmailAccountAsync,
+                Update = _emailAccountService.UpdateEmailAccountAsync,
+                GetById = _emailAccountService.GetEmailAccountByIdAsync,
+                IsEqual = (item, other) => item.Port.Equals(other.Port) && item.EnableSsl.Equals(other.EnableSsl),
+                Delete = _emailAccountService.DeleteEmailAccountAsync
+            };
         }
-
     }
+
 }

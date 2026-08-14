@@ -1,3 +1,4 @@
+@using Nop.Core.Domain.Vendors
 @model VendorModel
 
 <div class="card-body">
@@ -38,9 +39,14 @@
                 <nop-textarea asp-for="@Model.Locales[item].MetaDescription"></nop-textarea>
                 <span asp-validation-for="@Model.Locales[item].MetaDescription"></span>
             </div>
-         </div>
+        </div>
+        @await Component.InvokeAsync(typeof(MetaTagsGeneratorViewComponent), new MetaTagsGeneratorModel(Model, nameof(Vendor), item, Model.Locales[item].LanguageId)
+        {
+            TitleFieldId = Html.IdFor(model => model.Locales[item].Name),
+            TextFieldId = Html.IdFor(model => model.Locales[item].Description)
+        })
         <script>
-          $(document).ready(function () {
+          $(function() {
               $('#@Html.IdFor(model => model.Locales[item].SeName)').on('input change', function () {
                   var parameters = {
                       entityId: '@Model.Id',
@@ -91,8 +97,13 @@
                 <span asp-validation-for="MetaDescription"></span>
             </div>
         </div>
+        @await Component.InvokeAsync(typeof(MetaTagsGeneratorViewComponent), new MetaTagsGeneratorModel(Model, nameof(Vendor))
+        {
+            TitleFieldId = Html.IdFor(model => model.Name),
+            TextFieldId = Html.IdFor(model => model.Description)
+        })
         <script>
-              $(document).ready(function () {
+              $(function() {
                   $('#@Html.IdFor(model => model.SeName)').on('input change', function () {
                       var parameters = {
                           entityId: '@Model.Id',

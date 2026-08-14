@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ public sealed class UnifiedSearchService
     private readonly OemResolveService _oemResolveService;
     private readonly IProductSearchReadRepository _productSearchReadRepository;
     private readonly ISearchIndexHealthService _searchIndexHealthService;
+    private readonly ISearchAnalyticsService? _searchAnalyticsService;
     private readonly VinDecodeApplicationService _vinDecodeService;
 
     public UnifiedSearchService(
@@ -28,7 +30,8 @@ public sealed class UnifiedSearchService
         FitmentEvaluationService fitmentEvaluationService,
         ISearchIndexHealthService searchIndexHealthService,
         IBilingualSearchTextNormalizer bilingualNormalizer,
-        IAiCompletionPort? aiCompletionPort = null)
+        IAiCompletionPort? aiCompletionPort = null,
+        ISearchAnalyticsService? searchAnalyticsService = null)
     {
         _productSearchReadRepository = productSearchReadRepository;
         _vinDecodeService = vinDecodeService;
@@ -37,10 +40,12 @@ public sealed class UnifiedSearchService
         _searchIndexHealthService = searchIndexHealthService;
         _bilingualNormalizer = bilingualNormalizer;
         _aiCompletionPort = aiCompletionPort;
+        _searchAnalyticsService = searchAnalyticsService;
     }
 
     public async Task<SearchResult> SearchAsync(SearchQuery query, CancellationToken cancellationToken)
     {
+        var stopwatch = Stopwatch.StartNew();
         var normalizedText = _bilingualNormalizer.Normalize(query.RawText, query.Locale);
         var mode = await ResolveModeAsync(query, normalizedText, cancellationToken);
 
@@ -88,36 +93,81 @@ public sealed class UnifiedSearchService
         if (query.VehicleConfigurationId.HasValue)
             hits = await ApplyFitmentFilterAsync(hits, query.VehicleConfigurationId.Value, query.WidenFitment, cancellationToken);
 
-        var ranked = hits
+        // Drill-down filters are applied uniformly here so facet selections work across every lane
+        // (vehicle-tree and OEM projections never saw brand/price filters at the repository).
+        var filtered = ApplyFacetFilters(hits, query.Filters);
+
+        // Facets and total describe the whole filtered result, so both are computed before paging.
+        var facets = SearchFacetAggregator.Aggregate(filtered, query.VehicleConfigurationId.HasValue);
+        var total = filtered.Count;
+
+        var ranked = filtered
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.ProductId)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToList();
 
-        var facets = ranked
-            .Where(x => x.CategoryId.HasValue)
-            .GroupBy(x => x.CategoryId!.Value)
-            .Select(group => new SearchFacet
-            {
-                Key = "categoryId",
-                Value = group.Key.ToString(),
-                Count = group.Count()
-            })
-            .ToList();
+        var recovery = total == 0 ? BuildRecovery(query) : [];
 
-        var suggestions = ranked.Count == 0
-            ? BuildZeroResultSuggestions(query)
-            : new List<string>();
+        long? analyticsId = null;
+        if (_searchAnalyticsService is not null)
+        {
+            try
+            {
+                stopwatch.Stop();
+                analyticsId = await _searchAnalyticsService.RecordSearchAsync(
+                    normalizedText,
+                    modeUsed,
+                    query.Locale,
+                    total,
+                    query.VehicleConfigurationId.HasValue,
+                    query.WidenFitment,
+                    degraded,
+                    stopwatch.ElapsedMilliseconds,
+                    cancellationToken);
+            }
+            catch (System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Analytics is non-critical: search results must remain available if its store fails.
+            }
+        }
 
         return new SearchResult
         {
             ModeUsed = modeUsed,
             Hits = ranked,
+            Total = total,
             Facets = facets,
-            Suggestions = suggestions,
-            IsDegraded = degraded
+            Suggestions = recovery.Select(action => action.Label).ToList(),
+            Recovery = recovery,
+            IsDegraded = degraded,
+            AnalyticsId = analyticsId
         };
+    }
+
+    private static IReadOnlyList<SearchHit> ApplyFacetFilters(IReadOnlyList<SearchHit> hits, SearchFilters filters)
+    {
+        IEnumerable<SearchHit> filtered = hits;
+
+        if (filters.CategoryId is > 0)
+            filtered = filtered.Where(hit => hit.CategoryId == filters.CategoryId);
+
+        if (!string.IsNullOrWhiteSpace(filters.Brand))
+            filtered = filtered.Where(hit =>
+                string.Equals(hit.Brand, filters.Brand, System.StringComparison.OrdinalIgnoreCase));
+
+        if (filters.PriceMin.HasValue)
+            filtered = filtered.Where(hit => hit.Price is null || hit.Price >= filters.PriceMin.Value);
+
+        if (filters.PriceMax.HasValue)
+            filtered = filtered.Where(hit => hit.Price is null || hit.Price <= filters.PriceMax.Value);
+
+        return filtered as IReadOnlyList<SearchHit> ?? filtered.ToList();
     }
 
     public Task RebuildIndexAsync(CancellationToken cancellationToken)
@@ -169,13 +219,19 @@ public sealed class UnifiedSearchService
     private async Task<IReadOnlyList<SearchHit>> SearchVinAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)
     {
         var decode = await _vinDecodeService.DecodeAsync(normalizedText, cancellationToken);
-        var nextVehicleConfigurationId = query.VehicleConfigurationId;
+        if (decode.Candidates.Count != 1)
+            return [];
 
-        if (decode.Candidates.Count > 0)
-            nextVehicleConfigurationId = decode.Candidates[0].VehicleConfigurationId;
+        // A VIN is vehicle context, not a product keyword. Search the published fitment projection
+        // for the one decoded configuration; passing the 17-character VIN into keyword search
+        // cannot match a catalog title and previously fell through to invented demo products.
+        var vehicleQuery = CloneQuery(
+            query,
+            string.Empty,
+            SearchMode.VehicleTree,
+            decode.Candidates[0].VehicleConfigurationId);
 
-        var keywordQuery = CloneQuery(query, normalizedText, SearchMode.Keyword, nextVehicleConfigurationId);
-        return await _productSearchReadRepository.SearchKeywordAsync(keywordQuery, cancellationToken);
+        return await _productSearchReadRepository.SearchByVehicleTreeAsync(vehicleQuery, cancellationToken);
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchOemAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)
@@ -205,22 +261,42 @@ public sealed class UnifiedSearchService
 
             hit.FitsActiveContext = fitment.Outcome == FitmentStatus.Fits;
 
-            if (fitment.Outcome == FitmentStatus.Fits || (widenFitment && fitment.Outcome == FitmentStatus.Unknown))
+            // The widened lane carries unverified results only; they stay unbadged because
+            // FitsActiveContext is false, so a part is never presented as a confirmed fit.
+            var unverified = fitment.Outcome is FitmentStatus.Unknown or FitmentStatus.NeedsDisambiguation;
+
+            if (fitment.Outcome == FitmentStatus.Fits || (widenFitment && unverified))
                 filtered.Add(hit);
         }
 
         return filtered;
     }
 
-    private static IReadOnlyList<string> BuildZeroResultSuggestions(SearchQuery query)
+    private static IReadOnlyList<SearchRecoveryAction> BuildRecovery(SearchQuery query)
     {
-        var suggestions = new List<string>();
+        var recovery = new List<SearchRecoveryAction>();
 
-        if (!query.WidenFitment)
-            suggestions.Add("Try widening fitment to include unknown compatibility results.");
+        // A vehicle-scoped miss is most often over-strict fitment; offer the widen lane first.
+        if (query.VehicleConfigurationId.HasValue && !query.WidenFitment)
+            recovery.Add(new SearchRecoveryAction
+            {
+                Kind = "widen_fitment",
+                Label = "Include parts with unconfirmed fit for your vehicle."
+            });
 
-        suggestions.Add("Check OEM/VIN format or use a broader keyword.");
-        return suggestions;
+        recovery.Add(new SearchRecoveryAction
+        {
+            Kind = "select_vehicle",
+            Label = "Select your vehicle to see parts that fit."
+        });
+
+        recovery.Add(new SearchRecoveryAction
+        {
+            Kind = "broaden_keyword",
+            Label = "Check the OEM/VIN format or try a broader keyword."
+        });
+
+        return recovery;
     }
 
     private static SearchQuery CloneQuery(SearchQuery query, string rawText, SearchMode mode, int? vehicleConfigurationId = null)
