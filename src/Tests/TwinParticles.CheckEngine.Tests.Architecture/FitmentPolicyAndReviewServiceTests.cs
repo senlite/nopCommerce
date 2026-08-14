@@ -149,13 +149,64 @@ public class FitmentPolicyAndReviewServiceTests
         await invalidAct.Should().ThrowAsync<ArgumentException>();
     }
 
+    [Test]
+    public async Task ApproveAsync_Should_Invalidate_Fitment_Cache_For_The_Claim()
+    {
+        var claim = new FitmentClaim
+        {
+            Id = 400,
+            ProductId = 77,
+            VehicleConfigurationId = 88,
+            Status = FitmentStatus.Unknown,
+            IsActive = true
+        };
+        var cache = new RecordingFitmentCache();
+        var service = new FitmentReviewService(
+            new FakeReadRepository(claim),
+            new FakeWriteRepository(),
+            new FakeReviewQueueRepository(),
+            new NoOpAuditService(),
+            fitmentCache: cache);
+
+        await service.ApproveAsync(400, CancellationToken.None);
+
+        cache.Invalidations.Should().ContainSingle(x => x.productId == 77 && x.vehicleConfigurationId == 88);
+    }
+
     private sealed class FakeReadRepository : IFitmentClaimReadRepository
     {
+        private readonly FitmentClaim? _claim;
+
+        public FakeReadRepository(FitmentClaim? claim = null)
+        {
+            _claim = claim;
+        }
+
         public Task<IReadOnlyList<FitmentClaim>> GetClaimsAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
 
         public Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
+
+        public Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken)
+            => Task.FromResult(_claim is not null && _claim.Id == claimId ? _claim : null);
+    }
+
+    private sealed class RecordingFitmentCache : IFitmentCache
+    {
+        public List<(int productId, int vehicleConfigurationId)> Invalidations { get; } = [];
+
+        public Task<FitmentEvaluationResult?> GetAsync(FitmentEvaluationContext context, CancellationToken cancellationToken)
+            => Task.FromResult<FitmentEvaluationResult?>(null);
+
+        public Task SetAsync(FitmentEvaluationContext context, FitmentEvaluationResult result, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task InvalidateAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+        {
+            Invalidations.Add((productId, vehicleConfigurationId));
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeWriteRepository : IFitmentClaimWriteRepository

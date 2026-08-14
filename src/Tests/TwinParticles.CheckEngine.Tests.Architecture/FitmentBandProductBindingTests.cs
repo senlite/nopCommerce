@@ -54,5 +54,8 @@ public class FitmentBandProductBindingTests
         script.Should().Contain("data-ce-product-id", "the server-rendered id is the primary source");
         script.Should().Contain("addtocart_",
             "a theme-level fallback keeps the band working if the zone renders without an id");
+        script.Should().Contain("driveType");
+        script.Should().Contain("unmatched");
+        script.Should().Contain("populateVehicleSelector().then");
     }
 }

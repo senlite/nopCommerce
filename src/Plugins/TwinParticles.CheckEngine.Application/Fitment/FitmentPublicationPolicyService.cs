@@ -18,15 +18,18 @@ public sealed class FitmentPublicationPolicyService
     private readonly FitmentPublicationOptions _options;
     private readonly IFitmentClaimWriteRepository _writeRepository;
     private readonly ISeoLandingRegenerationTrigger? _seoLandingRegenerationTrigger;
+    private readonly IFitmentCache? _fitmentCache;
 
     public FitmentPublicationPolicyService(
         IFitmentClaimWriteRepository writeRepository,
         FitmentPublicationOptions? options = null,
-        ISeoLandingRegenerationTrigger? seoLandingRegenerationTrigger = null)
+        ISeoLandingRegenerationTrigger? seoLandingRegenerationTrigger = null,
+        IFitmentCache? fitmentCache = null)
     {
         _writeRepository = writeRepository;
         _options = options ?? FitmentPublicationOptions.Current;
         _seoLandingRegenerationTrigger = seoLandingRegenerationTrigger;
+        _fitmentCache = fitmentCache;
     }
 
     public async Task<bool> TryPublishAsync(FitmentClaim claim, CancellationToken cancellationToken)
@@ -50,6 +53,9 @@ public sealed class FitmentPublicationPolicyService
         claim.IsPublished = true;
         await _writeRepository.UpsertAsync(claim, cancellationToken);
         await _writeRepository.SetPublishedAsync(claim.Id, true, cancellationToken);
+
+        if (_fitmentCache is not null)
+            await _fitmentCache.InvalidateAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
 
         if (_seoLandingRegenerationTrigger is not null)
             await _seoLandingRegenerationTrigger.OnFitmentPublicationChangedAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
