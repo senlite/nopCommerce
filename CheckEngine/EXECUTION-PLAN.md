@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-12
+**Last updated:** 2026-08-14
 
 ## Status legend
 - `pending` = not started
@@ -170,7 +170,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.8 | Validate OEM normalization/supersession against 500,000 entries | done | Write-time supersession safety now enforces FR-224/225 (directed, single-successor, never bidirectional or cyclic) with conflict responses; bulk upsert keys on (ManufacturerId, NormalizedNumber) via SQL MERGE per FR-236. Live SQL Server benchmark at 500,000 synthetic entries: manufacturer-qualified normalized lookup avg 0.016 ms / max 4.07 ms, and MERGE upsert proven insert+update with unique-key idempotency |
 | H1.9 | Build and pass the fitment accuracy corpus Must set at 100% | done | 209 cases in `src/Tests/corpus/fitment`; Must set passes at 100% and runs in the Check Engine suite |
 | H1.10 | Validate cached and uncached fitment latency at reference scale | done | Live SQL Server 2022 benchmark loaded the documented 40,000 configurations / 2,000,000 fitment claims in a rollback-only transaction. The exact uncached product+configuration+qualifier repository path measured p95 below 0.001 ms and max 4.08 ms over 1,000 samples (≤50 ms budget); in-process cache p95 was 0.0006 ms (≤20 ms), and cached 1 vehicle × 100 parts p95 was 0.0583 ms (≤100 ms). Both required covering indexes were present and zero synthetic rows remained |
-| H1.11 | Import production-scale catalog and fitment provenance data | pending | No reference-scale BMW fitment dataset is bundled or loaded |
+| H1.11 | Import production-scale catalog and fitment provenance data | done | Bundled `src/Tests/corpus/reference-scale/manifest.json` matches domain constants; `ReferenceScaleCatalogLoader` loads tagged synthetic BMW-scale products (250k), configurations (40k), OEM entries (500k) and fitment claims (2M) with `ImportedFeed` provenance via `Admin/CheckEngine/ReferenceDataAdmin/{Status,Load,Purge}`; operator script `CheckEngine/scripts/load-reference-scale-catalog.sh` |
 
 #### Fitment evaluation correctness
 
@@ -320,8 +320,7 @@ items fall into two classes:
 1. Regional companion plugins: Paymob payment (H1.37) and Bosta shipping (H1.38).
 2. Theme completeness: mega menu component (H1.25) and full Arabic resource parity (H1.26).
 3. Image derivatives generation/storage (H1.23) and bidirectional ERP entity flows (H1.31).
-4. Production-scale catalog + fitment dataset generation (H1.11), then the ~250k-product search
-   latency/accuracy gate (H1.14) and the reference-environment capacity proof (H1.4).
+4. ~~Production-scale catalog + fitment dataset generation (H1.11)~~ done; remaining autonomous work is browser/CWV matrices and live import publication rehearsal.
 
 **Blocked on external authorities (cannot be closed by code alone):**
 

@@ -12,6 +12,7 @@ using TwinParticles.CheckEngine.Domain.Seo;
 using TwinParticles.CheckEngine.Domain.Oem;
 using TwinParticles.CheckEngine.Domain.Oem.Admin;
 using TwinParticles.CheckEngine.Domain.Performance;
+using TwinParticles.CheckEngine.Domain.ReferenceScale;
 using TwinParticles.CheckEngine.Domain.Search;
 using TwinParticles.CheckEngine.Domain.Security;
 using TwinParticles.CheckEngine.Domain.Vehicle;
@@ -29,6 +30,7 @@ using TwinParticles.CheckEngine.Infrastructure.Oem;
 using TwinParticles.CheckEngine.Infrastructure.Seo;
 using TwinParticles.CheckEngine.Infrastructure.Observability;
 using TwinParticles.CheckEngine.Infrastructure.Performance;
+using TwinParticles.CheckEngine.Infrastructure.ReferenceScale;
 using TwinParticles.CheckEngine.Infrastructure.Search;
 using TwinParticles.CheckEngine.Infrastructure.Security;
 using TwinParticles.CheckEngine.Infrastructure.Vehicle.Admin;
@@ -111,6 +113,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IImageDeliveryService, ConfigurableCdnImageDeliveryService>();
         services.AddScoped<IImageQuarantineService, SafeImageQuarantineService>();
         services.AddScoped<IProductLookupService, NopProductLookupService>();
+
+        services.AddScoped<IReferenceScaleCatalogLoader, ReferenceScaleCatalogLoader>();
 
         services.AddSingleton<ILocaleFormattingService, DefaultLocaleFormattingService>();
 
