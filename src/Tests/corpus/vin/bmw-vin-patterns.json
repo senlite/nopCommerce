@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "description": "Curated BMW VDS prefix corpus for Horizon 1 (H1.6). Only NHTSA vPIC- or Check Engine-documented mappings belong here.",
+  "wmis": [
+    { "wmi": "WBA", "manufacturerName": "BMW AG", "regionCode": "DE" },
+    { "wmi": "WBS", "manufacturerName": "BMW M GmbH", "regionCode": "DE" },
+    { "wmi": "WBX", "manufacturerName": "BMW AG", "regionCode": "DE" },
+    { "wmi": "5UX", "manufacturerName": "BMW US Manufacturing", "regionCode": "US" },
+    { "wmi": "5YM", "manufacturerName": "BMW US Manufacturing", "regionCode": "US" }
+  ],
+  "patterns": [
+    {
+      "pattern": "3A5",
+      "modelCode": "3ER",
+      "generationCode": "F30",
+      "engineCode": "N20B20",
+      "confidence": 0.88,
+      "priority": 100,
+      "provenance": "checkengine-user-guide:WBA3A5C51DF350429;nhtsa-vpic:328i-2013"
+    },
+    {
+      "pattern": "8E9",
+      "modelCode": "3ER",
+      "generationCode": "F30",
+      "engineCode": "B48-184",
+      "confidence": 0.92,
+      "priority": 100,
+      "provenance": "checkengine-doc-example:WBA8E9G51GNT12345;nhtsa-vpic:328i-2016"
+    },
+    {
+      "pattern": "3B1",
+      "modelCode": "3ER",
+      "generationCode": "F30",
+      "engineCode": "N20B20",
+      "confidence": 0.86,
+      "priority": 90,
+      "provenance": "nhtsa-vpic:320i-2014"
+    },
+    {
+      "pattern": "EV3",
+      "modelCode": "3ER",
+      "generationCode": "E46",
+      "engineCode": "M54B25",
+      "confidence": 0.90,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:325i-2005"
+    },
+    {
+      "pattern": "VB1",
+      "modelCode": "3ER",
+      "generationCode": "E90",
+      "engineCode": "N52B25",
+      "confidence": 0.85,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:325i-2006"
+    },
+    {
+      "pattern": "5B3",
+      "modelCode": "5ER",
+      "generationCode": "F10",
+      "engineCode": "N55B30",
+      "confidence": 0.87,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:535i-2014"
+    },
+    {
+      "pattern": "JB1",
+      "modelCode": "5ER",
+      "generationCode": "G30",
+      "engineCode": "B48-184",
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:530e-2018"
+    },
+    {
+      "pattern": "FR9",
+      "modelCode": "5ER",
+      "generationCode": "F10",
+      "engineCode": "N63B44",
+      "confidence": 0.83,
+      "priority": 90,
+      "provenance": "nhtsa-vpic:550i-2013"
+    },
+    {
+      "pattern": "CR6",
+      "modelCode": "X5",
+      "generationCode": "G05",
+      "engineCode": null,
+      "confidence": 0.82,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5UX-X5-2020"
+    }
+  ]
+}

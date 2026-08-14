@@ -33,6 +33,7 @@ using TwinParticles.CheckEngine.Infrastructure.Search;
 using TwinParticles.CheckEngine.Infrastructure.Security;
 using TwinParticles.CheckEngine.Infrastructure.Vehicle.Admin;
 using TwinParticles.CheckEngine.Infrastructure.Vehicle.Aliases;
+using TwinParticles.CheckEngine.Infrastructure.Vehicle.Vin;
 using TwinParticles.CheckEngine.Infrastructure.Vehicle.VinDecoders;
 
 namespace TwinParticles.CheckEngine.Infrastructure.DependencyInjection;
@@ -74,10 +75,20 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVehicleAliasWriteRepository, SqlVehicleAliasRepository>();
 
         services.AddScoped<IVehicleAdminRepository, SqlVehicleAdminRepository>();
+        services.AddScoped<IVinSupportRepository, SqlVinSupportRepository>();
+        services.AddScoped<BmwVinConfigurationResolver>();
+        services.AddScoped<BmwVinPatternSeedLoader>();
+        services.AddSingleton<IVinPrivacyService, VinPrivacyService>();
+        services.AddSingleton(_ => VinDecodeOptions.Current);
+        services.AddSingleton(provider =>
+        {
+            var catalog = BmwVinPatternCatalog.LoadAsync(CancellationToken.None).GetAwaiter().GetResult();
+            return new BmwVinWmiAllowList(catalog.Wmis.Select(wmi => wmi.Wmi));
+        });
         services.AddScoped<IVehicleSeedLoader, BmwReferenceVehicleSeedLoader>();
 
-        services.AddSingleton<IManufacturerVinDecoder, BmwVinDecoder>();
-        services.AddSingleton<IVinDecoderRegistry, VinDecoderRegistry>();
+        services.AddScoped<IManufacturerVinDecoder, BmwVinDecoder>();
+        services.AddScoped<IVinDecoderRegistry, VinDecoderRegistry>();
         services.AddSingleton<IVinDecodeRateLimiter, InMemoryVinDecodeRateLimiter>();
 
         services.AddSingleton<IBilingualSearchTextNormalizer, DefaultBilingualSearchTextNormalizer>();

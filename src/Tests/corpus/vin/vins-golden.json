@@ -1,0 +1,23 @@
+{
+  "description": "Golden VIN vectors for ISO normalisation and check-digit validation (H1.6 / doc 35-testing-strategy).",
+  "vectors": [
+    {
+      "raw": "WBA8E9G51GNT12345",
+      "normalized": "WBA8E9G51GNT12345",
+      "checkDigitValid": false,
+      "note": "Documented decode example; check digit intentionally not enforced in decoder unit tests."
+    },
+    {
+      "raw": "wba3a5c51df350429",
+      "normalized": "WBA3A5C51DF350429",
+      "checkDigitValid": false,
+      "note": "User-guide example VIN."
+    },
+    {
+      "raw": "1HGBH41JXMN109186",
+      "normalized": "1HGBH41JXMN109186",
+      "checkDigitValid": true,
+      "note": "Non-BMW control vector for ISO check-digit validation."
+    }
+  ]
+}

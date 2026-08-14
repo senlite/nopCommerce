@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
+using TwinParticles.CheckEngine.Infrastructure.Vehicle.Vin;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Vehicle.Admin;
 
@@ -19,10 +20,14 @@ namespace TwinParticles.CheckEngine.Infrastructure.Vehicle.Admin;
 public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
 {
     private readonly IVehicleAdminRepository _repository;
+    private readonly BmwVinPatternSeedLoader? _vinPatternSeedLoader;
 
-    public BmwReferenceVehicleSeedLoader(IVehicleAdminRepository repository)
+    public BmwReferenceVehicleSeedLoader(
+        IVehicleAdminRepository repository,
+        BmwVinPatternSeedLoader? vinPatternSeedLoader = null)
     {
         _repository = repository;
+        _vinPatternSeedLoader = vinPatternSeedLoader;
     }
 
     public async Task<VehicleSeedLoadResult> SeedAsync(CancellationToken cancellationToken)
@@ -70,6 +75,9 @@ public sealed class BmwReferenceVehicleSeedLoader : IVehicleSeedLoader
             generationsByKey,
             result,
             cancellationToken);
+
+        if (_vinPatternSeedLoader is not null)
+            await _vinPatternSeedLoader.SeedAsync(cancellationToken);
 
         return result;
     }
