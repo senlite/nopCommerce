@@ -4,6 +4,16 @@
     Layout = "_ConfigurePlugin";
 }
 
+<div class="cards-group">
+    <div class="card card-default">
+        <div class="card-body">
+            <a class="btn btn-info" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+        </div>
+    </div>
+</div>
+
+@await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
+
 <form asp-controller="CheckEngine" asp-action="Configure" method="post">
     <div class="cards-group">
         <div class="card card-default">

@@ -18,7 +18,7 @@ public sealed class SqlErpSyncQueueRepository : IErpSyncQueueRepository
         _dataProvider = dataProvider;
     }
 
-    public async Task EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
+    public async Task<Guid> EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
     {
         if (job.JobId == Guid.Empty)
             job.JobId = Guid.NewGuid();
@@ -26,11 +26,19 @@ public sealed class SqlErpSyncQueueRepository : IErpSyncQueueRepository
         if (job.CreatedUtc == default)
             job.CreatedUtc = DateTime.UtcNow;
 
-        await _dataProvider.ExecuteNonQueryAsync(
-            @"INSERT INTO TP_CE_ErpSyncJob
-(JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc)
-VALUES
-(@jobId, @entityType, @direction, @idempotencyKey, @payload, @attemptCount, @status, @conflictCode, @createdUtc)",
+        var rows = await _dataProvider.QueryAsync<JobIdRow>(
+            @"SET XACT_ABORT ON;
+DECLARE @result TABLE (JobId uniqueidentifier);
+MERGE TP_CE_ErpSyncJob WITH (HOLDLOCK) AS target
+USING (SELECT @idempotencyKey AS IdempotencyKey) AS source
+    ON target.IdempotencyKey = source.IdempotencyKey
+WHEN MATCHED THEN
+    UPDATE SET IdempotencyKey = target.IdempotencyKey
+WHEN NOT MATCHED THEN
+    INSERT (JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc, LastAttemptUtc, NextAttemptUtc)
+    VALUES (@jobId, @entityType, @direction, @idempotencyKey, @payload, @attemptCount, @status, @conflictCode, @createdUtc, NULL, NULL)
+OUTPUT inserted.JobId INTO @result;
+SELECT JobId FROM @result;",
             new DataParameter("jobId", job.JobId),
             new DataParameter("entityType", (int)job.EntityType),
             new DataParameter("direction", (int)job.Direction),
@@ -40,16 +48,29 @@ VALUES
             new DataParameter("status", job.Status),
             new DataParameter("conflictCode", job.ConflictCode),
             new DataParameter("createdUtc", job.CreatedUtc));
+
+        return rows.Single().JobId;
     }
 
     public async Task<IReadOnlyList<ErpSyncJob>> GetPendingAsync(CancellationToken cancellationToken)
     {
+        // Claim rows and return them in one statement. UPDLOCK + READPAST prevents overlapping task
+        // executions from processing the same job; stale Processing claims recover after ten minutes.
         var rows = await _dataProvider.QueryAsync<ErpSyncJobRow>(
-            @"SELECT JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc
-FROM TP_CE_ErpSyncJob
-WHERE Status = @status
-ORDER BY CreatedUtc, Id",
-            new DataParameter("status", "Queued"));
+            @";WITH claimable AS
+(
+    SELECT TOP (50) *
+    FROM TP_CE_ErpSyncJob WITH (UPDLOCK, READPAST, ROWLOCK)
+    WHERE (Status = 'Queued' AND (NextAttemptUtc IS NULL OR NextAttemptUtc <= SYSUTCDATETIME()))
+       OR (Status = 'Processing' AND LastAttemptUtc < DATEADD(MINUTE, -10, SYSUTCDATETIME()))
+    ORDER BY CreatedUtc, Id
+)
+UPDATE claimable
+SET Status = 'Processing',
+    LastAttemptUtc = SYSUTCDATETIME()
+OUTPUT inserted.JobId, inserted.EntityType, inserted.Direction, inserted.IdempotencyKey,
+       inserted.Payload, inserted.AttemptCount, inserted.Status, inserted.ConflictCode,
+       inserted.CreatedUtc, inserted.LastAttemptUtc, inserted.NextAttemptUtc;");
 
         return rows.Select(Map).ToList();
     }
@@ -57,7 +78,7 @@ ORDER BY CreatedUtc, Id",
     public async Task<ErpSyncJob?> GetByIdAsync(Guid jobId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ErpSyncJobRow>(
-            @"SELECT JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc
+            @"SELECT JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc, LastAttemptUtc, NextAttemptUtc
 FROM TP_CE_ErpSyncJob
 WHERE JobId = @jobId",
             new DataParameter("jobId", jobId));
@@ -75,7 +96,9 @@ SET EntityType = @entityType,
     Payload = @payload,
     AttemptCount = @attemptCount,
     Status = @status,
-    ConflictCode = @conflictCode
+    ConflictCode = @conflictCode,
+    LastAttemptUtc = @lastAttemptUtc,
+    NextAttemptUtc = @nextAttemptUtc
 WHERE JobId = @jobId",
             new DataParameter("entityType", (int)job.EntityType),
             new DataParameter("direction", (int)job.Direction),
@@ -84,13 +107,15 @@ WHERE JobId = @jobId",
             new DataParameter("attemptCount", job.AttemptCount),
             new DataParameter("status", job.Status),
             new DataParameter("conflictCode", job.ConflictCode),
+            new DataParameter("lastAttemptUtc", job.LastAttemptUtc),
+            new DataParameter("nextAttemptUtc", job.NextAttemptUtc),
             new DataParameter("jobId", job.JobId));
     }
 
     public async Task<IReadOnlyList<ErpSyncJob>> GetAllAsync(CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ErpSyncJobRow>(
-            @"SELECT JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc
+            @"SELECT JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc, LastAttemptUtc, NextAttemptUtc
 FROM TP_CE_ErpSyncJob
 ORDER BY CreatedUtc, Id");
 
@@ -108,8 +133,15 @@ ORDER BY CreatedUtc, Id");
             AttemptCount = row.AttemptCount,
             Status = row.Status,
             ConflictCode = row.ConflictCode,
-            CreatedUtc = row.CreatedUtc
+            CreatedUtc = row.CreatedUtc,
+            LastAttemptUtc = row.LastAttemptUtc,
+            NextAttemptUtc = row.NextAttemptUtc
         };
+
+    private sealed class JobIdRow
+    {
+        public Guid JobId { get; set; }
+    }
 
     private sealed class ErpSyncJobRow
     {
@@ -122,5 +154,7 @@ ORDER BY CreatedUtc, Id");
         public string Status { get; set; } = string.Empty;
         public string? ConflictCode { get; set; }
         public DateTime CreatedUtc { get; set; }
+        public DateTime? LastAttemptUtc { get; set; }
+        public DateTime? NextAttemptUtc { get; set; }
     }
 }

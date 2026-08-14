@@ -2,9 +2,9 @@
 @if (Model.Display)
 {
     <div class="coupon-box">
-        <div class="title">
-            <strong>@T("ShoppingCart.DiscountCouponCode")</strong>
-        </div>
+        <h2 class="title">
+            @T("ShoppingCart.DiscountCouponCode")
+        </h2>
         <div class="hint">
             @T("ShoppingCart.DiscountCouponCode.Tooltip")
         </div>
@@ -29,7 +29,7 @@
         }
     </div>
     <script asp-location="Footer">
-        $(document).ready(function () {
+        $(function() {
             $('#discountcouponcode').on('keydown', function (event) {
                 if (event.keyCode == 13) {
                     $('#applydiscountcouponcode').trigger("click");

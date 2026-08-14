@@ -26,6 +26,8 @@ public class ProductImageServiceTests
         result.Success.Should().BeTrue();
         result.UsedPlaceholder.Should().BeTrue();
         result.PictureId.Should().Be(999);
+        result.VariantUrls.Keys.Should().BeEquivalentTo(
+            new[] { ImageVariant.Listing, ImageVariant.Product, ImageVariant.Zoom });
     }
 
     [Test]
@@ -64,6 +66,7 @@ public class ProductImageServiceTests
         result.Success.Should().BeTrue();
         result.PictureId.Should().Be(777);
         storage.ReplacedPictureId.Should().Be(777);
+        result.VariantUrls.Should().HaveCount(3, "replacement regenerates every derivative");
     }
 
     private static ProductImageService CreateService(bool quarantine = false)
@@ -107,8 +110,13 @@ public class ProductImageServiceTests
 
     private sealed class FakeDelivery : IImageDeliveryService
     {
+        public List<ImageVariant> RequestedVariants { get; } = [];
+
         public Task<string?> GetVariantUrlAsync(int pictureId, ImageVariant variant, CancellationToken cancellationToken)
-            => Task.FromResult<string?>($"https://cdn.test/{pictureId}/{variant.ToString().ToLowerInvariant()}");
+        {
+            RequestedVariants.Add(variant);
+            return Task.FromResult<string?>($"https://cdn.test/{pictureId}/{variant.ToString().ToLowerInvariant()}");
+        }
     }
 
     private sealed class FakeQuarantine : IImageQuarantineService

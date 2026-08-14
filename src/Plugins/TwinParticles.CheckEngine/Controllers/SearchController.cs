@@ -17,16 +17,30 @@ public sealed class SearchController : BasePublicController
     private readonly GarageContextSearchService _garageContextSearchService;
     private readonly GarageService _garageService;
     private readonly ICustomerService _customerService;
+    private readonly RecommendationService _recommendationService;
+    private readonly SearchAutocompleteService _autocompleteService;
+    private readonly ISearchAnalyticsService _searchAnalyticsService;
     private readonly ISearchRateLimiter _searchRateLimiter;
     private readonly IWorkContext _workContext;
 
-    public SearchController(GarageContextSearchService garageContextSearchService, GarageService garageService, ICustomerService customerService, ISearchRateLimiter searchRateLimiter, IWorkContext workContext)
+    public SearchController(
+        GarageContextSearchService garageContextSearchService,
+        GarageService garageService,
+        ICustomerService customerService,
+        ISearchRateLimiter searchRateLimiter,
+        IWorkContext workContext,
+        RecommendationService recommendationService,
+        SearchAutocompleteService autocompleteService,
+        ISearchAnalyticsService searchAnalyticsService)
     {
         _garageContextSearchService = garageContextSearchService;
         _garageService = garageService;
         _customerService = customerService;
         _searchRateLimiter = searchRateLimiter;
         _workContext = workContext;
+        _recommendationService = recommendationService;
+        _autocompleteService = autocompleteService;
+        _searchAnalyticsService = searchAnalyticsService;
     }
 
     [HttpPost]
@@ -76,5 +90,63 @@ public sealed class SearchController : BasePublicController
         }
 
         return Json(await _garageContextSearchService.SearchWithGarageContextAsync(query, activeVehicleConfigurationId, cancellationToken));
+    }
+
+    [HttpGet]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> Suggest(string? term, string? locale, int take = 6, CancellationToken cancellationToken = default)
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isGuest = await _customerService.IsGuestAsync(customer);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var rateLimitKey = isGuest
+            ? $"suggest:ip:{ipAddress}"
+            : $"suggest:customer:{customer.Id}";
+
+        if (!_searchRateLimiter.TryAcquire(rateLimitKey, out var retryAfterSeconds))
+            return StatusCode(429, new { reasonCode = "search.rate_limited", retryAfterSeconds });
+
+        var result = await _autocompleteService.SuggestAsync(term ?? string.Empty, locale ?? "en", take, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Click(
+        [FromBody] SearchClickModel model,
+        CancellationToken cancellationToken)
+    {
+        if (model is null || model.AnalyticsId <= 0 || model.ProductId <= 0)
+            return BadRequest(new { reasonCode = "search.analytics.invalid_click" });
+
+        await _searchAnalyticsService.RecordClickAsync(
+            model.AnalyticsId,
+            model.ProductId,
+            cancellationToken);
+        return Ok();
+    }
+
+    [HttpGet]
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> Recommend(int? vehicleConfigurationId, int take = 8, CancellationToken cancellationToken = default)
+    {
+        if (take <= 0)
+            take = 8;
+
+        if (!vehicleConfigurationId.HasValue)
+        {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var isGuest = await _customerService.IsGuestAsync(customer);
+            if (!isGuest)
+            {
+                var garage = await _garageService.GetAsync(customer.Id, cancellationToken);
+                var activeVehicle = garage.Vehicles.FirstOrDefault(x => x.Id == garage.ActiveGarageVehicleId);
+                vehicleConfigurationId = activeVehicle?.VehicleConfigurationId;
+            }
+        }
+
+        var recommendations = await _recommendationService.GetRecommendationsAsync(vehicleConfigurationId, take, cancellationToken);
+        return Json(recommendations);
     }
 }

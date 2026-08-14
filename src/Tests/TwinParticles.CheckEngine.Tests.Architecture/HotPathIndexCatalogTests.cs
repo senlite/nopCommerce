@@ -28,7 +28,7 @@ public class HotPathIndexCatalogTests
             // NFR-001 / NFR-003 / NFR-008 / AC-10.3 fitment
             ["IX_TP_CE_FitmentClaim_ProductId_VehicleConfigurationId"] = "NFR-003 1×1 fitment claim lookup",
             ["IX_TP_CE_FitmentClaim_VehicleConfigurationId_IsPublished"] = "NFR-001 vehicle search base key",
-            ["IX_TP_CE_FitmentClaim_VehicleConfigurationId_IsPublished_Covering"] = "AC-10.3 covering vehicle→products",
+            ["IX_TP_CE_FitmentClaim_VehicleConfig_IsPublished_Covering"] = "AC-10.3 covering vehicle→products",
             ["IX_TP_CE_FitmentClaim_ProductId_IsPublished"] = "NFR-008 PDP fitment badge base key",
             ["IX_TP_CE_FitmentClaim_ProductId_IsPublished_Covering"] = "NFR-008 PDP covering badge path",
             ["IX_TP_CE_FitmentClaim_ReviewQueue"] = "Admin fitment review queue",
@@ -102,6 +102,30 @@ public class HotPathIndexCatalogTests
 
         foreach (var token in RequiredIncludeTokens)
             source.Should().Contain(token, because: "covering indexes must use FluentMigrator.SqlServer Include columns");
+    }
+
+    /// <summary>
+    /// MySQL caps identifiers at 64 characters, so a longer name fails plugin installation there
+    /// even though SQL Server (128) accepts it.
+    /// </summary>
+    [Test]
+    public void Migration_Identifiers_Should_Fit_Within_MySql_64_Character_Limit()
+    {
+        const int mySqlIdentifierLimit = 64;
+        var source = CombinedMigrationSource();
+
+        var identifiers = System.Text.RegularExpressions.Regex
+            .Matches(source, "\"(?<name>(IX|FK|UQ|PK)_[A-Za-z0-9_]+)\"")
+            .Select(match => match.Groups["name"].Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        identifiers.Should().NotBeEmpty("migrations declare named indexes and constraints");
+
+        var tooLong = identifiers.Where(name => name.Length > mySqlIdentifierLimit).ToList();
+
+        tooLong.Should().BeEmpty(
+            because: $"database identifiers must be <= {mySqlIdentifierLimit} chars for MySQL compatibility, but found: {string.Join(", ", tooLong.Select(n => $"{n} ({n.Length})"))}");
     }
 
     [Test]

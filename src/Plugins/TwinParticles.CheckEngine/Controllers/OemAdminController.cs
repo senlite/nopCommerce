@@ -11,7 +11,7 @@ using TwinParticles.CheckEngine.Security;
 namespace TwinParticles.CheckEngine.Controllers;
 
 [AuthorizeAdmin]
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 [AutoValidateAntiforgeryToken]
 public sealed class OemAdminController : BasePluginController
 {
@@ -99,16 +99,38 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> CreateRelation([FromBody] OemAdminDtos.OemRelationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.CreateRelationAsync(model.ToEntity(), cancellationToken);
-        return Ok();
+        try
+        {
+            await _service.CreateRelationAsync(model.ToEntity(), cancellationToken);
+            return Ok();
+        }
+        catch (System.InvalidOperationException exception)
+        {
+            return Conflict(new { reasonCode = exception.Message });
+        }
+        catch (System.ArgumentException exception)
+        {
+            return BadRequest(new { reasonCode = exception.Message });
+        }
     }
 
     [HttpPost]
     public async Task<IActionResult> UpdateRelation([FromBody] OemAdminDtos.OemRelationUpsertModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        await _service.UpdateRelationAsync(model.ToEntity(), cancellationToken);
-        return Ok();
+        try
+        {
+            await _service.UpdateRelationAsync(model.ToEntity(), cancellationToken);
+            return Ok();
+        }
+        catch (System.InvalidOperationException exception)
+        {
+            return Conflict(new { reasonCode = exception.Message });
+        }
+        catch (System.ArgumentException exception)
+        {
+            return BadRequest(new { reasonCode = exception.Message });
+        }
     }
 
     [HttpPost]

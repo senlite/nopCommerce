@@ -38,7 +38,7 @@
                         formaction="@Url.Action("ProductSpecificationAttributeAdd")"
                         formmethod="post"
                         class="btn btn-primary">
-                    <i class="far fa-save"></i>
+                    <i class="far fa-floppy-disk"></i>
                     @T("Admin.Common.Save")
                 </button>
                 <button type="submit"
@@ -46,18 +46,18 @@
                         formaction="@Url.Action("ProductSpecificationAttributeAdd")"
                         formmethod="post"
                         class="btn btn-primary">
-                    <i class="far fa-save"></i>
+                    <i class="far fa-floppy-disk"></i>
                     @T("Admin.Common.SaveContinue")
                 </button>
             }
             else
             {
                 <button type="submit" name="save" class="btn btn-primary">
-                    <i class="far fa-save"></i>
+                    <i class="far fa-floppy-disk"></i>
                     @T("Admin.Common.Save")
                 </button>
                 <button type="submit" name="save-continue" class="btn btn-primary">
-                    <i class="far fa-save"></i>
+                    <i class="far fa-floppy-disk"></i>
                     @T("Admin.Common.SaveContinue")
                 </button>
                 <button type="submit"
@@ -65,7 +65,7 @@
                         formaction="@Url.Action("ProductSpecAttrDelete")"
                         formmethod="post"
                         class="btn btn-danger">
-                    <i class="far fa-trash-alt"></i>
+                    <i class="far fa-trash-can"></i>
                     @T("Admin.Common.Delete")
                 </button>
             }
@@ -89,7 +89,7 @@
                                     }
                                     else
                                     {
-                                        <nop-select asp-for="AttributeTypeId" asp-items="@await (((SpecificationAttributeType) Model.AttributeTypeId).ToSelectListAsync())" />
+                                        <nop-select asp-for="AttributeTypeId" asp-items="@(await ((SpecificationAttributeType) Model.AttributeTypeId).ToSelectListAsync())" />
                                     }
                                     <span asp-validation-for="AttributeTypeId"></span>
                                 </div>
@@ -111,7 +111,7 @@
                             </div>
 
                             <script>
-                                $(document).ready(function() {
+                                $(function() {
                                     var valueContainers = {
                                         @((int) SpecificationAttributeType.Option): $('#AttributeValueOptionSection'),
                                         @((int) SpecificationAttributeType.CustomText): $('#AttributeValueCustomTextSection'),
@@ -149,7 +149,7 @@
                             @if (Model.SpecificationId == 0)
                             {
                                 <script>
-                                    $(document).ready(function() {
+                                    $(function() {
                                         $("#@Html.IdFor(model => model.AttributeId)").change(function() {
                                             var selectedAttributeId = $(this).val();
                                             //get options list
@@ -170,7 +170,7 @@
                                                         });
                                                 },
                                                 error: function (jqXHR, textStatus, errorThrown) {
-                                                    $("#getOptionsByAttributeIdAlert").click();
+                                                    $("#getOptionsByAttributeIdAlert").trigger("click");
                                                 }
                                             });
                                         });

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Language Name="فارسی" IsDefault="false" IsRightToLeft="true">
   <LocaleResource Name="AdminEmail">
     <Value>ایمیل کاربری مدیر</Value>
@@ -11,6 +11,15 @@
   </LocaleResource>
   <LocaleResource Name="AdminPasswordRequired">
     <Value>رمز عبور مدیر را وارد کنید</Value>
+  </LocaleResource>
+  <LocaleResource Name="CharacterSet">
+    <Value>مجموعه کاراکتری</Value>
+  </LocaleResource>
+  <LocaleResource Name="Collation">
+    <Value>جمع‌بندی</Value>
+  </LocaleResource>
+  <LocaleResource Name="CollationRequired">
+    <Value>جمع بندی لازم است</Value>
   </LocaleResource>
   <LocaleResource Name="ConfigureDirectoryPermissions">
     <Value>به حساب '{0}' مجوز ویرایش پوشه '{1}' داده نشده است. لطفا این مجوزها را پیکربندی کنید.</Value>
@@ -28,7 +37,7 @@
     <Value>اطلاعات اتصال به پایگاه داده</Value>
   </LocaleResource>
   <LocaleResource Name="ConnectionStringRequired">
-    <Value>اطلاعات اتصال به پایگاه داده مورد نیاز است</Value>
+    <Value>اطلاعات اتصال به پایگاه داده الزامی است</Value>
   </LocaleResource>
   <LocaleResource Name="ConnectionStringWrongFormat">
     <Value>فرمت اطلاعات اتصال به پایگاه داده صحیح نیست</Value>
@@ -118,22 +127,22 @@
     <Value>رمز عبور SQL</Value>
   </LocaleResource>
   <LocaleResource Name="SqlPasswordRequired">
-    <Value>رمز عبور SQL را وارد کنید</Value>
+    <Value>رمز عبور SQL الزامی است</Value>
   </LocaleResource>
   <LocaleResource Name="SqlServer">
     <Value>Microsoft SQL Server</Value>
   </LocaleResource>
   <LocaleResource Name="SqlUsername">
-    <Value>نام‌کاربری SQL</Value>
+    <Value>نام کاربری SQL</Value>
   </LocaleResource>
   <LocaleResource Name="SqlUsernameRequired">
-    <Value>نام‌کاربری SQL را وارد کنید</Value>
+    <Value>نام کاربری SQL الزامی است</Value>
   </LocaleResource>
   <LocaleResource Name="StoreInformation">
     <Value>اطلاعات فروشگاه</Value>
   </LocaleResource>
   <LocaleResource Name="SubscribeNewsletters">
-    <Value>Subscribe to nopCommerce newsletter</Value>
+    <Value>در خبرنامه nopCommerce مشترک شوید</Value>
   </LocaleResource>
   <LocaleResource Name="Title">
     <Value>نصب nopCommerce</Value>

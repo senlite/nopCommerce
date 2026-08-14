@@ -2,6 +2,7 @@
 
 @inject IGenericAttributeService genericAttributeService
 @inject INopHtmlHelper NopHtml
+@inject IPermissionService permissionService
 @inject IWorkContext workContext
 
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
@@ -12,12 +13,15 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Mvc.ViewFeatures
 @using Microsoft.AspNetCore.Routing
+@using Microsoft.AspNetCore.StaticFiles
 @using Microsoft.Extensions.Primitives
 @using Nop.Core
 @using Nop.Core.Domain.Common
 @using Nop.Core.Events
 @using Nop.Core.Infrastructure
+@using Nop.Core.Http
 @using Nop.Services.Common
+@using Nop.Services.Security
 @using static Nop.Services.Common.NopLinksDefaults
 @using Nop.Web.Areas.Admin.Components
 @using Nop.Web.Areas.Admin.Models.Affiliates
@@ -33,6 +37,7 @@
 @using Nop.Web.Areas.Admin.Models.Home
 @using Nop.Web.Areas.Admin.Models.Localization
 @using Nop.Web.Areas.Admin.Models.Logging
+@using Nop.Web.Areas.Admin.Models.Menus
 @using Nop.Web.Areas.Admin.Models.Messages
 @using Nop.Web.Areas.Admin.Models.MultiFactorAuthentication
 @using Nop.Web.Areas.Admin.Models.News
@@ -58,8 +63,8 @@
 @using Nop.Web.Framework.Events
 @using Nop.Web.Framework.Extensions
 @using Nop.Web.Framework.Infrastructure
-@using Nop.Web.Framework.Menu
 @using Nop.Web.Framework.Models
+@using Nop.Web.Framework.Models.Cms
 @using Nop.Web.Framework.Models.DataTables
 @using Nop.Web.Framework.Mvc.Routing
 @using Nop.Web.Framework.Security.Captcha

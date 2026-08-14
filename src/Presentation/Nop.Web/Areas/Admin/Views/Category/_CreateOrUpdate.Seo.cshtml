@@ -1,4 +1,5 @@
-﻿@model CategoryModel
+﻿@using Nop.Core.Domain.Catalog
+@model CategoryModel
 
 <div class="card-body">
     @(await Html.LocalizedEditorAsync<CategoryModel, CategoryLocalizedModel>("category-info-localized",
@@ -39,8 +40,13 @@
                 <span asp-validation-for="@Model.Locales[item].MetaDescription"></span>
             </div>
         </div>
+        @await Component.InvokeAsync(typeof(MetaTagsGeneratorViewComponent), new MetaTagsGeneratorModel(Model, nameof(Category), item, Model.Locales[item].LanguageId)
+        {
+            TitleFieldId = Html.IdFor(model => model.Locales[item].Name),
+            TextFieldId = Html.IdFor(model => model.Locales[item].Description)
+        })
         <script>
-			$(document).ready(function () {
+			$(function() {
 				$('#@Html.IdFor(model => model.Locales[item].SeName)').on('input change', function () {
 					var parameters = {
 					    entityId: '@Model.Id',
@@ -91,8 +97,13 @@
                 <span asp-validation-for="MetaDescription"></span>
             </div>
         </div>
+        @await Component.InvokeAsync(typeof(MetaTagsGeneratorViewComponent), new MetaTagsGeneratorModel(Model, nameof(Category))
+        {
+            TitleFieldId = Html.IdFor(model => model.Name),
+            TextFieldId = Html.IdFor(model => model.Description)
+        })
         <script>
-    		$(document).ready(function () {
+    		$(function() {
     			$('#@Html.IdFor(model => model.SeName)').on('input change', function () {
     				var parameters = {
     				    entityId: '@Model.Id',

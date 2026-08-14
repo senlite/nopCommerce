@@ -133,6 +133,108 @@ public class GarageServiceTests
     }
 
     [Test]
+    public async Task MigrateGuestAsync_Should_Merge_Inline_Payload_When_Server_Store_Is_Empty()
+    {
+        var service = CreateService();
+        var payload = new GarageGuestPayload
+        {
+            ActiveVehicleId = 7,
+            Vehicles =
+            [
+                new GarageVehicle
+                {
+                    Id = 7,
+                    VehicleConfigurationId = 6001,
+                    Vin = " wba8e9g50gnu12345 ",
+                    Label = " Guest BMW "
+                }
+            ]
+        };
+
+        var migrated = await service.MigrateGuestAsync(60, "browser-only-key", payload, CancellationToken.None);
+
+        migrated.Should().BeTrue("the browser payload is authoritative and needs no process-local state");
+        var garage = await service.GetAsync(60, CancellationToken.None);
+        garage.Vehicles.Should().ContainSingle();
+        garage.Vehicles[0].Vin.Should().Be("WBA8E9G50GNU12345");
+        garage.Vehicles[0].Label.Should().Be("Guest BMW");
+        garage.ActiveGarageVehicleId.Should().Be(garage.Vehicles[0].Id);
+        garage.Vehicles[0].IsActive.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task MigrateGuestAsync_Should_Deduplicate_By_Configuration_Or_Vin()
+    {
+        var service = CreateService();
+        await service.AddVehicleAsync(61, 7001, null, "Existing Config", CancellationToken.None);
+        await service.AddVehicleAsync(61, null, "WBA00000000000001", "Existing VIN", CancellationToken.None);
+
+        var payload = new GarageGuestPayload
+        {
+            Vehicles =
+            [
+                new GarageVehicle { Id = 1, VehicleConfigurationId = 7001, Vin = "OTHER", Label = "Same config" },
+                new GarageVehicle { Id = 2, VehicleConfigurationId = 9999, Vin = " wba00000000000001 ", Label = "Same VIN" }
+            ]
+        };
+
+        var migrated = await service.MigrateGuestAsync(61, "dedupe-key", payload, CancellationToken.None);
+
+        migrated.Should().BeTrue();
+        var garage = await service.GetAsync(61, CancellationToken.None);
+        garage.Vehicles.Should().HaveCount(2,
+            "configuration identity or normalized VIN identity is enough to avoid a duplicate");
+    }
+
+    [Test]
+    public async Task MigrateGuestAsync_Should_Reject_An_Empty_Inline_Payload()
+    {
+        var service = CreateService();
+
+        var migrated = await service.MigrateGuestAsync(
+            62,
+            "empty-key",
+            new GarageGuestPayload(),
+            CancellationToken.None);
+
+        migrated.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task RemoveVehicleAsync_Should_Remove_And_Promote_Another_When_Active_Removed()
+    {
+        var service = CreateService();
+        await service.AddVehicleAsync(18, 1801, null, "Car A", CancellationToken.None);
+        await service.AddVehicleAsync(18, 1802, null, "Car B", CancellationToken.None);
+
+        var garageBefore = await service.GetAsync(18, CancellationToken.None);
+        garageBefore.ActiveGarageVehicleId.Should().Be(1);
+
+        var removed = await service.RemoveVehicleAsync(18, 1, CancellationToken.None);
+        removed.Should().BeTrue();
+
+        var garage = await service.GetAsync(18, CancellationToken.None);
+        garage.Vehicles.Should().ContainSingle();
+        garage.Vehicles[0].Id.Should().Be(2);
+        garage.ActiveGarageVehicleId.Should().Be(2);
+        garage.Vehicles.Single(x => x.IsActive).Id.Should().Be(2);
+    }
+
+    [Test]
+    public async Task RemoveVehicleAsync_Should_Clear_Active_When_Last_Vehicle_Removed()
+    {
+        var service = CreateService();
+        await service.AddVehicleAsync(19, 1901, null, "Only Car", CancellationToken.None);
+
+        var removed = await service.RemoveVehicleAsync(19, 1, CancellationToken.None);
+        removed.Should().BeTrue();
+
+        var garage = await service.GetAsync(19, CancellationToken.None);
+        garage.Vehicles.Should().BeEmpty();
+        garage.ActiveGarageVehicleId.Should().BeNull();
+    }
+
+    [Test]
     public async Task AdminViewAsync_Should_Record_Audit_Entry()
     {
         var audit = new FakeGarageAuditService();
@@ -153,7 +255,11 @@ public class GarageServiceTests
         var telemetry = new NoopTelemetry();
 
         var vinService = new VinDecodeApplicationService(new FakeVinRegistry(), telemetry);
-        var oemService = new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository()));
+        var oemService = new OemResolveService(
+            new FakeOemNormalizationService(),
+            new FakeOemSearchRepository(),
+            new OemSupersessionService(new FakeOemRelationRepository()),
+            new EmptyProductOemMapRepository());
 
         return new GarageService(
             repository,
@@ -189,6 +295,9 @@ public class GarageServiceTests
             _state[garage.CustomerId] = garage;
             return Task.CompletedTask;
         }
+
+        public Task<bool> DeleteByCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+            => Task.FromResult(_state.Remove(customerId));
     }
 
     private sealed class FakeGarageGuestStore : IGarageGuestStore
@@ -263,5 +372,17 @@ public class GarageServiceTests
     {
         public Task<IReadOnlyList<OemRelation>> GetActiveOutgoingRelationsAsync(int fromOemNumberId, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<OemRelation>>([]);
+    }
+
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
     }
 }

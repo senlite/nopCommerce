@@ -223,6 +223,24 @@ its ancestors/descendants in the cached slice. Web farm uses distributed cache (
 | Quality bar | Every customer-selectable configuration has at least one path to sellable fitment or is hidden |
 | Seed | Optional sample slice for demo installs; production operators load curated data via import/admin |
 
+#### BMW launch generation priority
+
+The Domain Owner priority list used by the bundled structural reference seed is explicit so expansion
+is reviewable and repeatable. It identifies hierarchy coverage only; it does **not** assert that any
+part fits a configuration. Fitment remains a separate provenanced claim.
+
+| Priority | Models | Generations covered |
+|---|---|---|
+| 1 — highest launch demand | 3 Series | E46, E90, F30, G20 |
+| 1 — highest launch demand | 5 Series | E39, E60, F10, G30, G60 |
+| 1 — highest launch demand | X5 | E70, F15, G05 |
+| 2 — supporting passenger range | 1 / 2 / 4 / 7 Series | E87, F20, F40; F22, G42; F32, G22; E65, F01, G11, G70 |
+| 2 — supporting SAV range | X1 / X3 / X6 | E84, F48, U11; E83, F25, G01; E71, F16, G06 |
+
+The current seed defines 10 models, 32 generations and 284 ECE/GCC configuration leaves. It is
+incrementally idempotent: upgrades add missing natural keys and bilingual leaf aliases without
+overwriting operator edits or deleting preserved legacy configurations.
+
 ### Health and scale
 
 | Report (`FR-125`) | Detects |

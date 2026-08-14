@@ -60,11 +60,17 @@ public class MigrationSafetyConventionsTests
     }
 
     [Test]
-    public void All_Migrations_Should_Be_AutoReversing_For_Rollback_Safety()
+    public void All_Migrations_Should_Be_AutoReversing_Or_Declare_Explicit_Down()
     {
         foreach (var migration in DiscoverMigrations())
-            migration.Type.IsSubclassOf(typeof(AutoReversingMigration))
-                .Should().BeTrue($"{migration.Type.Name} must inherit AutoReversingMigration for rollback safety (FR-925)");
+        {
+            var autoReversing = migration.Type.IsSubclassOf(typeof(AutoReversingMigration));
+            var downMethod = migration.Type.GetMethod(nameof(Migration.Down));
+            var declaresExplicitDown = downMethod?.DeclaringType == migration.Type;
+
+            (autoReversing || declaresExplicitDown).Should().BeTrue(
+                $"{migration.Type.Name} must be auto-reversing or declare an explicit Down() for rollback safety (FR-925)");
+        }
     }
 
     [Test]
@@ -83,7 +89,7 @@ public class MigrationSafetyConventionsTests
 
         versions.Should().OnlyHaveUniqueItems("duplicate FluentMigrator versions block forward/rollback ordering");
         versions.Should().BeInAscendingOrder();
-        versions.Count.Should().BeGreaterThanOrEqualTo(23);
+        versions.Count.Should().BeGreaterThanOrEqualTo(24);
     }
 
     [Test]
@@ -154,6 +160,7 @@ public class MigrationSafetyConventionsTests
         // Mirrors CheckEngine/docs/10-database-design.md uninstall drop order guidance.
         var dropOrder = new[]
         {
+            "TP_CE_AuditEvent",
             "TP_CE_FitmentReviewQueueEvent",
             "TP_CE_FitmentQualifier",
             "TP_CE_FitmentClaim",

@@ -56,7 +56,7 @@ public class GarageContextSearchServiceTests
         var searchService = new UnifiedSearchService(
             new FakeSearchRepository(),
             new VinDecodeApplicationService(new FakeVinRegistry(), new NoopTelemetry()),
-            new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository())),
+            new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository()), new EmptyProductOemMapRepository()),
             new FitmentEvaluationService(new FakeFitmentRepository(), new FakeFitmentCache()),
             new FakeSearchIndexHealthService(),
             new LowerNormalizer());
@@ -140,10 +140,10 @@ public class GarageContextSearchServiceTests
 
     private sealed class FakeFitmentCache : IFitmentCache
     {
-        public Task<FitmentEvaluationResult?> GetAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+        public Task<FitmentEvaluationResult?> GetAsync(FitmentEvaluationContext context, CancellationToken cancellationToken)
             => Task.FromResult<FitmentEvaluationResult?>(null);
 
-        public Task SetAsync(int productId, int vehicleConfigurationId, FitmentEvaluationResult result, CancellationToken cancellationToken)
+        public Task SetAsync(FitmentEvaluationContext context, FitmentEvaluationResult result, CancellationToken cancellationToken)
             => Task.CompletedTask;
 
         public Task InvalidateAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
@@ -179,9 +179,23 @@ public class GarageContextSearchServiceTests
             => Task.FromResult<IReadOnlyList<OemRelation>>([]);
     }
 
+    private sealed class EmptyProductOemMapRepository : IProductOemMapRepository
+    {
+        public Task UpsertAsync(ProductOemMap map, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByProductIdAsync(int productId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+
+        public Task<IReadOnlyList<ProductOemMap>> GetByOemNumberIdAsync(int oemNumberId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<ProductOemMap>>([]);
+    }
+
     private sealed class FakeSearchIndexHealthService : ISearchIndexHealthService
     {
         public Task<bool> IsHealthyAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+
+        public Task ReportDegradedAsync(string reason, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task RebuildAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }

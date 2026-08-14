@@ -9,6 +9,7 @@ namespace TwinParticles.CheckEngine.Application.Seo;
 public sealed class SeoLandingService
 {
     private readonly ISeoLandingRepository _repository;
+    private readonly ISeoIndexabilityPolicy _indexabilityPolicy;
     private readonly ISeoPerformanceBudgetService _performanceBudgetService;
     private readonly ISeoSitemapService _sitemapService;
     private readonly ISeoStructuredDataService _structuredDataService;
@@ -19,13 +20,15 @@ public sealed class SeoLandingService
         ISeoUrlService urlService,
         ISeoStructuredDataService structuredDataService,
         ISeoSitemapService sitemapService,
-        ISeoPerformanceBudgetService performanceBudgetService)
+        ISeoPerformanceBudgetService performanceBudgetService,
+        ISeoIndexabilityPolicy indexabilityPolicy)
     {
         _repository = repository;
         _urlService = urlService;
         _structuredDataService = structuredDataService;
         _sitemapService = sitemapService;
         _performanceBudgetService = performanceBudgetService;
+        _indexabilityPolicy = indexabilityPolicy;
     }
 
     public async Task<SeoLandingGenerationResult> GenerateVehicleLandingAsync(int vehicleConfigurationId, string locale, CancellationToken cancellationToken)
@@ -45,7 +48,8 @@ public sealed class SeoLandingService
             HreflangPathEn = _urlService.BuildVehicleLandingPath(vehicleConfigurationId, "en"),
             HreflangPathAr = _urlService.BuildVehicleLandingPath(vehicleConfigurationId, "ar"),
             StructuredDataJsonLd = _structuredDataService.BuildVehicleLandingJsonLd(vehicleConfigurationId, normalizedLocale),
-            IsIndexable = _performanceBudgetService.MeetsBudget(),
+            IsIndexable = _performanceBudgetService.MeetsBudget() &&
+                          await _indexabilityPolicy.IsVehicleLandingIndexableAsync(vehicleConfigurationId, cancellationToken),
             CreatedUtc = DateTime.UtcNow
         };
 
@@ -71,7 +75,11 @@ public sealed class SeoLandingService
             HreflangPathEn = _urlService.BuildPartForVehicleLandingPath(productId, vehicleConfigurationId, "en"),
             HreflangPathAr = _urlService.BuildPartForVehicleLandingPath(productId, vehicleConfigurationId, "ar"),
             StructuredDataJsonLd = _structuredDataService.BuildPartForVehicleJsonLd(productId, vehicleConfigurationId, normalizedLocale),
-            IsIndexable = _performanceBudgetService.MeetsBudget(),
+            IsIndexable = _performanceBudgetService.MeetsBudget() &&
+                          await _indexabilityPolicy.IsPartForVehicleLandingIndexableAsync(
+                              productId,
+                              vehicleConfigurationId,
+                              cancellationToken),
             CreatedUtc = DateTime.UtcNow
         };
 

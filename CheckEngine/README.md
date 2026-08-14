@@ -15,6 +15,9 @@ that general-purpose e-commerce platforms structurally lack: a **vehicle-aware c
 **fitment engine** that guarantees a part fits a specific vehicle, and a **VIN-to-parts search path**
 that lets a customer arrive with nothing but a chassis number and leave with the correct component.
 
+> 📘 **New here?** The [Check Engine User Guide](USER-GUIDE.md) is a screenshot-led walkthrough of
+> installing, configuring, and using the plugin end to end.
+
 > **Status:** Specification phase. This repository is the documentation baseline and single source of
 > truth for the product. It is implementation-ready: every document is written to the level of detail
 > a development team needs to begin work without further discovery. See [ROADMAP.md](ROADMAP.md) for
@@ -377,7 +380,7 @@ to Stripe, Adyen, DHL, or Aramex. This is what makes the product market-agnostic
 
 | Artifact | Namespace | nopCommerce system name | Group |
 |---|---|---|---|
-| Check Engine | `TwinParticles.CheckEngine` | `Misc.CheckEngine` | Automotive |
+| Check Engine | `TwinParticles.CheckEngine` | `TwinParticles.CheckEngine` | Misc |
 | Paymob | `TwinParticles.Payments.Paymob` | `Payments.Paymob` | Payment methods |
 | Bosta | `TwinParticles.Shipping.Bosta` | `Shipping.Bosta` | Shipping rate computation |
 
@@ -494,10 +497,10 @@ upload time and refuses to install on mismatch:
 
 ```json
 {
-  "Group": "Automotive",
-  "FriendlyName": "Check Engine - Automotive Commerce Platform",
-  "SystemName": "Misc.CheckEngine",
-  "Version": "1.0.0",
+  "Group": "Misc",
+  "FriendlyName": "Check Engine",
+  "SystemName": "TwinParticles.CheckEngine",
+  "Version": "0.12.0",
   "SupportedVersions": [ "4.90" ],
   "Author": "Twin Particles",
   "DisplayOrder": 1,

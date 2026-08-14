@@ -15,8 +15,9 @@
             {
                 var controlId = $"{NopCatalogDefaults.ProductAttributePrefix}{attribute.Id}";
                 var textPrompt = !string.IsNullOrEmpty(attribute.TextPrompt) ? attribute.TextPrompt : attribute.Name;
-                <dt id="@($"{NopCatalogDefaults.ProductAttributePrefix}label_{attribute.Id}")">
-                    <label class="text-prompt">
+                var textPromptId = $"{NopCatalogDefaults.ProductAttributePrefix}textprompt_{attribute.Id}";
+                <dt id="@($"{NopCatalogDefaults.ProductAttributePrefix}label_{attribute.Id}")" @(attribute.HasCondition ? Html.Raw("style = \"display: none\"") : null)>
+                    <label id="@textPromptId" class="text-prompt">
                         @textPrompt
                     </label>
                     @if (attribute.IsRequired)
@@ -30,16 +31,16 @@
                         </div>
                     }
                 </dt>
-                <dd id="@($"{NopCatalogDefaults.ProductAttributePrefix}input_{attribute.Id}")">
+                <dd id="@($"{NopCatalogDefaults.ProductAttributePrefix}input_{attribute.Id}")" @(attribute.HasCondition ? Html.Raw("style = \"display: none\"") : null)>
                     @switch (attribute.AttributeControlType)
                     {
                         case AttributeControlType.DropdownList:
                             {
-                                <select data-attr="@(attribute.Id)" name="@(controlId)" id="@(controlId)" @(attribute.Values.Any(value => value.CustomerEntersQty) ? Html.Raw($"onchange=\"showHideDropdownQuantity('{controlId}')\"") : null)>
+                                <select data-attr="@(attribute.Id)" name="@(controlId)" id="@(controlId)" aria-labelledby="@textPromptId" @(attribute.Values.Any(value => value.CustomerEntersQty) ? Html.Raw($"onchange=\"showHideDropdownQuantity('{controlId}')\"") : null)>
                                     <option value="0">@T("Products.ProductAttributes.DropdownList.DefaultItem")</option>
                                     @foreach (var attributeValue in attribute.Values)
                                     {
-                                        var attributeName = string.IsNullOrEmpty(attributeValue.PriceAdjustment) ?
+                                        var attributeName = attributeValue.PriceAdjustmentValue == 0 ?
                                             attributeValue.Name :
                                             T("Products.ProductAttributes.PriceAdjustment", attributeValue.Name, attributeValue.PriceAdjustment,
                                                 attributeValue.CustomerEntersQty ? T("Products.ProductAttributes.PriceAdjustment.PerItem").Text : string.Empty).Text;
@@ -54,7 +55,7 @@
                                     </div>
                                 }
                                 <script asp-location="Footer">
-                                    $(document).ready(function() {
+                                    $(function() {
                                         showHideDropdownQuantity("@controlId");
                                     });
                                 </script>
@@ -85,7 +86,7 @@
                                     }
                                 </ul>
                                 <script asp-location="Footer">
-                                    $(document).ready(function() {
+                                    $(function() {
                                         showHideRadioQuantity("@controlId");
                                     });
                                 </script>
@@ -112,7 +113,7 @@
                                                     <label for="@(controlId)_@(attributeValue.Id)_qty">@(T("Products.ProductAttributes.PriceAdjustment.Quantity").Text)</label>
                                                     <input type="text" name="@(controlId)_@(attributeValue.Id)_qty" id="@(controlId)_@(attributeValue.Id)_qty" value="@(attributeValue.Quantity)" />
                                                     <script asp-location="Footer">
-                                                        $(document).ready(function() {
+                                                        $(function() {
                                                             showHideCheckboxQuantity('@(controlId)_@(attributeValue.Id)');
                                                         })
                                                     </script>
@@ -145,106 +146,89 @@
                             break;
                         case AttributeControlType.FileUpload:
                             {
-                                Download download = null;
-                                if (!string.IsNullOrEmpty(attribute.DefaultValue))
+                                var allowedFileTypes = string.Empty;
+
+                                if (attribute.AllowedFileExtensions.Any())
                                 {
-                                    download = await downloadService.GetDownloadByGuidAsync(new Guid(attribute.DefaultValue));
+                                    var fileTypeList = attribute.AllowedFileExtensions
+                                        .Select(x => new FileExtensionContentTypeProvider().TryGetContentType($".{x}", out var contentType) ? $"'{contentType}'" : null)
+                                        .Where(ft => !string.IsNullOrEmpty(ft))
+                                        .ToList();
+
+                                    allowedFileTypes = string.Join(", ", fileTypeList);
+                                }
+
+                                Download download = null;
+                                if (!string.IsNullOrEmpty(attribute.DefaultValue) && Guid.TryParse(attribute.DefaultValue, out var downloadGuid))
+                                {
+                                    download = await downloadService.GetDownloadByGuidAsync(downloadGuid);
                                 }
 
                                 @* register CSS and JS *@
-                                <link rel="stylesheet" href="~/lib_npm/fine-uploader/fine-uploader/fine-uploader.min.css" />
-                                <script asp-exclude-from-bundle="true" src="~/lib_npm/fine-uploader/jquery.fine-uploader/jquery.fine-uploader.min.js" asp-location="Footer"></script>
+                                <link rel="stylesheet" href="~/lib_npm/filepond/filepond.min.css" />
+                                <link rel="stylesheet" href="~/lib_npm/filepond-plugin-get-file/filepond-plugin-get-file.min.css" />
+                                <script asp-exclude-from-bundle="true" src="~/lib_npm/filepond/filepond.min.js" asp-location="Footer"></script>
+                                <script asp-exclude-from-bundle="true" src="~/lib_npm/filepond-plugin-file-validate-type/filepond-plugin-file-validate-type.min.js" asp-location="Footer"></script>
+                                <script asp-exclude-from-bundle="true" src="~/lib_npm/filepond-plugin-get-file/filepond-plugin-get-file.min.js" asp-location="Footer"></script>
 
-                                //ex. ['jpg', 'jpeg', 'png', 'gif'] or []
-                                var allowedFileExtensions = string.Join(", ", attribute.AllowedFileExtensions.Select(x => "'" + x.Trim() + "'").ToList());
+                                <div id="@(controlId)element" class="filepond"></div>
 
-                                if (download != null)
-                                {
-                                    <input id="@(controlId)" name="@(controlId)" type="hidden" value="@download.DownloadGuid" />
-                                }
-                                else
-                                {
-                                    <input id="@(controlId)" name="@(controlId)" type="hidden" />
-                                }
-
-                                @*fine uploader container*@
-                                <div id="@(controlId)uploader"></div>
-                                @*fine uploader template (keep it synchronized to \Content\fineuploader\templates\default.html)*@
-                                <script type="text/template" asp-location="Footer" id="@(controlId)-qq-template">
-                                    <div class="qq-uploader-selector qq-uploader">
-                                        <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
-                                            <span>@T("Common.FileUploader.DropFiles")</span>
-                                        </div>
-                                        <div class="qq-upload-button-selector qq-upload-button">
-                                            <div>@T("Common.FileUploader.Upload")</div>
-                                        </div>
-                                        <span class="qq-drop-processing-selector qq-drop-processing">
-                                            <span>@T("Common.FileUploader.Processing")</span>
-                                            <span class="qq-drop-processing-spinner-selector qq-drop-processing-spinner"></span>
-                                        </span>
-                                        <ul class="qq-upload-list-selector qq-upload-list">
-                                            <li>
-                                                <div class="qq-progress-bar-container-selector">
-                                                    <div class="qq-progress-bar-selector qq-progress-bar"></div>
-                                                </div>
-                                                <span class="qq-upload-spinner-selector qq-upload-spinner"></span>
-                                                <span class="qq-edit-filename-icon-selector qq-edit-filename-icon"></span>
-                                                <span class="qq-upload-file-selector qq-upload-file"></span>
-                                                <input class="qq-edit-filename-selector qq-edit-filename" tabindex="0" type="text">
-                                                <span class="qq-upload-size-selector qq-upload-size"></span>
-                                                <a class="qq-upload-cancel-selector qq-upload-cancel" href="#">@T("Common.FileUploader.Cancel")</a>
-                                                <a class="qq-upload-retry-selector qq-upload-retry" href="#">@T("Common.FileUploader.Retry")</a>
-                                                <a class="qq-upload-delete-selector qq-upload-delete" href="#">@T("Common.FileUploader.Delete")</a>
-                                                <span class="qq-upload-status-text-selector qq-upload-status-text"></span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </script>
+                                <input id="@(controlId)" name="@(controlId)" type="hidden" value="@(download?.DownloadGuid.ToString() ?? "")" />
+                                
                                 <script asp-location="Footer">
-                                    $(document).ready(function() {
-                                        $("#@(controlId)uploader").fineUploader({
-                                            request: {
-                                                endpoint: '@(Url.RouteUrl("UploadFileProductAttribute", new { attributeId = attribute.Id }))'
-                                            },
-                                            template: "@(controlId)-qq-template",
-                                            multiple: false,
-                                            validation: {
-                                                allowedExtensions: [@Html.Raw(allowedFileExtensions)]
-                                            }
-                                        }).on("complete", function(event, id, name, responseJSON, xhr) {
-                                            $("#@(controlId)").val(responseJSON.downloadGuid);
-                                            if (responseJSON.success) {
-                                                $("#@(controlId + "downloadurl")").html("<a href='" + responseJSON.downloadUrl + "'>@T("Common.FileUploader.DownloadUploadedFile")</a>");
-                                                $("#@(controlId + "remove")").show();
-                                            }
-                                            if (responseJSON.message) {
-                                                alert(responseJSON.message);
-                                            }
-                                        });
+                                    $(function () {
+                                        // Register the plugins
+                                        FilePond.registerPlugin(FilePondPluginFileValidateType,FilePondPluginGetFile);
 
-                                        $("#@(controlId + "remove")").on('click', function(e) {
-                                            $("#@(controlId + "downloadurl")").html("");
-                                            $("#@(controlId)").val('');
-                                            $(this).hide();
+                                        // Create a FilePond instance
+                                        FilePond.create(document.querySelector('#@(controlId)element'), {
+                                            credits: false,
+                                            acceptedFileTypes: [@Html.Raw(allowedFileTypes)],
+                                            allowMultiple: false,
+                                            maxFiles: 1,
+                                            allowDownloadByUrl: true,
+                                            @if (download != null)
+                                            {
+                                            <text>
+                                            files: [
+                                                {
+                                                    source: '@Html.Raw($"{download.Filename ?? download.DownloadGuid.ToString()}{download.Extension}")',
+                                                    options: {
+                                                        type: 'local',
+                                                        metadata: {
+                                                            url: '@(Url.RouteUrl(NopRouteNames.Standard.DOWNLOAD_GET_FILE_UPLOAD, new { downloadId = download.DownloadGuid }))'
+                                                        }
+                                                    },
+                                                }
+                                            ],
+                                            </text>
+                                            }
+                                            server: {
+                                                process: {
+                                                url: '@(Url.RouteUrl(NopRouteNames.Ajax.UPLOAD_FILE_PRODUCT_ATTRIBUTE, new { attributeId = attribute.Id }))',
+                                                    onload: (response) => {
+                                                        $("#@(controlId)").val(JSON.parse(response).downloadGuid);
+                                                    }
+                                                },
+                                                remove: (source, load, error) => {                                      
+                                                    $("#@(controlId)").val('');
+                                                    load();
+                                                },
+                                                revert: (uniqueFileId, load, error) => {
+                                                    $("#@(controlId)").val('');
+                                                    load();
+                                                },
+                                            },
+                                            onprocessfiles: (error) => {
+                                                if (error) {
+                                                    alert(error);
+                                                }
+                                            },
+                                            labelIdle: '@T("Common.FileUploader.DropFiles") / <span class="filepond--label-action">@T("Common.FileUploader.Browse")</span>',
+                                            labelFileProcessing: '@T("Common.FileUploader.Processing")',
                                         });
                                     });
                                 </script>
-                                <div id="@(controlId + "downloadurl")">
-                                    @if (download != null)
-                                    {
-                                        <a href="@(Url.RouteUrl("DownloadGetFileUpload", new {downloadId = download.DownloadGuid}))" class="download-uploaded-file">@T("Common.FileUploader.DownloadUploadedFile")</a>
-                                    }
-                                </div>
-                                <div>
-                                    @if (download != null)
-                                    {
-                                        <a id="@(controlId + "remove")" class="remove-download-button">@T("Common.FileUploader.RemoveDownload")</a>
-                                    }
-                                    else
-                                    {
-                                        <a id="@(controlId + "remove")" class="remove-download-buttonn" style="display: none;">@T("Common.FileUploader.RemoveDownload")</a>
-                                    }
-                                </div>
 
                             }
                             break;
@@ -278,7 +262,7 @@
                                     </div>
                                 }
                                 <script asp-location="Footer">
-                                    $(document).ready(function() {
+                                    $(function() {
                                         $('.attributes #color-squares-@(attribute.Id)').on('click', 'input', function(event) {
                                             $('.attributes #color-squares-@(attribute.Id)').find('li').removeClass('selected-value');
                                             $(this).closest('li').addClass('selected-value');
@@ -320,7 +304,7 @@
                                     </div>
                                 }
                                 <script asp-location="Footer">
-                                    $(document).ready(function() {
+                                    $(function() {
                                         $('.attributes #image-squares-@(attribute.Id)').on('click', 'input', function(event) {
                                             $('.attributes #image-squares-@(attribute.Id)').find('li').removeClass('selected-value');
                                             $(this).closest('li').addClass('selected-value');
@@ -364,10 +348,10 @@
 
         <script asp-location="Footer">
             var combinationsBehavior_@(Model.Id);
-            $(document).ready(function () {
+            $(function() {
                 combinationsBehavior_@(Model.Id) = createCombinationsBehavior({
                     contentEl: '[data-productid="@Model.Id"]',
-                    fetchUrl: '@Html.Raw(Url.RouteUrl("GetProductCombinations", new { productId = Model.Id }))'
+                    fetchUrl: '@Html.Raw(Url.RouteUrl(NopRouteNames.Ajax.GET_PRODUCT_COMBINATIONS, new { productId = Model.Id }))'
                 });
                 combinationsBehavior_@(Model.Id).init();
             });
@@ -384,7 +368,7 @@
         if (Model.AllowAddingOnlyExistingAttributeCombinations && catalogSettings.AttributeValueOutOfStockDisplayType == AttributeValueOutOfStockDisplayType.Disable)
         {
             <script asp-location="Footer">
-                $(document).ready(function () {
+                $(function() {
                     $(combinationsBehavior_@(Model.Id)).on('processed', function () {
                         @(attributeChangeHandlerFuncName)();
                     });
@@ -444,7 +428,7 @@
             function @(attributeChangeHandlerFuncName)() {
                 $.ajax({
                     cache: false,
-                    url: "@Html.Raw(Url.RouteUrl("ProductDetailsAttributeChange", new { productId = Model.Id, validateAttributeConditions = attributesHaveConditions, loadPicture = attributesHaveAssociatedPictures }))",
+                    url: "@Html.Raw(Url.RouteUrl(NopRouteNames.Ajax.PRODUCT_DETAILS_ATTRIBUTE_CHANGE, new { productId = Model.Id, validateAttributeConditions = attributesHaveConditions, loadPicture = attributesHaveAssociatedPictures }))",
                     data: $('#product-details-form').serialize(),
                     type: "POST",
                     success: function (data, textStatus, jqXHR) {
@@ -514,7 +498,7 @@
                     }
                 });
             }
-            $(document).ready(function() {
+            $(function() {
                 @(attributeChangeHandlerFuncName)();
                 @Html.Raw(attributeChangeScriptsBuilder.ToString())
             });

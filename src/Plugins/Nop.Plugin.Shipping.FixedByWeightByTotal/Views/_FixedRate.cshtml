@@ -28,7 +28,7 @@
                         Title = T("Plugins.Shipping.FixedByWeightByTotal.Fields.TransitDays").Text,
                         Width = "200",
                         Editable = true,
-                        EditType = EditType.Number	 
+                        EditType = EditType.String	 
                     },
                     new ColumnProperty(nameof(FixedRateModel.ShippingMethodId))
                     {
@@ -42,3 +42,8 @@
         </div>
     </div>
 </div>
+
+@if(await Html.IsTourActiveAsync())
+{
+    @await Html.PartialAsync("~/Plugins/Shipping.FixedByWeightByTotal/Views/_FixedRate.Tour.cshtml")
+}

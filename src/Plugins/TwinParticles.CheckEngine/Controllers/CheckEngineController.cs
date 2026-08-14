@@ -15,7 +15,7 @@ using TwinParticles.CheckEngine.Security;
 namespace TwinParticles.CheckEngine.Controllers;
 
 [AuthorizeAdmin]
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 [AutoValidateAntiforgeryToken]
 public sealed class CheckEngineController : BasePluginController
 {
@@ -66,5 +66,13 @@ public sealed class CheckEngineController : BasePluginController
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
 
         return await Configure();
+    }
+
+    public async Task<IActionResult> Dashboard()
+    {
+        if (!await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return AccessDeniedView();
+
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/Dashboard.cshtml");
     }
 }

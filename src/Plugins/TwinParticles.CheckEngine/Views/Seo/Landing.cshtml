@@ -1,0 +1,61 @@
+@model SeoLandingPageModel
+@using System.Net
+
+@{
+    Layout = "_ColumnsOne";
+    var isArabic = Model.CanonicalUrl.Contains("/ar/", StringComparison.OrdinalIgnoreCase);
+
+    NopHtml.AddTitleParts(Model.Title);
+    NopHtml.AddCanonicalUrlParts(Model.CanonicalUrl, withQueryString: false);
+    NopHtml.AddHeadCustomParts($"<link rel=\"alternate\" hreflang=\"en\" href=\"{WebUtility.HtmlEncode(Model.HreflangUrlEn)}\" />");
+    NopHtml.AddHeadCustomParts($"<link rel=\"alternate\" hreflang=\"ar\" href=\"{WebUtility.HtmlEncode(Model.HreflangUrlAr)}\" />");
+    NopHtml.AddHeadCustomParts($"<link rel=\"alternate\" hreflang=\"x-default\" href=\"{WebUtility.HtmlEncode(Model.HreflangUrlEn)}\" />");
+
+    if (!Model.IsIndexable)
+        NopHtml.AddHeadCustomParts("<meta name=\"robots\" content=\"noindex, follow\" />");
+
+    if (!string.IsNullOrWhiteSpace(Model.StructuredDataJsonLd))
+        NopHtml.AddJsonLdParts(Model.StructuredDataJsonLd);
+}
+
+<div class="page category-page ce-root ce-seo-landing" dir="@(isArabic ? "rtl" : "ltr")">
+    <div class="page-title">
+        <h1>@Model.Heading</h1>
+    </div>
+    <div class="page-body">
+        <div class="category-description">
+            <p>@Model.Description</p>
+        </div>
+
+        @if (Model.Products.Count > 0)
+        {
+            <div class="product-grid">
+                <div class="item-grid">
+                    @foreach (var product in Model.Products)
+                    {
+                        <div class="item-box">
+                            <div class="product-item" data-productid="@product.Id">
+                                <div class="details">
+                                    <h2 class="product-title">
+                                        <a href="@product.Url">@product.Name</a>
+                                    </h2>
+                                    <div class="description">
+                                        @(isArabic ? "تم التحقق من توافق القطعة مع السيارة." : "Verified fitment for this vehicle.")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="no-result">
+                @(isArabic
+                    ? "لا توجد قطع منشورة بتوافق مؤكد لهذه السيارة بعد."
+                    : "No published parts with verified fitment are available for this vehicle yet.")
+            </div>
+        }
+    </div>
+</div>

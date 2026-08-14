@@ -49,6 +49,71 @@ WHERE c.ProductId = @productId AND c.VehicleConfigurationId = @vehicleConfigurat
         return rows.Select(Map).ToList();
     }
 
+    public async Task<IReadOnlyList<FitmentClaim>> GetAllClaimsAsync(CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>(@"SELECT c.Id,
+       c.ProductId,
+       c.VehicleConfigurationId,
+       c.OemNumberId,
+       c.FitmentStatusId,
+       c.Confidence,
+       c.SafetyClassId,
+       c.SourceKindId,
+       c.SourceReference,
+       c.CreatedBy,
+       c.ProvenanceCreatedUtc,
+       c.LastVerifiedUtc,
+       c.ValidFromUtc,
+       c.ValidToUtc,
+       c.IsPublished,
+       c.IsActive,
+       q.ProductionFromYear,
+       q.ProductionToYear,
+       q.SteeringSide,
+       q.MarketRegion,
+       q.DriveType,
+       q.TransmissionType,
+       q.OptionCodesCsv
+FROM TP_CE_FitmentClaim c
+LEFT JOIN TP_CE_FitmentQualifier q ON q.FitmentClaimId = c.Id
+ORDER BY c.Id");
+
+        return rows.Select(Map).ToList();
+    }
+
+    public async Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>(@"SELECT c.Id,
+       c.ProductId,
+       c.VehicleConfigurationId,
+       c.OemNumberId,
+       c.FitmentStatusId,
+       c.Confidence,
+       c.SafetyClassId,
+       c.SourceKindId,
+       c.SourceReference,
+       c.CreatedBy,
+       c.ProvenanceCreatedUtc,
+       c.LastVerifiedUtc,
+       c.ValidFromUtc,
+       c.ValidToUtc,
+       c.IsPublished,
+       c.IsActive,
+       q.ProductionFromYear,
+       q.ProductionToYear,
+       q.SteeringSide,
+       q.MarketRegion,
+       q.DriveType,
+       q.TransmissionType,
+       q.OptionCodesCsv
+FROM TP_CE_FitmentClaim c
+LEFT JOIN TP_CE_FitmentQualifier q ON q.FitmentClaimId = c.Id
+WHERE c.Id = @claimId", new DataParameter("claimId", claimId));
+
+        var row = rows.FirstOrDefault();
+        return row is null ? null : Map(row);
+    }
+
     public async Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<FitmentClaimRow>(@"SELECT c.Id,

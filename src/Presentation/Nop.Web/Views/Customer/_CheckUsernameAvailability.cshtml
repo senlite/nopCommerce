@@ -1,5 +1,5 @@
 ﻿<script asp-location="Footer">
-    $(document).ready(function () {
+    $(function() {
         $('#check-availability-button').before('<span id="username-availabilty"></span>');
         $('#Username').on({
             keydown: function () {
@@ -20,7 +20,7 @@
                 $.ajax({
                     cache: false,
                     type: "POST",
-                    url: "@Url.RouteUrl("CheckUsernameAvailability")",
+                    url: "@Url.RouteUrl(NopRouteNames.Ajax.CHECK_USERNAME_AVAILABILITY)",
                     data: postData,
                     dataType: "json",
                     success: function (data, textStatus, jqXHR) {

@@ -31,7 +31,7 @@
         <div class="poll-vote-error" id="block-poll-vote-error-@(Model.Id)" style="display:none">
         </div>
         <script asp-location="Footer">
-            $(document).ready(function () {
+            $(function() {
                 $('#vote-poll-@(Model.Id)').on('click', function () {
                     var pollAnswerId = $("input:radio[name=pollanswers-@(Model.Id)]:checked").val();
                     if (typeof (pollAnswerId) == 'undefined') {
@@ -49,7 +49,7 @@
                         $.ajax({
                             cache: false,
                             type: "POST",
-                            url: "@(Url.RouteUrl("PollVote"))",
+                            url: "@(Url.RouteUrl(NopRouteNames.Ajax.POLL_VOTE))",
                             data: postData,
                             success: function (data, textStatus, jqXHR) {
                                 if (data.error) {

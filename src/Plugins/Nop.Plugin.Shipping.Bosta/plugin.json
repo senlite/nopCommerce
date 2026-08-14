@@ -1,0 +1,11 @@
+{
+  "Group": "Shipping rate computation",
+  "FriendlyName": "Bosta (Egypt)",
+  "SystemName": "Shipping.Bosta",
+  "Version": "1.0.0",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "Twin Particles",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Shipping.Bosta.dll",
+  "Description": "Reference Bosta domestic shipping rate and tracking integration for the Egyptian market. Independent of the Check Engine core plugin."
+}

@@ -16,6 +16,11 @@ public sealed class InMemoryFitmentClaimRepository : IFitmentClaimReadRepository
         return Task.FromResult<IReadOnlyList<FitmentClaim>>(results);
     }
 
+    public Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_claims.FirstOrDefault(x => x.Id == claimId));
+    }
+
     public Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken)
     {
         var queue = _claims
@@ -25,6 +30,9 @@ public sealed class InMemoryFitmentClaimRepository : IFitmentClaimReadRepository
 
         return Task.FromResult<IReadOnlyList<FitmentClaim>>(queue);
     }
+
+    public Task<IReadOnlyList<FitmentClaim>> GetAllClaimsAsync(CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<FitmentClaim>>(_claims.ToList());
 
     public Task UpsertAsync(FitmentClaim claim, CancellationToken cancellationToken)
     {

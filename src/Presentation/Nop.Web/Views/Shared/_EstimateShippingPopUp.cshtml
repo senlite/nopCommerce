@@ -15,18 +15,20 @@
                     asp-items="Model.AvailableCountries"
                     class="estimate-shipping-address-control"
                     data-trigger="country-select"
-                    data-url="@(Url.RouteUrl("GetStatesByCountryId"))"
+                    data-url="@(Url.RouteUrl(NopRouteNames.Ajax.GET_STATES_BY_COUNTRY_ID))"
                     data-stateprovince="#@Html.IdFor(model => model.StateProvinceId)"
                     data-loading="#estimate-shipping-loading-progress"
-                    placeholder="@T("Shipping.EstimateShippingPopUp.Country")"></select>
+                    aria-label="@T("Shipping.EstimateShippingPopUp.Country")"></select>
             <nop-required />
         </div>
     </div>
     <div class="estimate-shipping-row-item address-item">
-        <select asp-for="StateProvinceId"
+        <div class="estimate-shipping-row">
+            <select asp-for="StateProvinceId"
                 asp-items="Model.AvailableStates"
                 class="estimate-shipping-address-control"
-                placeholder="@T("Shipping.EstimateShippingPopUp.StateProvince")"></select>
+                aria-label="@T("Shipping.EstimateShippingPopUp.StateProvince")"></select>
+        </div>
     </div>
     <div class="estimate-shipping-row-item address-item">
         <div class="estimate-shipping-row">

@@ -1,17 +1,16 @@
 ﻿@inject IWebHelper webHelper
 @inject IDateTimeHelper dateTimeHelper
-@inject IPermissionService permissionService
 @inject ICustomerService customerService
 @inject IEventPublisher eventPublisher
 @inject LocalizationSettings localizationSettings
 @inject StoreInformationSettings storeInformationSettings
+@inject AdminAreaSettings adminAreaSettings
 @inject Nop.Services.Localization.ILanguageService languageService
+
 @using Nop.Core.Domain
 @using Nop.Core.Domain.Localization
 @using Nop.Services.Customers
 @using Nop.Services.Helpers
-@using Nop.Services.Security
-
 
 @{
     var returnUrl = webHelper.GetRawUrl(Context.Request);
@@ -21,7 +20,7 @@
     adminPageTitle += T("Admin.PageTitle").Text;
 
     //has "Manage Maintenance" permission?
-    var canManageMaintenance = await permissionService.AuthorizeAsync(StandardPermissionProvider.ManageMaintenance);
+    var canManageMaintenance = await permissionService.AuthorizeAsync(StandardPermission.System.MANAGE_MAINTENANCE);
 
     //avatar
     var currentCustomer = await workContext.GetCurrentCustomerAsync();
@@ -37,6 +36,7 @@
     <title>@adminPageTitle</title>
     <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
     @NopHtml.GenerateHeadCustom()
 
     @* CSS & Script resources *@
@@ -109,11 +109,11 @@
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link" href="#" data-toggle="dropdown">
-                                    <i class="fas fa-cogs"></i>
+                                    <i class="fas fa-gears"></i>
                                 </a>
                                 <ul class="maintenance-menu dropdown-menu dropdown-menu-right" role="menu">
                                     <li class="dropdown-item">
-                                        <form asp-controller="Common" asp-action="ClearCache" asp-area="@AreaNames.Admin">
+                                        <form asp-controller="Common" asp-action="ClearCache" asp-area="@AreaNames.ADMIN">
                                             <input name="returnurl" type="hidden" value="@returnUrl">
                                             <div class="input-group-append">
                                                 <button type="submit" style="width:210px;background-color: Transparent;">
@@ -123,13 +123,13 @@
                                         </form>
                                     </li>
                                     <li class="dropdown-item">
-                                        <form asp-controller="Common" asp-action="RestartApplication" asp-area="@AreaNames.Admin">
+                                        <form asp-controller="Common" asp-action="RestartApplication" asp-area="@AreaNames.ADMIN">
                                             <input name="returnurl" type="hidden" value="@returnUrl">
                                             <button id="restart-application" type="submit" style="width:210px;background-color: Transparent;">
                                                 <span>@T("Admin.Header.RestartApplication")</span>
                                             </button>
                                             <script>
-                                                $(document).ready(function () {
+                                                $(function() {
                                                     $("#restart-application").click(function (e) {
                                                         showThrobber('@Html.Raw(JavaScriptEncoder.Default.Encode(T("Admin.Header.RestartApplication.Progress").Text))');
                                                     });
@@ -155,7 +155,7 @@
         {
             <aside class="main-sidebar sidebar-dark-primary elevation-4">
                 <!-- Brand Logo -->
-            <a href="@Url.Content("~/Admin")" class="brand-link navbar-dark logo-switch">
+                <a href="@Url.Content("~/Admin")" class="brand-link navbar-dark logo-switch">
                     <img src="~/css/admin/images/logo.png" alt="logo.png" class="brand-image-xl logo-xl">
                     <img src="~/css/admin/images/logo-mini.png" alt="logo.png" class="brand-image-xs logo-xs">
                 </a>
@@ -168,7 +168,7 @@
                     <nav class="mt-2">
                         @await Component.InvokeAsync(typeof(AdminWidgetViewComponent), new { widgetZone = AdminWidgetZones.SearchBoxBefore })
                         <script>
-                            $(document).ready(function () {
+                            $(function() {
                                 Admin.Search.init();
                             });
                         </script>
@@ -179,7 +179,7 @@
                 </div>
             </aside>
         }
-        <div class="content-wrapper">
+        <div class="content-wrapper @(adminAreaSettings.UseStickyHeaderLayout ? "sticky-header-layout" : "")">
             @await Html.PartialAsync("Notifications")
             <nop-antiforgery-token />
             @RenderBody()
@@ -212,6 +212,23 @@
         </div>
     </div>
 
+    @if (adminAreaSettings.UseStickyHeaderLayout)
+    {
+        <script asp-location="Footer">
+            $(function() {
+                const stickyHeader = document.querySelector(".sticky-header-layout .content-header");
+
+                if (stickyHeader !== null) {
+                    const observer = new IntersectionObserver(
+                        ([e]) => e.target.classList.toggle("is-pinned", e.intersectionRatio < 1),
+                        { threshold: [1] }
+                    );
+
+                    observer.observe(stickyHeader);
+                }
+            });
+        </script>
+    }
     <script>
         var AdminLTEOptions = {
             boxWidgetOptions: {
@@ -234,7 +251,7 @@
     }
     <a id="backTop" class="btn btn-back-top bg-teal"></a>
     <script>
-        $(document).ready(function () {
+        $(function() {
             //enable "back top" arrow
             $('#backTop').backTop();
 
@@ -242,7 +259,58 @@
             $('[data-toggle="tooltip"]').tooltip({ placement: 'bottom' });
         });
     </script>
+    @{
+        var (licenseTermsDisplay, licenseTermsText) = Context.Items.TryGetValue("licenseTerms", out var licenseTerms) && licenseTerms is LicenseCheckModel licenseCheckModel
+            ? (licenseCheckModel.DisplayWarning == true && licenseCheckModel.AcceptedLicenseTerms != true, licenseCheckModel.WarningText)
+            : (false, null);
+    }
+    @if (licenseTermsDisplay && !string.IsNullOrEmpty(licenseTermsText))
+    {
+        <text>
+            <div id="license-terms" class="modal fade" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="form-horizontal">
+                            <div class="modal-body">
+                                @Html.Raw(licenseTermsText)
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="accept-license-terms-button" class="btn btn-primary">Accept terms</button>
+                                <a class="btn btn-default float-right" href="https://www.nopcommerce.com/nopcommerce-copyright-removal-key?utm_source=admin-panel&utm_medium=popup-accept-license&utm_campaign=powered_by_nopcommerce&utm_content=key" target="_blank">Buy a key</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                $(function() {
+                    var displayModal = @((licenseTermsDisplay == true).ToString().ToLower());
+                    if (displayModal) {
+                        $('#license-terms').modal({
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                    }
 
+                    $('#accept-license-terms-button').on('click', function () {
+                        var postData = {
+                            accepted: true
+                        };
+                        addAntiForgeryToken(postData);
+                        $.ajax({
+                            cache: false,
+                            type: 'POST',
+                            url: '@(Url.Action("AcceptLicenseTerms", "Home"))',
+                            data: postData,
+                            complete: function (jqXHR, textStatus) {
+                                $('#license-terms').modal('hide');
+                            }
+                        });
+                    });
+                });
+            </script>
+        </text>
+    }
     @NopHtml.GenerateScripts(ResourceLocation.Footer)
     @NopHtml.GenerateInlineScripts(ResourceLocation.Footer)
 </body>

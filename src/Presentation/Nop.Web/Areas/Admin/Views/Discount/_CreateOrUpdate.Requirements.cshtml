@@ -10,7 +10,7 @@
             </p>
 
             <script>
-            $(document).ready(function() {
+            $(function() {
                 $("#@Html.IdFor(model => model.AddDiscountRequirement)").change(loadNewRequirementBox);
 
                 //load add requirement box
@@ -20,7 +20,7 @@
                 loadRequirements();
 
                 //adding requirement event
-                $("#discountRequirementContainer").bind('nopnewdiscountruleadded', function(event, newRequirementId) {
+                $("#discountRequirementContainer").on('nopnewdiscountruleadded', function(event, newRequirementId) {
                     var parentId = $("#@Html.IdFor(model => model.RequirementGroupId)").val();
                     loadRequirements(newRequirementId, parentId);
                 });
@@ -118,7 +118,7 @@
                         }
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
-                        $("#getDiscountRequirementsAlert").click();
+                        $("#getDiscountRequirementsAlert").trigger("click");
                     }
                 });
             };
@@ -163,7 +163,7 @@
                         $("#discountRequirementContainer").trigger('nopnewdiscountruleadded', [data.NewRequirementId]);
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
-                        $("#failedToSave").click();
+                        $("#failedToSave").trigger("click");
                     }
                 });
             };
@@ -213,7 +213,7 @@
                         {{/if}}
                         {{if ParentId}}
                         <button type="button" class="btn btn-link" id="deleterequirement{{>DiscountRequirementId}}" onclick="deleteRequirement({{>DiscountRequirementId}})">
-                            <i class="far fa-trash-alt"></i>
+                            <i class="far fa-trash-can"></i>
                             {{if IsGroup}}
                                 @T("Admin.Promotions.Discounts.Requirements.RemoveGroup")
                             {{else}}

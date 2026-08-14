@@ -14,7 +14,8 @@
                 new ColumnProperty(nameof(ProductPictureModel.PictureUrl))
                 {
                     Title = T("Admin.Catalog.Products.Multimedia.Pictures.Fields.Picture").Text,
-                    Render = new RenderCustom("renderPicturesColumnProductPictureUrl")
+                    Render = new RenderCustom("renderPicturesColumnProductPictureUrl"),
+                    ClassName = "text-center preview"
                 },
                 new ColumnProperty(nameof(ProductPictureModel.DisplayOrder))
                 {

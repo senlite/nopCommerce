@@ -8,13 +8,31 @@ public sealed class ImportPipelineBatchState
 {
     public Guid BatchId { get; init; }
 
+    public int? SqlBatchId { get; set; }
+
     public string FileName { get; init; } = string.Empty;
 
     public ImportSourceFormat Format { get; init; }
 
     public bool DryRun { get; init; }
 
+    public byte[] SourceContent { get; init; } = [];
+
+    public string? SupplierProfileCode { get; init; }
+
+    public bool EnableAiEnrichment { get; init; }
+
+    public bool EnableTranslation { get; init; }
+
+    public bool EnableSeoGeneration { get; init; }
+
     public string Status { get; set; } = "Received";
+
+    public string? CurrentStage { get; set; }
+
+    public HashSet<string> CompletedStages { get; init; } = new(StringComparer.Ordinal);
+
+    public string? ErrorSummary { get; set; }
 
     public DateTimeOffset CreatedUtc { get; init; }
 

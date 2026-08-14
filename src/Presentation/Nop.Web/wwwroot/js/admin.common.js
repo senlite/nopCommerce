@@ -30,7 +30,7 @@ function showThrobber(message) {
     }, 1000);
 }
 
-$(document).ready(function () {
+$(function() {
     $('.multi-store-override-option').each(function (k, v) {
         checkOverriddenStoreValue(v, $(v).attr('data-for-input-selector'));
     });
@@ -38,7 +38,7 @@ $(document).ready(function () {
     //we must intercept all events of pressing the Enter button in the search bar to be sure that the input focus remains in the context of the search
     $("div.card-search").keypress(function (event) {
         if (event.which == 13 || event.keyCode == 13) {
-            $("button.btn-search").click();
+          $("button.btn-search").trigger("click");
             return false;
         }
     });
@@ -237,7 +237,7 @@ $(document).ajaxStart(function () {
     });
 
 //no-tabs solution
-$(document).ready(function () {
+$(function() {
   $(".card.card-secondary >.card-header").click(CardToggle);
 
   //expanded
@@ -268,7 +268,7 @@ function WrapAndSaveBlockData(card, collapsed) {
 }
 
 //collapse search block
-$(document).ready(function () {
+$(function() {
   $(".row.search-row").click(ToggleSearchBlockAndSavePreferences);
 });
 
@@ -312,12 +312,12 @@ function reloadAllDataTables(itemCount) {
 function showAlert(alertId, text)
 {
     $('#' + alertId + '-info').text(text);
-    $('#' + alertId).click();
+    $('#' + alertId).trigger("click");
 }
 
 //scrolling and hidden DataTables issue workaround
 //More info - https://datatables.net/examples/api/tabs_and_scrolling.html
-$(document).ready(function () {
+$(function() {
   $('button[data-card-widget="collapse"]').on('click', function (e) {
     //hack with waiting animation. 
     //when page is loaded, a box that should be collapsed have style 'display: none;'.that's why a table is not updated
@@ -364,4 +364,45 @@ function prepareTableCheckboxes(masterCheckbox, childCheckbox) {
 
   //Determining the state of the master checkbox by the state of its children
   $(masterCheckbox).prop('checked', $(childCheckbox).length == $(childCheckbox + ':checked').length && $(childCheckbox).length > 0);
+}
+
+function displayBarNotification(message, notifyTypeId, timeout) {
+
+  var cssStyles = ["alert-success", "alert-danger", "alert-warning"]
+
+  cssStyle = notifyTypeId >= 0 && notifyTypeId <= 2 ? cssStyles[notifyTypeId] : cssStyles[0];
+
+  var htmlcode = document.createElement('div');
+  htmlcode.classList.add('alert', cssStyle, 'alert-dismissable');
+
+  var button = document.createElement('button');
+  button.classList.add('close');
+  button.setAttribute('data-dismiss', 'alert');
+  button.setAttribute('aria-hidden', 'true');
+  button.innerHTML = '&times;';
+  htmlcode.appendChild(button);
+
+  var html = document.createElement('span');
+  html.innerHTML = message;
+  htmlcode.appendChild(html);
+
+  $('#admin-notifications').append(htmlcode);
+
+  //callback for notification removing
+  var removeNoteItem = function () {
+    $(htmlcode).remove();
+  };
+
+  //timeout (if set)
+  if (timeout > 0) {
+    var notificationTimeout = setTimeout(function () {
+      $(htmlcode).fadeOut('slow', removeNoteItem);
+    }, timeout);
+
+    $(htmlcode)
+      .fadeIn('slow')
+      .on('mouseenter', function () {
+        clearTimeout(notificationTimeout);
+      });
+  }
 }

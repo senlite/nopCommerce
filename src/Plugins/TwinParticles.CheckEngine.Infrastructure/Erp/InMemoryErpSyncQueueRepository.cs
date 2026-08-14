@@ -11,15 +11,31 @@ public sealed class InMemoryErpSyncQueueRepository : IErpSyncQueueRepository
 {
     private readonly List<ErpSyncJob> _jobs = [];
 
-    public Task EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
+    public Task<Guid> EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken)
     {
+        var existing = _jobs.FirstOrDefault(x => x.IdempotencyKey == job.IdempotencyKey);
+        if (existing is not null)
+            return Task.FromResult(existing.JobId);
+
         _jobs.Add(job);
-        return Task.CompletedTask;
+        return Task.FromResult(job.JobId);
     }
 
     public Task<IReadOnlyList<ErpSyncJob>> GetPendingAsync(CancellationToken cancellationToken)
     {
-        var items = _jobs.Where(x => x.Status == "Queued").ToList();
+        var now = DateTime.UtcNow;
+        var staleBefore = now.AddMinutes(-10);
+        var items = _jobs
+            .Where(x => x.Status == "Queued" && (!x.NextAttemptUtc.HasValue || x.NextAttemptUtc <= now)
+                || x.Status == "Processing" && x.LastAttemptUtc < staleBefore)
+            .Take(50)
+            .ToList();
+        foreach (var item in items)
+        {
+            item.Status = "Processing";
+            item.LastAttemptUtc = now;
+        }
+
         return Task.FromResult<IReadOnlyList<ErpSyncJob>>(items);
     }
 

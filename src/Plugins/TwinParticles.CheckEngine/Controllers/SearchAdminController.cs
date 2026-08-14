@@ -10,16 +10,21 @@ using TwinParticles.CheckEngine.Security;
 namespace TwinParticles.CheckEngine.Controllers;
 
 [AuthorizeAdmin]
-[Area(AreaNames.Admin)]
+[Area(AreaNames.ADMIN)]
 [AutoValidateAntiforgeryToken]
 public sealed class SearchAdminController : BasePluginController
 {
     private readonly Nop.Services.Security.IPermissionService _permissionService;
     private readonly SearchIndexAdminService _service;
+    private readonly SearchAnalyticsAdminService _analyticsService;
 
-    public SearchAdminController(SearchIndexAdminService service, Nop.Services.Security.IPermissionService permissionService)
+    public SearchAdminController(
+        SearchIndexAdminService service,
+        SearchAnalyticsAdminService analyticsService,
+        Nop.Services.Security.IPermissionService permissionService)
     {
         _service = service;
+        _analyticsService = analyticsService;
         _permissionService = permissionService;
     }
 
@@ -32,5 +37,20 @@ public sealed class SearchAdminController : BasePluginController
 
         await _service.RebuildAsync(cancellationToken);
         return Ok();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Analytics(int days = 30, CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return Json(await _analyticsService.GetSummaryAsync(days, cancellationToken));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> PruneAnalytics(int retentionDays = 90, CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var deleted = await _analyticsService.PruneAsync(retentionDays, cancellationToken);
+        return Json(new { deleted });
     }
 }

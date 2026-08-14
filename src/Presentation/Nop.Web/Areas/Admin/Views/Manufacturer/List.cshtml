@@ -18,7 +18,7 @@
     </h1>
     <div class="float-right">
         <a asp-action="Create" class="btn btn-primary">
-            <i class="fas fa-plus-square"></i>
+            <i class="fas fa-square-plus"></i>
             @T("Admin.Common.AddNew")
         </a>
         <div class="btn-group">
@@ -51,10 +51,9 @@
         </button>
         @await Component.InvokeAsync(typeof(AdminWidgetViewComponent), new { widgetZone = AdminWidgetZones.ManufacturerListButtons, additionalData = Model })
         <button type="button" id="delete-selected" class="btn btn-danger">
-            <i class="far fa-trash-alt"></i>
+            <i class="far fa-trash-can"></i>
             @T("Admin.Common.Delete.Selected")
         </button>
-        <nop-action-confirmation asp-button-id="delete-selected" />
     </div>
 </div>
 
@@ -66,7 +65,7 @@
                     <div class="card-body">
                         <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
                             <div class="search-text">@T("Admin.Common.Search")</div>
-                            <div class="icon-search"><i class="fas fa-search" aria-hidden="true"></i></div>
+                            <div class="icon-search"><i class="fas fa-magnifying-glass" aria-hidden="true"></i></div>
                             <div class="icon-collapse"><i class="far fa-angle-@(!hideSearchBlock ? "up" : "down")" aria-hidden="true"></i></div>
                         </div>
 
@@ -102,7 +101,7 @@
                             <div class="form-group row">
                                 <div class="text-center col-12">
                                     <button type="button" id="search-manufacturers" class="btn btn-primary btn-search">
-                                        <i class="fas fa-search"></i>
+                                        <i class="fas fa-magnifying-glass"></i>
                                         @T("Admin.Common.Search")
                                     </button>
                                 </div>
@@ -159,15 +158,15 @@
                                 Title = T("Admin.Common.Edit").Text,
                                 Width = "100",
                                 ClassName =  NopColumnClassDefaults.Button,
-                                Render = new RenderButtonEdit(new DataUrl("Edit"))
+                                Render = new RenderButtonEdit(new DataUrl("~/Admin/Manufacturer/Edit"))
                             }
                         }
                     })
 
 
                     <script>
-                        $(document).ready(function () {
-                            $('#delete-selected-action-confirmation-submit-button').bind('click', function () {
+                        $(function() {
+                            $('#delete-selected-action-confirmation-submit-button').on('click', function () {
                                 var postData = {
                                     selectedIds: selectedIds
                                 };
@@ -194,8 +193,6 @@
                             });
                         });
                     </script>
-                    <nop-alert asp-alert-id="deleteSelectedFailed" />
-                    <nop-alert asp-alert-id="nothingSelectedAlert" />
                 </div>
             </div>
         </div>
@@ -243,3 +240,7 @@
         </div>
     </div>
 </div>
+
+<nop-alert asp-alert-id="deleteSelectedFailed" />
+<nop-alert asp-alert-id="nothingSelectedAlert" />
+<nop-action-confirmation asp-button-id="delete-selected" />

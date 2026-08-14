@@ -13,6 +13,12 @@ public sealed class InMemorySearchIndexHealthService : ISearchIndexHealthService
         return Task.FromResult(_healthy);
     }
 
+    public Task ReportDegradedAsync(string reason, CancellationToken cancellationToken)
+    {
+        _healthy = false;
+        return Task.CompletedTask;
+    }
+
     public Task RebuildAsync(CancellationToken cancellationToken)
     {
         _healthy = true;

@@ -18,6 +18,13 @@ public interface IOemAdminRepository
     Task UpdateOemNumberAsync(OemNumber entity, CancellationToken cancellationToken);
     Task DeleteOemNumberAsync(int id, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Inserts or updates OEM numbers in bulk, keyed on (ManufacturerId, NormalizedNumber) per FR-236.
+    /// Callers must pre-normalize each entity. Existing rows keep their identity so relations and
+    /// product maps that reference them are preserved.
+    /// </summary>
+    Task<OemBulkUpsertResult> BulkUpsertOemNumbersAsync(IReadOnlyList<OemNumber> numbers, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<OemRelation>> GetRelationsAsync(CancellationToken cancellationToken);
     Task<OemRelation?> GetRelationByIdAsync(int id, CancellationToken cancellationToken);
     Task CreateRelationAsync(OemRelation entity, CancellationToken cancellationToken);

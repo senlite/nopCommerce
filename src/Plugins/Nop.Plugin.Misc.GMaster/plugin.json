@@ -1,0 +1,11 @@
+{
+  "Group": "Misc",
+  "FriendlyName": "GMaster Catalog Importer",
+  "SystemName": "Misc.GMaster",
+  "Version": "2.0.0",
+  "SupportedVersions": [ "4.90" ],
+  "Author": "GMaster",
+  "DisplayOrder": 2,
+  "FileName": "Nop.Plugin.Misc.GMaster.dll",
+  "Description": "Replaces the active catalog with the GMaster BMW-compatible parts catalog extracted from the supplier container packing lists, including real part photos and EGP retail pricing."
+}

@@ -78,6 +78,7 @@ public class OemAdminServiceTests
 
         public Task UpdateOemNumberAsync(OemNumber entity, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DeleteOemNumberAsync(int id, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<OemBulkUpsertResult> BulkUpsertOemNumbersAsync(IReadOnlyList<OemNumber> numbers, CancellationToken cancellationToken) => Task.FromResult(OemBulkUpsertResult.Empty);
         public Task<IReadOnlyList<OemRelation>> GetRelationsAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<OemRelation>>([]);
         public Task<OemRelation?> GetRelationByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<OemRelation?>(null);
         public Task CreateRelationAsync(OemRelation entity, CancellationToken cancellationToken) => Task.CompletedTask;

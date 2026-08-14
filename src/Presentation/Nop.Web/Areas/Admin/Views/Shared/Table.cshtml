@@ -1,7 +1,21 @@
 ﻿@model DataTablesModel
-
+@inject INopFileProvider fileProvider
 @functions
 {
+    string GetDefaultCulture()
+    {
+        var localePattern = NopCommonDefaults.LocalePatternPath;
+
+        var cultureToUse = NopCommonDefaults.DefaultLocalePattern; //Default regionalisation to use
+
+        if (fileProvider.DirectoryExists(fileProvider.Combine(fileProvider.WebRootPath, string.Format(localePattern, CultureInfo.CurrentCulture.Name))))
+            cultureToUse = CultureInfo.CurrentCulture.Name;
+        else if (fileProvider.DirectoryExists(fileProvider.Combine(fileProvider.WebRootPath, string.Format(localePattern, CultureInfo.CurrentCulture.TwoLetterISOLanguageName))))
+            cultureToUse = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+
+        return cultureToUse;
+    }
+
     string GetUrl(DataUrl dataUrl)
     {
         return !string.IsNullOrEmpty(dataUrl?.ActionName) && !string.IsNullOrEmpty(dataUrl.ControllerName)
@@ -53,7 +67,7 @@
 }
 
 <script asp-location="Footer">
-    $(document).ready(function () {
+    $(function() {
         $('#@Model.Name').DataTable({
             @await Html.PartialAsync("_Table.Definition", Model)
         });
@@ -72,7 +86,7 @@
         @if (isMasterCheckBoxUsed)
         {
             <text>
-            $('.mastercheckbox', $('#@Model.Name').parents('.dataTables_scroll').first()).first().click(function () {
+            $('.mastercheckbox', $('#@Model.Name').parents('.dt-scroll').first()).first().click(function () {
                 $('#@Model.Name .checkboxGroups').prop('checked', $(this).is(':checked')).change();
             });
 
@@ -88,7 +102,7 @@
                         return item != $check.val();
                     });
                 }
-                updateMasterCheckbox($('#@Model.Name').parents('.dataTables_scroll').first());
+                updateMasterCheckbox($('#@Model.Name').parents('.dt-scroll').first());
             });
             </text>
         }
@@ -191,7 +205,7 @@
 
             function rowEditMode_@(tableName)(rowid) {
                 var prevRow;
-                var rowIndexVlaue = parseInt(rowid[0].rowIndex);
+                var rowIndexValue = parseInt(rowid[0].rowIndex);
                 if (editIndexTable_@(tableName) == -1) {
                     saveRowIntoArray_@(tableName)(rowid);
                     rowid.attr("editState", "editState");
@@ -202,7 +216,7 @@
                     prevRow = $("[editState=editState]");
                     prevRow.attr("editState", "");
                     rowid.attr("editState", "editState");
-                    editIndexTable_@(tableName) = rowIndexVlaue;
+                    editIndexTable_@(tableName) = rowIndexValue;
                     saveArrayIntoRow_@(tableName)(prevRow);
                     saveRowIntoArray_@(tableName)(rowid);
                     setEditStateValue_@(tableName)(rowid);
@@ -226,7 +240,7 @@
                     });
 
                     if (columnType == 'number') {
-                        $($(curRow).children("[data-columnname='" + cellName + "']")[0]).html('<input value="' + editRowData_@(tableName)[cellName] + '" class="userinput" type="number" step="any" min="@int.MinValue" max="@int.MaxValue"/>');
+                        $($(curRow).children("[data-columnname='" + cellName + "']")[0]).html('<input value="' + editRowData_@(tableName)[cellName] + '" class="userinput form-control" type="number" step="any" min="@int.MinValue" max="@int.MaxValue"/>');
                     }
                     if (columnType == 'checkbox') {
                         var cellValue = editRowData_@(tableName)[cellName];
@@ -239,7 +253,7 @@
                     }
                     if (columnType == 'string') {
                         var strValue = editRowData_@(tableName)[cellName];
-                        $($(curRow).children("[data-columnname='" + cellName + "']")[0]).html('<input value="' + escapeQuotHtml(strValue) + '" class="userinput"  style="width: 99% " />');
+                        $($(curRow).children("[data-columnname='" + cellName + "']")[0]).html('<input value="' + escapeQuotHtml(strValue) + '" class="userinput form-control"  style="width: 99% " />');
                     }
                     $('#@Model.Name').DataTable().columns.adjust();
                 }
@@ -276,9 +290,25 @@
                     if (element.Editable == true) {
                         var input = $($($(currentCells).children("[data-columnname='" + element.Data + "']")).children('input')[0]);
                         var value = input.val();
-                        if (!/^\d+$/.test(value) && input.attr('type') == 'number')
-                            value = new Intl.NumberFormat("@CultureInfo.CurrentUICulture.Name", { minimumFractionDigits: 10 }).format(value);
+                        if (input.attr('type') == 'number') { 
+                            value = new Intl.NumberFormat("@CultureInfo.CurrentUICulture.Name", { 
+                                useGrouping: false,
+                                maximumFractionDigits: 8
+                            }).formatToParts(value)
+                                .map(({ type, value: vpart }) => //for some locales dotnet accepts latin digits, but still requires localized signs and separators
+                                {
+                                    var parser = Globalize("@GetDefaultCulture()").numberParser();
 
+                                    if (type == "integer")
+                                        return parser(vpart);
+
+                                        if (type == "fraction") //to keep leading zeros, we process each digit
+                                            return [...vpart].map(c => parser(c)).join('');
+
+                                    return vpart;
+                                })
+                                .reduce((string, part) => string + part);
+                        }
                         updateRowData.push({
                             'pname': element.Data, 'pvalue': value
                         });
@@ -371,7 +401,7 @@
                 function getchild_@(tableName)(d) {
                     return '<table id="child' + d.@(curModel.PrimaryKeyColumn) + '_@(tableName)' + '" class="table table-bordered table-hover dataTable" width="100%">@(Html.Raw(footerHtml))</table>';
                 }
-                $(document).ready(function () {
+                $(function() {
                     // Add event listener for opening and closing childs
                     $('#@curModel.Name tbody').on('click', 'td.child-control', function () {
                         var tr = $(this).closest('tr');
@@ -396,7 +426,7 @@
                             tdi.first().removeClass('fa-caret-right');
                             tdi.first().addClass(' fa-caret-down');
                             ///
-                            $('.mastercheckbox', $(classid).parents('.dataTables_scroll').first()).first().click(function () {
+                                $('.mastercheckbox', $(classid).parents('.dt-scroll').first()).first().click(function () {
                                 $(classid + ' .checkboxGroups').prop('checked', $(this).is(':checked')).change();
                             });
 
@@ -412,7 +442,7 @@
                                         return item != $check.val();
                                     });
                                 }
-                                updateMasterCheckbox($(classid).parents('.dataTables_scroll').first());
+                                updateMasterCheckbox($(classid).parents('.dt-scroll').first());
                             });
                             ///
                         }

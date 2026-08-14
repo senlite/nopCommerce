@@ -13,7 +13,7 @@ public sealed class ImportReviewService
         {
             string? reviewReasonCode = null;
 
-            if (row.IsDuplicate)
+            if (row.IsDuplicate && !IsDuplicateDecided(row.DuplicateDecision))
             {
                 reviewReasonCode = "import.review.duplicate";
             }
@@ -36,4 +36,7 @@ public sealed class ImportReviewService
 
         return reviewRows;
     }
+
+    private static bool IsDuplicateDecided(string? decision)
+        => decision is "Merge" or "Link" or "KeepSeparate";
 }
