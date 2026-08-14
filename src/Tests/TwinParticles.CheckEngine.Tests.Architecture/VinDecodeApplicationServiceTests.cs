@@ -74,6 +74,25 @@ public class VinDecodeApplicationServiceTests
     }
 
     [Test]
+    public async Task DecodeAsync_Should_Return_NeedsDisambiguation_When_Single_Candidate_Below_Threshold()
+    {
+        var decoder = new FakeDecoder(VinDecodeContribution.WithCandidates([
+            new VinDecodeCandidate
+            {
+                VehicleConfigurationId = 200,
+                Confidence = Confidence.Create(0.70m)
+            }
+        ]));
+
+        var service = new VinDecodeApplicationService(new FakeRegistry(decoder), new FakeTelemetry());
+
+        var result = await service.DecodeAsync("1HGCM82633A004352", CancellationToken.None);
+
+        result.Outcome.Should().Be("NeedsDisambiguation");
+        result.Candidates.Should().HaveCount(1);
+    }
+
+    [Test]
     public async Task DecodeAsync_Should_Return_Graceful_Failure_When_Decoder_Throws()
     {
         var service = new VinDecodeApplicationService(new FakeRegistry(new ThrowingDecoder()), new FakeTelemetry());
