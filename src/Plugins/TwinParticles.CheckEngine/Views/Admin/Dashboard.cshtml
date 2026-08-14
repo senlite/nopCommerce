@@ -16,6 +16,8 @@
 <section class="content">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
+
         <div class="card card-default">
             <div class="card-header">
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks")</h3>

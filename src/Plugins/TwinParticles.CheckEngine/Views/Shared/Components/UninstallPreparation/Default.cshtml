@@ -1,0 +1,119 @@
+@model UninstallPreparationModel
+
+@if (Model.Compact)
+{
+    <a class="btn btn-warning" href="@Model.ExportUrl" title="@Model.ExportAction">
+        <i class="fas fa-download"></i>
+        @Model.ExportAction
+    </a>
+}
+else
+{
+    <div class="card card-warning card-outline">
+        <div class="card-header">
+            <h3 class="card-title">@Model.ConfirmTitle</h3>
+        </div>
+        <div class="card-body">
+            <p class="mb-2">@Model.Warning</p>
+            <p class="mb-2">@Model.ExportRequired</p>
+            @if (Model.Prepared)
+            {
+                <p class="text-success mb-2">
+                    @Model.ExportPrepared
+                    @if (Model.ExpiresUtc.HasValue)
+                    {
+                        <span class="text-muted">(@Model.ExpiresUtc.Value.ToString("u"))</span>
+                    }
+                </p>
+            }
+            else if (Model.PreparedUtc.HasValue)
+            {
+                <p class="text-danger mb-2">@Model.ExportExpired</p>
+            }
+            <a class="btn btn-warning" href="@Model.ExportUrl">
+                <i class="fas fa-download"></i>
+                @Model.ExportAction
+            </a>
+        </div>
+    </div>
+}
+
+<div id="ce-uninstall-confirm-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="ce-uninstall-confirm-title" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="ce-uninstall-confirm-title">@Model.ConfirmTitle</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="@Model.ConfirmCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@Model.Warning</p>
+                <p>@Model.ConfirmBody</p>
+                @if (!Model.Prepared)
+                {
+                    <div class="alert alert-danger mb-0" role="alert">
+                        @Model.ExportRequired
+                    </div>
+                }
+                else
+                {
+                    <p class="text-success mb-0">@Model.ExportPrepared</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-warning" href="@Model.ExportUrl">
+                    <i class="fas fa-download"></i>
+                    @Model.ExportAction
+                </a>
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Model.ConfirmCancel</button>
+                <button type="button" class="btn btn-danger" id="ce-uninstall-confirm-proceed">@Model.ConfirmProceed</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.InterceptPluginListUninstall)
+{
+    <script>
+        (function () {
+            var systemName = 'TwinParticles.CheckEngine';
+            var pendingButton = null;
+            var selector = "button[name='uninstall-plugin-link-" + systemName + "']";
+
+            function bind() {
+                var grid = document.getElementById('plugins-local-grid');
+                if (!grid || grid.dataset.ceUninstallBound === '1')
+                    return;
+
+                grid.dataset.ceUninstallBound = '1';
+                grid.addEventListener('click', function (event) {
+                    var target = event.target;
+                    if (!target || !target.matches || !target.matches(selector))
+                        return;
+
+                    event.preventDefault();
+                    event.stopPropagation();
+                    pendingButton = target;
+                    $('#ce-uninstall-confirm-modal').modal('show');
+                }, true);
+            }
+
+            document.getElementById('ce-uninstall-confirm-proceed')?.addEventListener('click', function () {
+                if (!pendingButton)
+                    return;
+
+                $('#ce-uninstall-confirm-modal').modal('hide');
+                var form = pendingButton.form;
+                pendingButton = null;
+                if (form)
+                    form.submit();
+            });
+
+            if (document.readyState === 'loading')
+                document.addEventListener('DOMContentLoaded', bind);
+            else
+                bind();
+        })();
+    </script>
+}
