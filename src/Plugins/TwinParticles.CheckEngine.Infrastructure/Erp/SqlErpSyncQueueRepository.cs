@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Erp;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Erp;
 
@@ -26,53 +27,75 @@ public sealed class SqlErpSyncQueueRepository : IErpSyncQueueRepository
         if (job.CreatedUtc == default)
             job.CreatedUtc = DateTime.UtcNow;
 
-        var rows = await _dataProvider.QueryAsync<JobIdRow>(
-            @"SET XACT_ABORT ON;
-DECLARE @result TABLE (JobId uniqueidentifier);
-MERGE TP_CE_ErpSyncJob WITH (HOLDLOCK) AS target
-USING (SELECT @idempotencyKey AS IdempotencyKey) AS source
-    ON target.IdempotencyKey = source.IdempotencyKey
-WHEN MATCHED THEN
-    UPDATE SET IdempotencyKey = target.IdempotencyKey
-WHEN NOT MATCHED THEN
-    INSERT (JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc, LastAttemptUtc, NextAttemptUtc)
-    VALUES (@jobId, @entityType, @direction, @idempotencyKey, @payload, @attemptCount, @status, @conflictCode, @createdUtc, NULL, NULL)
-OUTPUT inserted.JobId INTO @result;
-SELECT JobId FROM @result;",
-            new DataParameter("jobId", job.JobId),
-            new DataParameter("entityType", (int)job.EntityType),
-            new DataParameter("direction", (int)job.Direction),
-            new DataParameter("idempotencyKey", job.IdempotencyKey),
-            new DataParameter("payload", job.Payload),
-            new DataParameter("attemptCount", job.AttemptCount),
-            new DataParameter("status", job.Status),
-            new DataParameter("conflictCode", job.ConflictCode),
-            new DataParameter("createdUtc", job.CreatedUtc));
+        var existing = await _dataProvider.QueryAsync<JobIdRow>(
+            "SELECT JobId FROM TP_CE_ErpSyncJob WHERE IdempotencyKey = @idempotencyKey",
+            new DataParameter("idempotencyKey", job.IdempotencyKey));
+        var existingId = existing.FirstOrDefault()?.JobId;
+        if (existingId is { } matched && matched != Guid.Empty)
+            return matched;
 
-        return rows.Single().JobId;
+        try
+        {
+            await _dataProvider.ExecuteNonQueryAsync(
+                @"INSERT INTO TP_CE_ErpSyncJob
+(JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc, LastAttemptUtc, NextAttemptUtc)
+VALUES
+(@jobId, @entityType, @direction, @idempotencyKey, @payload, @attemptCount, @status, @conflictCode, @createdUtc, NULL, NULL)",
+                new DataParameter("jobId", job.JobId),
+                new DataParameter("entityType", (int)job.EntityType),
+                new DataParameter("direction", (int)job.Direction),
+                new DataParameter("idempotencyKey", job.IdempotencyKey),
+                new DataParameter("payload", job.Payload),
+                new DataParameter("attemptCount", job.AttemptCount),
+                new DataParameter("status", job.Status),
+                new DataParameter("conflictCode", job.ConflictCode),
+                new DataParameter("createdUtc", job.CreatedUtc));
+
+            return job.JobId;
+        }
+        catch
+        {
+            var raced = await _dataProvider.QueryAsync<JobIdRow>(
+                "SELECT JobId FROM TP_CE_ErpSyncJob WHERE IdempotencyKey = @idempotencyKey",
+                new DataParameter("idempotencyKey", job.IdempotencyKey));
+            var racedId = raced.FirstOrDefault()?.JobId;
+            if (racedId is { } recovered && recovered != Guid.Empty)
+                return recovered;
+
+            throw;
+        }
     }
 
     public async Task<IReadOnlyList<ErpSyncJob>> GetPendingAsync(CancellationToken cancellationToken)
     {
-        // Claim rows and return them in one statement. UPDLOCK + READPAST prevents overlapping task
-        // executions from processing the same job; stale Processing claims recover after ten minutes.
+        var staleBefore = DateTime.UtcNow.AddMinutes(-10);
         var rows = await _dataProvider.QueryAsync<ErpSyncJobRow>(
-            @";WITH claimable AS
-(
-    SELECT TOP (50) *
-    FROM TP_CE_ErpSyncJob WITH (UPDLOCK, READPAST, ROWLOCK)
-    WHERE (Status = 'Queued' AND (NextAttemptUtc IS NULL OR NextAttemptUtc <= SYSUTCDATETIME()))
-       OR (Status = 'Processing' AND LastAttemptUtc < DATEADD(MINUTE, -10, SYSUTCDATETIME()))
-    ORDER BY CreatedUtc, Id
-)
-UPDATE claimable
-SET Status = 'Processing',
-    LastAttemptUtc = SYSUTCDATETIME()
-OUTPUT inserted.JobId, inserted.EntityType, inserted.Direction, inserted.IdempotencyKey,
-       inserted.Payload, inserted.AttemptCount, inserted.Status, inserted.ConflictCode,
-       inserted.CreatedUtc, inserted.LastAttemptUtc, inserted.NextAttemptUtc;");
+            CheckEngineSql.SelectTop(
+                50,
+                "JobId, EntityType, Direction, IdempotencyKey, Payload, AttemptCount, Status, ConflictCode, CreatedUtc, LastAttemptUtc, NextAttemptUtc",
+                @"FROM TP_CE_ErpSyncJob
+WHERE (Status = 'Queued' AND (NextAttemptUtc IS NULL OR NextAttemptUtc <= @now))
+   OR (Status = 'Processing' AND LastAttemptUtc < @staleBefore)
+ORDER BY CreatedUtc, Id"),
+            new DataParameter("now", DateTime.UtcNow),
+            new DataParameter("staleBefore", staleBefore));
 
-        return rows.Select(Map).ToList();
+        var claimed = new List<ErpSyncJob>();
+        foreach (var row in rows)
+        {
+            await _dataProvider.ExecuteNonQueryAsync(
+                @"UPDATE TP_CE_ErpSyncJob
+SET Status = 'Processing', LastAttemptUtc = @now
+WHERE JobId = @jobId",
+                new DataParameter("now", DateTime.UtcNow),
+                new DataParameter("jobId", row.JobId));
+
+            row.Status = "Processing";
+            row.LastAttemptUtc = DateTime.UtcNow;
+            claimed.Add(Map(row));
+        }
+
+        return claimed;
     }
 
     public async Task<ErpSyncJob?> GetByIdAsync(Guid jobId, CancellationToken cancellationToken)

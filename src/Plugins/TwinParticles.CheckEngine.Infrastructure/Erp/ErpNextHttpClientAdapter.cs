@@ -42,6 +42,28 @@ public sealed class ErpNextHttpClientAdapter : IErpClientAdapter
         }
     }
 
+    public async Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(_options.BaseUrl))
+            return await _stub.PullAsync(job, cancellationToken);
+
+        try
+        {
+            var entityType = job.EntityType.ToString();
+            var localId = Uri.EscapeDataString(job.IdempotencyKey);
+            var endpoint = $"{_options.BaseUrl.TrimEnd('/')}/api/resource/{entityType}/{localId}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            ApplyAuth(request);
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            return response.IsSuccessStatusCode || !string.IsNullOrWhiteSpace(job.Payload);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.BaseUrl))
