@@ -78,6 +78,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVinSupportRepository, SqlVinSupportRepository>();
         services.AddScoped<BmwVinConfigurationResolver>();
         services.AddScoped<BmwVinPatternSeedLoader>();
+        services.AddSingleton<IVinPrivacyService, VinPrivacyService>();
+        services.AddSingleton(_ => VinDecodeOptions.Current);
         services.AddSingleton(provider =>
         {
             var catalog = BmwVinPatternCatalog.LoadAsync(CancellationToken.None).GetAwaiter().GetResult();

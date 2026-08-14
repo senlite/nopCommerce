@@ -219,7 +219,7 @@ public sealed class UnifiedSearchService
     private async Task<IReadOnlyList<SearchHit>> SearchVinAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)
     {
         var decode = await _vinDecodeService.DecodeAsync(normalizedText, cancellationToken);
-        if (decode.Candidates.Count != 1)
+        if (!string.Equals(decode.Outcome, "SingleMatch", StringComparison.Ordinal) || decode.Candidates.Count != 1)
             return [];
 
         // A VIN is vehicle context, not a product keyword. Search the published fitment projection
