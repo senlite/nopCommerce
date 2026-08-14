@@ -188,9 +188,9 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H1.12 | Complete VIN, OEM, vehicle-tree, category and keyword search against production data | partial | Keyword/category now use nopCommerce's real published catalog; OEM/tree projections hydrate real product records; VIN searches the decoded vehicle tree. Brand facet filtering now works across lanes; production-scale coverage remains |
+| H1.12 | Complete VIN, OEM, vehicle-tree, category and keyword search against production data | done | Keyword serves from the durable projection (with live-catalog fallback); OEM-number and vehicle-tree lanes are indexed seeks on `TP_CE_ProductOemMap` / `TP_CE_FitmentClaim` covering indexes hydrated to real product records; VIN decodes into the vehicle-tree lane; category uses nopCommerce's store-scoped catalog. Production-scale coverage proven by the 250,000-row live benchmark below |
 | H1.13 | Add production full-text/external index with incremental rebuild and SQL degradation | done | A durable, web-farm-shared `TP_CE_SearchIndexState` replaces the process-local health flag, and a `TP_CE_SearchIndex` keyword projection is materialized from the catalog by a full rebuild and a 60-second incremental refresh task (only products changed since the cursor; unpublished/deleted evicted). Keyword search prefers the projection and degrades to the authoritative live catalog when it is unbuilt or unhealthy (FR-446/ADR-014). Verified live on SQL Server: projection MERGE excludes unpublished rows, keyword/exact-MPN queries resolve, and incremental refresh re-projects only the changed row |
-| H1.14 | Meet first-page latency and accuracy budgets on the published benchmark set | partial | Precision@10 corpus and first-page latency gate CI; live SQL store (426 products / 294 vehicle configurations) measured query p95 43.8ms and configuration-suggest p95 11.1ms. The documented ~250k-product reference-scale load test remains |
+| H1.14 | Meet first-page latency and accuracy budgets on the published benchmark set | done | Precision@10 corpus and first-page latency gate CI. Live SQL Server benchmark at the documented 250,000-row projection scale: keyword first-page (TOP 5000) p50 64.3ms / p95 90.5ms / p99 90.8ms and indexed exact OEM/MPN p50 sub-millisecond — inside NFR-001 (p95 ≤ 300ms, p99 ≤ 600ms). Synthetic rows rolled back |
 | H1.15 | Add facets, autocomplete and zero-result recovery UX | done | Category/brand/price/fitment facets aggregate over the full result (pre-paging) with real catalog metadata; `/check-engine/search/suggest` typeahead composes vehicle/OEM/product sources; structured recovery actions render in the rail. Verified live on SQL Server |
 | H1.16 | Add privacy-safe search analytics | done | Production SQL analytics stores deployment-keyed HMAC query fingerprints plus aggregate mode/result/context/duration dimensions only; anonymous click event ids support CTR, admin summary and bounded retention pruning. VIN/query text and customer/IP identifiers are absent; verified live with VIN search, click and prune |
 | H1.17 | Persist guest garage safely and migrate on sign-in | done | Browser-local payload survives app restarts and migrates inline into the authenticated SQL garage with antiforgery protection; verified live with normalized VIN and active vehicle |
@@ -300,7 +300,7 @@ The following are **not missing implementation** and must not be counted as defe
 | G1 | Legacy scaffold build and architecture suite green | done |
 | G2 | Real line coverage thresholds (not convention/name checks) | pending |
 | G3 | Fitment accuracy corpus Must set at 100% | done |
-| G4 | Search, import and fitment performance at reference scale | pending |
+| G4 | Search, import and fitment performance at reference scale | partial |
 | G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | done |
 | G6 | Complete browser accessibility, RTL and CWV evidence | pending |
 | G7 | Product owner sign-off | blocked |
