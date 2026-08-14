@@ -25,7 +25,9 @@ public class SearchIndexProjectionContractTests
 
         source.Should().Contain("TP_CE_SearchIndexState");
         source.Should().Contain("TP_CE_SearchIndex");
-        source.Should().Contain("MERGE TP_CE_SearchIndex");
+        source.Should().Contain("INSERT INTO TP_CE_SearchIndex");
+        source.Should().NotContain("MERGE TP_CE_SearchIndex",
+            "MERGE is SQL Server-only; the projection must use portable delete+insert");
         source.Should().Contain("p.UpdatedOnUtc > COALESCE((SELECT LastCursorUtc",
             "incremental refresh must only re-project products changed since the cursor");
         source.Should().Contain("RefreshIncrementalAsync");

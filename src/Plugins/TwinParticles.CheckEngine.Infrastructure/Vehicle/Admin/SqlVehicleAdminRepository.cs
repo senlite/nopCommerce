@@ -38,46 +38,32 @@ public sealed class SqlVehicleAdminRepository : IVehicleAdminRepository
         int targetMakeId,
         CancellationToken cancellationToken)
     {
-        var rows = await _dataProvider.QueryAsync<MergeRow>(@"
-SET XACT_ABORT ON;
-BEGIN TRANSACTION;
+        var conflict = (await _dataProvider.QueryAsync<int>(@"
+SELECT 1
+FROM TP_CE_VehicleModel sourceModel
+INNER JOIN TP_CE_VehicleModel targetModel
+    ON targetModel.MakeId = @targetMakeId
+   AND targetModel.Code = sourceModel.Code
+WHERE sourceModel.MakeId = @sourceMakeId",
+            new DataParameter("sourceMakeId", sourceMakeId),
+            new DataParameter("targetMakeId", targetMakeId))).Any();
 
-IF EXISTS (
-    SELECT 1
-    FROM TP_CE_VehicleModel sourceModel
-    INNER JOIN TP_CE_VehicleModel targetModel
-        ON targetModel.MakeId = @targetMakeId
-       AND targetModel.Code = sourceModel.Code
-    WHERE sourceModel.MakeId = @sourceMakeId
-)
-BEGIN
-    ROLLBACK TRANSACTION;
-    SELECT CAST(0 AS bit) AS Success,
-           CAST('vehicle.make.merge.model_code_conflict' AS nvarchar(128)) AS ErrorCode,
-           0 AS MovedChildren,
-           0 AS MovedAliases;
-    RETURN;
-END;
+        if (conflict)
+            return VehicleMergeRepositoryResult.Fail("vehicle.make.merge.model_code_conflict");
 
-DECLARE @movedChildren int;
-DECLARE @movedAliases int;
-
-UPDATE TP_CE_VehicleModel SET MakeId=@targetMakeId WHERE MakeId=@sourceMakeId;
-SET @movedChildren = @@ROWCOUNT;
-
-UPDATE TP_CE_VehicleAlias SET NodeId=@targetMakeId WHERE NodeType='make' AND NodeId=@sourceMakeId;
-SET @movedAliases = @@ROWCOUNT;
-
-UPDATE TP_CE_VehicleMake SET IsActive=0 WHERE Id=@sourceMakeId;
-
-COMMIT TRANSACTION;
-SELECT CAST(1 AS bit) AS Success,
-       CAST(NULL AS nvarchar(128)) AS ErrorCode,
-       @movedChildren AS MovedChildren,
-       @movedAliases AS MovedAliases;",
+        var movedChildren = await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleModel SET MakeId=@targetMakeId WHERE MakeId=@sourceMakeId",
             new DataParameter("sourceMakeId", sourceMakeId),
             new DataParameter("targetMakeId", targetMakeId));
-        return MapMerge(rows.Single());
+        var movedAliases = await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleAlias SET NodeId=@targetMakeId WHERE NodeType='make' AND NodeId=@sourceMakeId",
+            new DataParameter("sourceMakeId", sourceMakeId),
+            new DataParameter("targetMakeId", targetMakeId));
+        await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleMake SET IsActive=0 WHERE Id=@sourceMakeId",
+            new DataParameter("sourceMakeId", sourceMakeId));
+
+        return VehicleMergeRepositoryResult.Ok(movedChildren, movedAliases);
     }
 
     public async Task<IReadOnlyList<VehicleModel>> GetModelsAsync(CancellationToken cancellationToken)
@@ -103,46 +89,32 @@ SELECT CAST(1 AS bit) AS Success,
         // Only Generation.ModelId and model-scoped aliases move. Every generation/configuration id
         // stays stable, so fitment claims, garage rows, SEO landings, and historical records retain
         // their existing foreign keys.
-        var rows = await _dataProvider.QueryAsync<MergeRow>(@"
-SET XACT_ABORT ON;
-BEGIN TRANSACTION;
+        var conflict = (await _dataProvider.QueryAsync<int>(@"
+SELECT 1
+FROM TP_CE_VehicleGeneration sourceGeneration
+INNER JOIN TP_CE_VehicleGeneration targetGeneration
+    ON targetGeneration.ModelId = @targetModelId
+   AND targetGeneration.Code = sourceGeneration.Code
+WHERE sourceGeneration.ModelId = @sourceModelId",
+            new DataParameter("sourceModelId", sourceModelId),
+            new DataParameter("targetModelId", targetModelId))).Any();
 
-IF EXISTS (
-    SELECT 1
-    FROM TP_CE_VehicleGeneration sourceGeneration
-    INNER JOIN TP_CE_VehicleGeneration targetGeneration
-        ON targetGeneration.ModelId = @targetModelId
-       AND targetGeneration.Code = sourceGeneration.Code
-    WHERE sourceGeneration.ModelId = @sourceModelId
-)
-BEGIN
-    ROLLBACK TRANSACTION;
-    SELECT CAST(0 AS bit) AS Success,
-           CAST('vehicle.model.merge.generation_code_conflict' AS nvarchar(128)) AS ErrorCode,
-           0 AS MovedChildren,
-           0 AS MovedAliases;
-    RETURN;
-END;
+        if (conflict)
+            return VehicleMergeRepositoryResult.Fail("vehicle.model.merge.generation_code_conflict");
 
-DECLARE @movedChildren int;
-DECLARE @movedAliases int;
-
-UPDATE TP_CE_VehicleGeneration SET ModelId=@targetModelId WHERE ModelId=@sourceModelId;
-SET @movedChildren = @@ROWCOUNT;
-
-UPDATE TP_CE_VehicleAlias SET NodeId=@targetModelId WHERE NodeType='model' AND NodeId=@sourceModelId;
-SET @movedAliases = @@ROWCOUNT;
-
-UPDATE TP_CE_VehicleModel SET IsActive=0 WHERE Id=@sourceModelId;
-
-COMMIT TRANSACTION;
-SELECT CAST(1 AS bit) AS Success,
-       CAST(NULL AS nvarchar(128)) AS ErrorCode,
-       @movedChildren AS MovedChildren,
-       @movedAliases AS MovedAliases;",
+        var movedChildren = await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleGeneration SET ModelId=@targetModelId WHERE ModelId=@sourceModelId",
             new DataParameter("sourceModelId", sourceModelId),
             new DataParameter("targetModelId", targetModelId));
-        return MapMerge(rows.Single());
+        var movedAliases = await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleAlias SET NodeId=@targetModelId WHERE NodeType='model' AND NodeId=@sourceModelId",
+            new DataParameter("sourceModelId", sourceModelId),
+            new DataParameter("targetModelId", targetModelId));
+        await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleModel SET IsActive=0 WHERE Id=@sourceModelId",
+            new DataParameter("sourceModelId", sourceModelId));
+
+        return VehicleMergeRepositoryResult.Ok(movedChildren, movedAliases);
     }
 
     public async Task<IReadOnlyList<VehicleGeneration>> GetGenerationsAsync(CancellationToken cancellationToken)
@@ -168,50 +140,36 @@ SELECT CAST(1 AS bit) AS Success,
         // Bodies and configurations reparent onto the survivor generation. Configuration ids stay
         // stable, so every fitment claim, garage row and SEO landing that references a configuration
         // is reassigned to the survivor without touching its foreign keys (AC-012.1 / FR-112).
-        var rows = await _dataProvider.QueryAsync<MergeRow>(@"
-SET XACT_ABORT ON;
-BEGIN TRANSACTION;
+        var conflict = (await _dataProvider.QueryAsync<int>(@"
+SELECT 1
+FROM TP_CE_VehicleBody sourceBody
+INNER JOIN TP_CE_VehicleBody targetBody
+    ON targetBody.GenerationId = @targetGenerationId
+   AND targetBody.Code = sourceBody.Code
+WHERE sourceBody.GenerationId = @sourceGenerationId",
+            new DataParameter("sourceGenerationId", sourceGenerationId),
+            new DataParameter("targetGenerationId", targetGenerationId))).Any();
 
-IF EXISTS (
-    SELECT 1
-    FROM TP_CE_VehicleBody sourceBody
-    INNER JOIN TP_CE_VehicleBody targetBody
-        ON targetBody.GenerationId = @targetGenerationId
-       AND targetBody.Code = sourceBody.Code
-    WHERE sourceBody.GenerationId = @sourceGenerationId
-)
-BEGIN
-    ROLLBACK TRANSACTION;
-    SELECT CAST(0 AS bit) AS Success,
-           CAST('vehicle.generation.merge.body_code_conflict' AS nvarchar(128)) AS ErrorCode,
-           0 AS MovedChildren,
-           0 AS MovedAliases;
-    RETURN;
-END;
+        if (conflict)
+            return VehicleMergeRepositoryResult.Fail("vehicle.generation.merge.body_code_conflict");
 
-DECLARE @movedBodies int;
-DECLARE @movedConfigurations int;
-DECLARE @movedAliases int;
-
-UPDATE TP_CE_VehicleBody SET GenerationId=@targetGenerationId WHERE GenerationId=@sourceGenerationId;
-SET @movedBodies = @@ROWCOUNT;
-
-UPDATE TP_CE_VehicleConfiguration SET GenerationId=@targetGenerationId WHERE GenerationId=@sourceGenerationId;
-SET @movedConfigurations = @@ROWCOUNT;
-
-UPDATE TP_CE_VehicleAlias SET NodeId=@targetGenerationId WHERE NodeType='generation' AND NodeId=@sourceGenerationId;
-SET @movedAliases = @@ROWCOUNT;
-
-UPDATE TP_CE_VehicleGeneration SET IsActive=0 WHERE Id=@sourceGenerationId;
-
-COMMIT TRANSACTION;
-SELECT CAST(1 AS bit) AS Success,
-       CAST(NULL AS nvarchar(128)) AS ErrorCode,
-       (@movedBodies + @movedConfigurations) AS MovedChildren,
-       @movedAliases AS MovedAliases;",
+        var movedBodies = await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleBody SET GenerationId=@targetGenerationId WHERE GenerationId=@sourceGenerationId",
             new DataParameter("sourceGenerationId", sourceGenerationId),
             new DataParameter("targetGenerationId", targetGenerationId));
-        return MapMerge(rows.Single());
+        var movedConfigurations = await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleConfiguration SET GenerationId=@targetGenerationId WHERE GenerationId=@sourceGenerationId",
+            new DataParameter("sourceGenerationId", sourceGenerationId),
+            new DataParameter("targetGenerationId", targetGenerationId));
+        var movedAliases = await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleAlias SET NodeId=@targetGenerationId WHERE NodeType='generation' AND NodeId=@sourceGenerationId",
+            new DataParameter("sourceGenerationId", sourceGenerationId),
+            new DataParameter("targetGenerationId", targetGenerationId));
+        await _dataProvider.ExecuteNonQueryAsync(
+            "UPDATE TP_CE_VehicleGeneration SET IsActive=0 WHERE Id=@sourceGenerationId",
+            new DataParameter("sourceGenerationId", sourceGenerationId));
+
+        return VehicleMergeRepositoryResult.Ok(movedBodies + movedConfigurations, movedAliases);
     }
 
     public async Task<IReadOnlyList<VehicleBody>> GetBodiesAsync(CancellationToken cancellationToken)
@@ -289,16 +247,4 @@ SELECT CAST(1 AS bit) AS Success,
     public Task DeleteAliasAsync(int id, CancellationToken cancellationToken)
         => _dataProvider.ExecuteNonQueryAsync("DELETE FROM TP_CE_VehicleAlias WHERE Id=@id", new LinqToDB.Data.DataParameter("id", id));
 
-    private static VehicleMergeRepositoryResult MapMerge(MergeRow row)
-        => row.Success
-            ? VehicleMergeRepositoryResult.Ok(row.MovedChildren, row.MovedAliases)
-            : VehicleMergeRepositoryResult.Fail(row.ErrorCode ?? "vehicle.merge.failed");
-
-    private sealed class MergeRow
-    {
-        public bool Success { get; set; }
-        public string? ErrorCode { get; set; }
-        public int MovedChildren { get; set; }
-        public int MovedAliases { get; set; }
-    }
 }

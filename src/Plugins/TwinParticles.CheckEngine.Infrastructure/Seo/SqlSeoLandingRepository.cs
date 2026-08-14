@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Seo;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Seo;
 
@@ -53,7 +54,7 @@ WHERE LandingType = @landingType
 (LandingType, VehicleConfigurationId, ProductId, Locale, UrlPath, CanonicalUrlPath, HreflangPathEn, HreflangPathAr, StructuredDataJsonLd, IsIndexable, CreatedUtc)
 VALUES
 (@landingType, @vehicleConfigurationId, @productId, @locale, @urlPath, @canonicalUrlPath, @hreflangPathEn, @hreflangPathAr, @structuredDataJsonLd, @isIndexable, @createdUtc);
-SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+" + CheckEngineSql.SelectInsertedIntId() + @"",
             new DataParameter("landingType", (int)page.Type),
             new DataParameter("vehicleConfigurationId", page.VehicleConfigurationId),
             new DataParameter("productId", page.ProductId),
