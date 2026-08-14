@@ -65,6 +65,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<TwinParticles.CheckEngine.Application.Privacy.CheckEngineSubjectDataService>();
 
         services.AddScoped<ProductImageService>();
+        services.AddScoped<BatchImageReplacementService>();
         services.AddScoped<ImageImportOrchestrationService>();
 
         services.AddScoped<LocaleFormattingService>();

@@ -99,6 +99,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IImageStorageService, NopPictureImageStorageService>();
         services.AddScoped<IImageDeliveryService, ConfigurableCdnImageDeliveryService>();
         services.AddScoped<IImageQuarantineService, SafeImageQuarantineService>();
+        services.AddScoped<IProductLookupService, NopProductLookupService>();
 
         services.AddSingleton<ILocaleFormattingService, DefaultLocaleFormattingService>();
 
