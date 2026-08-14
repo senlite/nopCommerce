@@ -39,6 +39,11 @@ public sealed class VinDecodeApplicationService
 
     public Task<VinDecodeResult> DecodeAsync(string rawVin, CancellationToken cancellationToken)
     {
+        return DecodeCoreAsync(rawVin, cancellationToken);
+    }
+
+    private async Task<VinDecodeResult> DecodeCoreAsync(string rawVin, CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
 
         if (!TwinParticles.CheckEngine.Domain.Vehicle.Vin.TryCreate(rawVin, out var vin, out var errorCode, enforceCheckDigit: true))
@@ -46,12 +51,12 @@ public sealed class VinDecodeApplicationService
             TrackDecode("Failed", wmi: null, normalizedVin: null, candidateCount: 0, reasonCode: errorCode);
             RecordAudit("Failed", wmi: null, normalizedVin: null, candidateCount: 0, reasonCode: errorCode, cancellationToken);
 
-            return Task.FromResult(new VinDecodeResult
+            return new VinDecodeResult
             {
                 Outcome = "Failed",
                 CheckDigitValid = errorCode == "vin.check_digit_failed" ? false : null,
                 ReasonCode = errorCode
-            });
+            };
         }
 
         var segments = vin!.ParseSegments();
@@ -62,21 +67,21 @@ public sealed class VinDecodeApplicationService
             TrackDecode("Failed", segments.Wmi, vin.Value, candidateCount: 0, reasonCode: "vin.wmi_unknown");
             RecordAudit("Failed", segments.Wmi, vin.Value, candidateCount: 0, reasonCode: "vin.wmi_unknown", cancellationToken);
 
-            return Task.FromResult(new VinDecodeResult
+            return new VinDecodeResult
             {
                 Outcome = "Failed",
                 NormalizedVin = vin.Value,
                 CheckDigitValid = true,
                 Wmi = segments.Wmi,
                 ReasonCode = "vin.wmi_unknown"
-            });
+            };
         }
 
         VinDecodeContribution contribution;
 
         try
         {
-            contribution = decoder.Decode(vin);
+            contribution = await decoder.DecodeAsync(vin, cancellationToken);
         }
         catch (Exception)
         {
@@ -95,7 +100,7 @@ public sealed class VinDecodeApplicationService
         TrackDecode(outcome, segments.Wmi, vin.Value, orderedCandidates.Count, reasonCode);
         RecordAudit(outcome, segments.Wmi, vin.Value, orderedCandidates.Count, reasonCode, cancellationToken);
 
-        return Task.FromResult(new VinDecodeResult
+        return new VinDecodeResult
         {
             Outcome = outcome,
             NormalizedVin = vin.Value,
@@ -103,7 +108,7 @@ public sealed class VinDecodeApplicationService
             Wmi = segments.Wmi,
             Candidates = orderedCandidates,
             ReasonCode = reasonCode
-        });
+        };
     }
 
     private string ClassifyOutcome(IReadOnlyList<VinDecodeCandidate> orderedCandidates)
