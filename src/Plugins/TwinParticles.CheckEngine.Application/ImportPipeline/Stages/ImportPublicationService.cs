@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
@@ -35,8 +36,9 @@ public sealed class ImportPublicationService
 
         var published = 0;
         var failed = 0;
+        var rowsByNumber = rows.ToDictionary(row => row.RowNumber);
 
-        foreach (var row in rows)
+        foreach (var row in rows.OrderBy(row => row.DuplicateDecision == "Link" ? 1 : 0))
         {
             // A row merged into its duplicate original does not become a distinct product; it is a
             // resolved decision, not a failure.
@@ -45,6 +47,20 @@ public sealed class ImportPublicationService
                 row.IsPublished = false;
                 row.PublishError = null;
                 continue;
+            }
+
+            if (row.DuplicateDecision == "Link")
+            {
+                if (row.DuplicateOfRowNumber is int originalRowNumber &&
+                    rowsByNumber.TryGetValue(originalRowNumber, out var original) &&
+                    original.Fields.TryGetValue("publishedProductId", out var originalProductId) &&
+                    !string.IsNullOrWhiteSpace(originalProductId))
+                {
+                    row.Fields = new Dictionary<string, string?>(row.Fields)
+                    {
+                        ["publishedProductId"] = originalProductId
+                    };
+                }
             }
 
             if (row.ReviewStatus == "Rejected")
