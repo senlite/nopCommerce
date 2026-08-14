@@ -137,7 +137,16 @@ public class SeoLandingServiceTests
             _value = value;
         }
 
+        public int MaxLargestContentfulPaintMs => 2500;
+
+        public int MaxInteractionToNextPaintMs => 200;
+
+        public decimal MaxCumulativeLayoutShift => 0.1m;
+
         public bool MeetsBudget() => _value;
+
+        public bool MeetsBudget(decimal largestContentfulPaintMs, decimal interactionToNextPaintMs, decimal cumulativeLayoutShift)
+            => _value;
     }
 
     private sealed class FakeSeoIndexabilityPolicy : ISeoIndexabilityPolicy

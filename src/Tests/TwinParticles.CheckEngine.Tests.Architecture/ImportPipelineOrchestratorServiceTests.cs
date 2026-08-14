@@ -197,6 +197,36 @@ public class ImportPipelineOrchestratorServiceTests
     }
 
     [Test]
+    public async Task Sql_Repository_With_Product_Publisher_Should_Publish_All_Approved_Rows()
+    {
+        var repository = new DurableTestRepository();
+        var publisher = new RecordingImportProductPublisher();
+        var orchestrator = CreateOrchestrator(repository, productPublisher: publisher);
+        var csv = "oem,name,sku,vehicleConfigurationId,category\n11-51-7-586-925,Oil Filter,SKU-1,1001,Engine\n";
+
+        var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
+        {
+            Format = ImportSourceFormat.Csv,
+            FileName = "production-path.csv",
+            Content = Encoding.UTF8.GetBytes(csv),
+            DryRun = false
+        }, CancellationToken.None);
+
+        var publish = await orchestrator.PublishAsync(run.BatchId, dryRun: false, CancellationToken.None);
+
+        publish.PublishedRows.Should().Be(1);
+        publish.FailedRows.Should().Be(0);
+        publisher.PublishedRows.Should().HaveCount(1);
+        publisher.PublishedRows[0].Fields["sku"].Should().Be("SKU-1");
+        publisher.PublishedRows[0].OemNumberId.Should().Be(10);
+
+        var secondProcess = CreateOrchestrator(repository, productPublisher: publisher);
+        var restored = await secondProcess.GetBatchAsync(run.BatchId, CancellationToken.None);
+        restored!.Rows[0].IsPublished.Should().BeTrue();
+        restored.Rows[0].Fields.Should().ContainKey("publishedProductId");
+    }
+
+    [Test]
     public async Task Ten_Thousand_High_Confidence_Rows_Should_Reach_Published_State_Above_50_Rows_Per_Second()
     {
         var csv = new StringBuilder("oem,name,sku,vehicleConfigurationId,category\n");
@@ -204,7 +234,7 @@ public class ImportPipelineOrchestratorServiceTests
             csv.Append("OEM-").Append(i).Append(",Part ").Append(i).Append(",SKU-").Append(i)
                 .Append(",1001,Engine\n");
 
-        var orchestrator = CreateOrchestrator();
+        var orchestrator = CreateOrchestrator(productPublisher: new RecordingImportProductPublisher());
         var stopwatch = Stopwatch.StartNew();
         var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
         {
@@ -261,7 +291,8 @@ public class ImportPipelineOrchestratorServiceTests
 
     private static ImportPipelineOrchestratorService CreateOrchestrator(
         IImportPipelineRepository? repository = null,
-        FakeSearchRepository? searchRepository = null)
+        FakeSearchRepository? searchRepository = null,
+        IImportProductPublisher? productPublisher = null)
     {
         var normalization = new FakeOemNormalizationService();
         var resolveService = new OemResolveService(
@@ -283,13 +314,27 @@ public class ImportPipelineOrchestratorServiceTests
             new ImportCategorizationService(),
             new ImportImageAssignmentService(),
             new ImportReviewService(),
-            new ImportPublicationService(),
+            new ImportPublicationService(productPublisher),
             new ImageImportOrchestrationService(new ProductImageService(
                 new FakeImageStorageService(),
                 new FakeImageDeliveryService(),
                 new FakeImageQuarantineService(),
                 new FakeProductImageRepository())),
             pipelineRepository: repository);
+    }
+
+    private sealed class RecordingImportProductPublisher : IImportProductPublisher
+    {
+        public List<(IReadOnlyDictionary<string, string?> Fields, int? OemNumberId)> PublishedRows { get; } = [];
+
+        public Task<ImportProductPublishResult> PublishAsync(
+            IReadOnlyDictionary<string, string?> fields,
+            int? matchedOemNumberId,
+            CancellationToken cancellationToken)
+        {
+            PublishedRows.Add((fields, matchedOemNumberId));
+            return Task.FromResult(ImportProductPublishResult.Ok(5000 + PublishedRows.Count));
+        }
     }
 
     private sealed class FakeClock : ICheckEngineClock
