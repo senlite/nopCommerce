@@ -33,6 +33,16 @@ public class LicenceReadOnlyContractTests
     }
 
     [Test]
+    public void Heartbeat_Should_Revalidate_The_Stored_Activation_Key()
+    {
+        var service = ReadPluginFile(
+            "TwinParticles.CheckEngine.Application", "Licensing", "DefaultLicenceService.cs");
+
+        service.Should().Contain("GetActivationKeyAsync");
+        service.Should().Contain("_licenceKeyValidator.Validate(storedKey)");
+    }
+
+    [Test]
     public void Diagnostics_Admin_Should_Expose_Licence_Activation_And_Heartbeat()
     {
         var controller = ReadPluginFile(

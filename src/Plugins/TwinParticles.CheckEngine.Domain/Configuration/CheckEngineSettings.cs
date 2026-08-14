@@ -53,7 +53,7 @@ public sealed class CheckEngineSettings
     {
         public bool EnforcementEnabled { get; init; } = true;
 
-        /// <summary>When false, only ce-lic-v1 signed bundles activate.</summary>
-        public bool AllowLegacyDevKeys { get; init; } = true;
+        /// <summary>When false, only ce-lic-v1 signed bundles activate. Defaults off so unsigned keys cannot activate production.</summary>
+        public bool AllowLegacyDevKeys { get; init; }
     }
 }
