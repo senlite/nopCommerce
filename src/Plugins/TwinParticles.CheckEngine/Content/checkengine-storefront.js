@@ -21,6 +21,10 @@
     garageAdd: 'Add vehicle (VIN)…',
     garageVinPrompt: 'Enter a VIN to add a vehicle',
     garageAddFailed: 'Unable to add that vehicle.',
+    garageVinDisambiguationTitle: 'Which vehicle is this?',
+    garageVinDisambiguationLead: 'This VIN matches more than one vehicle configuration. Choose the one that matches your car.',
+    garageVinDisambiguationCancel: 'Cancel',
+    garageVinDisambiguationYear: 'Model year',
     searchEmptyTitle: 'No matching parts found',
     searchEmptyHint: 'Check the OEM number or VIN, or widen fitment to include unverified parts.',
     searchUnavailable: 'Search is unavailable right now.',
@@ -681,31 +685,187 @@
     });
   }
 
-  function addVehicleByVin(vin) {
+  function addVehicleByVin(vin, vehicleConfigurationId) {
+    var body = { vin: vin };
+    if (vehicleConfigurationId) {
+      body.vehicleConfigurationId = vehicleConfigurationId;
+    }
+
     return jsonFetch('/check-engine/garage/AddVehicle', {
       method: 'POST',
-      body: JSON.stringify({ vin: vin })
+      body: JSON.stringify(body)
     }).then(function (response) {
-      if (response.status === 401) {
-        var payload = getGuestPayload();
-        payload.vehicles = payload.vehicles || [];
-        var nextId = payload.vehicles.reduce(function (max, v) {
-          return Math.max(max, v.id || 0);
-        }, 0) + 1;
-        payload.vehicles.push({
-          id: nextId,
-          vin: vin,
-          label: 'VIN ' + vin,
-          isActive: payload.vehicles.length === 0
+      if (response.status === 409) {
+        return response.json().then(function (payload) {
+          var candidates = (payload && (payload.candidates || payload.Candidates)) || [];
+          if (!candidates.length) {
+            window.alert(TEXT.garageAddFailed);
+            return;
+          }
+          return showVinDisambiguationPicker(vin, candidates).then(function (selectedId) {
+            return addVehicleByVin(vin, selectedId);
+          });
         });
-        if (!payload.activeVehicleId) {
-          payload.activeVehicleId = nextId;
-        }
-        saveGuestPayload(payload);
-        return;
+      }
+      if (response.status === 401) {
+        return addGuestVehicleByVin(vin);
       }
       if (!response.ok) {
         window.alert(TEXT.garageAddFailed);
+      }
+    });
+  }
+
+  function addGuestVehicleByVin(vin, vehicleConfigurationId, label) {
+    function persistGuest(configId, displayLabel) {
+      var payload = getGuestPayload();
+      payload.vehicles = payload.vehicles || [];
+      var nextId = payload.vehicles.reduce(function (max, vehicle) {
+        return Math.max(max, vehicle.id || 0);
+      }, 0) + 1;
+      payload.vehicles.push({
+        id: nextId,
+        vin: vin,
+        vehicleConfigurationId: configId || null,
+        label: displayLabel || ('VIN ' + vin),
+        isActive: payload.vehicles.length === 0
+      });
+      if (!payload.activeVehicleId) {
+        payload.activeVehicleId = nextId;
+      }
+      saveGuestPayload(payload);
+    }
+
+    if (vehicleConfigurationId) {
+      persistGuest(vehicleConfigurationId, label);
+      return Promise.resolve();
+    }
+
+    return jsonFetch('/check-engine/vin/decode', {
+      method: 'POST',
+      body: JSON.stringify({ vin: vin })
+    }).then(function (response) {
+      if (!response.ok) {
+        persistGuest(null, 'VIN ' + vin);
+        return null;
+      }
+      return response.json();
+    }).then(function (decode) {
+      if (!decode) {
+        return;
+      }
+      var outcome = decode.outcome || decode.Outcome;
+      var candidates = (decode.candidates || decode.Candidates) || [];
+      if (outcome === 'NeedsDisambiguation' && candidates.length) {
+        return showVinDisambiguationPicker(vin, candidates).then(function (selectedId) {
+          var selected = null;
+          for (var i = 0; i < candidates.length; i++) {
+            var candidate = candidates[i];
+            var configId = candidate.vehicleConfigurationId || candidate.VehicleConfigurationId;
+            if (configId === selectedId) {
+              selected = candidate;
+              break;
+            }
+          }
+          var selectedLabel = selected && (selected.label || selected.Label);
+          return addGuestVehicleByVin(vin, selectedId, selectedLabel);
+        });
+      }
+      if (outcome === 'SingleMatch' && candidates.length === 1) {
+        var match = candidates[0];
+        persistGuest(
+          match.vehicleConfigurationId || match.VehicleConfigurationId,
+          match.label || match.Label || ('VIN ' + vin));
+        return;
+      }
+      persistGuest(null, 'VIN ' + vin);
+    }).catch(function () {
+      persistGuest(null, 'VIN ' + vin);
+    });
+  }
+
+  function closeVinDisambiguationModal() {
+    var modal = document.getElementById('ce-vin-disambiguation');
+    if (!modal) {
+      return;
+    }
+    modal.hidden = true;
+    document.documentElement.classList.remove('ce-modal-open');
+    var list = document.getElementById('ce-vin-disambiguation-list');
+    if (list) {
+      list.innerHTML = '';
+    }
+  }
+
+  function showVinDisambiguationPicker(vin, candidates) {
+    return new Promise(function (resolve, reject) {
+      var modal = document.getElementById('ce-vin-disambiguation');
+      var list = document.getElementById('ce-vin-disambiguation-list');
+      if (!modal || !list) {
+        reject(new Error('modal_missing'));
+        return;
+      }
+
+      list.innerHTML = '';
+      candidates.forEach(function (candidate) {
+        var configId = candidate.vehicleConfigurationId || candidate.VehicleConfigurationId;
+        var label = candidate.label || candidate.Label || ('#' + configId);
+        var year = candidate.modelYear || candidate.ModelYear;
+        var item = document.createElement('li');
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'ce-modal__option';
+        button.setAttribute('role', 'option');
+        button.innerHTML =
+          '<span class="ce-modal__option-label">' + escapeHtml(label) + '</span>' +
+          (year
+            ? '<span class="ce-modal__option-meta">' + escapeHtml(TEXT.garageVinDisambiguationYear) +
+              ' <span class="ce-code">' + escapeHtml(String(year)) + '</span></span>'
+            : '');
+        button.addEventListener('click', function () {
+          closeVinDisambiguationModal();
+          resolve(configId);
+        });
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+
+      modal.hidden = false;
+      document.documentElement.classList.add('ce-modal-open');
+      var first = list.querySelector('button');
+      if (first) {
+        first.focus();
+      }
+
+      modal._ceVinCancel = function () {
+        modal._ceVinCancel = null;
+        closeVinDisambiguationModal();
+        reject(new Error('cancelled'));
+      };
+      modal._ceVinResolve = resolve;
+    });
+  }
+
+  function bindVinDisambiguationModal() {
+    var modal = document.getElementById('ce-vin-disambiguation');
+    if (!modal || modal.dataset.ceBound === '1') {
+      return;
+    }
+    modal.dataset.ceBound = '1';
+    modal.querySelectorAll('[data-ce-vin-dismiss]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        if (typeof modal._ceVinCancel === 'function') {
+          modal._ceVinCancel();
+        } else {
+          closeVinDisambiguationModal();
+        }
+      });
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && modal && !modal.hidden) {
+        if (typeof modal._ceVinCancel === 'function') {
+          modal._ceVinCancel();
+        }
       }
     });
   }
@@ -1007,6 +1167,7 @@
     ensureGuestKey();
     bindSearch();
     bindGarage();
+    bindVinDisambiguationModal();
     bindHero();
     bindMegaMenu();
     populateVehicleSelector();

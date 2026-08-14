@@ -8,6 +8,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Observability;
 using TwinParticles.CheckEngine.Domain.Licensing;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine.Controllers;
@@ -78,5 +79,25 @@ public sealed class DiagnosticsAdminController : BasePluginController
             searchIndexHealthy = searchHealthy,
             redacted = true
         });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Activate([FromBody] LicenceActivateRequestModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+
+        var status = await _licenceService.ActivateAsync(model?.LicenceKey ?? string.Empty, cancellationToken);
+        return Json(status);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Heartbeat(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+
+        var status = await _licenceService.HeartbeatAsync(cancellationToken);
+        return Json(status);
     }
 }

@@ -8,6 +8,7 @@ using Nop.Services.Customers;
 using Nop.Web.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Garage;
+using TwinParticles.CheckEngine.Application.Vehicle.Admin;
 using TwinParticles.CheckEngine.Domain.Garage;
 using TwinParticles.CheckEngine.Models;
 
@@ -22,6 +23,7 @@ public sealed class GarageController : BasePublicController
     private readonly GarageService _garageService;
     private readonly GaragePrivacyService _privacyService;
     private readonly TwinParticles.CheckEngine.Application.Privacy.CheckEngineSubjectDataService _subjectDataService;
+    private readonly VehicleAdminService _vehicleAdminService;
     private readonly ICustomerService _customerService;
     private readonly IWorkContext _workContext;
 
@@ -29,12 +31,14 @@ public sealed class GarageController : BasePublicController
         GarageService garageService,
         GaragePrivacyService privacyService,
         TwinParticles.CheckEngine.Application.Privacy.CheckEngineSubjectDataService subjectDataService,
+        VehicleAdminService vehicleAdminService,
         ICustomerService customerService,
         IWorkContext workContext)
     {
         _garageService = garageService;
         _privacyService = privacyService;
         _subjectDataService = subjectDataService;
+        _vehicleAdminService = vehicleAdminService;
         _customerService = customerService;
         _workContext = workContext;
     }
@@ -66,10 +70,22 @@ public sealed class GarageController : BasePublicController
         }
         catch (GarageVinDisambiguationException exception)
         {
+            var labels = await _vehicleAdminService.GetConfigurationDisplayLabelsAsync(
+                exception.Candidates.Select(candidate => candidate.VehicleConfigurationId),
+                cancellationToken);
+
             return Conflict(new
             {
                 reasonCode = exception.Message,
-                candidates = exception.Candidates
+                candidates = exception.Candidates.Select(candidate => new
+                {
+                    vehicleConfigurationId = candidate.VehicleConfigurationId,
+                    confidence = candidate.Confidence.Value,
+                    modelYear = candidate.ModelYear,
+                    label = labels.TryGetValue(candidate.VehicleConfigurationId, out var label)
+                        ? label
+                        : $"Vehicle #{candidate.VehicleConfigurationId}"
+                })
             });
         }
     }

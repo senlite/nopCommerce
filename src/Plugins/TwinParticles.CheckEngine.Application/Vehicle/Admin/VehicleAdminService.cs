@@ -187,6 +187,49 @@ public sealed class VehicleAdminService
 
     public Task<VehicleSeedLoadResult> SeedAsync(CancellationToken cancellationToken) => _seedLoader.SeedAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<int, string>> GetConfigurationDisplayLabelsAsync(
+        IEnumerable<int> configurationIds,
+        CancellationToken cancellationToken)
+    {
+        var ids = configurationIds.Distinct().ToArray();
+        if (ids.Length == 0)
+            return new Dictionary<int, string>();
+
+        var labels = new Dictionary<int, string>();
+        foreach (var configurationId in ids)
+        {
+            var label = await GetConfigurationDisplayLabelAsync(configurationId, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(label))
+                labels[configurationId] = label;
+        }
+
+        return labels;
+    }
+
+    public async Task<string?> GetConfigurationDisplayLabelAsync(int configurationId, CancellationToken cancellationToken)
+    {
+        var configuration = await _repository.GetConfigurationByIdAsync(configurationId, cancellationToken);
+        if (configuration is null || !configuration.IsActive)
+            return null;
+
+        var generation = await _repository.GetGenerationByIdAsync(configuration.GenerationId, cancellationToken);
+        if (generation is null || !generation.IsActive)
+            return null;
+
+        var model = await _repository.GetModelByIdAsync(generation.ModelId, cancellationToken);
+        if (model is null || !model.IsActive)
+            return null;
+
+        var make = await _repository.GetMakeByIdAsync(model.MakeId, cancellationToken);
+        if (make is null || !make.IsActive)
+            return null;
+
+        return string.Join(
+            " ",
+            new[] { make.Name, model.Name, generation.Code, configuration.TrimName }
+                .Where(part => !string.IsNullOrWhiteSpace(part)));
+    }
+
     public async Task<VehicleLifecycleResult> ArchiveMakeAsync(
         int makeId,
         string actor,

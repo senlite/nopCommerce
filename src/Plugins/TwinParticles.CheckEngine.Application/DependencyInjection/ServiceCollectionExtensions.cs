@@ -78,6 +78,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILicenceService, DefaultLicenceService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<CheckEngineHealthService>();
+        services.AddScoped<CheckEngineLicenceGate>();
         services.AddScoped<CheckEngineUninstallExportService>();
 
         return services;

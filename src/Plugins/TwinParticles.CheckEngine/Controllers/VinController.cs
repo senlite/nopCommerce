@@ -1,8 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Web.Controllers;
+using TwinParticles.CheckEngine.Application.Vehicle.Admin;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
 using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Models;
@@ -12,12 +15,18 @@ namespace TwinParticles.CheckEngine.Controllers;
 public sealed class VinController : BasePublicController
 {
     private readonly VinDecodeApplicationService _decodeService;
+    private readonly VehicleAdminService _vehicleAdminService;
     private readonly IVinDecodeRateLimiter _rateLimiter;
     private readonly IWorkContext _workContext;
 
-    public VinController(VinDecodeApplicationService decodeService, IVinDecodeRateLimiter rateLimiter, IWorkContext workContext)
+    public VinController(
+        VinDecodeApplicationService decodeService,
+        VehicleAdminService vehicleAdminService,
+        IVinDecodeRateLimiter rateLimiter,
+        IWorkContext workContext)
     {
         _decodeService = decodeService;
+        _vehicleAdminService = vehicleAdminService;
         _rateLimiter = rateLimiter;
         _workContext = workContext;
     }
@@ -51,6 +60,31 @@ public sealed class VinController : BasePublicController
         }
 
         var result = await _decodeService.DecodeAsync(model.Vin, cancellationToken);
+        if (string.Equals(result.Outcome, "NeedsDisambiguation", StringComparison.Ordinal) && result.Candidates.Count > 0)
+        {
+            var labels = await _vehicleAdminService.GetConfigurationDisplayLabelsAsync(
+                result.Candidates.Select(candidate => candidate.VehicleConfigurationId),
+                cancellationToken);
+
+            return Json(new
+            {
+                result.Outcome,
+                result.NormalizedVin,
+                result.CheckDigitValid,
+                result.Wmi,
+                result.ReasonCode,
+                candidates = result.Candidates.Select(candidate => new
+                {
+                    vehicleConfigurationId = candidate.VehicleConfigurationId,
+                    confidence = candidate.Confidence.Value,
+                    modelYear = candidate.ModelYear,
+                    label = labels.TryGetValue(candidate.VehicleConfigurationId, out var label)
+                        ? label
+                        : $"Vehicle #{candidate.VehicleConfigurationId}"
+                })
+            });
+        }
+
         return Json(result);
     }
 }
