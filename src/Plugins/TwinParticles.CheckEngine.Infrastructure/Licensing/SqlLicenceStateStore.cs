@@ -24,7 +24,7 @@ public sealed class SqlLicenceStateStore : ILicenceStateStore
     public async Task<DateTimeOffset?> GetLastHeartbeatUtcAsync(CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<LicenceStateRow>(
-            "SELECT TOP 1 LastHeartbeatUtc FROM TP_CE_LicenceState ORDER BY Id");
+            "SELECT LastHeartbeatUtc FROM TP_CE_LicenceState ORDER BY Id");
 
         var value = rows.Select(row => row.LastHeartbeatUtc).FirstOrDefault();
         return value == default ? null : new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc));

@@ -27,6 +27,8 @@ public class LicenceReadOnlyContractTests
         filter.Should().Contain("Status403Forbidden");
         filter.Should().Contain("DiagnosticsAdminController");
         filter.Should().Contain("UninstallAdminController");
+        filter.Should().Contain("ADR-009");
+        filter.Should().Contain("Missing area = storefront");
         filter.Should().NotContain("BasePublicController");
     }
 
