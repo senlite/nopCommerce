@@ -11,23 +11,33 @@ using TwinParticles.CheckEngine.Domain.ImportPipeline;
 namespace TwinParticles.CheckEngine.Infrastructure.ImportPipeline;
 
 /// <summary>
-/// Best-effort PDF text extractor for simple text-based supplier PDFs.
-/// Binary/image-only PDFs return an empty row set (caller surfaces extraction failure).
+/// Best-effort PDF text extractor for simple text-based supplier PDFs, with optional OCR fallback
+/// for scanned/image PDFs when the operator configures an external OCR command (H1.20).
 /// </summary>
 public sealed class PdfImportExtractionParser : IImportExtractionParser
 {
+    private readonly IImportPdfOcrPort _ocrPort;
+
+    public PdfImportExtractionParser(IImportPdfOcrPort ocrPort)
+    {
+        _ocrPort = ocrPort;
+    }
+
     public bool CanParse(ImportSourceFormat format) => format == ImportSourceFormat.Pdf;
 
-    public Task<IReadOnlyList<ImportExtractedRow>> ParseAsync(ImportExtractionRequest request, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ImportExtractedRow>> ParseAsync(ImportExtractionRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         if (request.Content is null || request.Content.Length == 0)
-            return Task.FromResult<IReadOnlyList<ImportExtractedRow>>([]);
+            return [];
 
         var text = ExtractLatinText(request.Content);
         if (string.IsNullOrWhiteSpace(text))
-            return Task.FromResult<IReadOnlyList<ImportExtractedRow>>([]);
+            text = await _ocrPort.TryExtractTextAsync(request.Content, cancellationToken) ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
 
         // Prefer delimiter tables (comma/tab/pipe).
         var lines = text
@@ -36,15 +46,15 @@ public sealed class PdfImportExtractionParser : IImportExtractionParser
             .ToList();
 
         if (lines.Count < 2)
-            return Task.FromResult<IReadOnlyList<ImportExtractedRow>>([]);
+            return [];
 
         var delimiter = DetectDelimiter(lines[0]);
         if (delimiter is null)
-            return Task.FromResult<IReadOnlyList<ImportExtractedRow>>([]);
+            return [];
 
         var headers = Split(lines[0], delimiter.Value);
         if (headers.Count == 0)
-            return Task.FromResult<IReadOnlyList<ImportExtractedRow>>([]);
+            return [];
 
         var rows = new List<ImportExtractedRow>();
         var rowNumber = 1;
@@ -62,7 +72,7 @@ public sealed class PdfImportExtractionParser : IImportExtractionParser
             rows.Add(new ImportExtractedRow { RowNumber = rowNumber++, Fields = fields });
         }
 
-        return Task.FromResult<IReadOnlyList<ImportExtractedRow>>(rows);
+        return rows;
     }
 
     private static char? DetectDelimiter(string headerLine)

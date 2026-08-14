@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using TwinParticles.CheckEngine.Domain.Configuration;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Erp;
 using TwinParticles.CheckEngine.Domain.Fitment;
@@ -59,7 +62,19 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IImportExtractionParser, CsvImportExtractionParser>();
         services.AddSingleton<IImportExtractionParser, ExcelImportExtractionParser>();
-        services.AddSingleton<IImportExtractionParser, PdfImportExtractionParser>();
+        services.AddSingleton<IImportPdfOcrPort>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<CheckEngineSettings>>().Value;
+            var envCommand = Environment.GetEnvironmentVariable("CHECKENGINE_OCR_COMMAND");
+            var command = !string.IsNullOrWhiteSpace(envCommand) ? envCommand : settings.Import.OcrCommand;
+            var enabled = settings.Import.OcrEnabled || !string.IsNullOrWhiteSpace(envCommand);
+            if (enabled && !string.IsNullOrWhiteSpace(command))
+                return new ExternalProcessImportPdfOcrPort(command);
+
+            return NullImportPdfOcrPort.Instance;
+        });
+        services.AddSingleton<PdfImportExtractionParser>();
+        services.AddSingleton<IImportExtractionParser>(sp => sp.GetRequiredService<PdfImportExtractionParser>());
 
         services.AddSingleton<IFitmentCache, MemoryFitmentCache>();
         services.AddScoped<SqlFitmentClaimRepository>();
@@ -121,6 +136,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<InMemoryLicenceStateStore>();
         services.AddScoped<SqlLicenceStateStore>();
         services.AddScoped<ILicenceStateStore>(sp => sp.GetRequiredService<SqlLicenceStateStore>());
+        services.AddSingleton<ILicenceKeyValidator, HmacLicenceKeyValidator>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();
@@ -132,6 +148,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IErpSyncQueueRepository, SqlErpSyncQueueRepository>();
         services.AddSingleton<IErpClientAdapter, ErpNextHttpClientAdapter>();
         services.AddSingleton<IErpConflictResolutionService, DefaultErpConflictResolutionService>();
+        services.AddSingleton<IErpInboundWebhookValidator, HmacErpInboundWebhookValidator>();
         services.AddScoped<IErpReconciliationDataSource, NopErpReconciliationDataSource>();
 
         services.AddSingleton(_ => CheckEngineAiOptions.Current);

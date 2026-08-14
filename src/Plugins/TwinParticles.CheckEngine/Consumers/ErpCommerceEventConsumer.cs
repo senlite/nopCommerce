@@ -9,7 +9,7 @@ using Nop.Core.Domain.Shipping;
 using Nop.Core.Events;
 using Nop.Services.Events;
 using TwinParticles.CheckEngine.Application.Erp;
-using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Domain.Configuration;
 using TwinParticles.CheckEngine.Domain.Erp;
 
 namespace TwinParticles.CheckEngine.Consumers;

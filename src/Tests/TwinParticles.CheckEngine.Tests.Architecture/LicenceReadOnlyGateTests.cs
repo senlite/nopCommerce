@@ -69,7 +69,7 @@ public class LicenceReadOnlyGateTests
     {
         var now = new DateTimeOffset(2026, 8, 14, 12, 0, 0, TimeSpan.Zero);
         var store = new InMemoryLicenceStateStore();
-        var service = new DefaultLicenceService(store, new MutableClock(now));
+        var service = new DefaultLicenceService(store, new MutableClock(now), AcceptAllLegacyDevKeysValidator.Instance);
 
         var status = await service.ActivateAsync("demo-key", CancellationToken.None);
 
@@ -96,7 +96,17 @@ public class LicenceReadOnlyGateTests
             store.SetLastHeartbeatUtcAsync(heartbeatUtc.Value, CancellationToken.None).GetAwaiter().GetResult();
         }
 
-        return new DefaultLicenceService(store, clock);
+        return new DefaultLicenceService(store, clock, AcceptAllLegacyDevKeysValidator.Instance);
+    }
+
+    private sealed class AcceptAllLegacyDevKeysValidator : ILicenceKeyValidator
+    {
+        public static AcceptAllLegacyDevKeysValidator Instance { get; } = new();
+
+        public LicenceKeyValidationResult Validate(string licenceKey)
+            => string.IsNullOrWhiteSpace(licenceKey)
+                ? new LicenceKeyValidationResult { IsValid = false, ReasonCode = "licence.invalid_key" }
+                : new LicenceKeyValidationResult { IsValid = true };
     }
 
     private sealed class InMemoryLicenceStateStore : ILicenceStateStore

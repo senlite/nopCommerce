@@ -20,6 +20,7 @@
   <ItemGroup>
     <PackageReference Include="FluentMigrator.Extensions.SqlServer" Version="7.1.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
   </ItemGroup>
 

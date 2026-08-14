@@ -32,3 +32,13 @@ public sealed class ImageBatchReplaceItemModel
 
     public string? AltTextAr { get; set; }
 }
+
+public sealed class ImageSupplierManifestRequestModel
+{
+    public string CsvContent { get; set; } = string.Empty;
+}
+
+public sealed class ImageSupplierTemplateRequestModel
+{
+    public List<string> Skus { get; set; } = [];
+}

@@ -10,11 +10,16 @@ public sealed class DefaultLicenceService : ILicenceService
 {
     private readonly ICheckEngineClock _clock;
     private readonly ILicenceStateStore _stateStore;
+    private readonly ILicenceKeyValidator _licenceKeyValidator;
 
-    public DefaultLicenceService(ILicenceStateStore stateStore, ICheckEngineClock clock)
+    public DefaultLicenceService(
+        ILicenceStateStore stateStore,
+        ICheckEngineClock clock,
+        ILicenceKeyValidator licenceKeyValidator)
     {
         _stateStore = stateStore;
         _clock = clock;
+        _licenceKeyValidator = licenceKeyValidator;
     }
 
     public async Task<LicenceStatus> GetStatusAsync(CancellationToken cancellationToken)
@@ -33,6 +38,18 @@ public sealed class DefaultLicenceService : ILicenceService
                 State = "invalid",
                 AllowsAdminWrite = false,
                 ReasonCode = "licence.invalid_key"
+            };
+        }
+
+        var validation = _licenceKeyValidator.Validate(licenceKey);
+        if (!validation.IsValid)
+        {
+            return new LicenceStatus
+            {
+                IsActive = false,
+                State = "invalid",
+                AllowsAdminWrite = false,
+                ReasonCode = validation.ReasonCode ?? "licence.invalid_key"
             };
         }
 

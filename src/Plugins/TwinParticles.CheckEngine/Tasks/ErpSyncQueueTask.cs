@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Nop.Services.ScheduleTasks;
 using TwinParticles.CheckEngine.Application.Erp;
-using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Domain.Configuration;
 
 namespace TwinParticles.CheckEngine.Tasks;
 
