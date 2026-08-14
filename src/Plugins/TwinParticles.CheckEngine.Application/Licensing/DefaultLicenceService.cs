@@ -20,13 +20,7 @@ public sealed class DefaultLicenceService : ILicenceService
     public async Task<LicenceStatus> GetStatusAsync(CancellationToken cancellationToken)
     {
         var lastHeartbeatUtc = await _stateStore.GetLastHeartbeatUtcAsync(cancellationToken);
-        return new LicenceStatus
-        {
-            IsActive = lastHeartbeatUtc.HasValue,
-            State = lastHeartbeatUtc.HasValue ? "active" : "inactive",
-            LastHeartbeatUtc = lastHeartbeatUtc,
-            ReasonCode = lastHeartbeatUtc.HasValue ? null : "licence.not_activated"
-        };
+        return BuildStatus(lastHeartbeatUtc);
     }
 
     public async Task<LicenceStatus> ActivateAsync(string licenceKey, CancellationToken cancellationToken)
@@ -37,6 +31,7 @@ public sealed class DefaultLicenceService : ILicenceService
             {
                 IsActive = false,
                 State = "invalid",
+                AllowsAdminWrite = false,
                 ReasonCode = "licence.invalid_key"
             };
         }
@@ -49,5 +44,40 @@ public sealed class DefaultLicenceService : ILicenceService
     {
         await _stateStore.SetLastHeartbeatUtcAsync(_clock.UtcNow, cancellationToken);
         return await GetStatusAsync(cancellationToken);
+    }
+
+    private LicenceStatus BuildStatus(DateTimeOffset? lastHeartbeatUtc)
+    {
+        if (!lastHeartbeatUtc.HasValue)
+        {
+            return new LicenceStatus
+            {
+                IsActive = false,
+                State = "inactive",
+                AllowsAdminWrite = false,
+                ReasonCode = "licence.not_activated"
+            };
+        }
+
+        var age = _clock.UtcNow - lastHeartbeatUtc.Value;
+        if (age <= CheckEngineLicenceGate.GracePeriod)
+        {
+            return new LicenceStatus
+            {
+                IsActive = true,
+                State = "active",
+                LastHeartbeatUtc = lastHeartbeatUtc,
+                AllowsAdminWrite = true
+            };
+        }
+
+        return new LicenceStatus
+        {
+            IsActive = false,
+            State = "read_only",
+            LastHeartbeatUtc = lastHeartbeatUtc,
+            AllowsAdminWrite = false,
+            ReasonCode = "licence.grace_expired"
+        };
     }
 }

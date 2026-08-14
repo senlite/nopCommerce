@@ -144,6 +144,23 @@ else if (zone == "header_after")
             </form>
         </div>
 
+        <div id="ce-vin-disambiguation"
+             class="ce-modal"
+             hidden
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="ce-vin-disambiguation-title">
+            <button type="button" class="ce-modal__backdrop" data-ce-vin-dismiss tabindex="-1" aria-hidden="true"></button>
+            <div class="ce-modal__panel" role="document">
+                <h2 id="ce-vin-disambiguation-title" class="ce-modal__title">@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Title")</h2>
+                <p class="ce-modal__lead">@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Lead")</p>
+                <ul id="ce-vin-disambiguation-list" class="ce-modal__options" role="listbox"></ul>
+                <div class="ce-modal__actions">
+                    <button type="button" class="ce-btn ce-btn--quiet" data-ce-vin-dismiss>@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Cancel")</button>
+                </div>
+            </div>
+        </div>
+
         @* Localised copy for the client script, so no user-facing string is hardcoded in JS. *@
         <script type="application/json" id="ce-i18n">
             {
@@ -153,6 +170,10 @@ else if (zone == "header_after")
                 "garageAdd": "@T("Plugins.TwinParticles.CheckEngine.Garage.AddVehicle")",
                 "garageVinPrompt": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinPrompt")",
                 "garageAddFailed": "@T("Plugins.TwinParticles.CheckEngine.Garage.AddFailed")",
+                "garageVinDisambiguationTitle": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Title")",
+                "garageVinDisambiguationLead": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Lead")",
+                "garageVinDisambiguationCancel": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Cancel")",
+                "garageVinDisambiguationYear": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Year")",
                 "searchEmptyTitle": "@T("Plugins.TwinParticles.CheckEngine.Search.Empty.Title")",
                 "searchEmptyHint": "@T("Plugins.TwinParticles.CheckEngine.Search.Empty.Hint")",
                 "searchUnavailable": "@T("Plugins.TwinParticles.CheckEngine.Search.Unavailable")",

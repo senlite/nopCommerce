@@ -74,7 +74,7 @@ public class GaragePrivacyContractTests
         service.Should().NotContain("resolvedConfigurationId ??= decode.Candidates[0]");
         controller.Should().Contain("GarageVinDisambiguationException");
         controller.Should().Contain("return Conflict");
-        controller.Should().Contain("candidates = exception.Candidates");
+        controller.Should().Contain("candidates = exception.Candidates.Select");
     }
 
     private static string ReadPluginFile(string project, params string[] relativePath)

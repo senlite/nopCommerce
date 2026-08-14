@@ -60,6 +60,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     public Task<IList<string>> GetWidgetZonesAsync()
     {
         return Task.FromResult<IList<string>>([
+            AdminWidgetZones.PluginListButtons,
             PublicWidgetZones.HeaderAfter,
             PublicWidgetZones.HeaderMenuAfter,
             PublicWidgetZones.BodyStartHtmlTagAfter,
@@ -70,6 +71,9 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
     public Type GetWidgetViewComponent(string widgetZone)
     {
+        if (widgetZone.Equals(AdminWidgetZones.PluginListButtons, StringComparison.OrdinalIgnoreCase))
+            return typeof(Components.UninstallPreparationViewComponent);
+
         return typeof(Components.CheckEngineThemeChromeViewComponent);
     }
 
@@ -113,6 +117,10 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Garage.VehicleSelector"] = "Choose the vehicle to check parts against",
             ["Plugins.TwinParticles.CheckEngine.Garage.VinPrompt"] = "Enter a VIN to add a vehicle",
             ["Plugins.TwinParticles.CheckEngine.Garage.AddFailed"] = "Unable to add that vehicle.",
+            ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Title"] = "Which vehicle is this?",
+            ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Lead"] = "This VIN matches more than one vehicle configuration. Choose the one that matches your car.",
+            ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Cancel"] = "Cancel",
+            ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Year"] = "Model year",
             ["Plugins.TwinParticles.CheckEngine.Search.Label"] = "Search parts, OEM number, or VIN",
             ["Plugins.TwinParticles.CheckEngine.Search.Placeholder"] = "Search parts, OEM, or VIN",
             ["Plugins.TwinParticles.CheckEngine.Search.Submit"] = "Search",
@@ -165,7 +173,16 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.L10n.Preview"] = "Localization preview",
             ["Plugins.TwinParticles.CheckEngine.Licence.Status"] = "Licence status",
             ["Plugins.TwinParticles.CheckEngine.Licence.LastHeartbeat"] = "Last heartbeat",
-            ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "Activation key"
+            ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "Activation key",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.Warning"] = "Uninstall permanently deletes Check Engine vehicle, OEM, fitment, garage, analytics, audit and integration data.",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportRequired"] = "Download a fresh export before uninstalling. Uninstall is blocked unless an export was prepared within the last 24 hours.",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportPrepared"] = "A fresh export is on file. You may proceed with uninstall until it expires.",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportExpired"] = "The last export has expired. Download a new export before uninstalling.",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportAction"] = "Download uninstall export",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmTitle"] = "Uninstall Check Engine?",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmBody"] = "This removes every Check Engine table, setting, locale resource and schedule task. Host catalog orders are kept, but vehicle, OEM and fitment data are destroyed.",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmProceed"] = "Proceed with uninstall",
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmCancel"] = "Cancel"
         };
 
         // English is the safe default for every installed language. Arabic-specific values then
@@ -199,6 +216,10 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Garage.VehicleSelector"] = "اختر السيارة للتحقق من توافق القطع",
         ["Plugins.TwinParticles.CheckEngine.Garage.VinPrompt"] = "أدخل رقم الهيكل لإضافة سيارة",
         ["Plugins.TwinParticles.CheckEngine.Garage.AddFailed"] = "تعذرت إضافة هذه السيارة.",
+        ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Title"] = "أي سيارة هي هذه؟",
+        ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Lead"] = "رقم الهيكل يطابق أكثر من إعداد للسيارة. اختر الإعداد الذي يطابق سيارتك.",
+        ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Cancel"] = "إلغاء",
+        ["Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Year"] = "سنة الموديل",
         ["Plugins.TwinParticles.CheckEngine.Search.Label"] = "ابحث عن قطعة أو رقم OEM أو رقم هيكل",
         ["Plugins.TwinParticles.CheckEngine.Search.Placeholder"] = "ابحث عن قطعة أو OEM أو VIN",
         ["Plugins.TwinParticles.CheckEngine.Search.Submit"] = "بحث",
@@ -251,7 +272,16 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.L10n.Preview"] = "معاينة الترجمة",
         ["Plugins.TwinParticles.CheckEngine.Licence.Status"] = "حالة الترخيص",
         ["Plugins.TwinParticles.CheckEngine.Licence.LastHeartbeat"] = "آخر تحقق",
-        ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "مفتاح التفعيل"
+        ["Plugins.TwinParticles.CheckEngine.Licence.ActivationKey"] = "مفتاح التفعيل",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.Warning"] = "يزيل إلغاء التثبيت نهائياً بيانات المركبات وOEM والتوافق والمرآب والتحليلات والتدقيق والتكامل الخاصة بتوافق قطع السيارات.",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportRequired"] = "نزّل تصديراً حديثاً قبل إلغاء التثبيت. يُحظر الإلغاء ما لم يُجهَّز التصدير خلال آخر 24 ساعة.",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportPrepared"] = "يوجد تصدير حديث. يمكنك متابعة إلغاء التثبيت حتى انتهاء صلاحيته.",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportExpired"] = "انتهت صلاحية آخر تصدير. نزّل تصديراً جديداً قبل إلغاء التثبيت.",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ExportAction"] = "تنزيل تصدير إلغاء التثبيت",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmTitle"] = "إلغاء تثبيت توافق قطع السيارات؟",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmBody"] = "سيؤدي ذلك إلى إزالة كل جداول وإعدادات وموارد وجداول المهام الخاصة بتوافق قطع السيارات. تبقى طلبات الكتالوج الأساسية، لكن بيانات المركبات وOEM والتوافق تُحذف.",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmProceed"] = "متابعة إلغاء التثبيت",
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmCancel"] = "إلغاء"
     };
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)

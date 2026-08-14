@@ -103,7 +103,9 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<ILocaleFormattingService, DefaultLocaleFormattingService>();
 
-        services.AddSingleton<ILicenceStateStore, InMemoryLicenceStateStore>();
+        services.AddSingleton<InMemoryLicenceStateStore>();
+        services.AddScoped<SqlLicenceStateStore>();
+        services.AddScoped<ILicenceStateStore>(sp => sp.GetRequiredService<SqlLicenceStateStore>());
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();

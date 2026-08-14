@@ -64,6 +64,29 @@ public class UninstallExportContractTests
         controller.Should().Contain("expiresUtc");
     }
 
+    [Test]
+    public void Uninstall_Should_Integrate_With_Plugin_List_And_Configure_Surfaces()
+    {
+        var plugin = ReadPluginFile("TwinParticles.CheckEngine", "CheckEnginePlugin.cs");
+        var component = ReadPluginFile(
+            "TwinParticles.CheckEngine", "Components", "UninstallPreparationViewComponent.cs");
+        var view = ReadPluginFile(
+            "TwinParticles.CheckEngine", "Views", "Shared", "Components", "UninstallPreparation", "Default.cshtml");
+        var configure = ReadPluginFile("TwinParticles.CheckEngine", "Views", "Configure.cshtml");
+        var dashboard = ReadPluginFile("TwinParticles.CheckEngine", "Views", "Admin", "Dashboard.cshtml");
+
+        plugin.Should().Contain("AdminWidgetZones.PluginListButtons");
+        plugin.Should().Contain("typeof(Components.UninstallPreparationViewComponent)");
+        component.Should().Contain("CheckEnginePermissionProvider.ManageCheckEngine");
+        component.Should().Contain("UninstallPreparationModel");
+        view.Should().Contain("ce-uninstall-confirm-modal");
+        view.Should().Contain("uninstall-plugin-link-");
+        view.Should().Contain("TwinParticles.CheckEngine");
+        configure.Should().Contain("UninstallPreparationViewComponent");
+        dashboard.Should().Contain("UninstallPreparationViewComponent");
+        plugin.Should().Contain("Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmTitle");
+    }
+
     private static string ReadPluginFile(string project, params string[] relativePath)
     {
         for (var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
