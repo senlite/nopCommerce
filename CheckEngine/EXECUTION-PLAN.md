@@ -237,13 +237,13 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H2.1 | Complete multi-provider AI abstraction | partial | OpenAI-compatible, Azure OpenAI, and Anthropic adapters route through `AiCompletionProviderRouter`; gate is the single `IAiCompletionPort` |
-| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | SQL usage ledger default; gate enforces ceilings; `AiAdmin/AcknowledgeDisclosure` records operator acknowledgement |
-| H2.3 | Parse natural language into structured vehicle/part intent | partial | `NaturalLanguageIntentParser` returns structured `SearchIntent`; outbound prompts redact full VINs |
+| H2.1 | Complete multi-provider AI abstraction | partial | OpenAI-compatible, Azure OpenAI, and Anthropic adapters route through `AiCompletionProviderRouter`; gate wraps cached router |
+| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | SQL usage ledger default; gate enforces ceilings; admin configure + persisted disclosure acknowledgement |
+| H2.3 | Parse natural language into structured vehicle/part intent | partial | `NaturalLanguageIntentParser` uses versioned prompt store; outbound prompts redact full VINs |
 | H2.4 | Implement vector/semantic bilingual search | partial | Semantic index plus `BilingualSearchSynonymService` expands Arabic queries; AR embedding documents in the in-memory catalog |
 | H2.5 | Pass the published natural-language/semantic accuracy benchmark | partial | `nl-benchmark-queries.json` includes EN + AR queries with recall@5 gate |
-| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | `AiAdmin/Queue` + `Review` + ReviewBoard UI; candidates stay unpublished until approve |
-| H2.7 | Enforce the controlled automotive translation glossary | partial | `AutomotiveGlossaryService` injects glossary into translation prompts and validates output terms |
+| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Review board applies approved candidates to nopCommerce product fields via `NopAiContentApplicator` |
+| H2.7 | Enforce the controlled automotive translation glossary | partial | `AutomotiveGlossaryService` injects glossary into versioned translation prompts and validates output terms |
 | H2.8 | Complete reviewable AI fitment candidate workflow | partial | `FitmentAdmin/AiQueue` lists AI claims; approve promotes provenance to curator manual |
 | H2.9 | Productionize fitment-constrained recommendations | partial | Fitment-only results, category affinity vs seed product, no customer-id inputs; PDP rail |
 | H2.10 | Build the grounded customer assistant | partial | Storefront assistant widget + VIN-redacted grounded answers from catalog context |

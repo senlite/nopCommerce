@@ -11,4 +11,7 @@ public sealed class AiCompletionRequest
     public int MaxTokens { get; init; } = 512;
 
     public double Temperature { get; init; } = 0.2;
+
+    /// <summary>When true, bypass the response cache (admin regenerate).</summary>
+    public bool BypassCache { get; init; }
 }

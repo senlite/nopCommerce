@@ -14,17 +14,20 @@ public sealed class ImportTranslationHookService
     private readonly IAiFeatureToggle? _featureToggle;
     private readonly AutomotiveGlossaryService _glossaryService;
     private readonly AiContentCandidateService? _contentCandidateService;
+    private readonly AiPromptResolver? _promptResolver;
 
     public ImportTranslationHookService(
         AutomotiveGlossaryService glossaryService,
         IAiCompletionPort? aiCompletionPort = null,
         IAiFeatureToggle? featureToggle = null,
-        AiContentCandidateService? contentCandidateService = null)
+        AiContentCandidateService? contentCandidateService = null,
+        AiPromptResolver? promptResolver = null)
     {
         _glossaryService = glossaryService;
         _aiCompletionPort = aiCompletionPort;
         _featureToggle = featureToggle;
         _contentCandidateService = contentCandidateService;
+        _promptResolver = promptResolver;
     }
 
     public void Apply(IReadOnlyList<ImportPipelineRowState> rows, bool enabled)
@@ -52,7 +55,13 @@ public sealed class ImportTranslationHookService
         foreach (var row in rows)
         {
             row.Fields.TryGetValue("name", out var name);
-            var prompt = _glossaryService.BuildTranslationPromptAsync(name ?? string.Empty, "ar", default)
+            var glossaryContext = _glossaryService.BuildGlossaryPromptSection();
+            var prompt = _promptResolver?.Format(AiFeatureKeys.ImportTranslation, new Dictionary<string, string?>
+            {
+                ["sourceText"] = name ?? string.Empty,
+                ["targetLocale"] = "ar",
+                ["glossaryContext"] = glossaryContext
+            }) ?? _glossaryService.BuildTranslationPromptAsync(name ?? string.Empty, "ar", default)
                 .GetAwaiter().GetResult();
 
             var result = _aiCompletionPort.CompleteAsync(new AiCompletionRequest

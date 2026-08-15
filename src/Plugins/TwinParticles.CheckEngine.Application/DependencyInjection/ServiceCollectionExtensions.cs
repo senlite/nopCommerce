@@ -78,6 +78,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<AutomotiveGlossaryService>();
         services.AddScoped<AiContentCandidateService>();
+        services.AddScoped<AiPromptResolver>();
         services.AddScoped<NaturalLanguageIntentParser>();
         services.AddScoped<FitmentInferenceService>();
         services.AddSingleton<BilingualSearchSynonymService>();

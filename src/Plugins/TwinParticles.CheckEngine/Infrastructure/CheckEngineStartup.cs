@@ -26,7 +26,7 @@ public sealed class CheckEngineStartup : INopStartup
 
         services.AddSingleton<AiCompletionGateService>(sp =>
             new AiCompletionGateService(
-                sp.GetRequiredService<AiCompletionProviderRouter>(),
+                sp.GetRequiredService<CachingAiCompletionPort>(),
                 sp.GetService<IAiFeatureToggle>(),
                 sp.GetService<IAiUsageLedger>(),
                 sp.GetService<IAiSpendPolicy>()));

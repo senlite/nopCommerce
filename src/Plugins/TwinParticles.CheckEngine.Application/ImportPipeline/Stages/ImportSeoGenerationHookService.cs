@@ -10,15 +10,18 @@ public sealed class ImportSeoGenerationHookService
     private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly IAiFeatureToggle? _featureToggle;
     private readonly AiContentCandidateService? _contentCandidateService;
+    private readonly AiPromptResolver? _promptResolver;
 
     public ImportSeoGenerationHookService(
         IAiCompletionPort? aiCompletionPort = null,
         IAiFeatureToggle? featureToggle = null,
-        AiContentCandidateService? contentCandidateService = null)
+        AiContentCandidateService? contentCandidateService = null,
+        AiPromptResolver? promptResolver = null)
     {
         _aiCompletionPort = aiCompletionPort;
         _featureToggle = featureToggle;
         _contentCandidateService = contentCandidateService;
+        _promptResolver = promptResolver;
     }
 
     public void Apply(IReadOnlyList<ImportPipelineRowState> rows, bool enabled)
@@ -46,11 +49,16 @@ public sealed class ImportSeoGenerationHookService
         foreach (var row in rows)
         {
             row.Fields.TryGetValue("name", out var name);
+            var prompt = _promptResolver?.Format(AiFeatureKeys.ImportSeo, new Dictionary<string, string?>
+            {
+                ["name"] = name
+            }) ?? $"Generate SEO title and meta description for: {name}";
+
             var result = _aiCompletionPort.CompleteAsync(new AiCompletionRequest
             {
                 FeatureKey = AiFeatureKeys.ImportSeo,
                 PromptKey = AiFeatureKeys.ImportSeo,
-                Prompt = $"Generate SEO title and meta description for: {name}"
+                Prompt = prompt
             }, default).GetAwaiter().GetResult();
 
             if (!result.Success)

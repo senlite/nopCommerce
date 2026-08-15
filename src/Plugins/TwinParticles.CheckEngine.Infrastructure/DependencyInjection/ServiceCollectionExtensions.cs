@@ -156,6 +156,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AzureOpenAiCompletionPort>();
         services.AddSingleton<AnthropicCompletionPort>();
         services.AddSingleton<AiCompletionProviderRouter>();
+        services.AddSingleton<IAiCompletionCache, MemoryAiCompletionCache>();
+        services.AddSingleton<CachingAiCompletionPort>(sp => new CachingAiCompletionPort(
+            sp.GetRequiredService<AiCompletionProviderRouter>(),
+            sp.GetService<IAiCompletionCache>(),
+            sp.GetRequiredService<CheckEngineAiOptions>()));
         services.AddSingleton<IAiSpendPolicy, SettingsAiSpendPolicy>();
         services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
         services.AddSingleton<OpenAiCompatibleEmbeddingPort>();
@@ -163,11 +168,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AiEmbeddingProviderRouter>();
         services.AddSingleton<IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingProviderRouter>());
         services.AddSingleton<IAiDisclosureAcknowledgement, SettingsAiDisclosureAcknowledgement>();
+        services.AddSingleton<IAiPromptStore, EmbeddedAiPromptStore>();
         services.AddScoped<ISearchEmbeddingIndex, SqlSearchEmbeddingIndex>();
         services.AddScoped<ISearchEmbeddingCatalogSource, SqlSearchEmbeddingCatalogSource>();
         services.AddSingleton<IAiUsageLedger, SqlAiUsageLedger>();
         services.AddSingleton<IAiDataDisclosureCatalog, DefaultAiDataDisclosureCatalog>();
         services.AddScoped<IAiGenerationRepository, SqlAiGenerationRepository>();
+        services.AddScoped<IAiContentApplicator, NopAiContentApplicator>();
         services.AddScoped<ICheckEngineDatabaseHealthProbe, NopDataProviderDatabaseHealthProbe>();
 
         return services;

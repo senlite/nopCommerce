@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Services.Configuration;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Ai;
+using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
@@ -22,6 +24,8 @@ public sealed class AiAdminController : BasePluginController
     private readonly IAiSpendPolicy _spendPolicy;
     private readonly AiContentCandidateService _contentCandidateService;
     private readonly AiDisclosureService _disclosureService;
+    private readonly IAiGenerationRepository _generationRepository;
+    private readonly ISettingService _settingService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
     public AiAdminController(
@@ -30,6 +34,8 @@ public sealed class AiAdminController : BasePluginController
         IAiSpendPolicy spendPolicy,
         AiContentCandidateService contentCandidateService,
         AiDisclosureService disclosureService,
+        IAiGenerationRepository generationRepository,
+        ISettingService settingService,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _usageLedger = usageLedger;
@@ -37,6 +43,8 @@ public sealed class AiAdminController : BasePluginController
         _spendPolicy = spendPolicy;
         _contentCandidateService = contentCandidateService;
         _disclosureService = disclosureService;
+        _generationRepository = generationRepository;
+        _settingService = settingService;
         _permissionService = permissionService;
     }
 
@@ -81,7 +89,14 @@ public sealed class AiAdminController : BasePluginController
     public async Task<IActionResult> AcknowledgeDisclosure(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        return Json(new { acknowledged = _disclosureService.Acknowledge() });
+
+        var acknowledged = _disclosureService.Acknowledge();
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        settings.AiDisclosureAcknowledged = acknowledged;
+        await _settingService.SaveSettingAsync(settings);
+        CheckEngineAiSettingsSync.Apply(settings);
+
+        return Json(new { acknowledged });
     }
 
     [HttpGet]
@@ -107,5 +122,43 @@ public sealed class AiAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/AiReview.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var features = new[]
+        {
+            AiFeatureKeys.ImportEnrichment,
+            AiFeatureKeys.ImportTranslation,
+            AiFeatureKeys.ImportSeo,
+            AiFeatureKeys.SearchNaturalLanguage,
+            AiFeatureKeys.SearchSemantic,
+            AiFeatureKeys.FitmentInference,
+            AiFeatureKeys.CustomerAssistant
+        };
+
+        var usage = new List<object>();
+        foreach (var featureKey in features)
+        {
+            var daily = await _usageLedger.GetDailyUsageAsync(featureKey, cancellationToken);
+            usage.Add(new
+            {
+                featureKey,
+                dailyUsage = daily,
+                dailyCeiling = _spendPolicy.ResolveDailyCeiling(featureKey)
+            });
+        }
+
+        var pendingContent = await _generationRepository.GetPendingQueueAsync(200, cancellationToken);
+
+        return Json(new
+        {
+            disclosureAcknowledged = _spendPolicy.DisclosureAcknowledged,
+            usage,
+            pendingContentCount = pendingContent.Count
+        });
     }
 }

@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Search;
 
@@ -15,10 +16,14 @@ public sealed class NaturalLanguageIntentParser
     private static readonly Regex YearRegex = new(@"\b(19|20)\d{2}\b", RegexOptions.Compiled);
 
     private readonly IAiCompletionPort? _aiCompletionPort;
+    private readonly AiPromptResolver? _promptResolver;
 
-    public NaturalLanguageIntentParser(IAiCompletionPort? aiCompletionPort = null)
+    public NaturalLanguageIntentParser(
+        IAiCompletionPort? aiCompletionPort = null,
+        AiPromptResolver? promptResolver = null)
     {
         _aiCompletionPort = aiCompletionPort;
+        _promptResolver = promptResolver;
     }
 
     public async Task<SearchIntent> ParseAsync(string queryText, string locale, CancellationToken cancellationToken)
@@ -43,15 +48,22 @@ public sealed class NaturalLanguageIntentParser
     {
         try
         {
+            var redacted = AiPromptPrivacy.RedactVins(text);
+            var prompt = _promptResolver?.Format(AiFeatureKeys.SearchNaturalLanguage, new Dictionary<string, string?>
+            {
+                ["locale"] = locale,
+                ["query"] = redacted
+            }) ?? $"""
+                Parse this automotive search query into JSON with keys:
+                partTerms (string array), make, model, modelYear (number or null), oemNumber, keywordFallback.
+                Return only JSON. Locale={locale}. Query: {redacted}
+                """;
+
             var result = await _aiCompletionPort!.CompleteAsync(new AiCompletionRequest
             {
                 FeatureKey = AiFeatureKeys.SearchNaturalLanguage,
                 PromptKey = AiFeatureKeys.SearchNaturalLanguage,
-                Prompt = $"""
-                    Parse this automotive search query into JSON with keys:
-                    partTerms (string array), make, model, modelYear (number or null), oemNumber, keywordFallback.
-                    Return only JSON. Locale={locale}. Query: {AiPromptPrivacy.RedactVins(text)}
-                    """,
+                Prompt = prompt,
                 MaxTokens = 160,
                 Temperature = 0
             }, cancellationToken);

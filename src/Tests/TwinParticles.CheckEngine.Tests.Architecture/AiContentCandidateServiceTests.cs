@@ -13,10 +13,11 @@ namespace TwinParticles.CheckEngine.Tests.Architecture;
 public class AiContentCandidateServiceTests
 {
     [Test]
-    public async Task ReviewAsync_Should_Approve_Pending_Candidate()
+    public async Task ReviewAsync_Should_Approve_And_Apply_Pending_Candidate()
     {
         var store = new InMemoryGenerationRepository();
-        var service = new AiContentCandidateService(store);
+        var applicator = new RecordingApplicator();
+        var service = new AiContentCandidateService(store, applicator);
 
         var id = await service.SaveCandidateAsync(
             AiGenerationEntityType.ProductDescription,
@@ -35,6 +36,8 @@ public class AiContentCandidateServiceTests
         reviewed.Should().BeTrue();
         stored!.ReviewStatus.Should().Be("approved");
         stored.IsPublished.Should().BeTrue();
+        applicator.Applied.Should().BeTrue();
+        applicator.LastCandidate!.OutputText.Should().Be("candidate text");
     }
 
     private sealed class InMemoryGenerationRepository : IAiGenerationRepository
@@ -74,6 +77,20 @@ public class AiContentCandidateServiceTests
             }
 
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class RecordingApplicator : IAiContentApplicator
+    {
+        public bool Applied { get; private set; }
+
+        public AiGenerationCandidate? LastCandidate { get; private set; }
+
+        public Task<AiContentApplyResult> ApplyAsync(AiGenerationCandidate candidate, CancellationToken cancellationToken)
+        {
+            Applied = true;
+            LastCandidate = candidate;
+            return Task.FromResult(AiContentApplyResult.Ok());
         }
     }
 }

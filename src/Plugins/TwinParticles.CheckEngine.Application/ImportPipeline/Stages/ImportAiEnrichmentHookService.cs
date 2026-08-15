@@ -13,15 +13,18 @@ public sealed class ImportAiEnrichmentHookService
     private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly IAiFeatureToggle? _featureToggle;
     private readonly AiContentCandidateService? _contentCandidateService;
+    private readonly AiPromptResolver? _promptResolver;
 
     public ImportAiEnrichmentHookService(
         IAiCompletionPort? aiCompletionPort = null,
         IAiFeatureToggle? featureToggle = null,
-        AiContentCandidateService? contentCandidateService = null)
+        AiContentCandidateService? contentCandidateService = null,
+        AiPromptResolver? promptResolver = null)
     {
         _aiCompletionPort = aiCompletionPort;
         _featureToggle = featureToggle;
         _contentCandidateService = contentCandidateService;
+        _promptResolver = promptResolver;
     }
 
     public void Apply(IReadOnlyList<ImportPipelineRowState> rows, bool enabled)
@@ -40,6 +43,12 @@ public sealed class ImportAiEnrichmentHookService
             row.Fields.TryGetValue("name", out var name);
             row.Fields.TryGetValue("oem", out var oem);
 
+            var prompt = _promptResolver?.Format(AiFeatureKeys.ImportEnrichment, new Dictionary<string, string?>
+            {
+                ["name"] = name,
+                ["oem"] = oem
+            }) ?? $"Enrich product description. Name={name}; Oem={oem}";
+
             AiCompletionResult result;
             try
             {
@@ -47,7 +56,7 @@ public sealed class ImportAiEnrichmentHookService
                 {
                     FeatureKey = AiFeatureKeys.ImportEnrichment,
                     PromptKey = AiFeatureKeys.ImportEnrichment,
-                    Prompt = $"Enrich product description. Name={name}; Oem={oem}",
+                    Prompt = prompt,
                     MaxTokens = 256
                 }, default).GetAwaiter().GetResult();
             }

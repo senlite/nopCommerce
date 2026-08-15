@@ -11,10 +11,14 @@ namespace TwinParticles.CheckEngine.Application.Ai;
 public sealed class AiContentCandidateService
 {
     private readonly IAiGenerationRepository? _generationRepository;
+    private readonly IAiContentApplicator? _contentApplicator;
 
-    public AiContentCandidateService(IAiGenerationRepository? generationRepository = null)
+    public AiContentCandidateService(
+        IAiGenerationRepository? generationRepository = null,
+        IAiContentApplicator? contentApplicator = null)
     {
         _generationRepository = generationRepository;
+        _contentApplicator = contentApplicator;
     }
 
     public async Task<int?> SaveCandidateAsync(
@@ -78,6 +82,14 @@ public sealed class AiContentCandidateService
             return false;
 
         await _generationRepository.MarkReviewedAsync(id, approved, reviewer, cancellationToken);
+
+        if (approved && _contentApplicator is not null)
+        {
+            var applyResult = await _contentApplicator.ApplyAsync(existing, cancellationToken);
+            if (!applyResult.Success)
+                return false;
+        }
+
         return true;
     }
 }

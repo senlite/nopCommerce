@@ -33,6 +33,8 @@ public sealed class CheckEngineAiOptions
 
     public string EmbeddingModel { get; set; } = "text-embedding-3-small";
 
+    public int ResponseCacheTtlMinutes { get; set; } = 60;
+
     public int ResolveDailyCeiling(string featureKey)
     {
         if (!string.IsNullOrWhiteSpace(featureKey)
