@@ -75,6 +75,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SeoLandingService>();
         services.AddScoped<TwinParticles.CheckEngine.Domain.Seo.ISeoLandingRegenerationTrigger, SeoLandingRegenerationTrigger>();
 
+        services.AddScoped<AutomotiveGlossaryService>();
+        services.AddScoped<AiContentCandidateService>();
+        services.AddScoped<NaturalLanguageIntentParser>();
+        services.AddScoped<FitmentInferenceService>();
+        services.AddScoped<CustomerAssistantService>();
+
         services.AddScoped<AiProposalService>();
 
         services.AddScoped<ILicenceService, DefaultLicenceService>();

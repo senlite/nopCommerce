@@ -2,6 +2,8 @@ namespace TwinParticles.CheckEngine.Domain.Ai;
 
 public sealed class AiCompletionRequest
 {
+    public string FeatureKey { get; init; } = string.Empty;
+
     public string PromptKey { get; init; } = string.Empty;
 
     public string Prompt { get; init; } = string.Empty;

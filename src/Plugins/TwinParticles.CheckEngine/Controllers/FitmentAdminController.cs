@@ -16,11 +16,16 @@ namespace TwinParticles.CheckEngine.Controllers;
 public sealed class FitmentAdminController : BasePluginController
 {
     private readonly FitmentReviewService _reviewService;
+    private readonly FitmentInferenceService _inferenceService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
-    public FitmentAdminController(FitmentReviewService reviewService, Nop.Services.Security.IPermissionService permissionService)
+    public FitmentAdminController(
+        FitmentReviewService reviewService,
+        FitmentInferenceService inferenceService,
+        Nop.Services.Security.IPermissionService permissionService)
     {
         _reviewService = reviewService;
+        _inferenceService = inferenceService;
         _permissionService = permissionService;
     }
 
@@ -47,5 +52,19 @@ public sealed class FitmentAdminController : BasePluginController
         if (!await AuthorizedAsync()) return AccessDeniedView();
         await _reviewService.RejectAsync(model.ClaimId, cancellationToken);
         return Ok();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Infer([FromBody] FitmentInferenceRequestModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var claim = await _inferenceService.InferCandidateAsync(
+            model.ProductId,
+            model.VehicleConfigurationId,
+            model.ProductName,
+            cancellationToken);
+
+        return claim is null ? BadRequest() : Json(claim);
     }
 }

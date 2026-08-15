@@ -54,6 +54,7 @@ public sealed class AiProposalService
 
         var result = await _aiCompletionPort.CompleteAsync(new AiCompletionRequest
         {
+            FeatureKey = featureKey,
             PromptKey = promptKey,
             Prompt = prompt
         }, cancellationToken);

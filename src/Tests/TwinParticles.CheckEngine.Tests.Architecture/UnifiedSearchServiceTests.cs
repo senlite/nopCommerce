@@ -143,7 +143,8 @@ public class UnifiedSearchServiceTests
             oemService,
             fitmentService,
             new FakeSearchIndexHealthService(indexHealthy),
-            new LowerNormalizer());
+            new LowerNormalizer(),
+            new NaturalLanguageIntentParser());
     }
 
     private sealed class LowerNormalizer : IBilingualSearchTextNormalizer

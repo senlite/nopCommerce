@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
-using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Search;
 
@@ -14,7 +13,7 @@ namespace TwinParticles.CheckEngine.Application.Search;
 
 public sealed class UnifiedSearchService
 {
-    private readonly IAiCompletionPort? _aiCompletionPort;
+    private readonly NaturalLanguageIntentParser _naturalLanguageIntentParser;
     private readonly IBilingualSearchTextNormalizer _bilingualNormalizer;
     private readonly FitmentEvaluationService _fitmentEvaluationService;
     private readonly OemResolveService _oemResolveService;
@@ -30,7 +29,7 @@ public sealed class UnifiedSearchService
         FitmentEvaluationService fitmentEvaluationService,
         ISearchIndexHealthService searchIndexHealthService,
         IBilingualSearchTextNormalizer bilingualNormalizer,
-        IAiCompletionPort? aiCompletionPort = null,
+        NaturalLanguageIntentParser naturalLanguageIntentParser,
         ISearchAnalyticsService? searchAnalyticsService = null)
     {
         _productSearchReadRepository = productSearchReadRepository;
@@ -39,7 +38,7 @@ public sealed class UnifiedSearchService
         _fitmentEvaluationService = fitmentEvaluationService;
         _searchIndexHealthService = searchIndexHealthService;
         _bilingualNormalizer = bilingualNormalizer;
-        _aiCompletionPort = aiCompletionPort;
+        _naturalLanguageIntentParser = naturalLanguageIntentParser;
         _searchAnalyticsService = searchAnalyticsService;
     }
 
@@ -57,21 +56,8 @@ public sealed class UnifiedSearchService
 
         if (mode == SearchMode.NaturalLanguage)
         {
-            var (keywords, succeeded) = await ExtractNaturalLanguageKeywordsAsync(normalizedText, cancellationToken);
-            if (succeeded)
-            {
-                hits = await _productSearchReadRepository.SearchKeywordAsync(
-                    CloneQuery(query, keywords, SearchMode.Keyword),
-                    cancellationToken);
-                modeUsed = SearchMode.NaturalLanguage;
-            }
-            else
-            {
-                hits = await _productSearchReadRepository.SearchKeywordAsync(
-                    CloneQuery(query, normalizedText, SearchMode.Keyword),
-                    cancellationToken);
-                modeUsed = SearchMode.Keyword;
-            }
+            hits = await SearchNaturalLanguageAsync(query, normalizedText, cancellationToken);
+            modeUsed = SearchMode.NaturalLanguage;
         }
         else
         {
@@ -187,33 +173,42 @@ public sealed class UnifiedSearchService
         if (oemResolved.Success)
             return SearchMode.Oem;
 
+        var wordCount = normalizedText.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+        if (wordCount >= 2)
+            return SearchMode.NaturalLanguage;
+
         return SearchMode.Keyword;
     }
 
-    private async Task<(string Keywords, bool Succeeded)> ExtractNaturalLanguageKeywordsAsync(string text, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<SearchHit>> SearchNaturalLanguageAsync(
+        SearchQuery query,
+        string normalizedText,
+        CancellationToken cancellationToken)
     {
-        if (_aiCompletionPort is null)
-            return (text, false);
+        var intent = await _naturalLanguageIntentParser.ParseAsync(normalizedText, query.Locale, cancellationToken);
 
-        try
+        if (intent.VehicleConfigurationId is > 0)
         {
-            var result = await _aiCompletionPort.CompleteAsync(new AiCompletionRequest
-            {
-                PromptKey = "search.natural_language",
-                Prompt = $"Extract plain search keywords from this automotive query. Return only keywords, no punctuation.\nQuery: {text}",
-                MaxTokens = 64,
-                Temperature = 0
-            }, cancellationToken);
-
-            if (!result.Success || string.IsNullOrWhiteSpace(result.Text))
-                return (text, false);
-
-            return (result.Text.Trim(), true);
+            return await _productSearchReadRepository.SearchByVehicleTreeAsync(
+                CloneQuery(query, string.Empty, SearchMode.VehicleTree, intent.VehicleConfigurationId),
+                cancellationToken);
         }
-        catch
+
+        if (!string.IsNullOrWhiteSpace(intent.OemNumber))
         {
-            return (text, false);
+            return await SearchOemAsync(query, intent.OemNumber, cancellationToken);
         }
+
+        var keywords = intent.PartTerms.Count > 0
+            ? string.Join(' ', intent.PartTerms)
+            : intent.KeywordFallback;
+
+        if (string.IsNullOrWhiteSpace(keywords))
+            keywords = normalizedText;
+
+        return await _productSearchReadRepository.SearchKeywordAsync(
+            CloneQuery(query, keywords, SearchMode.Keyword),
+            cancellationToken);
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchVinAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)

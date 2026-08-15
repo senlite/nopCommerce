@@ -47,7 +47,7 @@ internal static class SearchTestSupport
             fitmentService,
             new FakeSearchIndexHealthService(indexHealthy),
             new DefaultBilingualSearchTextNormalizer(),
-            aiCompletionPort: null,
+            new NaturalLanguageIntentParser(),
             searchAnalyticsService: analyticsService);
     }
 

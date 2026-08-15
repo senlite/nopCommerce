@@ -40,6 +40,15 @@ public sealed class FitmentReviewService
         if (claimId <= 0)
             throw new ArgumentException("Claim id must be positive.", nameof(claimId));
 
+        var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
+        if (claim is not null && claim.SourceKindIsAi())
+        {
+            claim.Provenance.SourceKind = FitmentSourceKind.CuratorManual;
+            claim.Provenance.SourceReference = "ai.review.promoted";
+            claim.Provenance.CreatedBy = actor;
+            await _writeRepository.UpsertAsync(claim, cancellationToken);
+        }
+
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Fits, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, true, cancellationToken);
 

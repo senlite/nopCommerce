@@ -55,7 +55,7 @@ public sealed class RecommendationService
         }
 
         var fitting = new List<SearchHit>();
-        foreach (var hit in hits)
+        foreach (var hit in hits.OrderByDescending(x => x.Score).ThenBy(x => x.ProductId))
         {
             var fitment = await _fitmentEvaluationService.EvaluateAsync(new FitmentEvaluationContext
             {
@@ -73,6 +73,6 @@ public sealed class RecommendationService
                 break;
         }
 
-        return fitting;
+        return fitting.OrderByDescending(x => x.Score).ThenBy(x => x.ProductId).ToList();
     }
 }

@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-14
+**Last updated:** 2026-08-15
 
 ## Status legend
 - `pending` = not started
@@ -237,16 +237,16 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H2.1 | Complete multi-provider AI abstraction | partial | OpenAI-compatible and Null ports exist; dedicated Azure OpenAI/Anthropic adapters do not |
-| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | Toggles and in-memory ledger exist; ceilings are not enforced across every call |
-| H2.3 | Parse natural language into structured vehicle/part intent | partial | Current flow extracts keywords or falls back to ordinary keyword search |
+| H2.1 | Complete multi-provider AI abstraction | partial | OpenAI-compatible, Azure OpenAI, and Anthropic adapters route through `AiCompletionProviderRouter`; gate is the single `IAiCompletionPort` |
+| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | `AiCompletionGateService` enforces toggles, disclosure acknowledgement, and daily ceilings with ledger recording on every call |
+| H2.3 | Parse natural language into structured vehicle/part intent | partial | `NaturalLanguageIntentParser` returns structured `SearchIntent`; Auto mode routes multi-word queries to NL lane |
 | H2.4 | Implement vector/semantic bilingual search | pending | No embedding model or vector index exists |
 | H2.5 | Pass the published natural-language/semantic accuracy benchmark | pending | Benchmark corpus and target evidence are absent |
-| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Hooks call an LLM but mostly set stage flags rather than durable candidate fields |
-| H2.7 | Enforce the controlled automotive translation glossary | pending | No glossary-backed generation/validation pipeline exists |
-| H2.8 | Complete reviewable AI fitment candidate workflow | partial | Proposal safety exists; complete operator workflow is absent |
-| H2.9 | Productionize fitment-constrained recommendations | partial | Rule-based recommendations exist; scale, ranking and quality gates do not |
-| H2.10 | Build the grounded customer assistant | pending | No assistant service or storefront experience exists |
+| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Import hooks persist `TP_CE_AiGeneration` candidates via `AiContentCandidateService`; admin `AiAdmin/Candidates` endpoint |
+| H2.7 | Enforce the controlled automotive translation glossary | partial | `AutomotiveGlossaryService` injects glossary into translation prompts and validates output terms |
+| H2.8 | Complete reviewable AI fitment candidate workflow | partial | `FitmentInferenceService` creates capped `AiInference` claims; approve promotes provenance to curator manual |
+| H2.9 | Productionize fitment-constrained recommendations | partial | Recommendations rank by search score and evaluate fitment in score order |
+| H2.10 | Build the grounded customer assistant | partial | `CustomerAssistantService` + public `Assistant/Ask` endpoint answer only from catalog context |
 
 ### Horizon 3 — Marketplace / v1.2 (`EP-22`–`EP-24`)
 

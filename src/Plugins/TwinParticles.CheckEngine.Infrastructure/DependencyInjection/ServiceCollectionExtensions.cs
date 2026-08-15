@@ -152,9 +152,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IErpReconciliationDataSource, NopErpReconciliationDataSource>();
 
         services.AddSingleton(_ => CheckEngineAiOptions.Current);
-        services.AddSingleton<IAiCompletionPort, OpenAiCompatibleCompletionPort>();
-        services.AddSingleton<IAiUsageLedger, InMemoryAiUsageLedger>();
+        services.AddSingleton<OpenAiCompatibleCompletionPort>();
+        services.AddSingleton<AzureOpenAiCompletionPort>();
+        services.AddSingleton<AnthropicCompletionPort>();
+        services.AddSingleton<AiCompletionProviderRouter>();
+        services.AddSingleton<IAiSpendPolicy, SettingsAiSpendPolicy>();
         services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
+        services.AddSingleton<IAiUsageLedger, InMemoryAiUsageLedger>();
+        services.AddSingleton<IAiDataDisclosureCatalog, DefaultAiDataDisclosureCatalog>();
+        services.AddScoped<IAiGenerationRepository, SqlAiGenerationRepository>();
         services.AddScoped<ICheckEngineDatabaseHealthProbe, NopDataProviderDatabaseHealthProbe>();
 
         return services;
