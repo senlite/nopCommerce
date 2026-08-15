@@ -83,4 +83,29 @@ public sealed class AiAdminController : BasePluginController
         if (!await AuthorizedAsync()) return AccessDeniedView();
         return Json(new { acknowledged = _disclosureService.Acknowledge() });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Queue(int take = 50, CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return Json(await _contentCandidateService.GetPendingQueueAsync(take, cancellationToken));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Review([FromBody] AiCandidateReviewModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (model is null || model.Id <= 0)
+            return BadRequest();
+
+        var ok = await _contentCandidateService.ReviewAsync(model.Id, model.Approved, "admin", cancellationToken);
+        return ok ? Ok() : NotFound();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ReviewBoard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/AiReview.cshtml");
+    }
 }

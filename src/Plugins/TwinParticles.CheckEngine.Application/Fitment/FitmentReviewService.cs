@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Fitment;
@@ -33,6 +34,12 @@ public sealed class FitmentReviewService
     public Task<IReadOnlyList<FitmentClaim>> GetQueueAsync(CancellationToken cancellationToken)
     {
         return _readRepository.GetReviewQueueAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<FitmentClaim>> GetAiQueueAsync(CancellationToken cancellationToken)
+    {
+        var queue = await _readRepository.GetReviewQueueAsync(cancellationToken);
+        return queue.Where(claim => claim.SourceKindIsAi()).ToList();
     }
 
     public async Task ApproveAsync(int claimId, CancellationToken cancellationToken, string actor = "system")

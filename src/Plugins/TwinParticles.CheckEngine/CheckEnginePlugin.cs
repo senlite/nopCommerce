@@ -182,7 +182,17 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmTitle"] = "Uninstall Check Engine?",
             ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmBody"] = "This removes every Check Engine table, setting, locale resource and schedule task. Host catalog orders are kept, but vehicle, OEM and fitment data are destroyed.",
             ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmProceed"] = "Proceed with uninstall",
-            ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmCancel"] = "Cancel"
+            ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmCancel"] = "Cancel",
+            ["Plugins.TwinParticles.CheckEngine.Ai.Review"] = "AI review queue",
+            ["Plugins.TwinParticles.CheckEngine.Ai.Review.Candidates"] = "Content candidates",
+            ["Plugins.TwinParticles.CheckEngine.Ai.Review.Hint"] = "Approve or reject AI-generated descriptions, translations, and SEO. Nothing publishes until a reviewer accepts it.",
+            ["Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment"] = "AI fitment candidates",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.Title"] = "Parts assistant",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.Placeholder"] = "Ask about a part in your catalog…",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.Send"] = "Ask",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.Unavailable"] = "The assistant is unavailable right now.",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "Open parts assistant",
+            ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "Also fits your vehicle"
         };
 
         // English is the safe default for every installed language. Arabic-specific values then
@@ -281,7 +291,17 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmTitle"] = "إلغاء تثبيت توافق قطع السيارات؟",
         ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmBody"] = "سيؤدي ذلك إلى إزالة كل جداول وإعدادات وموارد وجداول المهام الخاصة بتوافق قطع السيارات. تبقى طلبات الكتالوج الأساسية، لكن بيانات المركبات وOEM والتوافق تُحذف.",
         ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmProceed"] = "متابعة إلغاء التثبيت",
-        ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmCancel"] = "إلغاء"
+        ["Plugins.TwinParticles.CheckEngine.Uninstall.ConfirmCancel"] = "إلغاء",
+        ["Plugins.TwinParticles.CheckEngine.Ai.Review"] = "مراجعة الذكاء الاصطناعي",
+        ["Plugins.TwinParticles.CheckEngine.Ai.Review.Candidates"] = "مرشحات المحتوى",
+        ["Plugins.TwinParticles.CheckEngine.Ai.Review.Hint"] = "وافق أو ارفض أوصاف وترجمات وSEO المولّدة. لا يُنشر شيء قبل المراجعة.",
+        ["Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment"] = "مرشحات توافق الذكاء الاصطناعي",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.Title"] = "مساعد القطع",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.Placeholder"] = "اسأل عن قطعة في الكتالوج…",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.Send"] = "اسأل",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.Unavailable"] = "المساعد غير متاح حالياً.",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "افتح مساعد القطع",
+        ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "يناسب سيارتك أيضاً"
     };
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)

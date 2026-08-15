@@ -59,4 +59,25 @@ public sealed class AiContentCandidateService
 
         return _generationRepository.GetPendingByEntityAsync(entityType, entityId, cancellationToken);
     }
+
+    public Task<IReadOnlyList<AiGenerationCandidate>> GetPendingQueueAsync(int take, CancellationToken cancellationToken)
+    {
+        if (_generationRepository is null)
+            return Task.FromResult<IReadOnlyList<AiGenerationCandidate>>([]);
+
+        return _generationRepository.GetPendingQueueAsync(take, cancellationToken);
+    }
+
+    public async Task<bool> ReviewAsync(int id, bool approved, string reviewer, CancellationToken cancellationToken)
+    {
+        if (_generationRepository is null || id <= 0)
+            return false;
+
+        var existing = await _generationRepository.GetByIdAsync(id, cancellationToken);
+        if (existing is null)
+            return false;
+
+        await _generationRepository.MarkReviewedAsync(id, approved, reviewer, cancellationToken);
+        return true;
+    }
 }

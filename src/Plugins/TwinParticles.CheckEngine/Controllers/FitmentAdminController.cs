@@ -38,6 +38,13 @@ public sealed class FitmentAdminController : BasePluginController
         return Json(await _reviewService.GetQueueAsync(cancellationToken));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> AiQueue(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return Json(await _reviewService.GetAiQueueAsync(cancellationToken));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Approve([FromBody] FitmentReviewActionModel model, CancellationToken cancellationToken)
     {

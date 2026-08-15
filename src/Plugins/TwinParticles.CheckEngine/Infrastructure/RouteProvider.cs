@@ -158,6 +158,16 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.DiagnosticsAdmin",
             pattern: "Admin/CheckEngine/DiagnosticsAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "DiagnosticsAdmin", action = "Package" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.AssistantAsk",
+            pattern: "check-engine/assistant/ask",
+            defaults: new { controller = "Assistant", action = "Ask" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.AiAdmin",
+            pattern: "Admin/CheckEngine/AiAdmin/{action}",
+            defaults: new { area = AreaNames.ADMIN, controller = "AiAdmin", action = "Queue" });
     }
 
     public int Priority => 0;

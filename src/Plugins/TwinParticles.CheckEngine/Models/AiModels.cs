@@ -15,3 +15,10 @@ public sealed class FitmentInferenceRequestModel
 
     public string ProductName { get; set; } = string.Empty;
 }
+
+public sealed class AiCandidateReviewModel
+{
+    public int Id { get; set; }
+
+    public bool Approved { get; set; }
+}

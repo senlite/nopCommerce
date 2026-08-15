@@ -1,0 +1,71 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Ai.Review").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Candidates")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Hint")</p>
+                <pre id="ce-ai-queue" style="white-space: pre-wrap;">Loading…</pre>
+                <div class="form-inline">
+                    <input id="ce-ai-id" type="number" class="form-control mr-2" placeholder="Candidate id" />
+                    <button id="ce-ai-approve" type="button" class="btn btn-primary mr-2">Approve</button>
+                    <button id="ce-ai-reject" type="button" class="btn btn-danger">Reject</button>
+                </div>
+            </div>
+        </div>
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment")</h3>
+            </div>
+            <div class="card-body">
+                <pre id="ce-ai-fitment" style="white-space: pre-wrap;">Loading…</pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers() {
+    var h = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  function load() {
+    fetch('/Admin/CheckEngine/AiAdmin/Queue', { headers: headers() })
+      .then(function (r) { return r.text(); })
+      .then(function (text) { document.getElementById('ce-ai-queue').textContent = text; });
+    fetch('/Admin/CheckEngine/FitmentAdmin/AiQueue', { headers: headers() })
+      .then(function (r) { return r.text(); })
+      .then(function (text) { document.getElementById('ce-ai-fitment').textContent = text; });
+  }
+  function review(approved) {
+    var id = parseInt(document.getElementById('ce-ai-id').value, 10);
+    if (!id) return;
+    fetch('/Admin/CheckEngine/AiAdmin/Review', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ id: id, approved: approved })
+    }).then(load);
+  }
+  document.getElementById('ce-ai-approve').addEventListener('click', function () { review(true); });
+  document.getElementById('ce-ai-reject').addEventListener('click', function () { review(false); });
+  load();
+})();
+</script>

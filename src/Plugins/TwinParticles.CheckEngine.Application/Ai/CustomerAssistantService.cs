@@ -56,6 +56,7 @@ public sealed class CustomerAssistantService
             };
         }
 
+        var redactedQuestion = AiPromptPrivacy.RedactVins(normalizedQuestion);
         var contextBlock = string.Join('\n', catalogContext.Select((line, index) => $"{index + 1}. {line}"));
         var result = await _aiCompletionPort.CompleteAsync(new AiCompletionRequest
         {
@@ -65,7 +66,7 @@ public sealed class CustomerAssistantService
                 Answer the shopper question using ONLY the catalog lines below.
                 If the answer is not in the context, say you do not know.
                 Never invent part numbers or prices.
-                Question: {normalizedQuestion}
+                Question: {redactedQuestion}
                 Catalog:
                 {contextBlock}
                 """,

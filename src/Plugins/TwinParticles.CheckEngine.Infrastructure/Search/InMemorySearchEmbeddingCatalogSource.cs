@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Search;
@@ -42,12 +44,46 @@ public sealed class InMemorySearchEmbeddingCatalogSource : ISearchEmbeddingCatal
                 Brand = "Mann",
                 Price = 18.50m,
                 Text = "Cabin Filter engine cabin filter air"
+            },
+            new SearchEmbeddingDocument
+            {
+                ProductId = 1001,
+                Locale = "ar",
+                Name = "فلتر زيت BMW",
+                CategoryName = "محرك",
+                Brand = "BMW",
+                Price = 24.90m,
+                Text = "فلتر زيت BMW oil filter engine"
+            },
+            new SearchEmbeddingDocument
+            {
+                ProductId = 1002,
+                Locale = "ar",
+                Name = "خرطوم رديتر",
+                CategoryName = "تبريد",
+                Brand = "Conti",
+                Price = 79.00m,
+                Text = "خرطوم رديتر radiator hose cooling"
+            },
+            new SearchEmbeddingDocument
+            {
+                ProductId = 1003,
+                Locale = "ar",
+                Name = "فلتر مقصورة",
+                CategoryName = "محرك",
+                Brand = "Mann",
+                Price = 18.50m,
+                Text = "فلتر مقصورة cabin filter air"
             }
         ];
     }
 
     public Task<IReadOnlyList<SearchEmbeddingDocument>> GetDocumentsAsync(string locale, CancellationToken cancellationToken)
     {
-        return Task.FromResult(_documents);
+        var filtered = string.IsNullOrWhiteSpace(locale)
+            ? _documents
+            : _documents.Where(document => string.Equals(document.Locale, locale, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        return Task.FromResult<IReadOnlyList<SearchEmbeddingDocument>>(filtered);
     }
 }

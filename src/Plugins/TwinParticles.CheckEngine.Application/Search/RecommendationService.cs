@@ -25,7 +25,8 @@ public sealed class RecommendationService
     public async Task<IReadOnlyList<SearchHit>> GetRecommendationsAsync(
         int? vehicleConfigurationId,
         int take,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int? seedProductId = null)
     {
         var pageSize = Math.Max(1, take);
 
@@ -51,12 +52,19 @@ public sealed class RecommendationService
                 PageSize = Math.Max(pageSize * 4, 24)
             }, cancellationToken);
 
-            return hits.Take(pageSize).ToList();
+            return Rank(hits, seedCategoryId: null).Take(pageSize).ToList();
         }
+
+        var seedCategoryId = seedProductId.HasValue
+            ? hits.FirstOrDefault(hit => hit.ProductId == seedProductId.Value)?.CategoryId
+            : null;
 
         var fitting = new List<SearchHit>();
         foreach (var hit in hits.OrderByDescending(x => x.Score).ThenBy(x => x.ProductId))
         {
+            if (seedProductId.HasValue && hit.ProductId == seedProductId.Value)
+                continue;
+
             var fitment = await _fitmentEvaluationService.EvaluateAsync(new FitmentEvaluationContext
             {
                 ProductId = hit.ProductId,
@@ -69,10 +77,18 @@ public sealed class RecommendationService
             hit.FitsActiveContext = true;
             fitting.Add(hit);
 
-            if (fitting.Count >= pageSize)
+            if (fitting.Count >= pageSize * 2)
                 break;
         }
 
-        return fitting.OrderByDescending(x => x.Score).ThenBy(x => x.ProductId).ToList();
+        return Rank(fitting, seedCategoryId).Take(pageSize).ToList();
+    }
+
+    private static IEnumerable<SearchHit> Rank(IEnumerable<SearchHit> hits, int? seedCategoryId)
+    {
+        return hits
+            .OrderByDescending(hit => seedCategoryId.HasValue && hit.CategoryId == seedCategoryId ? 1 : 0)
+            .ThenByDescending(hit => hit.Score)
+            .ThenBy(hit => hit.ProductId);
     }
 }

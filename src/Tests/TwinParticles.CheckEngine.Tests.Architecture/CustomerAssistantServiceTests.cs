@@ -25,6 +25,18 @@ public class CustomerAssistantServiceTests
     }
 
     [Test]
+    public async Task AskAsync_Should_Redact_Full_Vin_Before_Calling_Provider()
+    {
+        var port = new RecordingPort();
+        var service = new CustomerAssistantService(port, new StubSearchRepository());
+
+        await service.AskAsync("Does WBA3A5C53DF350429 need a water pump?", null, CancellationToken.None);
+
+        port.LastPrompt.Should().NotContain("WBA3A5C53DF350429");
+        port.LastPrompt.Should().Contain("VIN …0429");
+    }
+
+    [Test]
     public async Task AskAsync_Should_Return_Disabled_When_Port_Missing()
     {
         var service = new CustomerAssistantService();
@@ -32,6 +44,23 @@ public class CustomerAssistantServiceTests
         var response = await service.AskAsync("hello", null, CancellationToken.None);
 
         response.ErrorCode.Should().Be("ai.disabled");
+    }
+
+    private sealed class RecordingPort : IAiCompletionPort
+    {
+        public string LastPrompt { get; private set; } = string.Empty;
+
+        public Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken ct)
+        {
+            LastPrompt = request.Prompt;
+            return Task.FromResult(new AiCompletionResult
+            {
+                Success = true,
+                Text = "I do not invent part numbers.",
+                ProviderName = "test",
+                PromptHash = "abc"
+            });
+        }
     }
 
     private sealed class GroundedPort : IAiCompletionPort

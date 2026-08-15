@@ -12,15 +12,18 @@ public sealed class SemanticSearchService
     private readonly IAiEmbeddingPort? _embeddingPort;
     private readonly IAiFeatureToggle? _featureToggle;
     private readonly ISearchEmbeddingIndex? _embeddingIndex;
+    private readonly BilingualSearchSynonymService _synonyms;
 
     public SemanticSearchService(
         ISearchEmbeddingIndex? embeddingIndex = null,
         IAiEmbeddingPort? embeddingPort = null,
-        IAiFeatureToggle? featureToggle = null)
+        IAiFeatureToggle? featureToggle = null,
+        BilingualSearchSynonymService? synonyms = null)
     {
         _embeddingIndex = embeddingIndex;
         _embeddingPort = embeddingPort;
         _featureToggle = featureToggle;
+        _synonyms = synonyms ?? new BilingualSearchSynonymService();
     }
 
     public async Task<IReadOnlyList<SearchHit>> SearchAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -31,7 +34,7 @@ public sealed class SemanticSearchService
         if (_featureToggle is not null && !_featureToggle.IsEnabled(AiFeatureKeys.SearchSemantic))
             return [];
 
-        var text = query.RawText?.Trim() ?? string.Empty;
+        var text = _synonyms.Expand(query.RawText?.Trim() ?? string.Empty, query.Locale);
         if (string.IsNullOrWhiteSpace(text))
             return [];
 

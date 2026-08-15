@@ -50,7 +50,7 @@ public sealed class NaturalLanguageIntentParser
                 Prompt = $"""
                     Parse this automotive search query into JSON with keys:
                     partTerms (string array), make, model, modelYear (number or null), oemNumber, keywordFallback.
-                    Return only JSON. Locale={locale}. Query: {text}
+                    Return only JSON. Locale={locale}. Query: {AiPromptPrivacy.RedactVins(text)}
                     """,
                 MaxTokens = 160,
                 Temperature = 0

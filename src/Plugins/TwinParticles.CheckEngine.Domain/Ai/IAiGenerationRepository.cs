@@ -15,5 +15,8 @@ public interface IAiGenerationRepository
         int entityId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<AiGenerationCandidate>> GetPendingQueueAsync(int take, CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<AiGenerationCandidate>>([]);
+
     Task MarkReviewedAsync(int id, bool approved, string reviewer, CancellationToken cancellationToken);
 }

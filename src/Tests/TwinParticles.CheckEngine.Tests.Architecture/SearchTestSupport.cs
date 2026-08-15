@@ -66,6 +66,7 @@ internal static class SearchTestSupport
             index,
             new DeterministicTextEmbeddingPort());
         await builder.RebuildAsync("en", CancellationToken.None);
+        await builder.RebuildAsync("ar", CancellationToken.None);
 
         var semantic = new SemanticSearchService(index, new DeterministicTextEmbeddingPort(), new AlwaysOnAiToggle());
         return BuildSearchService(repository, fitmentMap, semanticSearchService: semantic);

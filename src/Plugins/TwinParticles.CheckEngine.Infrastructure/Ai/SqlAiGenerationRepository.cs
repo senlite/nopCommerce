@@ -70,6 +70,17 @@ ORDER BY CreatedUtc DESC",
         return rows.Select(Map).ToList();
     }
 
+    public async Task<IReadOnlyList<AiGenerationCandidate>> GetPendingQueueAsync(int take, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<AiGenerationRow>(@"
+SELECT Id, EntityTypeId, EntityId, FeatureKey, Locale, OutputText, PromptKey, PromptHash, QualityScore, IsPublished, ReviewStatus, Reviewer, CreatedUtc, ReviewedUtc
+FROM TP_CE_AiGeneration
+WHERE ReviewStatus = 'pending'
+ORDER BY CreatedUtc DESC");
+
+        return rows.Select(Map).Take(Math.Max(1, take)).ToList();
+    }
+
     public async Task MarkReviewedAsync(int id, bool approved, string reviewer, CancellationToken cancellationToken)
     {
         await _dataProvider.ExecuteNonQueryAsync(@"

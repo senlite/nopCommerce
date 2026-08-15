@@ -1096,3 +1096,56 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.ce-assistant {
+  position: relative;
+  margin-block-start: var(--ce-space-3, 0.75rem);
+}
+
+.ce-assistant__toggle {
+  border: 1px solid var(--ce-border-hairline, #d8dee6);
+  background: var(--ce-surface, #fff);
+  color: var(--ce-text-primary);
+  border-radius: var(--ce-radius-md, 8px);
+  padding: var(--ce-space-2, 0.5rem) var(--ce-space-3, 0.75rem);
+  cursor: pointer;
+}
+
+.ce-assistant__panel {
+  margin-block-start: var(--ce-space-2, 0.5rem);
+  padding: var(--ce-space-3, 0.75rem);
+  border: 1px solid var(--ce-border-hairline, #d8dee6);
+  border-radius: var(--ce-radius-md, 8px);
+  background: var(--ce-surface, #fff);
+}
+
+.ce-assistant__title {
+  margin: 0 0 var(--ce-space-2, 0.5rem);
+  font-size: 1rem;
+}
+
+.ce-assistant__log {
+  max-block-size: 12rem;
+  overflow: auto;
+  margin-block-end: var(--ce-space-2, 0.5rem);
+}
+
+.ce-assistant__form {
+  display: flex;
+  gap: var(--ce-space-2, 0.5rem);
+}
+
+.ce-assistant__input {
+  flex: 1;
+}
+
+.ce-recommend {
+  margin-block-start: var(--ce-space-4, 1rem);
+}
+
+.ce-recommend__list {
+  display: grid;
+  gap: var(--ce-space-2, 0.5rem);
+  padding: 0;
+  list-style: none;
+}
