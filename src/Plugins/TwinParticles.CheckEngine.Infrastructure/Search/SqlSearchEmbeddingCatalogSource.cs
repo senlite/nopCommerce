@@ -17,11 +17,25 @@ public sealed class SqlSearchEmbeddingCatalogSource : ISearchEmbeddingCatalogSou
         _dataProvider = dataProvider;
     }
 
-    public async Task<IReadOnlyList<SearchEmbeddingDocument>> GetDocumentsAsync(string locale, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetDocumentsAsync(string locale, CancellationToken cancellationToken) =>
+        LoadDocumentsAsync(locale, staleOnly: false, cancellationToken);
+
+    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(string locale, CancellationToken cancellationToken) =>
+        LoadDocumentsAsync(locale, staleOnly: true, cancellationToken);
+
+    private async Task<IReadOnlyList<SearchEmbeddingDocument>> LoadDocumentsAsync(
+        string locale,
+        bool staleOnly,
+        CancellationToken cancellationToken)
     {
         var normalizedLocale = string.IsNullOrWhiteSpace(locale) ? "en" : locale.Trim();
+        var staleFilter = staleOnly
+            ? @"
+LEFT JOIN TP_CE_SearchEmbedding se ON se.ProductId = si.ProductId AND se.Locale = @locale
+WHERE se.ProductId IS NULL OR si.UpdatedUtc > se.UpdatedUtc"
+            : string.Empty;
 
-        var rows = await _dataProvider.QueryAsync<CatalogRow>(@"
+        var rows = await _dataProvider.QueryAsync<CatalogRow>($@"
 SELECT si.ProductId,
        COALESCE(lp.LocaleValue, si.Name) AS Name,
        si.NormalizedText,
@@ -45,6 +59,7 @@ OUTER APPLY (
     ORDER BY pcm.DisplayOrder, cat.Id
 ) c
 LEFT JOIN Manufacturer m ON m.Id = p.ManufacturerId AND m.Deleted = 0
+{staleFilter}
 ORDER BY si.ProductId",
             new DataParameter("locale", normalizedLocale));
 

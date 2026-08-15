@@ -24,6 +24,9 @@ public sealed class ReferenceScaleSearchEmbeddingCatalogSource : ISearchEmbeddin
         return Task.FromResult<IReadOnlyList<SearchEmbeddingDocument>>(filtered);
     }
 
+    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(string locale, CancellationToken cancellationToken) =>
+        GetDocumentsAsync(locale, cancellationToken);
+
     public static ReferenceScaleCatalog LoadCatalog()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)

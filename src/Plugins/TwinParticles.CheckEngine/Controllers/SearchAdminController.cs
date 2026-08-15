@@ -107,6 +107,32 @@ public sealed class SearchAdminController : BasePluginController
         return Json(new { locales, totalIndexed });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> RefreshEmbeddingsIncremental(string locale = "en", CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var result = await _embeddingIndexBuilder.RefreshIncrementalAsync(locale, cancellationToken);
+        return Json(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RefreshEmbeddingsIncrementalAll(CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var locales = new List<SearchEmbeddingRebuildResult>();
+        var totalIndexed = 0;
+
+        foreach (var locale in DefaultEmbeddingLocales)
+        {
+            var result = await _embeddingIndexBuilder.RefreshIncrementalAsync(locale, cancellationToken);
+            locales.Add(result);
+            totalIndexed += result.Indexed;
+        }
+
+        return Json(new { locales, totalIndexed });
+    }
+
     [HttpGet]
     public async Task<IActionResult> Analytics(int days = 30, CancellationToken cancellationToken = default)
     {

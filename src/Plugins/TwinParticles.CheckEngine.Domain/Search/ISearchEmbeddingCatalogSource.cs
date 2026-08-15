@@ -7,4 +7,9 @@ namespace TwinParticles.CheckEngine.Domain.Search;
 public interface ISearchEmbeddingCatalogSource
 {
     Task<IReadOnlyList<SearchEmbeddingDocument>> GetDocumentsAsync(string locale, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns catalog documents that are missing embeddings or stale relative to the keyword projection.
+    /// </summary>
+    Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(string locale, CancellationToken cancellationToken);
 }

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using TwinParticles.CheckEngine.Application.Fitment;
+using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Search;
 
 namespace TwinParticles.CheckEngine.Application.Ai;
@@ -13,22 +15,29 @@ public sealed class CustomerAssistantService
 {
     private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly IProductSearchReadRepository? _productSearchReadRepository;
+    private readonly SemanticSearchService? _semanticSearchService;
+    private readonly FitmentEvaluationService? _fitmentEvaluationService;
     private readonly AiPromptResolver? _promptResolver;
 
     public CustomerAssistantService(
         IAiCompletionPort? aiCompletionPort = null,
         IProductSearchReadRepository? productSearchReadRepository = null,
-        AiPromptResolver? promptResolver = null)
+        AiPromptResolver? promptResolver = null,
+        SemanticSearchService? semanticSearchService = null,
+        FitmentEvaluationService? fitmentEvaluationService = null)
     {
         _aiCompletionPort = aiCompletionPort;
         _productSearchReadRepository = productSearchReadRepository;
         _promptResolver = promptResolver;
+        _semanticSearchService = semanticSearchService;
+        _fitmentEvaluationService = fitmentEvaluationService;
     }
 
     public async Task<CustomerAssistantResponse> AskAsync(
         string question,
         int? vehicleConfigurationId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string locale = "en")
     {
         var normalizedQuestion = question?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(normalizedQuestion))
@@ -49,7 +58,11 @@ public sealed class CustomerAssistantService
             };
         }
 
-        var catalogContext = await BuildCatalogContextAsync(normalizedQuestion, vehicleConfigurationId, cancellationToken);
+        var catalogContext = await BuildCatalogContextAsync(
+            normalizedQuestion,
+            vehicleConfigurationId,
+            locale,
+            cancellationToken);
         if (catalogContext.Count == 0)
         {
             return new CustomerAssistantResponse
@@ -108,25 +121,81 @@ public sealed class CustomerAssistantService
     private async Task<IReadOnlyList<string>> BuildCatalogContextAsync(
         string question,
         int? vehicleConfigurationId,
+        string locale,
         CancellationToken cancellationToken)
     {
-        var query = new SearchQuery
-        {
-            RawText = question,
-            Mode = SearchMode.Keyword,
-            VehicleConfigurationId = vehicleConfigurationId,
-            Page = 1,
-            PageSize = 5
-        };
-
-        var hits = vehicleConfigurationId.HasValue
-            ? await _productSearchReadRepository!.SearchByVehicleTreeAsync(query, cancellationToken)
-            : await _productSearchReadRepository!.SearchKeywordAsync(query, cancellationToken);
+        var hits = await RetrieveQuestionRelevantHitsAsync(question, locale, cancellationToken);
+        hits = await FilterToVerifiedFitAsync(hits, vehicleConfigurationId, cancellationToken);
 
         return hits
             .Take(5)
-            .Select(hit => $"ProductId={hit.ProductId}; Name={hit.Name}")
+            .Select(FormatCitation)
             .ToList();
+    }
+
+    private async Task<IReadOnlyList<SearchHit>> RetrieveQuestionRelevantHitsAsync(
+        string question,
+        string locale,
+        CancellationToken cancellationToken)
+    {
+        if (_semanticSearchService is not null)
+        {
+            var semanticHits = await _semanticSearchService.SearchAsync(new SearchQuery
+            {
+                RawText = question,
+                Mode = SearchMode.Semantic,
+                Locale = locale,
+                Page = 1,
+                PageSize = 8
+            }, cancellationToken);
+
+            if (semanticHits.Count > 0)
+                return semanticHits;
+        }
+
+        return await _productSearchReadRepository!.SearchKeywordAsync(new SearchQuery
+        {
+            RawText = question,
+            Mode = SearchMode.Keyword,
+            Locale = locale,
+            Page = 1,
+            PageSize = 8
+        }, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<SearchHit>> FilterToVerifiedFitAsync(
+        IReadOnlyList<SearchHit> hits,
+        int? vehicleConfigurationId,
+        CancellationToken cancellationToken)
+    {
+        if (!vehicleConfigurationId.HasValue || _fitmentEvaluationService is null)
+            return hits;
+
+        var fitting = new List<SearchHit>();
+        foreach (var hit in hits)
+        {
+            var fitment = await _fitmentEvaluationService.EvaluateAsync(new FitmentEvaluationContext
+            {
+                ProductId = hit.ProductId,
+                VehicleConfigurationId = vehicleConfigurationId.Value
+            }, cancellationToken);
+
+            if (fitment.Outcome == FitmentStatus.Fits)
+                fitting.Add(hit);
+        }
+
+        return fitting;
+    }
+
+    private static string FormatCitation(SearchHit hit)
+    {
+        var parts = new List<string> { $"ProductId={hit.ProductId}", $"Name={hit.Name}" };
+        if (!string.IsNullOrWhiteSpace(hit.Brand))
+            parts.Add($"Brand={hit.Brand}");
+        if (hit.Price.HasValue)
+            parts.Add($"Price={hit.Price.Value:0.##}");
+
+        return string.Join("; ", parts);
     }
 }
 

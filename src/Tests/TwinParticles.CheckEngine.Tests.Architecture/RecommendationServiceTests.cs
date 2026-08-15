@@ -23,9 +23,10 @@ public class RecommendationServiceTests
 
         var recommendations = await service.GetRecommendationsAsync(777, take: 10, CancellationToken.None);
 
-        recommendations.Should().HaveCount(1);
-        recommendations[0].ProductId.Should().Be(1001);
-        recommendations.Should().OnlyContain(x => x.FitsActiveContext);
+        recommendations.VehicleScoped.Should().BeTrue();
+        recommendations.Hits.Should().HaveCount(1);
+        recommendations.Hits[0].ProductId.Should().Be(1001);
+        recommendations.Hits.Should().OnlyContain(x => x.FitsActiveContext);
     }
 
     [Test]
@@ -37,8 +38,8 @@ public class RecommendationServiceTests
 
         var recommendations = await service.GetRecommendationsAsync(777, take: 10, CancellationToken.None);
 
-        recommendations.Select(x => x.ProductId).Should().NotContain(1002);
-        recommendations.Select(x => x.ProductId).Should().NotContain(1003);
+        recommendations.Hits.Select(x => x.ProductId).Should().NotContain(1002);
+        recommendations.Hits.Select(x => x.ProductId).Should().NotContain(1003);
     }
 
     [Test]
@@ -50,8 +51,21 @@ public class RecommendationServiceTests
 
         var recommendations = await service.GetRecommendationsAsync(777, take: 2, CancellationToken.None, seedProductId: 1001);
 
-        recommendations.Should().NotContain(x => x.ProductId == 1001);
-        recommendations[0].ProductId.Should().Be(1003);
+        recommendations.Hits.Should().NotContain(x => x.ProductId == 1001);
+        recommendations.Hits[0].ProductId.Should().Be(1003);
+    }
+
+    [Test]
+    public async Task GetRecommendationsAsync_Should_Label_Unscoped_When_No_Vehicle()
+    {
+        var service = new RecommendationService(
+            new FakeRepository(),
+            new FitmentEvaluationService(new FakeFitmentRepository(), new FakeFitmentCache()));
+
+        var recommendations = await service.GetRecommendationsAsync(null, take: 2, CancellationToken.None);
+
+        recommendations.VehicleScoped.Should().BeFalse();
+        recommendations.Hits.Should().NotBeEmpty();
     }
 
     [Test]

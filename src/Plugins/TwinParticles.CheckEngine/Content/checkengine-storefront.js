@@ -57,7 +57,8 @@
     assistantSend: 'Ask',
     assistantUnavailable: 'The assistant is unavailable right now.',
     assistantOpen: 'Open parts assistant',
-    recommendTitle: 'Also fits your vehicle'
+    recommendTitle: 'Also fits your vehicle',
+    recommendUnscopedTitle: 'You may also like'
   };
 
   var MODE_NAMES = {
@@ -1272,9 +1273,15 @@
         return [];
       }
       return response.json();
-    }).then(function (hits) {
+    }).then(function (payload) {
       list.innerHTML = '';
-      (hits || []).forEach(function (hit) {
+      var hits = Array.isArray(payload) ? payload : (payload.hits || payload.Hits || []);
+      var vehicleScoped = Array.isArray(payload) ? true : (payload.vehicleScoped ?? payload.VehicleScoped);
+      var title = document.querySelector('.ce-recommend__title');
+      if (title) {
+        title.textContent = vehicleScoped === false ? TEXT.recommendUnscopedTitle : TEXT.recommendTitle;
+      }
+      hits.forEach(function (hit) {
         var item = document.createElement('li');
         var name = hit.name || hit.Name || ('#' + (hit.productId || hit.ProductId));
         item.innerHTML = '<a href="/search?q=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>';

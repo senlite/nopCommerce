@@ -151,6 +151,10 @@ public sealed class SearchController : BasePublicController
             take,
             cancellationToken,
             seedProductId);
-        return Json(recommendations);
+        return Json(new
+        {
+            vehicleScoped = recommendations.VehicleScoped,
+            hits = recommendations.Hits
+        });
     }
 }

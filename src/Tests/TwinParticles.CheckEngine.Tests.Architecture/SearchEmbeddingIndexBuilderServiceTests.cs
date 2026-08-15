@@ -45,6 +45,24 @@ public class SearchEmbeddingIndexBuilderServiceTests
         (await index.GetCountAsync("en", CancellationToken.None)).Should().Be(result.Indexed);
     }
 
+    [Test]
+    public async Task RefreshIncrementalAsync_Should_Reindex_Stale_Documents_Without_Clearing()
+    {
+        var index = new InMemorySearchEmbeddingIndex();
+        var builder = new SearchEmbeddingIndexBuilderService(
+            new InMemorySearchEmbeddingCatalogSource(),
+            index,
+            new DeterministicTextEmbeddingPort());
+
+        await builder.RebuildAsync("en", CancellationToken.None);
+        var before = await index.GetCountAsync("en", CancellationToken.None);
+
+        var result = await builder.RefreshIncrementalAsync("en", CancellationToken.None);
+
+        result.Indexed.Should().BeGreaterThan(0);
+        (await index.GetCountAsync("en", CancellationToken.None)).Should().Be(before);
+    }
+
     private sealed class EmptyVectorPort : IAiEmbeddingPort
     {
         public Task<AiEmbeddingResult> EmbedAsync(AiEmbeddingRequest request, CancellationToken cancellationToken)

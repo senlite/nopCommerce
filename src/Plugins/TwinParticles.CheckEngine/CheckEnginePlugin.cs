@@ -162,6 +162,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeyword"] = "Rebuild keyword index",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings"] = "Semantic embeddings",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildEmbeddingsAll"] = "Rebuild all embedding locales",
+            ["Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshEmbeddings"] = "Refresh stale embeddings",
             ["Plugins.TwinParticles.CheckEngine.Search.Empty.Title"] = "No matching parts found",
             ["Plugins.TwinParticles.CheckEngine.Search.Empty.Hint"] = "Check the OEM number or VIN, or widen fitment to include unverified parts.",
             ["Plugins.TwinParticles.CheckEngine.Search.Unavailable"] = "Search is unavailable right now.",
@@ -231,7 +232,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Assistant.Send"] = "Ask",
             ["Plugins.TwinParticles.CheckEngine.Assistant.Unavailable"] = "The assistant is unavailable right now.",
             ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "Open parts assistant",
-            ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "Also fits your vehicle"
+            ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "Also fits your vehicle",
+            ["Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle"] = "You may also like"
         };
 
         // English is the safe default for every installed language. Arabic-specific values then
@@ -308,6 +310,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeyword"] = "إعادة بناء فهرس الكلمات",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings"] = "التضمينات الدلالية",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildEmbeddingsAll"] = "إعادة بناء كل اللغات",
+        ["Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshEmbeddings"] = "تحديث التضمينات المتغيرة",
         ["Plugins.TwinParticles.CheckEngine.Search.Empty.Title"] = "لم يتم العثور على قطع مطابقة",
         ["Plugins.TwinParticles.CheckEngine.Search.Empty.Hint"] = "تحقق من رقم OEM أو VIN أو وسّع نطاق التوافق.",
         ["Plugins.TwinParticles.CheckEngine.Search.Unavailable"] = "البحث غير متاح حالياً.",
@@ -377,7 +380,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Assistant.Send"] = "اسأل",
         ["Plugins.TwinParticles.CheckEngine.Assistant.Unavailable"] = "المساعد غير متاح حالياً.",
         ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "افتح مساعد القطع",
-        ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "يناسب سيارتك أيضاً"
+        ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "يناسب سيارتك أيضاً",
+        ["Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle"] = "قد يعجبك أيضاً",
     };
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)

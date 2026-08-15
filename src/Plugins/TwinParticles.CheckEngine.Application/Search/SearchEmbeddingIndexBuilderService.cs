@@ -26,6 +26,20 @@ public sealed class SearchEmbeddingIndexBuilderService
     {
         await _embeddingIndex.ClearAsync(locale, cancellationToken);
         var documents = await _catalogSource.GetDocumentsAsync(locale, cancellationToken);
+        return await IndexDocumentsAsync(locale, documents, cancellationToken);
+    }
+
+    public async Task<SearchEmbeddingRebuildResult> RefreshIncrementalAsync(string locale, CancellationToken cancellationToken)
+    {
+        var documents = await _catalogSource.GetStaleDocumentsAsync(locale, cancellationToken);
+        return await IndexDocumentsAsync(locale, documents, cancellationToken);
+    }
+
+    private async Task<SearchEmbeddingRebuildResult> IndexDocumentsAsync(
+        string locale,
+        IReadOnlyList<SearchEmbeddingDocument> documents,
+        CancellationToken cancellationToken)
+    {
         var indexed = 0;
         var skipped = 0;
         var failed = 0;

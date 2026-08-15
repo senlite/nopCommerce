@@ -86,4 +86,7 @@ public sealed class InMemorySearchEmbeddingCatalogSource : ISearchEmbeddingCatal
 
         return Task.FromResult<IReadOnlyList<SearchEmbeddingDocument>>(filtered);
     }
+
+    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(string locale, CancellationToken cancellationToken) =>
+        GetDocumentsAsync(locale, cancellationToken);
 }

@@ -44,6 +44,7 @@
                     </table>
                 </div>
                 <button id="ce-search-rebuild-embeddings-all" type="button" class="btn btn-warning">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildEmbeddingsAll")</button>
+                <button id="ce-search-refresh-embeddings" type="button" class="btn btn-secondary">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshEmbeddings")</button>
                 <p id="ce-search-rebuild-result" class="mt-3 text-muted"></p>
             </div>
         </div>
@@ -116,6 +117,16 @@
   });
   document.getElementById('ce-search-rebuild-embeddings-all').addEventListener('click', function () {
     rebuildEmbeddings(null);
+  });
+  document.getElementById('ce-search-refresh-embeddings').addEventListener('click', function () {
+    fetch('/Admin/CheckEngine/SearchAdmin/RefreshEmbeddingsIncrementalAll', {
+      method: 'POST',
+      headers: headers(false)
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      document.getElementById('ce-search-rebuild-result').textContent =
+        'Incremental refresh indexed ' + (data.totalIndexed || 0) + ' stale vectors.';
+      load();
+    });
   });
   load();
 })();

@@ -22,7 +22,7 @@ public sealed class RecommendationService
         _fitmentEvaluationService = fitmentEvaluationService;
     }
 
-    public async Task<IReadOnlyList<SearchHit>> GetRecommendationsAsync(
+    public async Task<RecommendationResult> GetRecommendationsAsync(
         int? vehicleConfigurationId,
         int take,
         CancellationToken cancellationToken,
@@ -30,20 +30,9 @@ public sealed class RecommendationService
     {
         var pageSize = Math.Max(1, take);
 
-        IReadOnlyList<SearchHit> hits;
-        if (vehicleConfigurationId.HasValue)
+        if (!vehicleConfigurationId.HasValue)
         {
-            hits = await _productSearchReadRepository.SearchByVehicleTreeAsync(new SearchQuery
-            {
-                VehicleConfigurationId = vehicleConfigurationId,
-                Mode = SearchMode.VehicleTree,
-                Page = 1,
-                PageSize = Math.Max(pageSize * 4, 24)
-            }, cancellationToken);
-        }
-        else
-        {
-            hits = await _productSearchReadRepository.SearchKeywordAsync(new SearchQuery
+            var hits = await _productSearchReadRepository.SearchKeywordAsync(new SearchQuery
             {
                 RawText = string.Empty,
                 Mode = SearchMode.Keyword,
@@ -52,15 +41,27 @@ public sealed class RecommendationService
                 PageSize = Math.Max(pageSize * 4, 24)
             }, cancellationToken);
 
-            return Rank(hits, seedCategoryId: null).Take(pageSize).ToList();
+            return new RecommendationResult
+            {
+                VehicleScoped = false,
+                Hits = Rank(hits, seedCategoryId: null).Take(pageSize).ToList()
+            };
         }
 
+        var vehicleHits = await _productSearchReadRepository.SearchByVehicleTreeAsync(new SearchQuery
+        {
+            VehicleConfigurationId = vehicleConfigurationId,
+            Mode = SearchMode.VehicleTree,
+            Page = 1,
+            PageSize = Math.Max(pageSize * 4, 24)
+        }, cancellationToken);
+
         var seedCategoryId = seedProductId.HasValue
-            ? hits.FirstOrDefault(hit => hit.ProductId == seedProductId.Value)?.CategoryId
+            ? vehicleHits.FirstOrDefault(hit => hit.ProductId == seedProductId.Value)?.CategoryId
             : null;
 
         var fitting = new List<SearchHit>();
-        foreach (var hit in hits.OrderByDescending(x => x.Score).ThenBy(x => x.ProductId))
+        foreach (var hit in vehicleHits.OrderByDescending(x => x.Score).ThenBy(x => x.ProductId))
         {
             if (seedProductId.HasValue && hit.ProductId == seedProductId.Value)
                 continue;
@@ -81,7 +82,11 @@ public sealed class RecommendationService
                 break;
         }
 
-        return Rank(fitting, seedCategoryId).Take(pageSize).ToList();
+        return new RecommendationResult
+        {
+            VehicleScoped = true,
+            Hits = Rank(fitting, seedCategoryId).Take(pageSize).ToList()
+        };
     }
 
     private static IEnumerable<SearchHit> Rank(IEnumerable<SearchHit> hits, int? seedCategoryId)
