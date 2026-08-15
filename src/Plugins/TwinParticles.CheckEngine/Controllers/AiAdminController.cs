@@ -21,6 +21,7 @@ public sealed class AiAdminController : BasePluginController
     private readonly IAiDataDisclosureCatalog _disclosureCatalog;
     private readonly IAiSpendPolicy _spendPolicy;
     private readonly AiContentCandidateService _contentCandidateService;
+    private readonly AiDisclosureService _disclosureService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
     public AiAdminController(
@@ -28,12 +29,14 @@ public sealed class AiAdminController : BasePluginController
         IAiDataDisclosureCatalog disclosureCatalog,
         IAiSpendPolicy spendPolicy,
         AiContentCandidateService contentCandidateService,
+        AiDisclosureService disclosureService,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _usageLedger = usageLedger;
         _disclosureCatalog = disclosureCatalog;
         _spendPolicy = spendPolicy;
         _contentCandidateService = contentCandidateService;
+        _disclosureService = disclosureService;
         _permissionService = permissionService;
     }
 
@@ -72,5 +75,12 @@ public sealed class AiAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         return Json(await _contentCandidateService.GetPendingAsync(entityType, entityId, cancellationToken));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AcknowledgeDisclosure(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return Json(new { acknowledged = _disclosureService.Acknowledge() });
     }
 }

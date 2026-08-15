@@ -14,6 +14,7 @@ namespace TwinParticles.CheckEngine.Application.Search;
 public sealed class UnifiedSearchService
 {
     private readonly NaturalLanguageIntentParser _naturalLanguageIntentParser;
+    private readonly SemanticSearchService? _semanticSearchService;
     private readonly IBilingualSearchTextNormalizer _bilingualNormalizer;
     private readonly FitmentEvaluationService _fitmentEvaluationService;
     private readonly OemResolveService _oemResolveService;
@@ -30,7 +31,8 @@ public sealed class UnifiedSearchService
         ISearchIndexHealthService searchIndexHealthService,
         IBilingualSearchTextNormalizer bilingualNormalizer,
         NaturalLanguageIntentParser naturalLanguageIntentParser,
-        ISearchAnalyticsService? searchAnalyticsService = null)
+        ISearchAnalyticsService? searchAnalyticsService = null,
+        SemanticSearchService? semanticSearchService = null)
     {
         _productSearchReadRepository = productSearchReadRepository;
         _vinDecodeService = vinDecodeService;
@@ -40,6 +42,7 @@ public sealed class UnifiedSearchService
         _bilingualNormalizer = bilingualNormalizer;
         _naturalLanguageIntentParser = naturalLanguageIntentParser;
         _searchAnalyticsService = searchAnalyticsService;
+        _semanticSearchService = semanticSearchService;
     }
 
     public async Task<SearchResult> SearchAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -58,6 +61,13 @@ public sealed class UnifiedSearchService
         {
             hits = await SearchNaturalLanguageAsync(query, normalizedText, cancellationToken);
             modeUsed = SearchMode.NaturalLanguage;
+        }
+        else if (mode == SearchMode.Semantic)
+        {
+            hits = _semanticSearchService is null
+                ? []
+                : await _semanticSearchService.SearchAsync(CloneQuery(query, normalizedText, SearchMode.Semantic), cancellationToken);
+            modeUsed = SearchMode.Semantic;
         }
         else
         {
@@ -206,9 +216,78 @@ public sealed class UnifiedSearchService
         if (string.IsNullOrWhiteSpace(keywords))
             keywords = normalizedText;
 
-        return await _productSearchReadRepository.SearchKeywordAsync(
-            CloneQuery(query, keywords, SearchMode.Keyword),
+        var keywordHits = await SearchKeywordTermsAsync(query, intent, keywords, cancellationToken);
+
+        if (_semanticSearchService is null)
+            return keywordHits;
+
+        var semanticHits = await _semanticSearchService.SearchAsync(
+            CloneQuery(query, normalizedText, SearchMode.Semantic),
             cancellationToken);
+
+        return MergeHits(keywordHits, semanticHits);
+    }
+
+    private async Task<IReadOnlyList<SearchHit>> SearchKeywordTermsAsync(
+        SearchQuery query,
+        SearchIntent intent,
+        string keywords,
+        CancellationToken cancellationToken)
+    {
+        if (intent.PartTerms.Count <= 1)
+        {
+            return await _productSearchReadRepository.SearchKeywordAsync(
+                CloneQuery(query, keywords, SearchMode.Keyword),
+                cancellationToken);
+        }
+
+        IReadOnlyList<SearchHit> merged = [];
+        foreach (var term in intent.PartTerms)
+        {
+            if (string.IsNullOrWhiteSpace(term))
+                continue;
+
+            var termHits = await _productSearchReadRepository.SearchKeywordAsync(
+                CloneQuery(query, term, SearchMode.Keyword),
+                cancellationToken);
+            merged = MergeHits(merged, termHits);
+        }
+
+        return merged.Count > 0
+            ? merged
+            : await _productSearchReadRepository.SearchKeywordAsync(
+                CloneQuery(query, keywords, SearchMode.Keyword),
+                cancellationToken);
+    }
+
+    private static IReadOnlyList<SearchHit> MergeHits(
+        IReadOnlyList<SearchHit> primary,
+        IReadOnlyList<SearchHit> secondary)
+    {
+        if (secondary.Count == 0)
+            return primary;
+
+        var merged = new Dictionary<int, SearchHit>();
+        foreach (var hit in primary)
+            merged[hit.ProductId] = hit;
+
+        foreach (var hit in secondary)
+        {
+            if (merged.TryGetValue(hit.ProductId, out var existing))
+            {
+                if (hit.Score > existing.Score)
+                    merged[hit.ProductId] = hit;
+            }
+            else
+            {
+                merged[hit.ProductId] = hit;
+            }
+        }
+
+        return merged.Values
+            .OrderByDescending(hit => hit.Score)
+            .ThenBy(hit => hit.ProductId)
+            .ToList();
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchVinAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)

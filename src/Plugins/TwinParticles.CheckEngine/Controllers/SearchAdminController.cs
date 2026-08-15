@@ -16,14 +16,17 @@ public sealed class SearchAdminController : BasePluginController
 {
     private readonly Nop.Services.Security.IPermissionService _permissionService;
     private readonly SearchIndexAdminService _service;
+    private readonly SearchEmbeddingIndexBuilderService _embeddingIndexBuilder;
     private readonly SearchAnalyticsAdminService _analyticsService;
 
     public SearchAdminController(
         SearchIndexAdminService service,
+        SearchEmbeddingIndexBuilderService embeddingIndexBuilder,
         SearchAnalyticsAdminService analyticsService,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _service = service;
+        _embeddingIndexBuilder = embeddingIndexBuilder;
         _analyticsService = analyticsService;
         _permissionService = permissionService;
     }
@@ -37,6 +40,14 @@ public sealed class SearchAdminController : BasePluginController
 
         await _service.RebuildAsync(cancellationToken);
         return Ok();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RebuildEmbeddings(string locale = "en", CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var indexed = await _embeddingIndexBuilder.RebuildAsync(locale, cancellationToken);
+        return Json(new { indexed, locale });
     }
 
     [HttpGet]

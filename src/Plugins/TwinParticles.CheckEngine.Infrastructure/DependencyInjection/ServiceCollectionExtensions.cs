@@ -158,7 +158,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AiCompletionProviderRouter>();
         services.AddSingleton<IAiSpendPolicy, SettingsAiSpendPolicy>();
         services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
-        services.AddSingleton<IAiUsageLedger, InMemoryAiUsageLedger>();
+        services.AddSingleton<OpenAiCompatibleEmbeddingPort>();
+        services.AddSingleton<DeterministicTextEmbeddingPort>();
+        services.AddSingleton<AiEmbeddingProviderRouter>();
+        services.AddSingleton<IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingProviderRouter>());
+        services.AddSingleton<IAiDisclosureAcknowledgement, SettingsAiDisclosureAcknowledgement>();
+        services.AddScoped<ISearchEmbeddingIndex, SqlSearchEmbeddingIndex>();
+        services.AddScoped<ISearchEmbeddingCatalogSource, SqlSearchEmbeddingCatalogSource>();
+        services.AddSingleton<IAiUsageLedger, SqlAiUsageLedger>();
         services.AddSingleton<IAiDataDisclosureCatalog, DefaultAiDataDisclosureCatalog>();
         services.AddScoped<IAiGenerationRepository, SqlAiGenerationRepository>();
         services.AddScoped<ICheckEngineDatabaseHealthProbe, NopDataProviderDatabaseHealthProbe>();

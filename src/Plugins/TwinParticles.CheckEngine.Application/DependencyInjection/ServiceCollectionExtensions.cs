@@ -79,7 +79,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<AiContentCandidateService>();
         services.AddScoped<NaturalLanguageIntentParser>();
         services.AddScoped<FitmentInferenceService>();
-        services.AddScoped<CustomerAssistantService>();
+        services.AddScoped<SemanticSearchService>();
+        services.AddScoped<SearchEmbeddingIndexBuilderService>();
+        services.AddScoped<AiDisclosureService>();
 
         services.AddScoped<AiProposalService>();
 

@@ -31,6 +31,8 @@ public sealed class CheckEngineAiOptions
 
     public bool DisclosureAcknowledged { get; set; }
 
+    public string EmbeddingModel { get; set; } = "text-embedding-3-small";
+
     public int ResolveDailyCeiling(string featureKey)
     {
         if (!string.IsNullOrWhiteSpace(featureKey)

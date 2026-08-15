@@ -238,10 +238,10 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 | ID | Task | Status | Gap |
 |---|---|---|---|
 | H2.1 | Complete multi-provider AI abstraction | partial | OpenAI-compatible, Azure OpenAI, and Anthropic adapters route through `AiCompletionProviderRouter`; gate is the single `IAiCompletionPort` |
-| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | `AiCompletionGateService` enforces toggles, disclosure acknowledgement, and daily ceilings with ledger recording on every call |
+| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | SQL usage ledger default; gate enforces ceilings; `AiAdmin/AcknowledgeDisclosure` records operator acknowledgement |
 | H2.3 | Parse natural language into structured vehicle/part intent | partial | `NaturalLanguageIntentParser` returns structured `SearchIntent`; Auto mode routes multi-word queries to NL lane |
-| H2.4 | Implement vector/semantic bilingual search | pending | No embedding model or vector index exists |
-| H2.5 | Pass the published natural-language/semantic accuracy benchmark | pending | Benchmark corpus and target evidence are absent |
+| H2.4 | Implement vector/semantic bilingual search | partial | `IAiEmbeddingPort`, `TP_CE_SearchEmbedding`, `SemanticSearchService`, and admin embedding rebuild endpoint |
+| H2.5 | Pass the published natural-language/semantic accuracy benchmark | partial | `nl-benchmark-queries.json` corpus with precision@5 gate in architecture tests |
 | H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Import hooks persist `TP_CE_AiGeneration` candidates via `AiContentCandidateService`; admin `AiAdmin/Candidates` endpoint |
 | H2.7 | Enforce the controlled automotive translation glossary | partial | `AutomotiveGlossaryService` injects glossary into translation prompts and validates output terms |
 | H2.8 | Complete reviewable AI fitment candidate workflow | partial | `FitmentInferenceService` creates capped `AiInference` claims; approve promotes provenance to curator manual |

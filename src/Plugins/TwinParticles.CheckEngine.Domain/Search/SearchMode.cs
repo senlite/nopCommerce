@@ -8,5 +8,6 @@ public enum SearchMode
     VehicleTree = 4,
     Category = 5,
     Keyword = 6,
-    NaturalLanguage = 7
+    NaturalLanguage = 7,
+    Semantic = 8
 }
