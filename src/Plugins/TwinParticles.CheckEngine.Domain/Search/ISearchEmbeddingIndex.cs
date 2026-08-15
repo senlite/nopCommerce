@@ -17,4 +17,6 @@ public interface ISearchEmbeddingIndex
         CancellationToken cancellationToken);
 
     Task ClearAsync(string locale, CancellationToken cancellationToken);
+
+    Task<int> GetCountAsync(string locale, CancellationToken cancellationToken);
 }

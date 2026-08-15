@@ -23,6 +23,14 @@ public class NopAiContentApplicatorConventionsTests
     }
 
     [Test]
+    public void Startup_Should_Register_Embedding_Gate()
+    {
+        var source = ReadPluginFile("Infrastructure", "CheckEngineStartup.cs");
+        source.Should().Contain("AiEmbeddingGateService");
+        source.Should().Contain("IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingGateService>");
+    }
+
+    [Test]
     public void NopAiContentApplicator_Should_Implement_Domain_Port()
     {
         typeof(NopAiContentApplicator).Should().Implement<IAiContentApplicator>();
@@ -35,6 +43,20 @@ public class NopAiContentApplicatorConventionsTests
              dir = dir.Parent)
         {
             var candidate = Path.Combine([dir.FullName, "src", "Plugins", "TwinParticles.CheckEngine.Infrastructure", .. relativePath]);
+            if (File.Exists(candidate))
+                return File.ReadAllText(candidate);
+        }
+
+        throw new FileNotFoundException($"Unable to locate {string.Join('/', relativePath)}");
+    }
+
+    private static string ReadPluginFile(params string[] relativePath)
+    {
+        for (var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+             dir is not null;
+             dir = dir.Parent)
+        {
+            var candidate = Path.Combine([dir.FullName, "src", "Plugins", "TwinParticles.CheckEngine", .. relativePath]);
             if (File.Exists(candidate))
                 return File.ReadAllText(candidate);
         }

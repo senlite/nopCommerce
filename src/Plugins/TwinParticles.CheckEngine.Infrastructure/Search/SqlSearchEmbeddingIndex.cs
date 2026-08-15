@@ -98,6 +98,14 @@ WHERE Locale = @locale",
             new DataParameter("locale", locale));
     }
 
+    public async Task<int> GetCountAsync(string locale, CancellationToken cancellationToken)
+    {
+        var count = await _dataProvider.QueryAsync<int>(
+            "SELECT COUNT(*) FROM TP_CE_SearchEmbedding WHERE Locale = @locale",
+            new DataParameter("locale", locale));
+        return count.FirstOrDefault();
+    }
+
     private sealed class EmbeddingRow
     {
         public int ProductId { get; set; }

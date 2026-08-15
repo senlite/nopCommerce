@@ -32,6 +32,14 @@ public sealed class CheckEngineStartup : INopStartup
                 sp.GetService<IAiSpendPolicy>()));
         services.AddSingleton<IAiCompletionPort>(sp => sp.GetRequiredService<AiCompletionGateService>());
 
+        services.AddSingleton<AiEmbeddingGateService>(sp =>
+            new AiEmbeddingGateService(
+                sp.GetRequiredService<AiEmbeddingProviderRouter>(),
+                sp.GetService<IAiFeatureToggle>(),
+                sp.GetService<IAiUsageLedger>(),
+                sp.GetService<IAiSpendPolicy>()));
+        services.AddSingleton<IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingGateService>());
+
         services.AddScoped<CheckEngineLicenceWriteFilter>();
         services.AddMvc(options => options.Filters.AddService<CheckEngineLicenceWriteFilter>());
     }

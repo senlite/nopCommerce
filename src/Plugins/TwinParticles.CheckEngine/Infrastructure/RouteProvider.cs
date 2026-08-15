@@ -102,7 +102,7 @@ public sealed class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.SearchAdmin",
             pattern: "Admin/CheckEngine/SearchAdmin/{action}",
-            defaults: new { area = AreaNames.ADMIN, controller = "SearchAdmin", action = "Rebuild" });
+            defaults: new { area = AreaNames.ADMIN, controller = "SearchAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.UninstallAdmin",

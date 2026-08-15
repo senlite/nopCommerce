@@ -71,5 +71,11 @@ public sealed class InMemorySearchEmbeddingIndex : ISearchEmbeddingIndex
         return Task.CompletedTask;
     }
 
+    public Task<int> GetCountAsync(string locale, CancellationToken cancellationToken)
+    {
+        var count = _entries.Keys.Count(key => key.EndsWith($"|{locale}", StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(count);
+    }
+
     private static string BuildKey(int productId, string locale) => $"{productId}|{locale}";
 }

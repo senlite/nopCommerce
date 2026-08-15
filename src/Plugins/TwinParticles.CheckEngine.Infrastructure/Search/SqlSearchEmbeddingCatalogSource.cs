@@ -19,18 +19,50 @@ public sealed class SqlSearchEmbeddingCatalogSource : ISearchEmbeddingCatalogSou
 
     public async Task<IReadOnlyList<SearchEmbeddingDocument>> GetDocumentsAsync(string locale, CancellationToken cancellationToken)
     {
+        var normalizedLocale = string.IsNullOrWhiteSpace(locale) ? "en" : locale.Trim();
+
         var rows = await _dataProvider.QueryAsync<CatalogRow>(@"
-SELECT ProductId, Name, NormalizedText, Price
-FROM TP_CE_SearchIndex
-ORDER BY ProductId");
+SELECT si.ProductId,
+       COALESCE(lp.LocaleValue, si.Name) AS Name,
+       si.NormalizedText,
+       si.Sku,
+       si.Mpn,
+       si.Price,
+       c.CategoryName,
+       m.Name AS Brand
+FROM TP_CE_SearchIndex si
+INNER JOIN Product p ON p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 1
+LEFT JOIN Language lang ON lang.UniqueSeoCode = @locale AND lang.Published = 1
+LEFT JOIN LocalizedProperty lp ON lp.EntityId = p.Id
+    AND lp.LocaleKeyGroup = N'Product'
+    AND lp.LocaleKey = N'Name'
+    AND lp.LanguageId = lang.Id
+OUTER APPLY (
+    SELECT TOP (1) cat.Name AS CategoryName
+    FROM Product_Category_Mapping pcm
+    INNER JOIN Category cat ON cat.Id = pcm.CategoryId AND cat.Deleted = 0 AND cat.Published = 1
+    WHERE pcm.ProductId = p.Id
+    ORDER BY pcm.DisplayOrder, cat.Id
+) c
+LEFT JOIN Manufacturer m ON m.Id = p.ManufacturerId AND m.Deleted = 0
+ORDER BY si.ProductId",
+            new DataParameter("locale", normalizedLocale));
 
         return rows.Select(row => new SearchEmbeddingDocument
         {
             ProductId = row.ProductId,
-            Locale = locale,
+            Locale = normalizedLocale,
             Name = row.Name,
-            Text = $"{row.Name} {row.NormalizedText}",
-            Price = row.Price
+            CategoryName = row.CategoryName,
+            Brand = row.Brand,
+            Price = row.Price,
+            Text = SearchEmbeddingCatalogTextBuilder.Build(
+                row.Name,
+                row.CategoryName,
+                row.Brand,
+                row.Sku,
+                row.Mpn,
+                row.NormalizedText)
         }).ToList();
     }
 
@@ -39,6 +71,10 @@ ORDER BY ProductId");
         public int ProductId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string NormalizedText { get; set; } = string.Empty;
+        public string? Sku { get; set; }
+        public string? Mpn { get; set; }
         public decimal Price { get; set; }
+        public string? CategoryName { get; set; }
+        public string? Brand { get; set; }
     }
 }

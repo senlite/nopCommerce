@@ -177,7 +177,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AzureOpenAiEmbeddingPort>();
         services.AddSingleton<DeterministicTextEmbeddingPort>();
         services.AddSingleton<AiEmbeddingProviderRouter>();
-        services.AddSingleton<IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingProviderRouter>());
         services.AddSingleton<IAiDisclosureAcknowledgement, SettingsAiDisclosureAcknowledgement>();
         services.AddSingleton<IAiPromptStore, EmbeddedAiPromptStore>();
         services.AddScoped<ISearchEmbeddingIndex, SqlSearchEmbeddingIndex>();

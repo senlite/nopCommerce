@@ -22,11 +22,13 @@ public sealed class SearchEmbeddingIndexBuilderService
         _embeddingPort = embeddingPort;
     }
 
-    public async Task<int> RebuildAsync(string locale, CancellationToken cancellationToken)
+    public async Task<SearchEmbeddingRebuildResult> RebuildAsync(string locale, CancellationToken cancellationToken)
     {
         await _embeddingIndex.ClearAsync(locale, cancellationToken);
         var documents = await _catalogSource.GetDocumentsAsync(locale, cancellationToken);
         var indexed = 0;
+        var skipped = 0;
+        var failed = 0;
         const int batchSize = 32;
 
         for (var offset = 0; offset < documents.Count; offset += batchSize)
@@ -43,14 +45,30 @@ public sealed class SearchEmbeddingIndexBuilderService
                     Locale = locale
                 }, cancellationToken);
 
-                if (!embedding.Success || embedding.Vector.Length == 0)
+                if (!embedding.Success)
+                {
+                    failed++;
                     continue;
+                }
+
+                if (embedding.Vector.Length == 0)
+                {
+                    skipped++;
+                    continue;
+                }
 
                 await _embeddingIndex.UpsertAsync(document, embedding.Vector, embedding.ModelHash, cancellationToken);
                 indexed++;
             }
         }
 
-        return indexed;
+        return new SearchEmbeddingRebuildResult
+        {
+            Locale = locale,
+            CatalogCount = documents.Count,
+            Indexed = indexed,
+            Skipped = skipped,
+            Failed = failed
+        };
     }
 }
