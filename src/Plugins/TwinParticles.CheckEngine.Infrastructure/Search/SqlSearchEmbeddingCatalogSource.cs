@@ -81,6 +81,30 @@ ORDER BY si.ProductId",
         }).ToList();
     }
 
+    public async Task<int> GetCatalogCountAsync(string locale, CancellationToken cancellationToken)
+    {
+        var normalizedLocale = string.IsNullOrWhiteSpace(locale) ? "en" : locale.Trim();
+        var count = await _dataProvider.QueryAsync<int>(@"
+SELECT COUNT(*)
+FROM TP_CE_SearchIndex si
+INNER JOIN Product p ON p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 1",
+            new DataParameter("locale", normalizedLocale));
+        return count.FirstOrDefault();
+    }
+
+    public async Task<int> GetStaleCountAsync(string locale, CancellationToken cancellationToken)
+    {
+        var normalizedLocale = string.IsNullOrWhiteSpace(locale) ? "en" : locale.Trim();
+        var count = await _dataProvider.QueryAsync<int>(@"
+SELECT COUNT(*)
+FROM TP_CE_SearchIndex si
+INNER JOIN Product p ON p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 1
+LEFT JOIN TP_CE_SearchEmbedding se ON se.ProductId = si.ProductId AND se.Locale = @locale
+WHERE se.ProductId IS NULL OR si.UpdatedUtc > se.UpdatedUtc",
+            new DataParameter("locale", normalizedLocale));
+        return count.FirstOrDefault();
+    }
+
     private sealed class CatalogRow
     {
         public int ProductId { get; set; }

@@ -25,6 +25,7 @@ public sealed class SearchAdminController : BasePluginController
     private readonly SearchAnalyticsAdminService _analyticsService;
     private readonly ISearchIndexStateReader _indexStateReader;
     private readonly ISearchEmbeddingIndex _embeddingIndex;
+    private readonly ISearchEmbeddingCatalogSource _catalogSource;
 
     public SearchAdminController(
         SearchIndexAdminService service,
@@ -32,6 +33,7 @@ public sealed class SearchAdminController : BasePluginController
         SearchAnalyticsAdminService analyticsService,
         ISearchIndexStateReader indexStateReader,
         ISearchEmbeddingIndex embeddingIndex,
+        ISearchEmbeddingCatalogSource catalogSource,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _service = service;
@@ -39,6 +41,7 @@ public sealed class SearchAdminController : BasePluginController
         _analyticsService = analyticsService;
         _indexStateReader = indexStateReader;
         _embeddingIndex = embeddingIndex;
+        _catalogSource = catalogSource;
         _permissionService = permissionService;
     }
 
@@ -61,11 +64,17 @@ public sealed class SearchAdminController : BasePluginController
 
         foreach (var locale in DefaultEmbeddingLocales)
         {
+            var count = await _embeddingIndex.GetCountAsync(locale, cancellationToken);
+            var catalogCount = await _catalogSource.GetCatalogCountAsync(locale, cancellationToken);
+            var staleCount = await _catalogSource.GetStaleCountAsync(locale, cancellationToken);
             embeddings.Add(new
             {
                 locale,
-                ready = await _embeddingIndex.IsReadyAsync(locale, cancellationToken),
-                count = await _embeddingIndex.GetCountAsync(locale, cancellationToken)
+                ready = count > 0,
+                count,
+                catalogCount,
+                staleCount,
+                semanticReady = count > 0 && staleCount == 0 && count >= catalogCount
             });
         }
 
@@ -79,6 +88,26 @@ public sealed class SearchAdminController : BasePluginController
 
         await _service.RebuildAsync(cancellationToken);
         return Ok();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RebuildKeywordAndRefreshEmbeddings(CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        await _service.RebuildAsync(cancellationToken);
+
+        var locales = new List<SearchEmbeddingRebuildResult>();
+        var totalIndexed = 0;
+
+        foreach (var locale in DefaultEmbeddingLocales)
+        {
+            var result = await _embeddingIndexBuilder.RefreshIncrementalAsync(locale, cancellationToken);
+            locales.Add(result);
+            totalIndexed += result.Indexed;
+        }
+
+        return Json(new { keywordRebuilt = true, locales, totalIndexed });
     }
 
     [HttpPost]

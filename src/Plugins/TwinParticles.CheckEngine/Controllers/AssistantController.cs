@@ -23,7 +23,11 @@ public sealed class AssistantController : BasePublicController
         if (model is null || string.IsNullOrWhiteSpace(model.Question))
             return BadRequest();
 
-        var response = await _assistantService.AskAsync(model.Question, model.VehicleConfigurationId, cancellationToken);
+        var response = await _assistantService.AskAsync(
+            model.Question,
+            model.VehicleConfigurationId,
+            cancellationToken,
+            string.IsNullOrWhiteSpace(model.Locale) ? "en" : model.Locale.Trim());
         return Json(response);
     }
 }

@@ -9,6 +9,9 @@
     { "id": "nl-misspelled-filter", "rawText": "cabin filtr", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1003] },
     { "id": "nl-semantic-radiator", "rawText": "hose for radiator cooling system", "mode": "Semantic", "locale": "en", "expectedProductIds": [1002] },
     { "id": "nl-bmw-engine-part", "rawText": "bmw engine oil filtration", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1001] },
-    { "id": "nl-ar-oil-filter", "rawText": "فلتر زيت", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1001] }
+    { "id": "nl-ar-oil-filter", "rawText": "فلتر زيت", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1001] },
+    { "id": "nl-ar-radiator-hose", "rawText": "خرطوم رديتر", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1002] },
+    { "id": "nl-ar-cabin-filter", "rawText": "فلتر مقصورة", "mode": "NaturalLanguage", "locale": "ar", "expectedProductIds": [1003] },
+    { "id": "nl-ar-cooling", "rawText": "تبريد راديتر", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1002] }
   ]
 }

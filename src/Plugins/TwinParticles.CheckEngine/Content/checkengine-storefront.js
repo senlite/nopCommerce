@@ -58,7 +58,8 @@
     assistantUnavailable: 'The assistant is unavailable right now.',
     assistantOpen: 'Open parts assistant',
     recommendTitle: 'Also fits your vehicle',
-    recommendUnscopedTitle: 'You may also like'
+    recommendUnscopedTitle: 'You may also like',
+    recommendFitmentBadge: 'Fits your vehicle'
   };
 
   var MODE_NAMES = {
@@ -1232,7 +1233,8 @@
           method: 'POST',
           body: JSON.stringify({
             question: question,
-            vehicleConfigurationId: vehicleId || null
+            vehicleConfigurationId: vehicleId || null,
+            locale: (document.documentElement.lang || 'en').split('-')[0]
           })
         });
       }).then(function (response) {
@@ -1284,7 +1286,10 @@
       hits.forEach(function (hit) {
         var item = document.createElement('li');
         var name = hit.name || hit.Name || ('#' + (hit.productId || hit.ProductId));
-        item.innerHTML = '<a href="/search?q=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>';
+        var badge = vehicleScoped === true
+          ? '<span class="ce-recommend__badge">' + escapeHtml(TEXT.recommendFitmentBadge) + '</span> '
+          : '';
+        item.innerHTML = badge + '<a href="/search?q=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>';
         list.appendChild(item);
       });
       if (list.children.length) {

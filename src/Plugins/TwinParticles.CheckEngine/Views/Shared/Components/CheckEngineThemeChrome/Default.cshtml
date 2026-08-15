@@ -223,10 +223,13 @@ else if (zone == "header_after")
                 "assistantUnavailable": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Unavailable")",
                 "assistantOpen": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Open")",
                 "recommendTitle": "@T("Plugins.TwinParticles.CheckEngine.Recommend.Title")",
-                "recommendUnscopedTitle": "@T("Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle")"
+                "recommendUnscopedTitle": "@T("Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle")",
+                "recommendFitmentBadge": "@T("Plugins.TwinParticles.CheckEngine.Recommend.FitmentBadge")"
             }
         </script>
 
+        @if (Model.EnableCustomerAssistant)
+        {
         <div class="ce-assistant" data-ce-theme="assistant">
             <button type="button" class="ce-assistant__toggle" id="ce-assistant-toggle" aria-expanded="false" aria-controls="ce-assistant-panel">
                 @T("Plugins.TwinParticles.CheckEngine.Assistant.Open")
@@ -241,6 +244,7 @@ else if (zone == "header_after")
                 </form>
             </div>
         </div>
+        }
     </div>
 }
 else if (zone == "productdetails_top")

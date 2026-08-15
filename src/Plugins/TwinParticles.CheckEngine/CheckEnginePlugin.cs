@@ -160,6 +160,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Search.Admin"] = "Search admin",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.KeywordIndex"] = "Keyword index",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeyword"] = "Rebuild keyword index",
+            ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeywordAndEmbeddings"] = "Rebuild keyword + refresh embeddings",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings"] = "Semantic embeddings",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildEmbeddingsAll"] = "Rebuild all embedding locales",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshEmbeddings"] = "Refresh stale embeddings",
@@ -233,7 +234,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Assistant.Unavailable"] = "The assistant is unavailable right now.",
             ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "Open parts assistant",
             ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "Also fits your vehicle",
-            ["Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle"] = "You may also like"
+            ["Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle"] = "You may also like",
+            ["Plugins.TwinParticles.CheckEngine.Recommend.FitmentBadge"] = "Fits your vehicle"
         };
 
         // English is the safe default for every installed language. Arabic-specific values then
@@ -308,6 +310,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Search.Admin"] = "إدارة البحث",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.KeywordIndex"] = "فهرس الكلمات المفتاحية",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeyword"] = "إعادة بناء فهرس الكلمات",
+        ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeywordAndEmbeddings"] = "إعادة بناء الكلمات وتحديث التضمينات",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings"] = "التضمينات الدلالية",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildEmbeddingsAll"] = "إعادة بناء كل اللغات",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshEmbeddings"] = "تحديث التضمينات المتغيرة",
@@ -382,6 +385,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "افتح مساعد القطع",
         ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "يناسب سيارتك أيضاً",
         ["Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle"] = "قد يعجبك أيضاً",
+        ["Plugins.TwinParticles.CheckEngine.Recommend.FitmentBadge"] = "يناسب سيارتك",
     };
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)

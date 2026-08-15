@@ -5,6 +5,8 @@ public sealed class AssistantRequestModel
     public string Question { get; set; } = string.Empty;
 
     public int? VehicleConfigurationId { get; set; }
+
+    public string? Locale { get; set; }
 }
 
 public sealed class FitmentInferenceRequestModel

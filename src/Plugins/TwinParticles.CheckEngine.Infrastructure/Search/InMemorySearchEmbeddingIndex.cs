@@ -43,21 +43,31 @@ public sealed class InMemorySearchEmbeddingIndex : ISearchEmbeddingIndex
         int take,
         CancellationToken cancellationToken)
     {
-        var hits = _entries.Values
-            .Where(entry => string.Equals(entry.Document.Locale, locale, StringComparison.OrdinalIgnoreCase))
-            .Select(entry => new SearchHit
+        var topK = new CosineSimilarityTopK<SearchHit>(queryEmbedding, Math.Max(1, take), hit => hit.ProductId);
+
+        foreach (var entry in _entries.Values.Where(entry =>
+                     string.Equals(entry.Document.Locale, locale, StringComparison.OrdinalIgnoreCase)))
+        {
+            topK.Consider(new SearchHit
             {
                 ProductId = entry.Document.ProductId,
                 Name = entry.Document.Name,
                 CategoryName = entry.Document.CategoryName,
                 Brand = entry.Document.Brand,
-                Price = entry.Document.Price,
-                Score = (decimal)VectorMath.CosineSimilarity(queryEmbedding, entry.Embedding)
+                Price = entry.Document.Price
+            }, entry.Embedding);
+        }
+
+        var hits = topK.Results()
+            .Select(entry => new SearchHit
+            {
+                ProductId = entry.Item.ProductId,
+                Name = entry.Item.Name,
+                CategoryName = entry.Item.CategoryName,
+                Brand = entry.Item.Brand,
+                Price = entry.Item.Price,
+                Score = (decimal)entry.Score
             })
-            .Where(hit => hit.Score > 0m)
-            .OrderByDescending(hit => hit.Score)
-            .ThenBy(hit => hit.ProductId)
-            .Take(Math.Max(1, take))
             .ToList();
 
         return Task.FromResult<IReadOnlyList<SearchHit>>(hits);

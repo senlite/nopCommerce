@@ -22,6 +22,7 @@
             <div class="card-body">
                 <p id="ce-search-keyword-status" class="text-muted"></p>
                 <button id="ce-search-rebuild-keyword" type="button" class="btn btn-primary">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeyword")</button>
+                <button id="ce-search-rebuild-keyword-and-embeddings" type="button" class="btn btn-outline-primary">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildKeywordAndEmbeddings")</button>
             </div>
         </div>
 
@@ -35,8 +36,10 @@
                         <thead>
                             <tr>
                                 <th>Locale</th>
-                                <th>Ready</th>
+                                <th>Semantic ready</th>
                                 <th>Vectors</th>
+                                <th>Catalog</th>
+                                <th>Stale</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -73,8 +76,10 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + row.locale + '</td>' +
-        '<td>' + (row.ready ? 'yes' : 'no') + '</td>' +
+        '<td>' + (row.semanticReady ? 'yes' : 'no') + '</td>' +
         '<td>' + (row.count || 0) + '</td>' +
+        '<td>' + (row.catalogCount || 0) + '</td>' +
+        '<td>' + (row.staleCount || 0) + '</td>' +
         '<td><button type="button" class="btn btn-sm btn-secondary" data-ce-locale="' + row.locale + '">Rebuild</button></td>';
       tbody.appendChild(tr);
     });
@@ -114,6 +119,16 @@
   document.getElementById('ce-search-rebuild-keyword').addEventListener('click', function () {
     fetch('/Admin/CheckEngine/SearchAdmin/Rebuild', { method: 'POST', headers: headers(false) })
       .then(load);
+  });
+  document.getElementById('ce-search-rebuild-keyword-and-embeddings').addEventListener('click', function () {
+    fetch('/Admin/CheckEngine/SearchAdmin/RebuildKeywordAndRefreshEmbeddings', {
+      method: 'POST',
+      headers: headers(false)
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      document.getElementById('ce-search-rebuild-result').textContent =
+        'Keyword rebuild complete · refreshed ' + (data.totalIndexed || 0) + ' stale embedding vectors.';
+      load();
+    });
   });
   document.getElementById('ce-search-rebuild-embeddings-all').addEventListener('click', function () {
     rebuildEmbeddings(null);

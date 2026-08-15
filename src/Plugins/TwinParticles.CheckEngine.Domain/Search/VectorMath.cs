@@ -1,10 +1,62 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace TwinParticles.CheckEngine.Domain.Search;
+
+/// <summary>
+/// Maintains the top-K cosine similarities without sorting the full candidate set.
+/// </summary>
+public sealed class CosineSimilarityTopK<T>
+{
+    private readonly float[] _query;
+    private readonly int _capacity;
+    private readonly Func<T, int> _tieBreaker;
+    private readonly List<(T Item, float Score)> _items = new();
+
+    public CosineSimilarityTopK(float[] query, int capacity, Func<T, int> tieBreaker)
+    {
+        _query = query ?? throw new ArgumentNullException(nameof(query));
+        _capacity = Math.Max(1, capacity);
+        _tieBreaker = tieBreaker ?? throw new ArgumentNullException(nameof(tieBreaker));
+    }
+
+    public void Consider(T item, float[] vector)
+    {
+        var score = VectorMath.CosineSimilarity(_query, vector);
+        if (score <= 0f)
+            return;
+
+        if (_items.Count < _capacity)
+        {
+            _items.Add((item, score));
+            return;
+        }
+
+        var worstIndex = 0;
+        var worstScore = _items[0].Score;
+        for (var index = 1; index < _items.Count; index++)
+        {
+            if (_items[index].Score < worstScore)
+            {
+                worstScore = _items[index].Score;
+                worstIndex = index;
+            }
+        }
+
+        if (score > worstScore)
+            _items[worstIndex] = (item, score);
+    }
+
+    public IReadOnlyList<(T Item, float Score)> Results() =>
+        _items
+            .OrderByDescending(entry => entry.Score)
+            .ThenBy(entry => _tieBreaker(entry.Item))
+            .ToList();
+}
 
 public static class VectorMath
 {

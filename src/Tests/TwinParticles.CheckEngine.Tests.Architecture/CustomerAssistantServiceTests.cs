@@ -72,6 +72,30 @@ public class CustomerAssistantServiceTests
     }
 
     [Test]
+    public async Task AskAsync_Should_Pass_Locale_To_Semantic_Search()
+    {
+        var port = new RecordingPort();
+        var index = new InMemorySearchEmbeddingIndex();
+        var builder = new SearchEmbeddingIndexBuilderService(
+            new InMemorySearchEmbeddingCatalogSource(),
+            index,
+            new DeterministicTextEmbeddingPort());
+        await builder.RebuildAsync("ar", CancellationToken.None);
+
+        var semantic = new SemanticSearchService(index, new DeterministicTextEmbeddingPort(), new AlwaysOnToggle());
+        var service = new CustomerAssistantService(
+            port,
+            new StubSearchRepository(),
+            semanticSearchService: semantic);
+
+        var response = await service.AskAsync("فلتر زيت", null, CancellationToken.None, "ar");
+
+        response.Citations.Should().NotBeEmpty();
+        response.Citations[0].Should().Contain("ProductId=1001");
+        port.LastPrompt.Should().Contain("ProductId=1001");
+    }
+
+    [Test]
     public async Task AskAsync_Should_Prefer_Semantic_Hits_Over_Keyword()
     {
         var port = new RecordingPort();
