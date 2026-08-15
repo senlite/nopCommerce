@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Framework;
@@ -14,6 +16,8 @@ namespace TwinParticles.CheckEngine.Controllers;
 [AutoValidateAntiforgeryToken]
 public sealed class SearchAdminController : BasePluginController
 {
+    private static readonly string[] DefaultEmbeddingLocales = ["en", "ar"];
+
     private readonly Nop.Services.Security.IPermissionService _permissionService;
     private readonly SearchIndexAdminService _service;
     private readonly SearchEmbeddingIndexBuilderService _embeddingIndexBuilder;
@@ -48,6 +52,24 @@ public sealed class SearchAdminController : BasePluginController
         if (!await AuthorizedAsync()) return AccessDeniedView();
         var indexed = await _embeddingIndexBuilder.RebuildAsync(locale, cancellationToken);
         return Json(new { indexed, locale });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RebuildEmbeddingsAll(CancellationToken cancellationToken = default)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var locales = new List<object>();
+        var totalIndexed = 0;
+
+        foreach (var locale in DefaultEmbeddingLocales)
+        {
+            var indexed = await _embeddingIndexBuilder.RebuildAsync(locale, cancellationToken);
+            totalIndexed += indexed;
+            locales.Add(new { locale, indexed });
+        }
+
+        return Json(new { locales, totalIndexed });
     }
 
     [HttpGet]

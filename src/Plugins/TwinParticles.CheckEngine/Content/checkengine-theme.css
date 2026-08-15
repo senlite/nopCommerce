@@ -332,6 +332,10 @@
    Search form
    ============================================================ */
 
+.ce-search__mode {
+  max-inline-size: 11rem;
+}
+
 .ce-search {
   position: relative;
   display: flex;

@@ -122,6 +122,22 @@ public class AiCompletionGateTests
             return Task.CompletedTask;
         }
 
+        public Task RecordOutcomeAsync(string featureKey, int tokenUsage, bool success, CancellationToken cancellationToken)
+        {
+            if (success)
+                _usage += tokenUsage;
+            return Task.CompletedTask;
+        }
+
+        public Task<AiUsageSummary> GetUsageSummaryAsync(string featureKey, CancellationToken cancellationToken) =>
+            Task.FromResult(new AiUsageSummary
+            {
+                FeatureKey = featureKey,
+                TodayTokens = _usage,
+                Last7DaysTokens = _usage,
+                Last30DaysTokens = _usage
+            });
+
         public Task<int> GetDailyUsageAsync(string featureKey, CancellationToken cancellationToken) =>
             Task.FromResult(_usage);
 

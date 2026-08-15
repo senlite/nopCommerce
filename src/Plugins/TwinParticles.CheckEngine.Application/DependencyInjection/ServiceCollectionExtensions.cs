@@ -85,6 +85,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SemanticSearchService>();
         services.AddScoped<SearchEmbeddingIndexBuilderService>();
         services.AddScoped<AiDisclosureService>();
+        services.AddScoped<CustomerAssistantService>();
 
         services.AddScoped<AiProposalService>();
 

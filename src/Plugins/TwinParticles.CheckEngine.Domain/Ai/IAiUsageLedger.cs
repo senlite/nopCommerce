@@ -7,7 +7,11 @@ public interface IAiUsageLedger
 {
     Task RecordAsync(string featureKey, int tokenUsage, CancellationToken cancellationToken);
 
+    Task RecordOutcomeAsync(string featureKey, int tokenUsage, bool success, CancellationToken cancellationToken);
+
     Task<int> GetDailyUsageAsync(string featureKey, CancellationToken cancellationToken);
+
+    Task<AiUsageSummary> GetUsageSummaryAsync(string featureKey, CancellationToken cancellationToken);
 
     Task<bool> IsCeilingExceededAsync(string featureKey, int ceiling, CancellationToken cancellationToken);
 }

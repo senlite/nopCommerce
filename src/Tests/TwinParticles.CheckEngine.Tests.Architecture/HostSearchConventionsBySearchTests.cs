@@ -43,8 +43,10 @@ public class HostSearchConventionsBySearchTests
 
         script.Should().Contain("data-ce-suggest-vehicle");
         script.Should().Contain("selectedSuggestionVehicleId");
-        script.Should().Contain("mode: selectedSuggestionVehicleId ? 4 : 1",
-            "a selected configuration is vehicle context, not a product keyword");
+        script.Should().Contain("function resolveSearchMode()");
+        script.Should().Contain("if (selectedSuggestionVehicleId)");
+        script.Should().Contain("return 4");
+        script.Should().Contain("mode: resolveSearchMode()");
         script.Should().Contain("vehicleConfigurationId: selectedSuggestionVehicleId || null");
     }
 }

@@ -33,7 +33,7 @@ public sealed class AiCompletionGateService : IAiCompletionPort
 
         if (_featureToggle is not null && !_featureToggle.IsEnabled(featureKey))
         {
-            return DisabledResult(featureKey, "ai.disabled");
+            return await FailAsync(featureKey, "ai.disabled", ct);
         }
 
         if (_featureToggle is not null
@@ -41,7 +41,7 @@ public sealed class AiCompletionGateService : IAiCompletionPort
             && _spendPolicy is not null
             && !_spendPolicy.DisclosureAcknowledged)
         {
-            return DisabledResult(featureKey, "ai.disclosure_required");
+            return await FailAsync(featureKey, "ai.disclosure_required", ct);
         }
 
         if (_usageLedger is not null && _spendPolicy is not null)
@@ -49,19 +49,31 @@ public sealed class AiCompletionGateService : IAiCompletionPort
             var ceiling = _spendPolicy.ResolveDailyCeiling(featureKey);
             if (ceiling > 0 && await _usageLedger.IsCeilingExceededAsync(featureKey, ceiling, ct))
             {
-                return DisabledResult(featureKey, "ai.ceiling_exceeded");
+                return await FailAsync(featureKey, "ai.ceiling_exceeded", ct);
             }
         }
 
         var result = await _innerPort.CompleteAsync(request, ct);
 
-        if (result.Success && _usageLedger is not null)
+        if (_usageLedger is not null)
         {
-            var tokens = result.TokenUsage > 0 ? result.TokenUsage : EstimateTokens(request, result);
-            await _usageLedger.RecordAsync(featureKey, tokens, ct);
+            var tokens = result.Success && result.TokenUsage > 0
+                ? result.TokenUsage
+                : result.Success
+                    ? EstimateTokens(request, result)
+                    : 0;
+            await _usageLedger.RecordOutcomeAsync(featureKey, tokens, result.Success, ct);
         }
 
         return result;
+    }
+
+    private async Task<AiCompletionResult> FailAsync(string featureKey, string errorCode, CancellationToken ct)
+    {
+        if (_usageLedger is not null)
+            await _usageLedger.RecordOutcomeAsync(featureKey, 0, success: false, ct);
+
+        return DisabledResult(featureKey, errorCode);
     }
 
     private static string ResolveFeatureKey(AiCompletionRequest request)

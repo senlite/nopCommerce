@@ -395,6 +395,22 @@
     announce(total + ' ' + TEXT.searchResultsCount);
   }
 
+  function resolveSearchMode() {
+    if (selectedSuggestionVehicleId) {
+      return 4;
+    }
+
+    var modeSelect = document.getElementById('ce-search-mode');
+    if (modeSelect && modeSelect.value) {
+      var mode = parseInt(modeSelect.value, 10);
+      if (mode > 0) {
+        return mode;
+      }
+    }
+
+    return 1;
+  }
+
   function runSearch() {
     var input = document.getElementById('ce-sticky-search-input');
     var widen = document.getElementById('ce-widen-fitment');
@@ -418,7 +434,7 @@
         brand: currentFilters.brand || null,
         priceMin: currentFilters.priceMin != null ? currentFilters.priceMin : null,
         priceMax: currentFilters.priceMax != null ? currentFilters.priceMax : null,
-        mode: selectedSuggestionVehicleId ? 4 : 1,
+        mode: resolveSearchMode(),
         vehicleConfigurationId: selectedSuggestionVehicleId || null,
         locale: document.documentElement.lang || 'en'
       })

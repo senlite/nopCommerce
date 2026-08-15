@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Infrastructure.Ai;
 
 namespace TwinParticles.CheckEngine.Tests.Architecture;
@@ -28,5 +29,22 @@ public class InMemoryAiUsageLedgerTests
         await ledger.RecordAsync("import.ai.enrichment", 100, CancellationToken.None);
 
         (await ledger.IsCeilingExceededAsync("import.ai.enrichment", 100, CancellationToken.None)).Should().BeTrue();
+    }
+
+    [Test]
+    public async Task GetUsageSummaryAsync_Should_Aggregate_Tokens_And_Failures()
+    {
+        var ledger = new InMemoryAiUsageLedger();
+
+        await ledger.RecordOutcomeAsync(AiFeatureKeys.SearchSemantic, 40, success: true, CancellationToken.None);
+        await ledger.RecordOutcomeAsync(AiFeatureKeys.SearchSemantic, 0, success: false, CancellationToken.None);
+
+        var summary = await ledger.GetUsageSummaryAsync(AiFeatureKeys.SearchSemantic, CancellationToken.None);
+
+        summary.TodayTokens.Should().Be(40);
+        summary.Last7DaysTokens.Should().Be(40);
+        summary.TodayAttempts.Should().Be(2);
+        summary.TodayFailures.Should().Be(1);
+        AiUsageSummary.FailureRate(summary.TodayAttempts, summary.TodayFailures).Should().Be(0.5);
     }
 }

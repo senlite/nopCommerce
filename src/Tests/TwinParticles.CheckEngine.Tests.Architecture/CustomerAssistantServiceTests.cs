@@ -6,6 +6,7 @@ using NUnit.Framework;
 using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure.Ai;
 
 namespace TwinParticles.CheckEngine.Tests.Architecture;
 
@@ -34,6 +35,20 @@ public class CustomerAssistantServiceTests
 
         port.LastPrompt.Should().NotContain("WBA3A5C53DF350429");
         port.LastPrompt.Should().Contain("VIN …0429");
+    }
+
+    [Test]
+    public async Task AskAsync_Should_Use_Prompt_Store_When_Resolver_Present()
+    {
+        var port = new RecordingPort();
+        var resolver = new AiPromptResolver(new EmbeddedAiPromptStore());
+        var service = new CustomerAssistantService(port, new StubSearchRepository(), resolver);
+
+        await service.AskAsync("Do you have a water pump?", null, CancellationToken.None);
+
+        port.LastPrompt.Should().Contain("Context:");
+        port.LastPrompt.Should().Contain("ProductId=42");
+        port.LastPrompt.Should().Contain("Do not invent OEM");
     }
 
     [Test]

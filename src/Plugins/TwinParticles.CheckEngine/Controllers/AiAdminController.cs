@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Ai;
+using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Models;
@@ -25,6 +27,7 @@ public sealed class AiAdminController : BasePluginController
     private readonly AiContentCandidateService _contentCandidateService;
     private readonly AiDisclosureService _disclosureService;
     private readonly IAiGenerationRepository _generationRepository;
+    private readonly FitmentReviewService _fitmentReviewService;
     private readonly ISettingService _settingService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
@@ -35,6 +38,7 @@ public sealed class AiAdminController : BasePluginController
         AiContentCandidateService contentCandidateService,
         AiDisclosureService disclosureService,
         IAiGenerationRepository generationRepository,
+        FitmentReviewService fitmentReviewService,
         ISettingService settingService,
         Nop.Services.Security.IPermissionService permissionService)
     {
@@ -44,6 +48,7 @@ public sealed class AiAdminController : BasePluginController
         _contentCandidateService = contentCandidateService;
         _disclosureService = disclosureService;
         _generationRepository = generationRepository;
+        _fitmentReviewService = fitmentReviewService;
         _settingService = settingService;
         _permissionService = permissionService;
     }
@@ -63,14 +68,15 @@ public sealed class AiAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var usage = await _usageLedger.GetDailyUsageAsync(featureKey, cancellationToken);
+        var summary = await _usageLedger.GetUsageSummaryAsync(featureKey, cancellationToken);
         var ceiling = _spendPolicy.ResolveDailyCeiling(featureKey);
 
         return Json(new
         {
             featureKey,
-            dailyUsage = usage,
+            dailyUsage = summary.TodayTokens,
             dailyCeiling = ceiling,
+            summary,
             disclosureAcknowledged = _spendPolicy.DisclosureAcknowledged
         });
     }
@@ -150,22 +156,29 @@ public sealed class AiAdminController : BasePluginController
         var usage = new List<object>();
         foreach (var featureKey in features)
         {
-            var daily = await _usageLedger.GetDailyUsageAsync(featureKey, cancellationToken);
+            var summary = await _usageLedger.GetUsageSummaryAsync(featureKey, cancellationToken);
+            var ceiling = _spendPolicy.ResolveDailyCeiling(featureKey);
             usage.Add(new
             {
                 featureKey,
-                dailyUsage = daily,
-                dailyCeiling = _spendPolicy.ResolveDailyCeiling(featureKey)
+                dailyUsage = summary.TodayTokens,
+                dailyCeiling = ceiling,
+                summary,
+                todayFailureRate = AiUsageSummary.FailureRate(summary.TodayAttempts, summary.TodayFailures),
+                last7DaysFailureRate = AiUsageSummary.FailureRate(summary.Last7DaysAttempts, summary.Last7DaysFailures),
+                last30DaysFailureRate = AiUsageSummary.FailureRate(summary.Last30DaysAttempts, summary.Last30DaysFailures)
             });
         }
 
         var pendingContent = await _generationRepository.GetPendingQueueAsync(200, cancellationToken);
+        var pendingFitmentAi = await _fitmentReviewService.GetAiQueueAsync(cancellationToken);
 
         return Json(new
         {
             disclosureAcknowledged = _spendPolicy.DisclosureAcknowledged,
             usage,
-            pendingContentCount = pendingContent.Count
+            pendingContentCount = pendingContent.Count,
+            pendingFitmentAiCount = pendingFitmentAi.Count
         });
     }
 }

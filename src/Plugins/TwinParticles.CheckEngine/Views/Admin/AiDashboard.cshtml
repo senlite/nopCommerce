@@ -27,9 +27,13 @@
                         <thead>
                             <tr>
                                 <th>Feature</th>
-                                <th>Daily usage</th>
+                                <th>Today</th>
+                                <th>7 days</th>
+                                <th>30 days</th>
                                 <th>Ceiling</th>
-                                <th>Utilization</th>
+                                <th>Today util.</th>
+                                <th>7d fail rate</th>
+                                <th>30d fail rate</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -55,22 +59,32 @@
     if (!ceiling) return '—';
     return Math.min(100, Math.round((usage / ceiling) * 100)) + '%';
   }
+  function rate(fraction) {
+    if (fraction == null || isNaN(fraction)) return '—';
+    return Math.round(fraction * 1000) / 10 + '%';
+  }
   function render(data) {
     document.getElementById('ce-ai-disclosure-status').textContent =
       data.disclosureAcknowledged ? 'Disclosure acknowledged.' : 'Disclosure not acknowledged — AI features remain gated.';
     var tbody = document.querySelector('#ce-ai-usage-table tbody');
     tbody.innerHTML = '';
     (data.usage || []).forEach(function (row) {
+      var summary = row.summary || {};
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td><code>' + row.featureKey + '</code></td>' +
-        '<td>' + row.dailyUsage + '</td>' +
+        '<td>' + (summary.todayTokens || row.dailyUsage || 0) + '</td>' +
+        '<td>' + (summary.last7DaysTokens || 0) + '</td>' +
+        '<td>' + (summary.last30DaysTokens || 0) + '</td>' +
         '<td>' + row.dailyCeiling + '</td>' +
-        '<td>' + pct(row.dailyUsage, row.dailyCeiling) + '</td>';
+        '<td>' + pct(summary.todayTokens || row.dailyUsage || 0, row.dailyCeiling) + '</td>' +
+        '<td>' + rate(row.last7DaysFailureRate) + '</td>' +
+        '<td>' + rate(row.last30DaysFailureRate) + '</td>';
       tbody.appendChild(tr);
     });
     document.getElementById('ce-ai-pending-count').textContent =
-      'Pending content candidates: ' + (data.pendingContentCount || 0);
+      'Pending content candidates: ' + (data.pendingContentCount || 0) +
+      ' · Pending fitment AI proposals: ' + (data.pendingFitmentAiCount || 0);
   }
   function load() {
     fetch('/Admin/CheckEngine/AiAdmin/DashboardData', { headers: headers(false) })

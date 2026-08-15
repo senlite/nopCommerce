@@ -13,13 +13,16 @@ public sealed class CustomerAssistantService
 {
     private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly IProductSearchReadRepository? _productSearchReadRepository;
+    private readonly AiPromptResolver? _promptResolver;
 
     public CustomerAssistantService(
         IAiCompletionPort? aiCompletionPort = null,
-        IProductSearchReadRepository? productSearchReadRepository = null)
+        IProductSearchReadRepository? productSearchReadRepository = null,
+        AiPromptResolver? promptResolver = null)
     {
         _aiCompletionPort = aiCompletionPort;
         _productSearchReadRepository = productSearchReadRepository;
+        _promptResolver = promptResolver;
     }
 
     public async Task<CustomerAssistantResponse> AskAsync(
@@ -58,18 +61,19 @@ public sealed class CustomerAssistantService
 
         var redactedQuestion = AiPromptPrivacy.RedactVins(normalizedQuestion);
         var contextBlock = string.Join('\n', catalogContext.Select((line, index) => $"{index + 1}. {line}"));
+        var prompt = _promptResolver is not null
+            ? _promptResolver.Format(AiFeatureKeys.CustomerAssistant, new Dictionary<string, string?>
+            {
+                ["context"] = contextBlock,
+                ["question"] = redactedQuestion
+            })
+            : BuildFallbackPrompt(redactedQuestion, contextBlock);
+
         var result = await _aiCompletionPort.CompleteAsync(new AiCompletionRequest
         {
             FeatureKey = AiFeatureKeys.CustomerAssistant,
             PromptKey = AiFeatureKeys.CustomerAssistant,
-            Prompt = $"""
-                Answer the shopper question using ONLY the catalog lines below.
-                If the answer is not in the context, say you do not know.
-                Never invent part numbers or prices.
-                Question: {redactedQuestion}
-                Catalog:
-                {contextBlock}
-                """,
+            Prompt = prompt,
             MaxTokens = 256,
             Temperature = 0
         }, cancellationToken);
@@ -90,6 +94,16 @@ public sealed class CustomerAssistantService
             Citations = catalogContext
         };
     }
+
+    private static string BuildFallbackPrompt(string question, string contextBlock) =>
+        $"""
+            Answer the shopper question using ONLY the catalog lines below.
+            If the answer is not in the context, say you do not know.
+            Never invent part numbers or prices.
+            Question: {question}
+            Catalog:
+            {contextBlock}
+            """;
 
     private async Task<IReadOnlyList<string>> BuildCatalogContextAsync(
         string question,

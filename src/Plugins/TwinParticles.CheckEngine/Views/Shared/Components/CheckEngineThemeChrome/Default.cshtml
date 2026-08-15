@@ -133,6 +133,22 @@ else if (zone == "header_after")
                     <span>@T("Plugins.TwinParticles.CheckEngine.Search.Widen")</span>
                 </label>
 
+                @if (Model.EnableSearchNaturalLanguage || Model.EnableSearchSemantic)
+                {
+                    <label class="ce-visually-hidden" for="ce-search-mode">@T("Plugins.TwinParticles.CheckEngine.Search.Mode")</label>
+                    <select id="ce-search-mode" class="ce-select ce-search__mode" name="searchMode" aria-describedby="ce-search-hint">
+                        <option value="1">@T("Plugins.TwinParticles.CheckEngine.Search.Mode.Auto")</option>
+                        @if (Model.EnableSearchNaturalLanguage)
+                        {
+                            <option value="7">@T("Plugins.TwinParticles.CheckEngine.Search.Mode.NaturalLanguage")</option>
+                        }
+                        @if (Model.EnableSearchSemantic)
+                        {
+                            <option value="8">@T("Plugins.TwinParticles.CheckEngine.Search.Mode.Semantic")</option>
+                        }
+                    </select>
+                }
+
                 <button type="submit" class="ce-btn ce-btn--primary">
                     <span class="ce-btn__label">@T("Plugins.TwinParticles.CheckEngine.Search.Submit")</span>
                 </button>
