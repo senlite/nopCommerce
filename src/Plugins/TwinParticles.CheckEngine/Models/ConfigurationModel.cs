@@ -28,6 +28,9 @@ public record ConfigurationModel : BaseNopModel
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiAzureDeploymentName")]
     public string? AiAzureDeploymentName { get; set; }
 
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiAzureEmbeddingDeploymentName")]
+    public string? AiAzureEmbeddingDeploymentName { get; set; }
+
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiDailyTokenCeiling")]
     public int AiDailyTokenCeiling { get; set; } = 100_000;
 

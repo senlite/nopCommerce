@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Ai;
@@ -26,21 +27,28 @@ public sealed class SearchEmbeddingIndexBuilderService
         await _embeddingIndex.ClearAsync(locale, cancellationToken);
         var documents = await _catalogSource.GetDocumentsAsync(locale, cancellationToken);
         var indexed = 0;
+        const int batchSize = 32;
 
-        foreach (var document in documents)
+        for (var offset = 0; offset < documents.Count; offset += batchSize)
         {
-            var embedding = await _embeddingPort.EmbedAsync(new AiEmbeddingRequest
+            cancellationToken.ThrowIfCancellationRequested();
+            var batch = documents.Skip(offset).Take(batchSize).ToList();
+
+            foreach (var document in batch)
             {
-                FeatureKey = AiFeatureKeys.SearchSemantic,
-                Text = document.Text,
-                Locale = locale
-            }, cancellationToken);
+                var embedding = await _embeddingPort.EmbedAsync(new AiEmbeddingRequest
+                {
+                    FeatureKey = AiFeatureKeys.SearchSemantic,
+                    Text = document.Text,
+                    Locale = locale
+                }, cancellationToken);
 
-            if (!embedding.Success || embedding.Vector.Length == 0)
-                continue;
+                if (!embedding.Success || embedding.Vector.Length == 0)
+                    continue;
 
-            await _embeddingIndex.UpsertAsync(document, embedding.Vector, embedding.ModelHash, cancellationToken);
-            indexed++;
+                await _embeddingIndex.UpsertAsync(document, embedding.Vector, embedding.ModelHash, cancellationToken);
+                indexed++;
+            }
         }
 
         return indexed;

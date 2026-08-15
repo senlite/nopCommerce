@@ -156,14 +156,25 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AzureOpenAiCompletionPort>();
         services.AddSingleton<AnthropicCompletionPort>();
         services.AddSingleton<AiCompletionProviderRouter>();
-        services.AddSingleton<IAiCompletionCache, MemoryAiCompletionCache>();
+        services.AddSingleton<MemoryAiCompletionCache>();
+        services.AddSingleton<IAiCompletionCache>(sp =>
+        {
+            var memory = sp.GetRequiredService<MemoryAiCompletionCache>();
+            var staticCache = sp.GetService<Nop.Core.Caching.IStaticCacheManager>();
+            if (staticCache is null)
+                return memory;
+
+            var distributed = new NopStaticCacheAiCompletionCache(staticCache, sp.GetRequiredService<CheckEngineAiOptions>());
+            return new LayeredAiCompletionCache(memory, distributed);
+        });
         services.AddSingleton<CachingAiCompletionPort>(sp => new CachingAiCompletionPort(
             sp.GetRequiredService<AiCompletionProviderRouter>(),
-            sp.GetService<IAiCompletionCache>(),
+            sp.GetRequiredService<IAiCompletionCache>(),
             sp.GetRequiredService<CheckEngineAiOptions>()));
         services.AddSingleton<IAiSpendPolicy, SettingsAiSpendPolicy>();
         services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
         services.AddSingleton<OpenAiCompatibleEmbeddingPort>();
+        services.AddSingleton<AzureOpenAiEmbeddingPort>();
         services.AddSingleton<DeterministicTextEmbeddingPort>();
         services.AddSingleton<AiEmbeddingProviderRouter>();
         services.AddSingleton<IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingProviderRouter>());

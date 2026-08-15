@@ -25,6 +25,8 @@ public sealed class CheckEngineAiOptions
 
     public string AzureDeploymentName { get; set; } = string.Empty;
 
+    public string AzureEmbeddingDeploymentName { get; set; } = string.Empty;
+
     public string AzureApiVersion { get; set; } = "2024-02-15-preview";
 
     public string AnthropicVersion { get; set; } = "2023-06-01";

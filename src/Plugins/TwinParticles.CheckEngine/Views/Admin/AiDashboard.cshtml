@@ -1,0 +1,88 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+        <a class="btn btn-info" href="@Url.Action("ReviewBoard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a>
+        <a class="btn btn-primary" href="@Url.Action("Configure", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Configuration")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Usage")</h3>
+            </div>
+            <div class="card-body">
+                <p id="ce-ai-disclosure-status" class="text-muted"></p>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ce-ai-usage-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Daily usage</th>
+                                <th>Ceiling</th>
+                                <th>Utilization</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <p id="ce-ai-pending-count" class="mt-3"></p>
+                <button id="ce-ai-ack-disclosure" type="button" class="btn btn-warning">@T("Plugins.TwinParticles.CheckEngine.Ai.AcknowledgeDisclosure")</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  function pct(usage, ceiling) {
+    if (!ceiling) return '—';
+    return Math.min(100, Math.round((usage / ceiling) * 100)) + '%';
+  }
+  function render(data) {
+    document.getElementById('ce-ai-disclosure-status').textContent =
+      data.disclosureAcknowledged ? 'Disclosure acknowledged.' : 'Disclosure not acknowledged — AI features remain gated.';
+    var tbody = document.querySelector('#ce-ai-usage-table tbody');
+    tbody.innerHTML = '';
+    (data.usage || []).forEach(function (row) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><code>' + row.featureKey + '</code></td>' +
+        '<td>' + row.dailyUsage + '</td>' +
+        '<td>' + row.dailyCeiling + '</td>' +
+        '<td>' + pct(row.dailyUsage, row.dailyCeiling) + '</td>';
+      tbody.appendChild(tr);
+    });
+    document.getElementById('ce-ai-pending-count').textContent =
+      'Pending content candidates: ' + (data.pendingContentCount || 0);
+  }
+  function load() {
+    fetch('/Admin/CheckEngine/AiAdmin/DashboardData', { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(render);
+  }
+  document.getElementById('ce-ai-ack-disclosure').addEventListener('click', function () {
+    fetch('/Admin/CheckEngine/AiAdmin/AcknowledgeDisclosure', {
+      method: 'POST',
+      headers: headers(false)
+    }).then(load);
+  });
+  load();
+})();
+</script>

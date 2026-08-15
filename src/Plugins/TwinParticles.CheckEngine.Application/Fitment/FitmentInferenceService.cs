@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Fitment;
 
@@ -13,15 +15,18 @@ public sealed class FitmentInferenceService
     private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly IFitmentClaimWriteRepository _writeRepository;
     private readonly IFitmentReviewQueueRepository _reviewQueueRepository;
+    private readonly AiPromptResolver? _promptResolver;
 
     public FitmentInferenceService(
         IFitmentClaimWriteRepository writeRepository,
         IFitmentReviewQueueRepository reviewQueueRepository,
-        IAiCompletionPort? aiCompletionPort = null)
+        IAiCompletionPort? aiCompletionPort = null,
+        AiPromptResolver? promptResolver = null)
     {
         _writeRepository = writeRepository;
         _reviewQueueRepository = reviewQueueRepository;
         _aiCompletionPort = aiCompletionPort;
+        _promptResolver = promptResolver;
     }
 
     public async Task<FitmentClaim?> InferCandidateAsync(
@@ -34,14 +39,21 @@ public sealed class FitmentInferenceService
         if (productId <= 0 || vehicleConfigurationId <= 0 || _aiCompletionPort is null)
             return null;
 
+        var prompt = _promptResolver?.Format(AiFeatureKeys.FitmentInference, new Dictionary<string, string?>
+        {
+            ["productId"] = productId.ToString(),
+            ["configurationId"] = vehicleConfigurationId.ToString(),
+            ["attributes"] = productName
+        }) ?? $"""
+            Given product "{productName}" (id {productId}) and vehicle configuration {vehicleConfigurationId},
+            respond with one word: Fits, DoesNotFit, or Unknown.
+            """;
+
         var result = await _aiCompletionPort.CompleteAsync(new AiCompletionRequest
         {
             FeatureKey = AiFeatureKeys.FitmentInference,
             PromptKey = AiFeatureKeys.FitmentInference,
-            Prompt = $"""
-                Given product "{productName}" (id {productId}) and vehicle configuration {vehicleConfigurationId},
-                respond with one word: Fits, DoesNotFit, or Unknown.
-                """,
+            Prompt = prompt,
             MaxTokens = 8,
             Temperature = 0
         }, cancellationToken);

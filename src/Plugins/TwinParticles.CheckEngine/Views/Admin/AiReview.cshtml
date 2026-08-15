@@ -100,7 +100,7 @@
     });
   }
   function loadDashboard() {
-    fetch('/Admin/CheckEngine/AiAdmin/Dashboard', { headers: headers(false) })
+    fetch('/Admin/CheckEngine/AiAdmin/DashboardData', { headers: headers(false) })
       .then(function (r) { return r.json(); })
       .then(function (data) { document.getElementById('ce-ai-dashboard').textContent = JSON.stringify(data, null, 2); });
   }

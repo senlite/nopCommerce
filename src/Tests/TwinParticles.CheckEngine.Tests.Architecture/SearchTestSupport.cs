@@ -60,9 +60,31 @@ internal static class SearchTestSupport
         IProductSearchReadRepository? repository = null,
         Dictionary<int, FitmentStatus>? fitmentMap = null)
     {
+        return await BuildSearchServiceWithCatalogAsync(
+            new InMemorySearchEmbeddingCatalogSource(),
+            repository,
+            fitmentMap);
+    }
+
+    public static async Task<UnifiedSearchService> BuildReferenceScaleSearchServiceAsync(
+        IProductSearchReadRepository? repository = null,
+        Dictionary<int, FitmentStatus>? fitmentMap = null)
+    {
+        var catalog = ReferenceScaleSearchEmbeddingCatalogSource.LoadCatalog().Documents;
+        return await BuildSearchServiceWithCatalogAsync(
+            new InMemorySearchEmbeddingCatalogSource(catalog),
+            repository,
+            fitmentMap);
+    }
+
+    private static async Task<UnifiedSearchService> BuildSearchServiceWithCatalogAsync(
+        InMemorySearchEmbeddingCatalogSource catalogSource,
+        IProductSearchReadRepository? repository,
+        Dictionary<int, FitmentStatus>? fitmentMap)
+    {
         var index = new InMemorySearchEmbeddingIndex();
         var builder = new SearchEmbeddingIndexBuilderService(
-            new InMemorySearchEmbeddingCatalogSource(),
+            catalogSource,
             index,
             new DeterministicTextEmbeddingPort());
         await builder.RebuildAsync("en", CancellationToken.None);

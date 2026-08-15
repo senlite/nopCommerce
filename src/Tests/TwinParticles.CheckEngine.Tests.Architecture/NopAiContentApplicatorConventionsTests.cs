@@ -16,7 +16,9 @@ public class NopAiContentApplicatorConventionsTests
 
         source.Should().Contain("AddScoped<IAiContentApplicator, NopAiContentApplicator>");
         source.Should().Contain("AddSingleton<IAiPromptStore, EmbeddedAiPromptStore>");
-        source.Should().Contain("AddSingleton<IAiCompletionCache, MemoryAiCompletionCache>");
+        source.Should().Contain("AddSingleton<MemoryAiCompletionCache>");
+        source.Should().Contain("LayeredAiCompletionCache");
+        source.Should().Contain("AzureOpenAiEmbeddingPort");
         source.Should().Contain("CachingAiCompletionPort");
     }
 

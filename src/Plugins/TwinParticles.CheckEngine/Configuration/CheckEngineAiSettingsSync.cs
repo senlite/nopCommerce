@@ -18,6 +18,7 @@ public static class CheckEngineAiSettingsSync
         options.Model = string.IsNullOrWhiteSpace(settings.AiModel) ? options.Model : settings.AiModel;
         options.EmbeddingModel = string.IsNullOrWhiteSpace(settings.AiEmbeddingModel) ? options.EmbeddingModel : settings.AiEmbeddingModel;
         options.AzureDeploymentName = settings.AiAzureDeploymentName ?? string.Empty;
+        options.AzureEmbeddingDeploymentName = settings.AiAzureEmbeddingDeploymentName ?? string.Empty;
         options.DailyTokenCeiling = settings.AiDailyTokenCeiling > 0 ? settings.AiDailyTokenCeiling : options.DailyTokenCeiling;
         options.ResponseCacheTtlMinutes = settings.AiResponseCacheTtlMinutes > 0 ? settings.AiResponseCacheTtlMinutes : options.ResponseCacheTtlMinutes;
         options.DisclosureAcknowledged = settings.AiDisclosureAcknowledged;
@@ -34,6 +35,7 @@ public static class CheckEngineAiSettingsSync
         settings.AiModel = options.Model;
         settings.AiEmbeddingModel = options.EmbeddingModel;
         settings.AiAzureDeploymentName = options.AzureDeploymentName;
+        settings.AiAzureEmbeddingDeploymentName = options.AzureEmbeddingDeploymentName;
         settings.AiDailyTokenCeiling = options.DailyTokenCeiling;
         settings.AiResponseCacheTtlMinutes = options.ResponseCacheTtlMinutes;
         settings.AiDisclosureAcknowledged = options.DisclosureAcknowledged;

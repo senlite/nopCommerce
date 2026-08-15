@@ -20,6 +20,8 @@ public sealed class CheckEnginePluginSettings : ISettings
 
     public string? AiAzureDeploymentName { get; set; }
 
+    public string? AiAzureEmbeddingDeploymentName { get; set; }
+
     public int AiDailyTokenCeiling { get; set; } = 100_000;
 
     public int AiResponseCacheTtlMinutes { get; set; } = 60;

@@ -61,6 +61,13 @@ public sealed class FitmentAdminController : BasePluginController
         return Ok();
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ReviewBoard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/FitmentAiReview.cshtml");
+    }
+
     [HttpPost]
     public async Task<IActionResult> Infer([FromBody] FitmentInferenceRequestModel model, CancellationToken cancellationToken)
     {

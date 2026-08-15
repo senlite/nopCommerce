@@ -128,6 +128,13 @@ public sealed class AiAdminController : BasePluginController
     public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/AiDashboard.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
 
         var features = new[]
         {

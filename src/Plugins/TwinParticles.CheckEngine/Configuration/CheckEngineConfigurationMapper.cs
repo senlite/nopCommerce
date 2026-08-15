@@ -23,6 +23,7 @@ public static class CheckEngineConfigurationMapper
             AiModel = settings.AiModel,
             AiEmbeddingModel = settings.AiEmbeddingModel,
             AiAzureDeploymentName = settings.AiAzureDeploymentName,
+            AiAzureEmbeddingDeploymentName = settings.AiAzureEmbeddingDeploymentName,
             AiDailyTokenCeiling = settings.AiDailyTokenCeiling,
             AiResponseCacheTtlMinutes = settings.AiResponseCacheTtlMinutes,
             AiDisclosureAcknowledged = settings.AiDisclosureAcknowledged,
@@ -47,6 +48,7 @@ public static class CheckEngineConfigurationMapper
         settings.AiModel = model.AiModel;
         settings.AiEmbeddingModel = model.AiEmbeddingModel;
         settings.AiAzureDeploymentName = model.AiAzureDeploymentName;
+        settings.AiAzureEmbeddingDeploymentName = model.AiAzureEmbeddingDeploymentName;
         settings.AiDailyTokenCeiling = model.AiDailyTokenCeiling;
         settings.AiResponseCacheTtlMinutes = model.AiResponseCacheTtlMinutes;
         settings.AiDisclosureAcknowledged = model.AiDisclosureAcknowledged;
