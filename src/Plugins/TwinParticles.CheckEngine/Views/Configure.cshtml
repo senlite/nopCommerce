@@ -65,6 +65,28 @@
                     <div class="col-md-9"><nop-editor asp-for="AiModel" /><span asp-validation-for="AiModel"></span></div>
                 </div>
                 <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-label asp-for="AiEmbeddingProviderKind" />
+                    </div>
+                    <div class="col-md-9">
+                        <select asp-for="AiEmbeddingProviderKind" class="form-control">
+                            <option value="0">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.SameAsCompletion")</option>
+                            <option value="1">OpenAI-compatible</option>
+                            <option value="2">Azure OpenAI</option>
+                            <option value="3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Deterministic")</option>
+                        </select>
+                        <small class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Hint")</small>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiEmbeddingBaseUrl" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiEmbeddingBaseUrl" /><span asp-validation-for="AiEmbeddingBaseUrl"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiEmbeddingApiKey" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiEmbeddingApiKey" /><span asp-validation-for="AiEmbeddingApiKey"></span></div>
+                </div>
+                <div class="form-group row">
                     <div class="col-md-3"><nop-label asp-for="AiEmbeddingModel" /></div>
                     <div class="col-md-9"><nop-editor asp-for="AiEmbeddingModel" /><span asp-validation-for="AiEmbeddingModel"></span></div>
                 </div>

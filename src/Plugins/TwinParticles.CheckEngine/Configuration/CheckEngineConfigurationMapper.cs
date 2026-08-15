@@ -18,10 +18,13 @@ public static class CheckEngineConfigurationMapper
         {
             Enabled = settings.Enabled,
             AiProviderKind = settings.AiProviderKind,
+            AiEmbeddingProviderKind = settings.AiEmbeddingProviderKind,
             AiBaseUrl = settings.AiBaseUrl,
             AiApiKey = settings.AiApiKey,
             AiModel = settings.AiModel,
             AiEmbeddingModel = settings.AiEmbeddingModel,
+            AiEmbeddingBaseUrl = settings.AiEmbeddingBaseUrl,
+            AiEmbeddingApiKey = settings.AiEmbeddingApiKey,
             AiAzureDeploymentName = settings.AiAzureDeploymentName,
             AiAzureEmbeddingDeploymentName = settings.AiAzureEmbeddingDeploymentName,
             AiDailyTokenCeiling = settings.AiDailyTokenCeiling,
@@ -43,10 +46,13 @@ public static class CheckEngineConfigurationMapper
     {
         settings.Enabled = model.Enabled;
         settings.AiProviderKind = model.AiProviderKind;
+        settings.AiEmbeddingProviderKind = model.AiEmbeddingProviderKind;
         settings.AiBaseUrl = model.AiBaseUrl;
         settings.AiApiKey = model.AiApiKey;
         settings.AiModel = model.AiModel;
         settings.AiEmbeddingModel = model.AiEmbeddingModel;
+        settings.AiEmbeddingBaseUrl = model.AiEmbeddingBaseUrl;
+        settings.AiEmbeddingApiKey = model.AiEmbeddingApiKey;
         settings.AiAzureDeploymentName = model.AiAzureDeploymentName;
         settings.AiAzureEmbeddingDeploymentName = model.AiAzureEmbeddingDeploymentName;
         settings.AiDailyTokenCeiling = model.AiDailyTokenCeiling;

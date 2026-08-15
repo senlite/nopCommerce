@@ -171,6 +171,12 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<AiCompletionProviderRouter>(),
             sp.GetRequiredService<IAiCompletionCache>(),
             sp.GetRequiredService<CheckEngineAiOptions>()));
+        services.AddSingleton<MemoryAiEmbeddingCache>();
+        services.AddSingleton<IAiEmbeddingCache>(sp => sp.GetRequiredService<MemoryAiEmbeddingCache>());
+        services.AddSingleton<CachingAiEmbeddingPort>(sp => new CachingAiEmbeddingPort(
+            sp.GetRequiredService<AiEmbeddingProviderRouter>(),
+            sp.GetRequiredService<IAiEmbeddingCache>(),
+            sp.GetRequiredService<CheckEngineAiOptions>()));
         services.AddSingleton<IAiSpendPolicy, SettingsAiSpendPolicy>();
         services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
         services.AddSingleton<OpenAiCompatibleEmbeddingPort>();

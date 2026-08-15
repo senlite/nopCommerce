@@ -11,6 +11,8 @@ public sealed class CheckEngineAiOptions
 
     public AiProviderKind ProviderKind { get; set; } = AiProviderKind.OpenAiCompatible;
 
+    public AiEmbeddingProviderKind EmbeddingProviderKind { get; set; } = AiEmbeddingProviderKind.SameAsCompletion;
+
     public IReadOnlyCollection<string> EnabledFeatures { get; set; } = Array.Empty<string>();
 
     public int DailyTokenCeiling { get; set; } = 100_000;
@@ -20,6 +22,10 @@ public sealed class CheckEngineAiOptions
     public string BaseUrl { get; set; } = string.Empty;
 
     public string ApiKey { get; set; } = string.Empty;
+
+    public string EmbeddingBaseUrl { get; set; } = string.Empty;
+
+    public string EmbeddingApiKey { get; set; } = string.Empty;
 
     public string Model { get; set; } = "gpt-4o-mini";
 

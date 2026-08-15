@@ -10,6 +10,8 @@ public sealed class CheckEnginePluginSettings : ISettings
 
     public int AiProviderKind { get; set; } = (int)Domain.Ai.AiProviderKind.OpenAiCompatible;
 
+    public int AiEmbeddingProviderKind { get; set; }
+
     public string? AiBaseUrl { get; set; }
 
     public string? AiApiKey { get; set; }
@@ -17,6 +19,10 @@ public sealed class CheckEnginePluginSettings : ISettings
     public string? AiModel { get; set; } = "gpt-4o-mini";
 
     public string? AiEmbeddingModel { get; set; } = "text-embedding-3-small";
+
+    public string? AiEmbeddingBaseUrl { get; set; }
+
+    public string? AiEmbeddingApiKey { get; set; }
 
     public string? AiAzureDeploymentName { get; set; }
 

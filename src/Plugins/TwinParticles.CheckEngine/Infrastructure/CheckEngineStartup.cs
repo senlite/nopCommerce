@@ -34,7 +34,7 @@ public sealed class CheckEngineStartup : INopStartup
 
         services.AddSingleton<AiEmbeddingGateService>(sp =>
             new AiEmbeddingGateService(
-                sp.GetRequiredService<AiEmbeddingProviderRouter>(),
+                sp.GetRequiredService<CachingAiEmbeddingPort>(),
                 sp.GetService<IAiFeatureToggle>(),
                 sp.GetService<IAiUsageLedger>(),
                 sp.GetService<IAiSpendPolicy>()));

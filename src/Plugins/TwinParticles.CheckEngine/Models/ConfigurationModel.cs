@@ -12,6 +12,9 @@ public record ConfigurationModel : BaseNopModel
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind")]
     public int AiProviderKind { get; set; } = 1;
 
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind")]
+    public int AiEmbeddingProviderKind { get; set; }
+
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiBaseUrl")]
     public string? AiBaseUrl { get; set; }
 
@@ -24,6 +27,13 @@ public record ConfigurationModel : BaseNopModel
 
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingModel")]
     public string? AiEmbeddingModel { get; set; }
+
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingBaseUrl")]
+    public string? AiEmbeddingBaseUrl { get; set; }
+
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingApiKey")]
+    [DataType(DataType.Password)]
+    public string? AiEmbeddingApiKey { get; set; }
 
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiAzureDeploymentName")]
     public string? AiAzureDeploymentName { get; set; }

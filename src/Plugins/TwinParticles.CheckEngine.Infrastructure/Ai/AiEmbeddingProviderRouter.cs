@@ -26,7 +26,7 @@ public sealed class AiEmbeddingProviderRouter : IAiEmbeddingPort
 
     public async Task<AiEmbeddingResult> EmbedAsync(AiEmbeddingRequest request, CancellationToken cancellationToken)
     {
-        if (HasProviderCredentials())
+        if (_options.HasEmbeddingProviderCredentials())
         {
             var providerResult = await ResolveProvider().EmbedAsync(request, cancellationToken);
             if (providerResult.Success)
@@ -36,27 +36,13 @@ public sealed class AiEmbeddingProviderRouter : IAiEmbeddingPort
         return await _deterministicPort.EmbedAsync(request, cancellationToken);
     }
 
-    private IAiEmbeddingPort ResolveProvider()
+    internal IAiEmbeddingPort ResolveProvider()
     {
-        return _options.ProviderKind switch
+        return _options.ResolveEffectiveEmbeddingProvider() switch
         {
             AiProviderKind.AzureOpenAi => _azurePort,
-            AiProviderKind.Anthropic => _deterministicPort,
-            _ => _openAiPort
-        };
-    }
-
-    private bool HasProviderCredentials()
-    {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey) || string.IsNullOrWhiteSpace(_options.BaseUrl))
-            return false;
-
-        return _options.ProviderKind switch
-        {
-            AiProviderKind.AzureOpenAi => !string.IsNullOrWhiteSpace(_options.AzureEmbeddingDeploymentName)
-                || !string.IsNullOrWhiteSpace(_options.AzureDeploymentName),
-            AiProviderKind.Anthropic => false,
-            _ => true
+            AiProviderKind.OpenAiCompatible => _openAiPort,
+            _ => _deterministicPort
         };
     }
 }

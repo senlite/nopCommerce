@@ -23,15 +23,16 @@ public sealed class OpenAiCompatibleEmbeddingPort : IAiEmbeddingPort
 
     public async Task<AiEmbeddingResult> EmbedAsync(AiEmbeddingRequest request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey) || string.IsNullOrWhiteSpace(_options.BaseUrl))
+        var (baseUrl, apiKey) = _options.ResolveEmbeddingCredentials();
+        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(baseUrl))
             return DisabledResult();
 
         try
         {
-            var endpoint = $"{_options.BaseUrl.TrimEnd('/')}/embeddings";
+            var endpoint = $"{baseUrl.TrimEnd('/')}/embeddings";
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint);
             httpRequest.Headers.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _options.ApiKey);
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
             var body = new
             {

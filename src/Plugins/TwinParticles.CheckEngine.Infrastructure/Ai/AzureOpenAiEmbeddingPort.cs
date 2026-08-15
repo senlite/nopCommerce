@@ -23,8 +23,9 @@ public sealed class AzureOpenAiEmbeddingPort : IAiEmbeddingPort
     public async Task<AiEmbeddingResult> EmbedAsync(AiEmbeddingRequest request, CancellationToken cancellationToken)
     {
         var deployment = ResolveDeploymentName();
-        if (string.IsNullOrWhiteSpace(_options.ApiKey)
-            || string.IsNullOrWhiteSpace(_options.BaseUrl)
+        var (baseUrl, apiKey) = _options.ResolveEmbeddingCredentials();
+        if (string.IsNullOrWhiteSpace(apiKey)
+            || string.IsNullOrWhiteSpace(baseUrl)
             || string.IsNullOrWhiteSpace(deployment))
         {
             return DisabledResult();
@@ -33,9 +34,9 @@ public sealed class AzureOpenAiEmbeddingPort : IAiEmbeddingPort
         try
         {
             var endpoint =
-                $"{_options.BaseUrl.TrimEnd('/')}/openai/deployments/{deployment}/embeddings?api-version={_options.AzureApiVersion}";
+                $"{baseUrl.TrimEnd('/')}/openai/deployments/{deployment}/embeddings?api-version={_options.AzureApiVersion}";
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint);
-            httpRequest.Headers.Add("api-key", _options.ApiKey);
+            httpRequest.Headers.Add("api-key", apiKey);
 
             var body = new { input = request.Text };
             httpRequest.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");

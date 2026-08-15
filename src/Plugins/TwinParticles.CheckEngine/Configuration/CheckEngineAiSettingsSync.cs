@@ -13,8 +13,11 @@ public static class CheckEngineAiSettingsSync
     {
         var options = CheckEngineAiOptions.Current;
         options.ProviderKind = (AiProviderKind)Math.Max(1, settings.AiProviderKind);
+        options.EmbeddingProviderKind = (AiEmbeddingProviderKind)Math.Max(0, settings.AiEmbeddingProviderKind);
         options.BaseUrl = settings.AiBaseUrl ?? string.Empty;
         options.ApiKey = settings.AiApiKey ?? string.Empty;
+        options.EmbeddingBaseUrl = settings.AiEmbeddingBaseUrl ?? string.Empty;
+        options.EmbeddingApiKey = settings.AiEmbeddingApiKey ?? string.Empty;
         options.Model = string.IsNullOrWhiteSpace(settings.AiModel) ? options.Model : settings.AiModel;
         options.EmbeddingModel = string.IsNullOrWhiteSpace(settings.AiEmbeddingModel) ? options.EmbeddingModel : settings.AiEmbeddingModel;
         options.AzureDeploymentName = settings.AiAzureDeploymentName ?? string.Empty;
@@ -30,8 +33,11 @@ public static class CheckEngineAiSettingsSync
     {
         var options = CheckEngineAiOptions.Current;
         settings.AiProviderKind = (int)options.ProviderKind;
+        settings.AiEmbeddingProviderKind = (int)options.EmbeddingProviderKind;
         settings.AiBaseUrl = options.BaseUrl;
         settings.AiApiKey = options.ApiKey;
+        settings.AiEmbeddingBaseUrl = options.EmbeddingBaseUrl;
+        settings.AiEmbeddingApiKey = options.EmbeddingApiKey;
         settings.AiModel = options.Model;
         settings.AiEmbeddingModel = options.EmbeddingModel;
         settings.AiAzureDeploymentName = options.AzureDeploymentName;
