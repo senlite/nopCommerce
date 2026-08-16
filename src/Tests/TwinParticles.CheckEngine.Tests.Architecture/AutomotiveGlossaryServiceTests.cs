@@ -13,12 +13,13 @@ namespace TwinParticles.CheckEngine.Tests.Architecture;
 public class AutomotiveGlossaryServiceTests
 {
     [Test]
-    public void ValidateTranslation_Should_Require_Glossary_Term()
+    public void ScoreTranslation_Should_Return_Partial_Score_When_Term_Missing()
     {
         var service = new AutomotiveGlossaryService();
 
-        service.ValidateTranslation("BMW water pump", "مضخة مياه BMW").Should().BeTrue();
-        service.ValidateTranslation("BMW water pump", "مضخة BMW").Should().BeFalse();
+        service.ScoreTranslation("BMW water pump", "مضخة مياه BMW").Should().Be(1m);
+        service.ScoreTranslation("BMW water pump", "مضخة BMW").Should().Be(0.5m);
+        service.ScoreTranslation("generic part", "قطعة").Should().Be(1m);
     }
 
     [Test]

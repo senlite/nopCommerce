@@ -84,19 +84,34 @@ public sealed class AutomotiveGlossaryService
 
     public bool ValidateTranslation(string englishTerm, string translatedText)
     {
-        if (string.IsNullOrWhiteSpace(englishTerm) || string.IsNullOrWhiteSpace(translatedText))
-            return true;
+        return ScoreTranslation(englishTerm, translatedText) >= 1m;
+    }
 
+    /// <summary>
+    /// Returns 1 when all glossary terms present in the source appear in the translation;
+    /// 0.5 when at least one required term is missing; 1 when no glossary terms apply.
+    /// </summary>
+    public decimal ScoreTranslation(string englishTerm, string translatedText)
+    {
+        if (string.IsNullOrWhiteSpace(englishTerm) || string.IsNullOrWhiteSpace(translatedText))
+            return 1m;
+
+        var required = 0;
+        var matched = 0;
         foreach (var pair in GetTerms())
         {
             if (!englishTerm.Contains(pair.Key, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            if (!translatedText.Contains(pair.Value, StringComparison.Ordinal))
-                return false;
+            required++;
+            if (translatedText.Contains(pair.Value, StringComparison.Ordinal))
+                matched++;
         }
 
-        return true;
+        if (required == 0)
+            return 1m;
+
+        return matched == required ? 1m : 0.5m;
     }
 
     public Task<string> BuildTranslationPromptAsync(string sourceText, string targetLocale, CancellationToken cancellationToken)

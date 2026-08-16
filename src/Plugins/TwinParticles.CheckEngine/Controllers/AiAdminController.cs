@@ -225,7 +225,7 @@ public sealed class AiAdminController : BasePluginController
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
-        var overrides = PluginAutomotiveGlossaryOverridesSource.ParseOverrides(settings.AutomotiveGlossaryOverridesJson);
+        var overrides = AutomotiveGlossaryOverridesJson.Parse(settings.AutomotiveGlossaryOverridesJson);
         var embedded = new AutomotiveGlossaryService().GetTerms();
         var merged = _glossaryService.GetTerms();
 
@@ -255,7 +255,7 @@ public sealed class AiAdminController : BasePluginController
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         var before = settings.AutomotiveGlossaryOverridesJson;
-        settings.AutomotiveGlossaryOverridesJson = PluginAutomotiveGlossaryOverridesSource.SerializeOverrides(model.Overrides);
+        settings.AutomotiveGlossaryOverridesJson = AutomotiveGlossaryOverridesJson.Serialize(model.Overrides);
         await _settingService.SaveSettingAsync(settings);
 
         await _auditService.AppendAsync(
