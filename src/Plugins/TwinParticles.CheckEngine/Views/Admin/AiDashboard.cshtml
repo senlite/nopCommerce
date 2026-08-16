@@ -22,14 +22,16 @@
             </div>
             <div class="card-body">
                 <p id="ce-ai-disclosure-status" class="text-muted"></p>
+                <p id="ce-ai-global-usage" class="text-muted"></p>
                 <div class="table-responsive">
                     <table class="table table-bordered" id="ce-ai-usage-table">
                         <thead>
                             <tr>
                                 <th>Feature</th>
-                                <th>Today</th>
-                                <th>7 days</th>
-                                <th>30 days</th>
+                                <th>Today tokens</th>
+                                <th>Today cost (USD)</th>
+                                <th>7d tokens</th>
+                                <th>30d tokens</th>
                                 <th>Ceiling</th>
                                 <th>Today util.</th>
                                 <th>7d fail rate</th>
@@ -39,6 +41,7 @@
                         <tbody></tbody>
                     </table>
                 </div>
+                <div id="ce-ai-alerts" class="alert alert-warning mt-3" hidden></div>
                 <p id="ce-ai-pending-count" class="mt-3"></p>
                 <button id="ce-ai-ack-disclosure" type="button" class="btn btn-warning">@T("Plugins.TwinParticles.CheckEngine.Ai.AcknowledgeDisclosure")</button>
             </div>
@@ -63,9 +66,16 @@
     if (fraction == null || isNaN(fraction)) return '—';
     return Math.round(fraction * 1000) / 10 + '%';
   }
+  function money(value) {
+    if (value == null || isNaN(value)) return '—';
+    return '$' + (Math.round(value * 10000) / 10000);
+  }
   function render(data) {
     document.getElementById('ce-ai-disclosure-status').textContent =
       data.disclosureAcknowledged ? 'Disclosure acknowledged.' : 'Disclosure not acknowledged — AI features remain gated.';
+    document.getElementById('ce-ai-global-usage').textContent =
+      'Global today: ' + (data.globalDailyUsage || 0) + ' / ' + (data.globalDailyCeiling || 0) +
+      ' tokens · rate $' + (data.tokenCostPer1KUsd || 0) + ' / 1K tokens';
     var tbody = document.querySelector('#ce-ai-usage-table tbody');
     tbody.innerHTML = '';
     (data.usage || []).forEach(function (row) {
@@ -74,6 +84,7 @@
       tr.innerHTML =
         '<td><code>' + row.featureKey + '</code></td>' +
         '<td>' + (summary.todayTokens || row.dailyUsage || 0) + '</td>' +
+        '<td>' + money(row.todayEstimatedCostUsd ?? summary.todayEstimatedCostUsd) + '</td>' +
         '<td>' + (summary.last7DaysTokens || 0) + '</td>' +
         '<td>' + (summary.last30DaysTokens || 0) + '</td>' +
         '<td>' + row.dailyCeiling + '</td>' +
@@ -85,6 +96,18 @@
     document.getElementById('ce-ai-pending-count').textContent =
       'Pending content candidates: ' + (data.pendingContentCount || 0) +
       ' · Pending fitment AI proposals: ' + (data.pendingFitmentAiCount || 0);
+    var alerts = document.getElementById('ce-ai-alerts');
+    var recent = data.recentBudgetAlerts || [];
+    if (recent.length) {
+      alerts.hidden = false;
+      alerts.innerHTML = '<strong>Budget alerts today</strong><ul>' + recent.map(function (alert) {
+        var scope = alert.global ? 'global' : alert.featureKey;
+        return '<li>' + scope + ': ' + alert.usage + ' / ' + alert.ceiling + ' tokens</li>';
+      }).join('') + '</ul>';
+    } else {
+      alerts.hidden = true;
+      alerts.innerHTML = '';
+    }
   }
   function load() {
     fetch('/Admin/CheckEngine/AiAdmin/DashboardData', { headers: headers(false) })

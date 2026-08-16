@@ -4,7 +4,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Domain.Ai;
-using TwinParticles.CheckEngine.Infrastructure.Ai;
 
 namespace TwinParticles.CheckEngine.Tests.Architecture;
 
@@ -14,7 +13,7 @@ public class AiEmbeddingGateTests
     [Test]
     public async Task EmbedAsync_Should_Block_When_Feature_Disabled()
     {
-        var gate = new AiEmbeddingGateService(new SuccessPort(), new AlwaysOffToggle());
+        var gate = CreateGate(new SuccessPort(), new AlwaysOffToggle(), new TrackingLedger(10_000), new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
 
         var result = await gate.EmbedAsync(new AiEmbeddingRequest
         {
@@ -23,36 +22,28 @@ public class AiEmbeddingGateTests
         }, CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be("ai.disabled");
+        result.ErrorCode.Should().Be(AiErrorCodes.Disabled);
     }
 
     [Test]
     public async Task EmbedAsync_Should_Block_When_Ceiling_Exceeded()
     {
         var ledger = new TrackingLedger(10);
-        var gate = new AiEmbeddingGateService(
-            new SuccessPort(),
-            new AlwaysOnToggle(),
-            ledger,
-            new FixedSpendPolicy(10, disclosureAcknowledged: true));
+        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10, disclosureAcknowledged: true));
 
         var first = await gate.EmbedAsync(Request(), CancellationToken.None);
         var second = await gate.EmbedAsync(Request(), CancellationToken.None);
 
         first.Success.Should().BeTrue();
         second.Success.Should().BeFalse();
-        second.ErrorCode.Should().Be("ai.ceiling_exceeded");
+        second.ErrorCode.Should().Be(AiErrorCodes.BudgetExceeded);
     }
 
     [Test]
     public async Task EmbedAsync_Should_Record_Tokens_On_Success()
     {
         var ledger = new TrackingLedger(10_000);
-        var gate = new AiEmbeddingGateService(
-            new SuccessPort(),
-            new AlwaysOnToggle(),
-            ledger,
-            new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
+        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
 
         await gate.EmbedAsync(Request(), CancellationToken.None);
 
@@ -64,11 +55,7 @@ public class AiEmbeddingGateTests
     public async Task EmbedAsync_Should_Record_Failure_When_Gate_Blocks()
     {
         var ledger = new TrackingLedger(10_000);
-        var gate = new AiEmbeddingGateService(
-            new SuccessPort(),
-            new AlwaysOffToggle(),
-            ledger,
-            new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
+        var gate = CreateGate(new SuccessPort(), new AlwaysOffToggle(), ledger, new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
 
         await gate.EmbedAsync(Request(), CancellationToken.None);
 
@@ -76,6 +63,17 @@ public class AiEmbeddingGateTests
         summary.TodayFailures.Should().Be(1);
         summary.TodayAttempts.Should().Be(1);
     }
+
+    private static AiEmbeddingGateService CreateGate(
+        IAiEmbeddingPort inner,
+        IAiFeatureToggle toggle,
+        IAiUsageLedger ledger,
+        IAiSpendPolicy policy) =>
+        new(
+            inner,
+            new AiSpendGuardService(toggle, policy, ledger),
+            ledger,
+            policy);
 
     private static AiEmbeddingRequest Request()
     {
@@ -115,33 +113,43 @@ public class AiEmbeddingGateTests
     {
         public FixedSpendPolicy(int ceiling, bool disclosureAcknowledged)
         {
-            DisclosureAcknowledged = disclosureAcknowledged;
             _ceiling = ceiling;
+            DisclosureAcknowledged = disclosureAcknowledged;
         }
 
         private readonly int _ceiling;
 
         public bool DisclosureAcknowledged { get; }
 
+        public int GlobalDailyCeiling => _ceiling;
+
+        public decimal TokenCostPer1KUsd => 0.002m;
+
         public int ResolveDailyCeiling(string featureKey) => _ceiling;
     }
 
     private sealed class TrackingLedger : IAiUsageLedger
     {
-        private readonly int _ceiling;
         private int _usage;
         private int _attempts;
         private int _failures;
 
-        public TrackingLedger(int ceiling) => _ceiling = ceiling;
-
-        public Task RecordAsync(string featureKey, int tokenUsage, CancellationToken cancellationToken)
+        public TrackingLedger(int ceiling)
         {
-            _usage += tokenUsage;
-            return Task.CompletedTask;
+            Ceiling = ceiling;
         }
 
-        public Task RecordOutcomeAsync(string featureKey, int tokenUsage, bool success, CancellationToken cancellationToken)
+        public int Ceiling { get; }
+
+        public Task RecordAsync(string featureKey, int tokenUsage, CancellationToken cancellationToken) =>
+            RecordOutcomeAsync(featureKey, tokenUsage, success: true, estimatedCostUsd: 0m, cancellationToken);
+
+        public Task RecordOutcomeAsync(
+            string featureKey,
+            int tokenUsage,
+            bool success,
+            decimal estimatedCostUsd,
+            CancellationToken cancellationToken)
         {
             _attempts++;
             if (success)
@@ -153,6 +161,9 @@ public class AiEmbeddingGateTests
         }
 
         public Task<int> GetDailyUsageAsync(string featureKey, CancellationToken cancellationToken) =>
+            Task.FromResult(_usage);
+
+        public Task<int> GetGlobalDailyUsageAsync(CancellationToken cancellationToken) =>
             Task.FromResult(_usage);
 
         public Task<AiUsageSummary> GetUsageSummaryAsync(string featureKey, CancellationToken cancellationToken) =>

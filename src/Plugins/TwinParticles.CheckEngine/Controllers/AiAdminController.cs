@@ -30,6 +30,7 @@ public sealed class AiAdminController : BasePluginController
     private readonly FitmentReviewService _fitmentReviewService;
     private readonly ISettingService _settingService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
+    private readonly AiSpendAlertService _spendAlertService;
 
     public AiAdminController(
         IAiUsageLedger usageLedger,
@@ -40,7 +41,8 @@ public sealed class AiAdminController : BasePluginController
         IAiGenerationRepository generationRepository,
         FitmentReviewService fitmentReviewService,
         ISettingService settingService,
-        Nop.Services.Security.IPermissionService permissionService)
+        Nop.Services.Security.IPermissionService permissionService,
+        AiSpendAlertService spendAlertService)
     {
         _usageLedger = usageLedger;
         _disclosureCatalog = disclosureCatalog;
@@ -51,6 +53,7 @@ public sealed class AiAdminController : BasePluginController
         _fitmentReviewService = fitmentReviewService;
         _settingService = settingService;
         _permissionService = permissionService;
+        _spendAlertService = spendAlertService;
     }
 
     private async Task<bool> AuthorizedAsync() =>
@@ -164,6 +167,9 @@ public sealed class AiAdminController : BasePluginController
                 dailyUsage = summary.TodayTokens,
                 dailyCeiling = ceiling,
                 summary,
+                todayEstimatedCostUsd = summary.TodayEstimatedCostUsd,
+                last7DaysEstimatedCostUsd = summary.Last7DaysEstimatedCostUsd,
+                last30DaysEstimatedCostUsd = summary.Last30DaysEstimatedCostUsd,
                 todayFailureRate = AiUsageSummary.FailureRate(summary.TodayAttempts, summary.TodayFailures),
                 last7DaysFailureRate = AiUsageSummary.FailureRate(summary.Last7DaysAttempts, summary.Last7DaysFailures),
                 last30DaysFailureRate = AiUsageSummary.FailureRate(summary.Last30DaysAttempts, summary.Last30DaysFailures)
@@ -172,10 +178,15 @@ public sealed class AiAdminController : BasePluginController
 
         var pendingContent = await _generationRepository.GetPendingQueueAsync(200, cancellationToken);
         var pendingFitmentAi = await _fitmentReviewService.GetAiQueueAsync(cancellationToken);
+        var globalUsage = await _usageLedger.GetGlobalDailyUsageAsync(cancellationToken);
 
         return Json(new
         {
             disclosureAcknowledged = _spendPolicy.DisclosureAcknowledged,
+            globalDailyUsage = globalUsage,
+            globalDailyCeiling = _spendPolicy.GlobalDailyCeiling,
+            tokenCostPer1KUsd = _spendPolicy.TokenCostPer1KUsd,
+            recentBudgetAlerts = _spendAlertService.GetRecentAlerts(),
             usage,
             pendingContentCount = pendingContent.Count,
             pendingFitmentAiCount = pendingFitmentAi.Count

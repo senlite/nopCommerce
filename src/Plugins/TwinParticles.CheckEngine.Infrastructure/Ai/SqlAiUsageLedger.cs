@@ -18,9 +18,14 @@ public sealed class SqlAiUsageLedger : IAiUsageLedger
     }
 
     public Task RecordAsync(string featureKey, int tokenUsage, CancellationToken cancellationToken) =>
-        RecordOutcomeAsync(featureKey, tokenUsage, success: true, cancellationToken);
+        RecordOutcomeAsync(featureKey, tokenUsage, success: true, estimatedCostUsd: 0m, cancellationToken);
 
-    public async Task RecordOutcomeAsync(string featureKey, int tokenUsage, bool success, CancellationToken cancellationToken)
+    public async Task RecordOutcomeAsync(
+        string featureKey,
+        int tokenUsage,
+        bool success,
+        decimal estimatedCostUsd,
+        CancellationToken cancellationToken)
     {
         var day = DateTime.UtcNow.Date;
         await _dataProvider.ExecuteNonQueryAsync(@"
@@ -29,13 +34,15 @@ USING (SELECT @featureKey AS FeatureKey, @usageDay AS UsageDay) AS source
 ON target.FeatureKey = source.FeatureKey AND target.UsageDay = source.UsageDay
 WHEN MATCHED THEN UPDATE SET
     TokenUsage = target.TokenUsage + @tokenUsage,
+    EstimatedCostUsd = target.EstimatedCostUsd + @estimatedCostUsd,
     AttemptCount = target.AttemptCount + 1,
     FailureCount = target.FailureCount + @failureIncrement
-WHEN NOT MATCHED THEN INSERT (FeatureKey, UsageDay, TokenUsage, AttemptCount, FailureCount)
-VALUES (@featureKey, @usageDay, @tokenUsage, 1, @failureIncrement);",
+WHEN NOT MATCHED THEN INSERT (FeatureKey, UsageDay, TokenUsage, EstimatedCostUsd, AttemptCount, FailureCount)
+VALUES (@featureKey, @usageDay, @tokenUsage, @estimatedCostUsd, 1, @failureIncrement);",
             new DataParameter("featureKey", featureKey),
             new DataParameter("usageDay", day),
             new DataParameter("tokenUsage", Math.Max(0, tokenUsage)),
+            new DataParameter("estimatedCostUsd", Math.Max(0m, estimatedCostUsd)),
             new DataParameter("failureIncrement", success ? 0 : 1));
     }
 
@@ -46,6 +53,17 @@ VALUES (@featureKey, @usageDay, @tokenUsage, 1, @failureIncrement);",
 SELECT TokenUsage FROM TP_CE_AiUsageDaily
 WHERE FeatureKey = @featureKey AND UsageDay = @usageDay",
             new DataParameter("featureKey", featureKey),
+            new DataParameter("usageDay", day));
+
+        return rows.FirstOrDefault();
+    }
+
+    public async Task<int> GetGlobalDailyUsageAsync(CancellationToken cancellationToken)
+    {
+        var day = DateTime.UtcNow.Date;
+        var rows = await _dataProvider.QueryAsync<int>(@"
+SELECT COALESCE(SUM(TokenUsage), 0) FROM TP_CE_AiUsageDaily
+WHERE UsageDay = @usageDay",
             new DataParameter("usageDay", day));
 
         return rows.FirstOrDefault();
@@ -67,7 +85,10 @@ SELECT
     COALESCE(SUM(CASE WHEN UsageDay >= @day7 THEN AttemptCount ELSE 0 END), 0) AS Last7DaysAttempts,
     COALESCE(SUM(CASE WHEN UsageDay >= @day7 THEN FailureCount ELSE 0 END), 0) AS Last7DaysFailures,
     COALESCE(SUM(CASE WHEN UsageDay >= @day30 THEN AttemptCount ELSE 0 END), 0) AS Last30DaysAttempts,
-    COALESCE(SUM(CASE WHEN UsageDay >= @day30 THEN FailureCount ELSE 0 END), 0) AS Last30DaysFailures
+    COALESCE(SUM(CASE WHEN UsageDay >= @day30 THEN FailureCount ELSE 0 END), 0) AS Last30DaysFailures,
+    COALESCE(SUM(CASE WHEN UsageDay = @today THEN EstimatedCostUsd ELSE 0 END), 0) AS TodayEstimatedCostUsd,
+    COALESCE(SUM(CASE WHEN UsageDay >= @day7 THEN EstimatedCostUsd ELSE 0 END), 0) AS Last7DaysEstimatedCostUsd,
+    COALESCE(SUM(CASE WHEN UsageDay >= @day30 THEN EstimatedCostUsd ELSE 0 END), 0) AS Last30DaysEstimatedCostUsd
 FROM TP_CE_AiUsageDaily
 WHERE FeatureKey = @featureKey AND UsageDay >= @day30",
             new DataParameter("featureKey", featureKey),
@@ -88,7 +109,10 @@ WHERE FeatureKey = @featureKey AND UsageDay >= @day30",
             Last7DaysAttempts = row.Last7DaysAttempts,
             Last7DaysFailures = row.Last7DaysFailures,
             Last30DaysAttempts = row.Last30DaysAttempts,
-            Last30DaysFailures = row.Last30DaysFailures
+            Last30DaysFailures = row.Last30DaysFailures,
+            TodayEstimatedCostUsd = row.TodayEstimatedCostUsd,
+            Last7DaysEstimatedCostUsd = row.Last7DaysEstimatedCostUsd,
+            Last30DaysEstimatedCostUsd = row.Last30DaysEstimatedCostUsd
         };
     }
 
@@ -109,5 +133,8 @@ WHERE FeatureKey = @featureKey AND UsageDay >= @day30",
         public int Last7DaysFailures { get; init; }
         public int Last30DaysAttempts { get; init; }
         public int Last30DaysFailures { get; init; }
+        public decimal TodayEstimatedCostUsd { get; init; }
+        public decimal Last7DaysEstimatedCostUsd { get; init; }
+        public decimal Last30DaysEstimatedCostUsd { get; init; }
     }
 }

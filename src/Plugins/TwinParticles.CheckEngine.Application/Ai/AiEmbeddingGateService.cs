@@ -11,43 +11,28 @@ namespace TwinParticles.CheckEngine.Application.Ai;
 public sealed class AiEmbeddingGateService : IAiEmbeddingPort
 {
     private readonly IAiEmbeddingPort _innerPort;
-    private readonly IAiFeatureToggle? _featureToggle;
     private readonly IAiUsageLedger? _usageLedger;
     private readonly IAiSpendPolicy? _spendPolicy;
+    private readonly AiSpendGuardService _spendGuard;
 
     public AiEmbeddingGateService(
         IAiEmbeddingPort innerPort,
-        IAiFeatureToggle? featureToggle = null,
+        AiSpendGuardService spendGuard,
         IAiUsageLedger? usageLedger = null,
         IAiSpendPolicy? spendPolicy = null)
     {
         _innerPort = innerPort;
-        _featureToggle = featureToggle;
         _usageLedger = usageLedger;
         _spendPolicy = spendPolicy;
+        _spendGuard = spendGuard;
     }
 
     public async Task<AiEmbeddingResult> EmbedAsync(AiEmbeddingRequest request, CancellationToken cancellationToken)
     {
         var featureKey = ResolveFeatureKey(request);
-
-        if (_featureToggle is not null && !_featureToggle.IsEnabled(featureKey))
-            return await FailAsync(featureKey, "ai.disabled", cancellationToken);
-
-        if (_featureToggle is not null
-            && _featureToggle.IsEnabled(featureKey)
-            && _spendPolicy is not null
-            && !_spendPolicy.DisclosureAcknowledged)
-        {
-            return await FailAsync(featureKey, "ai.disclosure_required", cancellationToken);
-        }
-
-        if (_usageLedger is not null && _spendPolicy is not null)
-        {
-            var ceiling = _spendPolicy.ResolveDailyCeiling(featureKey);
-            if (ceiling > 0 && await _usageLedger.IsCeilingExceededAsync(featureKey, ceiling, cancellationToken))
-                return await FailAsync(featureKey, "ai.ceiling_exceeded", cancellationToken);
-        }
+        var guard = await _spendGuard.CheckAsync(featureKey, cancellationToken);
+        if (!guard.Allowed)
+            return await FailAsync(featureKey, guard.ErrorCode ?? AiErrorCodes.Disabled, cancellationToken);
 
         var result = await _innerPort.EmbedAsync(request, cancellationToken);
 
@@ -58,7 +43,8 @@ public sealed class AiEmbeddingGateService : IAiEmbeddingPort
                 : result.Success
                     ? EstimateTokens(request)
                     : 0;
-            await _usageLedger.RecordOutcomeAsync(featureKey, tokens, result.Success, cancellationToken);
+            var cost = _spendPolicy is null ? 0m : AiCostEstimator.EstimateUsd(tokens, _spendPolicy.TokenCostPer1KUsd);
+            await _usageLedger.RecordOutcomeAsync(featureKey, tokens, result.Success, cost, cancellationToken);
         }
 
         return result;
@@ -67,7 +53,7 @@ public sealed class AiEmbeddingGateService : IAiEmbeddingPort
     private async Task<AiEmbeddingResult> FailAsync(string featureKey, string errorCode, CancellationToken cancellationToken)
     {
         if (_usageLedger is not null)
-            await _usageLedger.RecordOutcomeAsync(featureKey, 0, success: false, cancellationToken);
+            await _usageLedger.RecordOutcomeAsync(featureKey, 0, success: false, estimatedCostUsd: 0m, cancellationToken);
 
         return new AiEmbeddingResult
         {

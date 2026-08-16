@@ -28,6 +28,7 @@ public static class CheckEngineConfigurationMapper
             AiAzureDeploymentName = settings.AiAzureDeploymentName,
             AiAzureEmbeddingDeploymentName = settings.AiAzureEmbeddingDeploymentName,
             AiDailyTokenCeiling = settings.AiDailyTokenCeiling,
+            AiTokenCostPer1KUsd = settings.AiTokenCostPer1KUsd,
             AiResponseCacheTtlMinutes = settings.AiResponseCacheTtlMinutes,
             AiDisclosureAcknowledged = settings.AiDisclosureAcknowledged,
             AiEnabledFeatures = settings.AiEnabledFeatures,
@@ -56,6 +57,7 @@ public static class CheckEngineConfigurationMapper
         settings.AiAzureDeploymentName = model.AiAzureDeploymentName;
         settings.AiAzureEmbeddingDeploymentName = model.AiAzureEmbeddingDeploymentName;
         settings.AiDailyTokenCeiling = model.AiDailyTokenCeiling;
+        settings.AiTokenCostPer1KUsd = model.AiTokenCostPer1KUsd;
         settings.AiResponseCacheTtlMinutes = model.AiResponseCacheTtlMinutes;
         settings.AiDisclosureAcknowledged = model.AiDisclosureAcknowledged;
         settings.AiPerFeatureDailyTokenCeilings = model.AiPerFeatureDailyTokenCeilings;
@@ -72,4 +74,13 @@ public static class CheckEngineConfigurationMapper
         settings.AiEnabledFeatures = string.Join(',', enabledFeatures);
         CheckEngineAiSettingsSync.Apply(settings);
     }
+
+    public static bool HasAnyAiFeatureEnabled(ConfigurationModel model) =>
+        model.EnableImportEnrichment
+        || model.EnableImportTranslation
+        || model.EnableImportSeo
+        || model.EnableSearchNaturalLanguage
+        || model.EnableSearchSemantic
+        || model.EnableFitmentInference
+        || model.EnableCustomerAssistant;
 }

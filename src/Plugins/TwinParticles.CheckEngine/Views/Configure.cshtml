@@ -103,6 +103,10 @@
                     <div class="col-md-9"><nop-editor asp-for="AiDailyTokenCeiling" /><span asp-validation-for="AiDailyTokenCeiling"></span></div>
                 </div>
                 <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiTokenCostPer1KUsd" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiTokenCostPer1KUsd" /><span asp-validation-for="AiTokenCostPer1KUsd"></span></div>
+                </div>
+                <div class="form-group row">
                     <div class="col-md-3"><nop-label asp-for="AiResponseCacheTtlMinutes" /></div>
                     <div class="col-md-9"><nop-editor asp-for="AiResponseCacheTtlMinutes" /><span asp-validation-for="AiResponseCacheTtlMinutes"></span></div>
                 </div>
@@ -119,11 +123,13 @@
                     <div class="col-md-9">
                         <nop-editor asp-for="AiDisclosureAcknowledged" />
                         <span asp-validation-for="AiDisclosureAcknowledged"></span>
+                        <p class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Ai.DisclosureSummary")</p>
+                        <div id="ce-ai-disclosure-panel" class="border rounded p-3 bg-light small"></div>
                     </div>
                 </div>
                 <div class="form-group row">
                     <div class="col-md-3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiFeatures")</div>
-                    <div class="col-md-9">
+                    <div class="col-md-9" id="ce-ai-feature-toggles">
                         <div class="form-check"><input asp-for="EnableImportEnrichment" class="form-check-input" /><label asp-for="EnableImportEnrichment" class="form-check-label"></label></div>
                         <div class="form-check"><input asp-for="EnableImportTranslation" class="form-check-input" /><label asp-for="EnableImportTranslation" class="form-check-label"></label></div>
                         <div class="form-check"><input asp-for="EnableImportSeo" class="form-check-input" /><label asp-for="EnableImportSeo" class="form-check-label"></label></div>
@@ -142,3 +148,58 @@
         </div>
     </div>
 </form>
+
+<script>
+(function () {
+  var features = [
+    'import.ai.enrichment',
+    'import.ai.translation',
+    'import.ai.seo',
+    'search.natural_language',
+    'search.semantic',
+    'fitment.inference',
+    'assistant.customer'
+  ];
+  var panel = document.getElementById('ce-ai-disclosure-panel');
+  var ack = document.getElementById('AiDisclosureAcknowledged');
+  var toggleRoot = document.getElementById('ce-ai-feature-toggles');
+
+  function setFeatureInputsEnabled(enabled) {
+    if (!toggleRoot) return;
+    toggleRoot.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+      input.disabled = !enabled;
+    });
+  }
+
+  function renderDisclosure() {
+    if (!panel) return;
+    panel.innerHTML = '<p>Loading disclosure categories…</p>';
+    Promise.all(features.map(function (featureKey) {
+      return fetch('/Admin/CheckEngine/AiAdmin/Disclosure?featureKey=' + encodeURIComponent(featureKey), {
+        headers: { 'Accept': 'application/json' }
+      }).then(function (r) { return r.json(); }).then(function (items) {
+        return { featureKey: featureKey, items: items || [] };
+      });
+    })).then(function (rows) {
+      panel.innerHTML = rows.map(function (row) {
+        var items = row.items.map(function (item) {
+          return '<li><strong>' + item.category + ':</strong> ' + item.description + '</li>';
+        }).join('');
+        return '<div class="mb-2"><code>' + row.featureKey + '</code><ul class="mb-0">' + items + '</ul></div>';
+      }).join('');
+    }).catch(function () {
+      panel.textContent = 'Unable to load disclosure catalog.';
+    });
+  }
+
+  function syncToggleState() {
+    setFeatureInputsEnabled(!!(ack && ack.checked));
+  }
+
+  if (ack) {
+    ack.addEventListener('change', syncToggleState);
+    syncToggleState();
+  }
+  renderDisclosure();
+})();
+</script>

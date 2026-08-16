@@ -23,6 +23,7 @@ public static class CheckEngineAiSettingsSync
         options.AzureDeploymentName = settings.AiAzureDeploymentName ?? string.Empty;
         options.AzureEmbeddingDeploymentName = settings.AiAzureEmbeddingDeploymentName ?? string.Empty;
         options.DailyTokenCeiling = settings.AiDailyTokenCeiling > 0 ? settings.AiDailyTokenCeiling : options.DailyTokenCeiling;
+        options.TokenCostPer1KUsd = settings.AiTokenCostPer1KUsd > 0 ? settings.AiTokenCostPer1KUsd : options.TokenCostPer1KUsd;
         options.ResponseCacheTtlMinutes = settings.AiResponseCacheTtlMinutes > 0 ? settings.AiResponseCacheTtlMinutes : options.ResponseCacheTtlMinutes;
         options.DisclosureAcknowledged = settings.AiDisclosureAcknowledged;
         options.EnabledFeatures = ParseEnabledFeatures(settings.AiEnabledFeatures);
@@ -43,6 +44,7 @@ public static class CheckEngineAiSettingsSync
         settings.AiAzureDeploymentName = options.AzureDeploymentName;
         settings.AiAzureEmbeddingDeploymentName = options.AzureEmbeddingDeploymentName;
         settings.AiDailyTokenCeiling = options.DailyTokenCeiling;
+        settings.AiTokenCostPer1KUsd = options.TokenCostPer1KUsd;
         settings.AiResponseCacheTtlMinutes = options.ResponseCacheTtlMinutes;
         settings.AiDisclosureAcknowledged = options.DisclosureAcknowledged;
         settings.AiEnabledFeatures = string.Join(',', options.EnabledFeatures);

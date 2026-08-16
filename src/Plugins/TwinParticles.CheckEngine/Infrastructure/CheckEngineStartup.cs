@@ -24,10 +24,17 @@ public sealed class CheckEngineStartup : INopStartup
         services.AddCheckEngineApplication();
         services.AddCheckEngineInfrastructure();
 
+        services.AddSingleton<AiSpendAlertService>();
+        services.AddSingleton<AiSpendGuardService>(sp => new AiSpendGuardService(
+            sp.GetService<IAiFeatureToggle>(),
+            sp.GetService<IAiSpendPolicy>(),
+            sp.GetService<IAiUsageLedger>(),
+            sp.GetRequiredService<AiSpendAlertService>()));
+
         services.AddSingleton<AiCompletionGateService>(sp =>
             new AiCompletionGateService(
                 sp.GetRequiredService<CachingAiCompletionPort>(),
-                sp.GetService<IAiFeatureToggle>(),
+                sp.GetRequiredService<AiSpendGuardService>(),
                 sp.GetService<IAiUsageLedger>(),
                 sp.GetService<IAiSpendPolicy>()));
         services.AddSingleton<IAiCompletionPort>(sp => sp.GetRequiredService<AiCompletionGateService>());
@@ -35,7 +42,7 @@ public sealed class CheckEngineStartup : INopStartup
         services.AddSingleton<AiEmbeddingGateService>(sp =>
             new AiEmbeddingGateService(
                 sp.GetRequiredService<CachingAiEmbeddingPort>(),
-                sp.GetService<IAiFeatureToggle>(),
+                sp.GetRequiredService<AiSpendGuardService>(),
                 sp.GetService<IAiUsageLedger>(),
                 sp.GetService<IAiSpendPolicy>()));
         services.AddSingleton<IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingGateService>());

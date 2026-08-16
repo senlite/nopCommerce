@@ -22,6 +22,12 @@ public sealed class AiUsageSummary
 
     public int Last30DaysFailures { get; init; }
 
+    public decimal TodayEstimatedCostUsd { get; init; }
+
+    public decimal Last7DaysEstimatedCostUsd { get; init; }
+
+    public decimal Last30DaysEstimatedCostUsd { get; init; }
+
     public static double FailureRate(int attempts, int failures) =>
         attempts <= 0 ? 0 : (double)failures / attempts;
 }

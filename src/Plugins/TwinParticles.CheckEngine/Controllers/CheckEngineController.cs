@@ -55,6 +55,13 @@ public sealed class CheckEngineController : BasePluginController
         if (!ModelState.IsValid)
             return await Configure();
 
+        if (CheckEngineConfigurationMapper.HasAnyAiFeatureEnabled(model) && !model.AiDisclosureAcknowledged)
+        {
+            _notificationService.ErrorNotification(
+                await _localizationService.GetResourceAsync("Plugins.TwinParticles.CheckEngine.Configuration.Ai.DisclosureRequired"));
+            return await Configure();
+        }
+
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         CheckEngineConfigurationMapper.ApplyModel(settings, model);
         await _settingService.SaveSettingAsync(settings);

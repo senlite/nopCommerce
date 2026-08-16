@@ -43,6 +43,8 @@ public sealed class CheckEngineAiOptions
 
     public int ResponseCacheTtlMinutes { get; set; } = 60;
 
+    public decimal TokenCostPer1KUsd { get; set; } = 0.002m;
+
     public int ResolveDailyCeiling(string featureKey)
     {
         if (!string.IsNullOrWhiteSpace(featureKey)

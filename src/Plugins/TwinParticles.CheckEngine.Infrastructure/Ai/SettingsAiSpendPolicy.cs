@@ -13,5 +13,9 @@ public sealed class SettingsAiSpendPolicy : IAiSpendPolicy
 
     public bool DisclosureAcknowledged => _options.DisclosureAcknowledged;
 
+    public int GlobalDailyCeiling => _options.DailyTokenCeiling;
+
+    public decimal TokenCostPer1KUsd => _options.TokenCostPer1KUsd;
+
     public int ResolveDailyCeiling(string featureKey) => _options.ResolveDailyCeiling(featureKey);
 }

@@ -13,7 +13,7 @@ public class AiCompletionGateTests
     [Test]
     public async Task CompleteAsync_Should_Block_When_Feature_Disabled()
     {
-        var gate = new AiCompletionGateService(new SuccessPort(), new AlwaysOffToggle());
+        var gate = CreateGate(new SuccessPort(), new AlwaysOffToggle(), new TrackingLedger(10_000), new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
 
         var result = await gate.CompleteAsync(new AiCompletionRequest
         {
@@ -22,42 +22,46 @@ public class AiCompletionGateTests
         }, CancellationToken.None);
 
         result.Success.Should().BeFalse();
-        result.ErrorCode.Should().Be("ai.disabled");
+        result.ErrorCode.Should().Be(AiErrorCodes.Disabled);
     }
 
     [Test]
     public async Task CompleteAsync_Should_Block_When_Ceiling_Exceeded()
     {
         var ledger = new TrackingLedger(10);
-        var gate = new AiCompletionGateService(
-            new SuccessPort(),
-            new AlwaysOnToggle(),
-            ledger,
-            new FixedSpendPolicy(10, disclosureAcknowledged: true));
+        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10, disclosureAcknowledged: true));
 
         var first = await gate.CompleteAsync(Request(), CancellationToken.None);
         var second = await gate.CompleteAsync(Request(), CancellationToken.None);
 
         first.Success.Should().BeTrue();
         second.Success.Should().BeFalse();
-        second.ErrorCode.Should().Be("ai.ceiling_exceeded");
+        second.ErrorCode.Should().Be(AiErrorCodes.BudgetExceeded);
     }
 
     [Test]
-    public async Task CompleteAsync_Should_Record_Tokens_On_Success()
+    public async Task CompleteAsync_Should_Record_Tokens_And_Cost_On_Success()
     {
         var ledger = new TrackingLedger(10_000);
-        var gate = new AiCompletionGateService(
-            new SuccessPort(),
-            new AlwaysOnToggle(),
-            ledger,
-            new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
+        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10_000, disclosureAcknowledged: true, costPer1K: 1m));
 
         await gate.CompleteAsync(Request(), CancellationToken.None);
 
         (await ledger.GetDailyUsageAsync(AiFeatureKeys.SearchNaturalLanguage, CancellationToken.None))
             .Should().Be(12);
+        ledger.LastRecordedCost.Should().Be(0.012m);
     }
+
+    private static AiCompletionGateService CreateGate(
+        IAiCompletionPort inner,
+        IAiFeatureToggle toggle,
+        IAiUsageLedger ledger,
+        IAiSpendPolicy policy) =>
+        new(
+            inner,
+            new AiSpendGuardService(toggle, policy, ledger),
+            ledger,
+            policy);
 
     private static AiCompletionRequest Request()
     {
@@ -96,15 +100,20 @@ public class AiCompletionGateTests
 
     private sealed class FixedSpendPolicy : IAiSpendPolicy
     {
-        private readonly int _ceiling;
-
-        public FixedSpendPolicy(int ceiling, bool disclosureAcknowledged)
+        public FixedSpendPolicy(int ceiling, bool disclosureAcknowledged, decimal costPer1K = 0.002m)
         {
             _ceiling = ceiling;
             DisclosureAcknowledged = disclosureAcknowledged;
+            TokenCostPer1KUsd = costPer1K;
         }
 
+        private readonly int _ceiling;
+
         public bool DisclosureAcknowledged { get; }
+
+        public int GlobalDailyCeiling => _ceiling;
+
+        public decimal TokenCostPer1KUsd { get; }
 
         public int ResolveDailyCeiling(string featureKey) => _ceiling;
     }
@@ -116,16 +125,24 @@ public class AiCompletionGateTests
 
         public TrackingLedger(int ceiling) => _ceiling = ceiling;
 
-        public Task RecordAsync(string featureKey, int tokenUsage, CancellationToken cancellationToken)
-        {
-            _usage += tokenUsage;
-            return Task.CompletedTask;
-        }
+        public decimal LastRecordedCost { get; private set; }
 
-        public Task RecordOutcomeAsync(string featureKey, int tokenUsage, bool success, CancellationToken cancellationToken)
+        public Task RecordAsync(string featureKey, int tokenUsage, CancellationToken cancellationToken) =>
+            RecordOutcomeAsync(featureKey, tokenUsage, success: true, estimatedCostUsd: 0m, cancellationToken);
+
+        public Task RecordOutcomeAsync(
+            string featureKey,
+            int tokenUsage,
+            bool success,
+            decimal estimatedCostUsd,
+            CancellationToken cancellationToken)
         {
             if (success)
+            {
                 _usage += tokenUsage;
+                LastRecordedCost += estimatedCostUsd;
+            }
+
             return Task.CompletedTask;
         }
 
@@ -135,10 +152,14 @@ public class AiCompletionGateTests
                 FeatureKey = featureKey,
                 TodayTokens = _usage,
                 Last7DaysTokens = _usage,
-                Last30DaysTokens = _usage
+                Last30DaysTokens = _usage,
+                TodayEstimatedCostUsd = LastRecordedCost
             });
 
         public Task<int> GetDailyUsageAsync(string featureKey, CancellationToken cancellationToken) =>
+            Task.FromResult(_usage);
+
+        public Task<int> GetGlobalDailyUsageAsync(CancellationToken cancellationToken) =>
             Task.FromResult(_usage);
 
         public Task<bool> IsCeilingExceededAsync(string featureKey, int ceiling, CancellationToken cancellationToken) =>

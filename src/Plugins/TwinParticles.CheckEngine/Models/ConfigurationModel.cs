@@ -44,6 +44,9 @@ public record ConfigurationModel : BaseNopModel
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiDailyTokenCeiling")]
     public int AiDailyTokenCeiling { get; set; } = 100_000;
 
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiTokenCostPer1KUsd")]
+    public decimal AiTokenCostPer1KUsd { get; set; } = 0.002m;
+
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiResponseCacheTtlMinutes")]
     public int AiResponseCacheTtlMinutes { get; set; } = 60;
 

@@ -36,8 +36,8 @@ public class InMemoryAiUsageLedgerTests
     {
         var ledger = new InMemoryAiUsageLedger();
 
-        await ledger.RecordOutcomeAsync(AiFeatureKeys.SearchSemantic, 40, success: true, CancellationToken.None);
-        await ledger.RecordOutcomeAsync(AiFeatureKeys.SearchSemantic, 0, success: false, CancellationToken.None);
+        await ledger.RecordOutcomeAsync(AiFeatureKeys.SearchSemantic, 40, success: true, estimatedCostUsd: 0.08m, CancellationToken.None);
+        await ledger.RecordOutcomeAsync(AiFeatureKeys.SearchSemantic, 0, success: false, estimatedCostUsd: 0m, CancellationToken.None);
 
         var summary = await ledger.GetUsageSummaryAsync(AiFeatureKeys.SearchSemantic, CancellationToken.None);
 
@@ -45,6 +45,7 @@ public class InMemoryAiUsageLedgerTests
         summary.Last7DaysTokens.Should().Be(40);
         summary.TodayAttempts.Should().Be(2);
         summary.TodayFailures.Should().Be(1);
+        summary.TodayEstimatedCostUsd.Should().Be(0.08m);
         AiUsageSummary.FailureRate(summary.TodayAttempts, summary.TodayFailures).Should().Be(0.5);
     }
 }

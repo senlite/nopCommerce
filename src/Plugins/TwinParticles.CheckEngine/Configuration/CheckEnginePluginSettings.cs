@@ -30,6 +30,8 @@ public sealed class CheckEnginePluginSettings : ISettings
 
     public int AiDailyTokenCeiling { get; set; } = 100_000;
 
+    public decimal AiTokenCostPer1KUsd { get; set; } = 0.002m;
+
     public int AiResponseCacheTtlMinutes { get; set; } = 60;
 
     public bool AiDisclosureAcknowledged { get; set; }

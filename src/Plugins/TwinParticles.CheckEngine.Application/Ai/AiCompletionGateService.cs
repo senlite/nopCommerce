@@ -11,47 +11,28 @@ namespace TwinParticles.CheckEngine.Application.Ai;
 public sealed class AiCompletionGateService : IAiCompletionPort
 {
     private readonly IAiCompletionPort _innerPort;
-    private readonly IAiFeatureToggle? _featureToggle;
     private readonly IAiUsageLedger? _usageLedger;
     private readonly IAiSpendPolicy? _spendPolicy;
+    private readonly AiSpendGuardService _spendGuard;
 
     public AiCompletionGateService(
         IAiCompletionPort innerPort,
-        IAiFeatureToggle? featureToggle = null,
+        AiSpendGuardService spendGuard,
         IAiUsageLedger? usageLedger = null,
         IAiSpendPolicy? spendPolicy = null)
     {
         _innerPort = innerPort;
-        _featureToggle = featureToggle;
         _usageLedger = usageLedger;
         _spendPolicy = spendPolicy;
+        _spendGuard = spendGuard;
     }
 
     public async Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken ct)
     {
         var featureKey = ResolveFeatureKey(request);
-
-        if (_featureToggle is not null && !_featureToggle.IsEnabled(featureKey))
-        {
-            return await FailAsync(featureKey, "ai.disabled", ct);
-        }
-
-        if (_featureToggle is not null
-            && _featureToggle.IsEnabled(featureKey)
-            && _spendPolicy is not null
-            && !_spendPolicy.DisclosureAcknowledged)
-        {
-            return await FailAsync(featureKey, "ai.disclosure_required", ct);
-        }
-
-        if (_usageLedger is not null && _spendPolicy is not null)
-        {
-            var ceiling = _spendPolicy.ResolveDailyCeiling(featureKey);
-            if (ceiling > 0 && await _usageLedger.IsCeilingExceededAsync(featureKey, ceiling, ct))
-            {
-                return await FailAsync(featureKey, "ai.ceiling_exceeded", ct);
-            }
-        }
+        var guard = await _spendGuard.CheckAsync(featureKey, ct);
+        if (!guard.Allowed)
+            return await FailAsync(featureKey, guard.ErrorCode ?? AiErrorCodes.Disabled, ct);
 
         var result = await _innerPort.CompleteAsync(request, ct);
 
@@ -62,7 +43,8 @@ public sealed class AiCompletionGateService : IAiCompletionPort
                 : result.Success
                     ? EstimateTokens(request, result)
                     : 0;
-            await _usageLedger.RecordOutcomeAsync(featureKey, tokens, result.Success, ct);
+            var cost = _spendPolicy is null ? 0m : AiCostEstimator.EstimateUsd(tokens, _spendPolicy.TokenCostPer1KUsd);
+            await _usageLedger.RecordOutcomeAsync(featureKey, tokens, result.Success, cost, ct);
         }
 
         return result;
@@ -71,7 +53,7 @@ public sealed class AiCompletionGateService : IAiCompletionPort
     private async Task<AiCompletionResult> FailAsync(string featureKey, string errorCode, CancellationToken ct)
     {
         if (_usageLedger is not null)
-            await _usageLedger.RecordOutcomeAsync(featureKey, 0, success: false, ct);
+            await _usageLedger.RecordOutcomeAsync(featureKey, 0, success: false, estimatedCostUsd: 0m, ct);
 
         return DisabledResult(featureKey, errorCode);
     }
