@@ -132,6 +132,48 @@ ORDER BY Score DESC, ProductId"),
         return await SearchNopCatalogAsync(query, keywords: null, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<SearchHit>> BrowseUnscopedAsync(SearchQuery query, CancellationToken cancellationToken)
+    {
+        // Bounded at the database rather than reusing the 5000-row keyword projection: this path has no
+        // keyword or fitment filter to narrow the candidate set, and every hit costs an SeName lookup.
+        var take = query.PageSize <= 0 ? 8 : Math.Min(query.PageSize, 100);
+
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var store = await _storeContext.GetCurrentStoreAsync();
+            var language = await _workContext.GetWorkingLanguageAsync();
+            var categories = query.Filters.CategoryId.HasValue
+                ? new List<int> { query.Filters.CategoryId.Value }
+                : null;
+
+            var products = await _productService.SearchProductsAsync(
+                pageIndex: 0,
+                pageSize: take,
+                categoryIds: categories,
+                storeId: store.Id,
+                visibleIndividuallyOnly: true,
+                priceMin: query.Filters.PriceMin,
+                priceMax: query.Filters.PriceMax,
+                languageId: language.Id,
+                showHidden: false,
+                overridePublished: true);
+
+            var hits = products
+                .Where(product => product.Published && !product.Deleted && product.VisibleIndividually)
+                .Select(product => MapProduct(product, keywords: null))
+                .ToList();
+
+            await EnrichAsync(hits, cancellationToken);
+            return hits;
+        }
+        catch (Exception exception)
+        {
+            await _healthService.ReportDegradedAsync(exception.GetType().Name, cancellationToken);
+            return [];
+        }
+    }
+
     public async Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken)
     {
         if (!query.VehicleConfigurationId.HasValue || query.VehicleConfigurationId.Value <= 0)

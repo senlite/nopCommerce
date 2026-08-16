@@ -148,6 +148,65 @@ public class CustomerAssistantServiceTests
     }
 
     [Test]
+    public async Task AskAsync_Should_Retrieve_Catalog_Context_For_A_Conversational_Question()
+    {
+        // Regression: the raw sentence was passed to keyword search, which matches on the whole phrase,
+        // so the assistant refused every conversational question even when the part was in the catalog.
+        var repository = new PhraseSensitiveSearchRepository();
+        var service = new CustomerAssistantService(new GroundedPort(), repository);
+
+        var response = await service.AskAsync("Do you have a thermostat?", null, CancellationToken.None);
+
+        response.Citations.Should().NotBeEmpty();
+        response.Citations[0].Name.Should().Be("Thermostat");
+        repository.Queries.Should().NotContain("Do you have a thermostat?");
+    }
+
+    [Test]
+    public async Task AskAsync_Should_Still_Refuse_When_No_Retrieval_Candidate_Matches()
+    {
+        var repository = new PhraseSensitiveSearchRepository();
+        var service = new CustomerAssistantService(new GroundedPort(), repository);
+
+        var response = await service.AskAsync("Do you have a flux capacitor?", null, CancellationToken.None);
+
+        response.Citations.Should().BeEmpty();
+        response.Grounded.Should().BeTrue();
+        response.Answer.Should().Contain("could not find");
+    }
+
+    /// <summary>
+    /// Only matches when the query is exactly a catalog term, the way a phrase LIKE search behaves.
+    /// </summary>
+    private sealed class PhraseSensitiveSearchRepository : IProductSearchReadRepository
+    {
+        public List<string> Queries { get; } = [];
+
+        public Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
+        {
+            Queries.Add(query.RawText ?? string.Empty);
+
+            if (string.Equals(query.RawText, "thermostat", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.FromResult<IReadOnlyList<SearchHit>>([
+                    new SearchHit { ProductId = 51, Name = "Thermostat", SeName = "thermostat", Score = 1 }
+                ]);
+            }
+
+            return Task.FromResult<IReadOnlyList<SearchHit>>([]);
+        }
+
+        public Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SearchHit>>([]);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByOemIdAsync(int oemNumberId, SearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SearchHit>>([]);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SearchHit>>([]);
+    }
+
+    [Test]
     public async Task AskAsync_Should_Return_Empty_Question_Error()
     {
         var service = new CustomerAssistantService(new GroundedPort(), new StubSearchRepository());

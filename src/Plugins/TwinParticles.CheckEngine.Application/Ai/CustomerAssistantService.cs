@@ -162,14 +162,24 @@ public sealed class CustomerAssistantService
                 return semanticHits;
         }
 
-        return await _productSearchReadRepository!.SearchKeywordAsync(new SearchQuery
+        // Keyword search matches the query as a phrase, so a conversational sentence finds nothing.
+        // Try progressively less precise retrieval terms and stop at the first that returns catalog rows.
+        foreach (var candidate in AssistantRetrievalQueryBuilder.BuildCandidates(question))
         {
-            RawText = question,
-            Mode = SearchMode.Keyword,
-            Locale = locale,
-            Page = 1,
-            PageSize = 8
-        }, cancellationToken);
+            var hits = await _productSearchReadRepository!.SearchKeywordAsync(new SearchQuery
+            {
+                RawText = candidate,
+                Mode = SearchMode.Keyword,
+                Locale = locale,
+                Page = 1,
+                PageSize = 8
+            }, cancellationToken);
+
+            if (hits.Count > 0)
+                return hits;
+        }
+
+        return [];
     }
 
     private async Task<IReadOnlyList<SearchHit>> FilterToVerifiedFitAsync(

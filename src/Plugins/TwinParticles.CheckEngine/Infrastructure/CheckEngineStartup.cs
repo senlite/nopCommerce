@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Nop.Core.Infrastructure;
+using Nop.Data;
+using Nop.Services.Configuration;
 using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Application.DependencyInjection;
 using TwinParticles.CheckEngine.Application.Licensing;
+using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Configuration;
 using TwinParticles.CheckEngine.Infrastructure.Ai;
@@ -58,7 +63,32 @@ public sealed class CheckEngineStartup : INopStartup
             TwinParticles.CheckEngine.Search.PluginSearchSynonymOverridesSource>();
     }
 
+    /// <summary>
+    /// Hydrates <see cref="CheckEngineAiOptions.Current"/> from persisted settings on every start.
+    ///
+    /// The options object is a process-wide singleton, so without this an application restart — or any
+    /// additional node in a web farm — serves with no enabled AI features, no provider credentials and
+    /// a reset disclosure acknowledgement until an administrator happens to open the configure page.
+    /// </summary>
     public void Configure(IApplicationBuilder application)
     {
+        if (!DataSettingsManager.IsDatabaseInstalled())
+            return;
+
+        try
+        {
+            using var scope = application.ApplicationServices.CreateScope();
+            var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
+            var settings = settingService.LoadSettingAsync<CheckEnginePluginSettings>().GetAwaiter().GetResult();
+            CheckEngineAiSettingsSync.Apply(settings);
+        }
+        catch (Exception exception)
+        {
+            // A store that cannot read plugin settings must still boot; AI features stay off until
+            // the settings load successfully, which matches the disabled-by-default posture.
+            application.ApplicationServices
+                .GetService<ILogger<CheckEngineStartup>>()?
+                .LogWarning(exception, "Check Engine could not hydrate AI options at startup; AI features remain disabled.");
+        }
     }
 }
