@@ -1331,6 +1331,9 @@
     if (!rail || !list) {
       return;
     }
+    if (rail.getAttribute('data-ce-enable-recommendations') === 'false') {
+      return;
+    }
 
     var productId = parseInt(rail.getAttribute('data-ce-product-id') || '0', 10);
     loadGarageContext().then(function (ctx) {
@@ -1360,10 +1363,12 @@
       hits.forEach(function (hit) {
         var item = document.createElement('li');
         var name = hit.name || hit.Name || ('#' + (hit.productId || hit.ProductId));
+        var seName = hit.seName || hit.SeName;
+        var href = seName ? ('/' + seName) : ('/search?q=' + encodeURIComponent(name));
         var badge = vehicleScoped === true
           ? '<span class="ce-recommend__badge">' + escapeHtml(TEXT.recommendFitmentBadge) + '</span> '
           : '';
-        item.innerHTML = badge + '<a href="/search?q=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>';
+        item.innerHTML = badge + '<a href="' + href + '">' + escapeHtml(name) + '</a>';
         list.appendChild(item);
       });
       if (list.children.length) {

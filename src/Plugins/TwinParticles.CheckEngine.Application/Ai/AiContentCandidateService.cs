@@ -81,6 +81,13 @@ public sealed class AiContentCandidateService
         if (existing is null)
             return false;
 
+        if (approved
+            && string.Equals(existing.FeatureKey, AiFeatureKeys.ImportTranslation, StringComparison.OrdinalIgnoreCase)
+            && existing.QualityScore is < 1m)
+        {
+            return false;
+        }
+
         await _generationRepository.MarkReviewedAsync(id, approved, reviewer, cancellationToken);
 
         if (approved && _contentApplicator is not null)

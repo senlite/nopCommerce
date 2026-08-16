@@ -44,7 +44,8 @@ public sealed class CheckEngineThemeChromeViewComponent : NopViewComponent
             MenuText = await BuildMenuTextAsync(widgetZone),
             EnableSearchNaturalLanguage = IsFeatureEnabled(AiFeatureKeys.SearchNaturalLanguage),
             EnableSearchSemantic = IsFeatureEnabled(AiFeatureKeys.SearchSemantic),
-            EnableCustomerAssistant = IsFeatureEnabled(AiFeatureKeys.CustomerAssistant)
+            EnableCustomerAssistant = IsFeatureEnabled(AiFeatureKeys.CustomerAssistant),
+            EnableRecommendations = IsFeatureEnabled(AiFeatureKeys.Recommendations)
         };
 
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Shared/Components/CheckEngineThemeChrome/Default.cshtml", model);
@@ -159,6 +160,8 @@ public sealed class CheckEngineThemeChromeViewComponent : NopViewComponent
         public bool EnableSearchSemantic { get; init; }
 
         public bool EnableCustomerAssistant { get; init; }
+
+        public bool EnableRecommendations { get; init; }
     }
 
     public sealed class MegaMenuGroup

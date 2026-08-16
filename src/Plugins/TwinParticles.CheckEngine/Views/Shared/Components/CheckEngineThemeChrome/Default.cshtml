@@ -265,10 +265,13 @@ else if (zone == "productdetails_top")
             <span class="ce-fitment__detail">@T("Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle.Hint")</span>
         </span>
     </section>
-    <aside class="ce-root ce-recommend" data-ce-theme="recommendations" data-ce-product-id="@(Model.ProductId > 0 ? Model.ProductId.ToString() : string.Empty)" hidden>
-        <h2 class="ce-recommend__title">@T("Plugins.TwinParticles.CheckEngine.Recommend.Title")</h2>
-        <ul id="ce-recommend-list" class="ce-recommend__list"></ul>
-    </aside>
+    @if (Model.EnableRecommendations)
+    {
+        <aside class="ce-root ce-recommend" data-ce-theme="recommendations" data-ce-product-id="@(Model.ProductId > 0 ? Model.ProductId.ToString() : string.Empty)" data-ce-enable-recommendations="true" hidden>
+            <h2 class="ce-recommend__title">@T("Plugins.TwinParticles.CheckEngine.Recommend.Title")</h2>
+            <ul id="ce-recommend-list" class="ce-recommend__list"></ul>
+        </aside>
+    }
 }
 else if (zone == "home_page_top")
 {

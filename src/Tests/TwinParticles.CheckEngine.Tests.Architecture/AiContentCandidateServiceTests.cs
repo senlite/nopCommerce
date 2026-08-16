@@ -41,6 +41,32 @@ public class AiContentCandidateServiceTests
     }
 
     [Test]
+    public async Task ReviewAsync_Should_Reject_Glossary_Invalid_Translation_Approval()
+    {
+        var store = new InMemoryGenerationRepository();
+        var applicator = new RecordingApplicator();
+        var service = new AiContentCandidateService(store, applicator);
+
+        var id = await service.SaveCandidateAsync(
+            AiGenerationEntityType.Translation,
+            7,
+            AiFeatureKeys.ImportTranslation,
+            "ar",
+            "مضخة BMW",
+            AiFeatureKeys.ImportTranslation,
+            "hash",
+            0.5m,
+            CancellationToken.None);
+
+        var reviewed = await service.ReviewAsync(id!.Value, approved: true, "nour", CancellationToken.None);
+        var stored = await store.GetByIdAsync(id.Value, CancellationToken.None);
+
+        reviewed.Should().BeFalse();
+        stored!.ReviewStatus.Should().Be("pending");
+        applicator.Applied.Should().BeFalse();
+    }
+
+    [Test]
     public async Task RebindImportRowEntityAsync_Should_Point_Pending_Candidates_To_Product()
     {
         var store = new InMemoryGenerationRepository();

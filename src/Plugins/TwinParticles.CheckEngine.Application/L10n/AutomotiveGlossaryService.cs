@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,6 +11,8 @@ namespace TwinParticles.CheckEngine.Application.L10n;
 
 public sealed class AutomotiveGlossaryService
 {
+    private static readonly Lazy<IReadOnlyDictionary<string, string>> EmbeddedGlossary = new(LoadEmbeddedGlossary);
+
     private static readonly IReadOnlyDictionary<string, string> DefaultGlossary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["water pump"] = "مضخة مياه",
@@ -35,7 +40,7 @@ public sealed class AutomotiveGlossaryService
     private readonly IReadOnlyDictionary<string, string> _englishToArabic;
 
     public AutomotiveGlossaryService()
-        : this(DefaultGlossary)
+        : this(EmbeddedGlossary.Value)
     {
     }
 
@@ -79,5 +84,35 @@ public sealed class AutomotiveGlossaryService
         var glossary = BuildGlossaryPromptSection();
         var prompt = $"Translate the following automotive product text to {targetLocale}. {glossary}\nText: {sourceText}";
         return Task.FromResult(prompt);
+    }
+
+    private static IReadOnlyDictionary<string, string> LoadEmbeddedGlossary()
+    {
+        var assembly = typeof(AutomotiveGlossaryService).Assembly;
+        var resourceName = assembly
+            .GetManifestResourceNames()
+            .FirstOrDefault(name => name.EndsWith("automotive-glossary.json", StringComparison.OrdinalIgnoreCase));
+
+        if (resourceName is null)
+            return DefaultGlossary;
+
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream is null)
+            return DefaultGlossary;
+
+        using var reader = new StreamReader(stream);
+        var payload = JsonSerializer.Deserialize<GlossaryFile>(
+            reader.ReadToEnd(),
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        if (payload?.Terms is null || payload.Terms.Count == 0)
+            return DefaultGlossary;
+
+        return new Dictionary<string, string>(payload.Terms, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private sealed class GlossaryFile
+    {
+        public Dictionary<string, string>? Terms { get; set; }
     }
 }

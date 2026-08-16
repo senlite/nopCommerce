@@ -8,6 +8,7 @@ using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Data;
 using Nop.Services.Catalog;
+using Nop.Services.Seo;
 using TwinParticles.CheckEngine.Domain.Search;
 using TwinParticles.CheckEngine.Infrastructure.Data;
 
@@ -20,6 +21,7 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
     private readonly ISearchIndexStateReader? _indexStateReader;
     private readonly IProductService _productService;
     private readonly IStoreContext _storeContext;
+    private readonly IUrlRecordService _urlRecordService;
     private readonly IWorkContext _workContext;
 
     public SqlProductSearchReadRepository(
@@ -28,6 +30,7 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
         IStoreContext storeContext,
         IWorkContext workContext,
         ISearchIndexHealthService healthService,
+        IUrlRecordService urlRecordService,
         ISearchIndexStateReader? indexStateReader = null)
     {
         _dataProvider = dataProvider;
@@ -35,6 +38,7 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
         _storeContext = storeContext;
         _workContext = workContext;
         _healthService = healthService;
+        _urlRecordService = urlRecordService;
         _indexStateReader = indexStateReader;
     }
 
@@ -348,6 +352,11 @@ WHERE m.ProductId IN ({idList})");
 
                 if (brandByProduct.TryGetValue(hit.ProductId, out var brand))
                     hit.Brand = brand;
+            }
+
+            foreach (var hit in hits)
+            {
+                hit.SeName = await _urlRecordService.GetSeNameAsync(hit.ProductId, nameof(Product));
             }
         }
         catch (Exception exception)

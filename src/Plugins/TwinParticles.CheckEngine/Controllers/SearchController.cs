@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using Nop.Services.Customers;
 using Nop.Web.Controllers;
 using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Application.Search;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Search;
 using TwinParticles.CheckEngine.Models;
 
@@ -17,6 +19,7 @@ public sealed class SearchController : BasePublicController
     private readonly GarageContextSearchService _garageContextSearchService;
     private readonly GarageService _garageService;
     private readonly ICustomerService _customerService;
+    private readonly IAiFeatureToggle? _featureToggle;
     private readonly RecommendationService _recommendationService;
     private readonly SearchAutocompleteService _autocompleteService;
     private readonly ISearchAnalyticsService _searchAnalyticsService;
@@ -31,7 +34,8 @@ public sealed class SearchController : BasePublicController
         IWorkContext workContext,
         RecommendationService recommendationService,
         SearchAutocompleteService autocompleteService,
-        ISearchAnalyticsService searchAnalyticsService)
+        ISearchAnalyticsService searchAnalyticsService,
+        IAiFeatureToggle? featureToggle = null)
     {
         _garageContextSearchService = garageContextSearchService;
         _garageService = garageService;
@@ -41,6 +45,7 @@ public sealed class SearchController : BasePublicController
         _recommendationService = recommendationService;
         _autocompleteService = autocompleteService;
         _searchAnalyticsService = searchAnalyticsService;
+        _featureToggle = featureToggle;
     }
 
     [HttpPost]
@@ -131,19 +136,29 @@ public sealed class SearchController : BasePublicController
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Recommend(int? vehicleConfigurationId, int take = 8, int? seedProductId = null, CancellationToken cancellationToken = default)
     {
+        if (_featureToggle is not null && !_featureToggle.IsEnabled(AiFeatureKeys.Recommendations))
+        {
+            return Json(new { vehicleScoped = false, hits = Array.Empty<object>() });
+        }
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isGuest = await _customerService.IsGuestAsync(customer);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var rateLimitKey = isGuest
+            ? $"recommend:ip:{ipAddress}"
+            : $"recommend:customer:{customer.Id}";
+
+        if (!_searchRateLimiter.TryAcquire(rateLimitKey, out var retryAfterSeconds))
+            return StatusCode(429, new { reasonCode = "search.rate_limited", retryAfterSeconds });
+
         if (take <= 0)
             take = 8;
 
-        if (!vehicleConfigurationId.HasValue)
+        if (!vehicleConfigurationId.HasValue && !isGuest)
         {
-            var customer = await _workContext.GetCurrentCustomerAsync();
-            var isGuest = await _customerService.IsGuestAsync(customer);
-            if (!isGuest)
-            {
-                var garage = await _garageService.GetAsync(customer.Id, cancellationToken);
-                var activeVehicle = garage.Vehicles.FirstOrDefault(x => x.Id == garage.ActiveGarageVehicleId);
-                vehicleConfigurationId = activeVehicle?.VehicleConfigurationId;
-            }
+            var garage = await _garageService.GetAsync(customer.Id, cancellationToken);
+            var activeVehicle = garage.Vehicles.FirstOrDefault(x => x.Id == garage.ActiveGarageVehicleId);
+            vehicleConfigurationId = activeVehicle?.VehicleConfigurationId;
         }
 
         var recommendations = await _recommendationService.GetRecommendationsAsync(

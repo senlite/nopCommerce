@@ -12,6 +12,10 @@
     { "id": "nl-ar-oil-filter", "rawText": "فلتر زيت", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1001] },
     { "id": "nl-ar-radiator-hose", "rawText": "خرطوم رديتر", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1002] },
     { "id": "nl-ar-cabin-filter", "rawText": "فلتر مقصورة", "mode": "NaturalLanguage", "locale": "ar", "expectedProductIds": [1003] },
-    { "id": "nl-ar-cooling", "rawText": "تبريد راديتر", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1002] }
+    { "id": "nl-ar-cooling", "rawText": "تبريد راديتر", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1002] },
+    { "id": "nl-vehicle-part-oil", "rawText": "2015 BMW oil filter", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1001] },
+    { "id": "nl-code-switch-oil", "rawText": "oil filter فلتر زيت", "mode": "Semantic", "locale": "en", "expectedProductIds": [1001] },
+    { "id": "nl-code-switch-radiator", "rawText": "radiator hose خرطوم رديتر", "mode": "Semantic", "locale": "en", "expectedProductIds": [1002] },
+    { "id": "nl-ar-code-switch-oil", "rawText": "BMW oil filter فلتر زيت", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1001] }
   ]
 }

@@ -39,7 +39,8 @@ public static class CheckEngineConfigurationMapper
             EnableSearchNaturalLanguage = enabled.Contains(AiFeatureKeys.SearchNaturalLanguage),
             EnableSearchSemantic = enabled.Contains(AiFeatureKeys.SearchSemantic),
             EnableFitmentInference = enabled.Contains(AiFeatureKeys.FitmentInference),
-            EnableCustomerAssistant = enabled.Contains(AiFeatureKeys.CustomerAssistant)
+            EnableCustomerAssistant = enabled.Contains(AiFeatureKeys.CustomerAssistant),
+            EnableRecommendations = enabled.Contains(AiFeatureKeys.Recommendations)
         };
     }
 
@@ -70,6 +71,7 @@ public static class CheckEngineConfigurationMapper
         if (model.EnableSearchSemantic) enabledFeatures.Add(AiFeatureKeys.SearchSemantic);
         if (model.EnableFitmentInference) enabledFeatures.Add(AiFeatureKeys.FitmentInference);
         if (model.EnableCustomerAssistant) enabledFeatures.Add(AiFeatureKeys.CustomerAssistant);
+        if (model.EnableRecommendations) enabledFeatures.Add(AiFeatureKeys.Recommendations);
 
         settings.AiEnabledFeatures = string.Join(',', enabledFeatures);
         CheckEngineAiSettingsSync.Apply(settings);
@@ -82,5 +84,6 @@ public static class CheckEngineConfigurationMapper
         || model.EnableSearchNaturalLanguage
         || model.EnableSearchSemantic
         || model.EnableFitmentInference
-        || model.EnableCustomerAssistant;
+        || model.EnableCustomerAssistant
+        || model.EnableRecommendations;
 }

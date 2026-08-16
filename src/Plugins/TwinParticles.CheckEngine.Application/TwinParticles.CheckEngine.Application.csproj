@@ -21,4 +21,8 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="L10n\automotive-glossary.json" />
+  </ItemGroup>
+
 </Project>

@@ -79,4 +79,7 @@ public record ConfigurationModel : BaseNopModel
 
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableCustomerAssistant")]
     public bool EnableCustomerAssistant { get; set; }
+
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableRecommendations")]
+    public bool EnableRecommendations { get; set; }
 }

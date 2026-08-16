@@ -17,6 +17,11 @@
     { "id": "rs-ar-brake", "rawText": "فحمات فرامل", "mode": "Semantic", "locale": "ar", "expectedProductIds": [2004] },
     { "id": "rs-ar-timing", "rawText": "سير التوقيت", "mode": "NaturalLanguage", "locale": "ar", "expectedProductIds": [2006] },
     { "id": "rs-ar-fuel", "rawText": "طرمبة بنزين", "mode": "Semantic", "locale": "ar", "expectedProductIds": [2010] },
-    { "id": "rs-misspelled-cabin", "rawText": "cabn air filtr", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2003] }
+    { "id": "rs-misspelled-cabin", "rawText": "cabn air filtr", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2003] },
+    { "id": "rs-vehicle-part-oil", "rawText": "2018 BMW 3 series oil filter", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2001] },
+    { "id": "rs-vehicle-part-brake", "rawText": "front brake pads for BMW", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2004] },
+    { "id": "rs-code-switch-brake", "rawText": "brake pad فحمات فرامل", "mode": "Semantic", "locale": "en", "expectedProductIds": [2004] },
+    { "id": "rs-code-switch-timing", "rawText": "timing belt سير التوقيت", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2006] },
+    { "id": "rs-ar-code-switch-oil", "rawText": "BMW oil filter فلتر زيت", "mode": "Semantic", "locale": "ar", "expectedProductIds": [2001] }
   ]
 }

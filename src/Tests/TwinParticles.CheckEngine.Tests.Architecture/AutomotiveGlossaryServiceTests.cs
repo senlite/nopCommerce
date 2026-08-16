@@ -27,4 +27,12 @@ public class AutomotiveGlossaryServiceTests
 
         prompt.Should().Contain("فحمات فرامل");
     }
+
+    [Test]
+    public void EmbeddedGlossary_Should_Load_Extended_Terms()
+    {
+        var service = new AutomotiveGlossaryService();
+
+        service.ValidateTranslation("upper radiator hose", "خرطوم رديتر علوي").Should().BeTrue();
+    }
 }

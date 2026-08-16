@@ -9,5 +9,6 @@ public static class AiFeatureKeys
     public const string SearchSemantic = "search.semantic";
     public const string FitmentInference = "fitment.inference";
     public const string CustomerAssistant = "assistant.customer";
+    public const string Recommendations = "recommendations.fitment";
     public const string ContentDescription = "content.description";
 }
