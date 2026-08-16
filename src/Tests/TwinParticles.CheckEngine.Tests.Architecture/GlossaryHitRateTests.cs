@@ -63,7 +63,7 @@ public class GlossaryHitRateTests
     [Test]
     public void ScoreTranslation_Should_Use_Admin_Overrides_For_Validation()
     {
-        var service = new AutomotiveGlossaryService(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        var service = AutomotiveGlossaryService.ForTerms(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["brake pad"] = "فحمات مخصصة"
         });

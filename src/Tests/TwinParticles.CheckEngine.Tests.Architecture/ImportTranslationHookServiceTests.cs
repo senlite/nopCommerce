@@ -20,7 +20,7 @@ public class ImportTranslationHookServiceTests
         var port = new RecordingAiCompletionPort();
         var store = new InMemoryGenerationRepository();
         var service = new AiContentCandidateService(store);
-        var glossary = new AutomotiveGlossaryService(new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase)
+        var glossary = AutomotiveGlossaryService.ForTerms(new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase)
         {
             ["water pump"] = "مضخة مياه"
         });

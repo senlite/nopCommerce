@@ -23,7 +23,7 @@ public sealed class SqlImportPipelineRepository : IImportPipelineRepository
     public async Task<ImportBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
-            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, [RowCount], ErrorSummary,
+            $@"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, {CheckEngineSql.QuoteIdentifier("RowCount")}, ErrorSummary,
        SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc
 FROM TP_CE_ImportBatch WHERE Id = @id",
             new DataParameter("id", batchId));
@@ -34,7 +34,7 @@ FROM TP_CE_ImportBatch WHERE Id = @id",
     public async Task<ImportBatch?> GetBatchByCorrelationIdAsync(Guid correlationId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<ImportBatchRow>(
-            @"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, [RowCount], ErrorSummary,
+            $@"SELECT Id, CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, {CheckEngineSql.QuoteIdentifier("RowCount")}, ErrorSummary,
        SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc
 FROM TP_CE_ImportBatch WHERE CorrelationId = @correlationId",
             new DataParameter("correlationId", correlationId));
@@ -47,13 +47,13 @@ FROM TP_CE_ImportBatch WHERE CorrelationId = @correlationId",
         if (batch.Id > 0)
         {
             var updated = await _dataProvider.ExecuteNonQueryAsync(
-                @"UPDATE TP_CE_ImportBatch
+                $@"UPDATE TP_CE_ImportBatch
 SET CorrelationId = @correlationId,
     FileName = @fileName,
     SourceFormatId = @sourceFormatId,
     Status = @status,
     UploadedByCustomerId = @uploadedByCustomerId,
-    [RowCount] = @rowCount,
+    {CheckEngineSql.QuoteIdentifier("RowCount")} = @rowCount,
     ErrorSummary = @errorSummary,
     SourceContent = @sourceContent,
     RunOptionsJson = @runOptionsJson,
@@ -80,8 +80,8 @@ WHERE Id = @id",
         }
 
         var inserted = await _dataProvider.QueryAsync<ScalarIntRow>(
-            @"INSERT INTO TP_CE_ImportBatch
-(CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, [RowCount], ErrorSummary, SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc)
+            $@"INSERT INTO TP_CE_ImportBatch
+(CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, {CheckEngineSql.QuoteIdentifier("RowCount")}, ErrorSummary, SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc)
 VALUES
 (@correlationId, @fileName, @sourceFormatId, @status, @uploadedByCustomerId, @rowCount, @errorSummary, @sourceContent, @runOptionsJson, @currentStage, @completedStagesCsv, @createdUtc, @updatedUtc);
 " + CheckEngineSql.SelectInsertedIntId() + @"",

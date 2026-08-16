@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -217,6 +218,21 @@ public class CustomerAssistantServiceTests
     }
 
     [Test]
+    public async Task AskAsync_Should_Retrieve_Catalog_From_Conversational_Question()
+    {
+        var port = new RecordingPort();
+        var repo = new PhraseOnlySearchRepository();
+        var service = new CustomerAssistantService(port, repo);
+
+        var response = await service.AskAsync("Do you have a water pump for my BMW?", null, CancellationToken.None);
+
+        response.Grounded.Should().BeTrue();
+        response.Citations.Should().ContainSingle(x => x.ProductId == 42);
+        repo.Queries.Should().Contain("water pump");
+        repo.Queries.Should().NotContain("Do you have a water pump for my BMW?");
+    }
+
+    [Test]
     public async Task AskAsync_Should_Return_Disabled_When_Port_Missing()
     {
         var service = new CustomerAssistantService();
@@ -302,6 +318,33 @@ public class CustomerAssistantServiceTests
 
         public Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken) =>
             Task.FromResult<FitmentClaim?>(null);
+    }
+
+    private sealed class PhraseOnlySearchRepository : IProductSearchReadRepository
+    {
+        public List<string> Queries { get; } = [];
+
+        public Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
+        {
+            Queries.Add(query.RawText);
+            if (string.Equals(query.RawText, "water pump", StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.FromResult<IReadOnlyList<SearchHit>>([
+                    new SearchHit { ProductId = 42, Name = "Water Pump", Score = 1 }
+                ]);
+            }
+
+            return Task.FromResult<IReadOnlyList<SearchHit>>([]);
+        }
+
+        public Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken) =>
+            SearchKeywordAsync(query, cancellationToken);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByOemIdAsync(int oemNumberId, SearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SearchHit>>([]);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SearchHit>>([]);
     }
 
     private sealed class StubSearchRepository : IProductSearchReadRepository

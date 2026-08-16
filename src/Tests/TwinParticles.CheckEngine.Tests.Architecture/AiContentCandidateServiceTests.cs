@@ -153,6 +153,104 @@ public class AiContentCandidateServiceTests
         pending.Should().ContainSingle();
     }
 
+    [Test]
+    public async Task ReviewAsync_Should_Return_NotFound_For_Missing_Or_Invalid_Id()
+    {
+        var empty = new AiContentCandidateService();
+        (await empty.ReviewAsync(1, true, "nour", CancellationToken.None)).ReasonCode.Should().Be("ai.review.not_found");
+
+        var store = new InMemoryGenerationRepository();
+        var service = new AiContentCandidateService(store);
+        (await service.ReviewAsync(0, true, "nour", CancellationToken.None)).ReasonCode.Should().Be("ai.review.not_found");
+        (await service.ReviewAsync(99, true, "nour", CancellationToken.None)).ReasonCode.Should().Be("ai.review.not_found");
+    }
+
+    [Test]
+    public async Task ReviewAsync_Should_Reject_Without_Applying()
+    {
+        var store = new InMemoryGenerationRepository();
+        var applicator = new RecordingApplicator();
+        var service = new AiContentCandidateService(store, applicator);
+
+        var id = await service.SaveCandidateAsync(
+            AiGenerationEntityType.ProductDescription,
+            7,
+            AiFeatureKeys.ImportEnrichment,
+            "en",
+            "candidate text",
+            AiFeatureKeys.ImportEnrichment,
+            "hash",
+            0.8m,
+            CancellationToken.None);
+
+        var reviewed = await service.ReviewAsync(id!.Value, approved: false, "nour", CancellationToken.None);
+        var stored = await store.GetByIdAsync(id.Value, CancellationToken.None);
+
+        reviewed.Success.Should().BeTrue();
+        stored!.ReviewStatus.Should().Be("rejected");
+        stored.IsPublished.Should().BeFalse();
+        applicator.Applied.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task ReviewAsync_Should_Keep_Pending_When_Apply_Fails()
+    {
+        var store = new InMemoryGenerationRepository();
+        var applicator = new FailingApplicator();
+        var service = new AiContentCandidateService(store, applicator);
+
+        var id = await service.SaveCandidateAsync(
+            AiGenerationEntityType.ProductDescription,
+            7,
+            AiFeatureKeys.ImportEnrichment,
+            "en",
+            "candidate text",
+            AiFeatureKeys.ImportEnrichment,
+            "hash",
+            0.8m,
+            CancellationToken.None);
+
+        var reviewed = await service.ReviewAsync(id!.Value, approved: true, "nour", CancellationToken.None);
+        var stored = await store.GetByIdAsync(id.Value, CancellationToken.None);
+
+        reviewed.Success.Should().BeFalse();
+        reviewed.ReasonCode.Should().Be("ai.apply.product_not_found");
+        stored!.ReviewStatus.Should().Be("pending");
+        stored.IsPublished.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task GetPendingQueueAsync_Should_Return_Pending_Only()
+    {
+        var store = new InMemoryGenerationRepository();
+        var service = new AiContentCandidateService(store);
+
+        await service.SaveCandidateAsync(
+            AiGenerationEntityType.SeoMetadata, 1, AiFeatureKeys.ImportSeo, "en", "seo",
+            AiFeatureKeys.ImportSeo, "h1", 1m, CancellationToken.None);
+        var approvedId = await service.SaveCandidateAsync(
+            AiGenerationEntityType.ProductDescription, 2, AiFeatureKeys.ImportEnrichment, "en", "desc",
+            AiFeatureKeys.ImportEnrichment, "h2", 1m, CancellationToken.None);
+        await service.ReviewAsync(approvedId!.Value, approved: true, "nour", CancellationToken.None);
+
+        var queue = await service.GetPendingQueueAsync(10, CancellationToken.None);
+        queue.Should().ContainSingle(x => x.EntityType == AiGenerationEntityType.SeoMetadata);
+        queue.Should().NotContain(x => x.ReviewStatus != "pending");
+    }
+
+    [Test]
+    public async Task SaveCandidateAsync_Should_Ignore_Blank_Output()
+    {
+        var store = new InMemoryGenerationRepository();
+        var service = new AiContentCandidateService(store);
+
+        var id = await service.SaveCandidateAsync(
+            AiGenerationEntityType.Translation, 1, AiFeatureKeys.ImportTranslation, "ar", "  ",
+            AiFeatureKeys.ImportTranslation, "h", 1m, CancellationToken.None);
+
+        id.Should().BeNull();
+    }
+
     private sealed class InMemoryGenerationRepository : IAiGenerationRepository
     {
         private readonly Dictionary<int, AiGenerationCandidate> _items = new();
@@ -178,6 +276,12 @@ public class AiContentCandidateServiceTests
         {
             return Task.FromResult<IReadOnlyList<AiGenerationCandidate>>(
                 _items.Values.Where(x => x.EntityType == entityType && x.EntityId == entityId && x.ReviewStatus == "pending").ToList());
+        }
+
+        public Task<IReadOnlyList<AiGenerationCandidate>> GetPendingQueueAsync(int take, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<AiGenerationCandidate>>(
+                _items.Values.Where(x => x.ReviewStatus == "pending").Take(Math.Max(1, take)).ToList());
         }
 
         public Task MarkReviewedAsync(int id, bool approved, string reviewer, CancellationToken cancellationToken)
@@ -213,5 +317,11 @@ public class AiContentCandidateServiceTests
             LastCandidate = candidate;
             return Task.FromResult(AiContentApplyResult.Ok());
         }
+    }
+
+    private sealed class FailingApplicator : IAiContentApplicator
+    {
+        public Task<AiContentApplyResult> ApplyAsync(AiGenerationCandidate candidate, CancellationToken cancellationToken) =>
+            Task.FromResult(AiContentApplyResult.Fail("ai.apply.product_not_found"));
     }
 }

@@ -95,14 +95,14 @@ public sealed class AiContentCandidateService
             return AiReviewResult.Blocked("ai.review.spec_unknown_keys");
         }
 
-        await _generationRepository.MarkReviewedAsync(id, approved, reviewer, cancellationToken);
-
         if (approved && _contentApplicator is not null)
         {
             var applyResult = await _contentApplicator.ApplyAsync(existing, cancellationToken);
             if (!applyResult.Success)
                 return AiReviewResult.Blocked(applyResult.ErrorCode ?? "ai.apply.failed");
         }
+
+        await _generationRepository.MarkReviewedAsync(id, approved, reviewer, cancellationToken);
 
         return approved ? AiReviewResult.Approved() : AiReviewResult.Rejected();
     }

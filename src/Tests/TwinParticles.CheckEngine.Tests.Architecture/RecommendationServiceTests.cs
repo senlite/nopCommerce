@@ -127,6 +127,19 @@ public class RecommendationServiceTests
     }
 
     [Test]
+    public async Task GetRecommendationsAsync_Should_Clamp_Take_To_At_Least_One()
+    {
+        var service = new RecommendationService(
+            new FakeRepository(),
+            new FitmentEvaluationService(new FakeFitmentRepository(), new FakeFitmentCache()));
+
+        var recommendations = await service.GetRecommendationsAsync(777, take: 0, CancellationToken.None);
+
+        recommendations.Hits.Should().HaveCount(1);
+        recommendations.Hits[0].ProductId.Should().Be(1001);
+    }
+
+    [Test]
     public void GetRecommendationsAsync_Should_Not_Accept_Customer_Identifiers()
     {
         var method = typeof(RecommendationService).GetMethod(nameof(RecommendationService.GetRecommendationsAsync));

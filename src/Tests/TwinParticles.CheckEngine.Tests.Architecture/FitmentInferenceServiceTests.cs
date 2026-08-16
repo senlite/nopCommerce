@@ -41,6 +41,44 @@ public class FitmentInferenceServiceTests
         FitmentAiReference.Parse(claim.Provenance.SourceReference).Rationale.Should().Be("OEM cross-reference missing");
     }
 
+    [Test]
+    public async Task InferCandidateAsync_Should_Return_Null_When_Port_Missing_Or_Ids_Invalid()
+    {
+        var writeRepo = new InMemoryFitmentWriteRepository();
+        var queueRepo = new RecordingQueueRepository();
+        var noPort = new FitmentInferenceService(writeRepo, queueRepo);
+        (await noPort.InferCandidateAsync(10, 20, "Water Pump", CancellationToken.None)).Should().BeNull();
+
+        var withPort = new FitmentInferenceService(writeRepo, queueRepo, new FitsPort());
+        (await withPort.InferCandidateAsync(0, 20, "Water Pump", CancellationToken.None)).Should().BeNull();
+        (await withPort.InferCandidateAsync(10, 0, "Water Pump", CancellationToken.None)).Should().BeNull();
+    }
+
+    [Test]
+    public async Task InferCandidateAsync_Should_Parse_Unknown_Token_As_Unknown()
+    {
+        var writeRepo = new InMemoryFitmentWriteRepository();
+        var queueRepo = new RecordingQueueRepository();
+        var service = new FitmentInferenceService(writeRepo, queueRepo, new UnknownPort());
+
+        var claim = await service.InferCandidateAsync(10, 20, "Mystery Part", CancellationToken.None);
+
+        claim!.Status.Should().Be(FitmentStatus.Unknown);
+        claim.IsPublished.Should().BeFalse();
+        claim.Confidence.Should().Be(FitmentInferenceService.AiInferenceConfidenceCap);
+    }
+
+    private sealed class UnknownPort : IAiCompletionPort
+    {
+        public Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken ct) =>
+            Task.FromResult(new AiCompletionResult
+            {
+                Success = true,
+                Text = "I am not sure about this one",
+                PromptHash = "unk"
+            });
+    }
+
     private sealed class JsonVerdictPort : IAiCompletionPort
     {
         public Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken ct)

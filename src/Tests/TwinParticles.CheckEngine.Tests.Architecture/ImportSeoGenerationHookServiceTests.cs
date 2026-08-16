@@ -39,6 +39,58 @@ public class ImportSeoGenerationHookServiceTests
         store.Items[0].IsPublished.Should().BeFalse();
     }
 
+    [Test]
+    public void Apply_Should_Skip_When_Disabled_Or_Feature_Off()
+    {
+        var store = new InMemoryGenerationRepository();
+        var service = new AiContentCandidateService(store);
+        var hook = new ImportSeoGenerationHookService(
+            new RecordingAiCompletionPort(),
+            featureToggle: new OffToggle(),
+            contentCandidateService: service);
+
+        var rows = new List<ImportPipelineRowState>
+        {
+            new() { RowNumber = 1, Fields = new Dictionary<string, string?> { ["name"] = "Filter" } }
+        };
+
+        hook.Apply(rows, enabled: false);
+        store.Items.Should().BeEmpty();
+
+        hook.Apply(rows, enabled: true);
+        store.Items.Should().BeEmpty();
+    }
+
+    [Test]
+    public void Apply_Should_Skip_Row_When_Completion_Fails()
+    {
+        var store = new InMemoryGenerationRepository();
+        var hook = new ImportSeoGenerationHookService(
+            new FailingPort(),
+            contentCandidateService: new AiContentCandidateService(store));
+
+        var rows = new List<ImportPipelineRowState>
+        {
+            new() { RowNumber = 1, Fields = new Dictionary<string, string?> { ["name"] = "Filter" } }
+        };
+
+        hook.Apply(rows, enabled: true);
+
+        store.Items.Should().BeEmpty();
+        rows[0].Fields.Should().NotContainKey("seoCandidate");
+    }
+
+    private sealed class OffToggle : IAiFeatureToggle
+    {
+        public bool IsEnabled(string featureKey) => false;
+    }
+
+    private sealed class FailingPort : IAiCompletionPort
+    {
+        public Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken cancellationToken) =>
+            Task.FromResult(new AiCompletionResult { Success = false, ErrorCode = "ai.completion_failed" });
+    }
+
     private sealed class RecordingAiCompletionPort : IAiCompletionPort
     {
         public Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken cancellationToken)

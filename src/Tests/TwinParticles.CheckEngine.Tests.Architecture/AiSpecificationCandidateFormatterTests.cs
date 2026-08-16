@@ -41,7 +41,7 @@ public class AiSpecificationCandidateFormatterTests
     [Test]
     public void Validate_Should_Flag_Unknown_Keys_And_Compute_Quality_Score()
     {
-        var catalog = new AllowedSpecificationKeyCatalog(["Material", "Thread"]);
+        var catalog = AllowedSpecificationKeyCatalog.ForKeys(["Material", "Thread"]);
         var result = AiSpecificationCandidateFormatter.Validate(
             """[{"key":"Material","value":"Steel"},{"key":"FooBar","value":"X"}]""",
             catalog);
@@ -54,7 +54,7 @@ public class AiSpecificationCandidateFormatterTests
     [Test]
     public void Validate_Should_Return_Perfect_Score_When_All_Keys_Allowed()
     {
-        var catalog = new AllowedSpecificationKeyCatalog(["Material", "Thread"]);
+        var catalog = AllowedSpecificationKeyCatalog.ForKeys(["Material", "Thread"]);
         var result = AiSpecificationCandidateFormatter.Validate(
             """[{"key":"Material","value":"Steel"},{"key":"Thread","value":"M14x1.5"}]""",
             catalog);

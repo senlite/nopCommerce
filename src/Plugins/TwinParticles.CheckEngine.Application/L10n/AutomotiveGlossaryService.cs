@@ -45,11 +45,20 @@ public sealed class AutomotiveGlossaryService
         _overridesSource = overridesSource;
     }
 
-    public AutomotiveGlossaryService(IReadOnlyDictionary<string, string> englishToArabic)
+    private AutomotiveGlossaryService(IReadOnlyDictionary<string, string> englishToArabic, bool fixedTerms)
     {
         _overridesSource = null;
         _fixedTerms = englishToArabic;
     }
+
+    /// <summary>
+    /// Builds a glossary over an explicit term set, bypassing the embedded catalog and overrides.
+    ///
+    /// Exposed as a factory rather than a second public constructor: the container picks a constructor
+    /// by parameter count, and a second single-argument constructor makes the type unresolvable.
+    /// </summary>
+    public static AutomotiveGlossaryService ForTerms(IReadOnlyDictionary<string, string> englishToArabic) =>
+        new(englishToArabic, fixedTerms: true);
 
     private readonly IReadOnlyDictionary<string, string>? _fixedTerms;
 

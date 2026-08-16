@@ -53,10 +53,19 @@ public sealed class AllowedSpecificationKeyCatalog : IAllowedSpecificationKeyCat
         _keys = MergeKeys(EmbeddedKeys.Value, overridesSource?.GetOverrides());
     }
 
-    public AllowedSpecificationKeyCatalog(IEnumerable<string> keys)
+    private AllowedSpecificationKeyCatalog(HashSet<string> keys)
     {
-        _keys = new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
+        _keys = keys;
     }
+
+    /// <summary>
+    /// Builds a catalog over an explicit key set.
+    ///
+    /// Exposed as a factory rather than a second public constructor: the container picks a constructor
+    /// by parameter count, and a second single-argument constructor makes the type unresolvable.
+    /// </summary>
+    public static AllowedSpecificationKeyCatalog ForKeys(IEnumerable<string> keys) =>
+        new(new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase));
 
     public IReadOnlyCollection<string> GetAllowedKeys() => _keys;
 
