@@ -23,4 +23,7 @@ public sealed class SearchResult
     public bool NeedsDisambiguation { get; init; }
 
     public IReadOnlyList<SearchVinCandidate> VinCandidates { get; init; } = [];
+
+    /// <summary>Structured NL parse output when <see cref="ModeUsed"/> is natural language.</summary>
+    public SearchParsedIntent? ParsedIntent { get; init; }
 }

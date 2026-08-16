@@ -30,6 +30,7 @@
     searchUnavailable: 'Search is unavailable right now.',
     searchResultsCount: 'results',
     searchMode: 'Mode',
+    searchParsedIntent: 'Understood as',
     fitsLabel: 'Fits your vehicle',
     fitsHint: 'Verified against your active vehicle.',
     unfitLabel: 'Does not fit',
@@ -341,6 +342,42 @@
     }
   }
 
+  function formatParsedIntent(intent) {
+    if (!intent) {
+      return '';
+    }
+
+    var parts = [];
+    var partTerms = intent.partTerms || intent.PartTerms || [];
+    if (partTerms.length) {
+      parts.push(partTerms.join(', '));
+    }
+
+    var vehicleBits = [];
+    var make = intent.make || intent.Make;
+    var model = intent.model || intent.Model;
+    var year = intent.modelYear != null ? intent.modelYear : intent.ModelYear;
+    if (make) {
+      vehicleBits.push(make);
+    }
+    if (model) {
+      vehicleBits.push(model);
+    }
+    if (year != null) {
+      vehicleBits.push(String(year));
+    }
+    if (vehicleBits.length) {
+      parts.push(vehicleBits.join(' '));
+    }
+
+    var oem = intent.oemNumber || intent.OemNumber;
+    if (oem) {
+      parts.push('OEM ' + oem);
+    }
+
+    return parts.join(' · ');
+  }
+
   function renderSearchResults(payload) {
     var hits = (payload && (payload.hits || payload.Hits)) || [];
     var modeUsed = payload && (payload.modeUsed || payload.ModeUsed);
@@ -387,12 +424,22 @@
       total = hits.length;
     }
 
+    var parsedIntent = payload && (payload.parsedIntent || payload.ParsedIntent);
+    var parsedIntentText = formatParsedIntent(parsedIntent);
+
     var header = '<div class="ce-results__header">' +
       '<span>' + escapeHtml(String(total)) + ' ' + escapeHtml(TEXT.searchResultsCount) + '</span>' +
       '<span class="ce-results__mode">' + escapeHtml(TEXT.searchMode) + ': ' +
       escapeHtml(MODE_NAMES[modeUsed] || String(modeUsed || '')) +
       (degraded ? ' · degraded' : '') +
       '</span></div>';
+
+    if (parsedIntentText) {
+      header += '<p class="ce-results__intent">' +
+        escapeHtml(TEXT.searchParsedIntent) + ': ' +
+        escapeHtml(parsedIntentText) +
+        '</p>';
+    }
 
     var facets = renderFacets((payload && (payload.facets || payload.Facets)) || []);
 

@@ -60,12 +60,14 @@ public sealed class UnifiedSearchService
         IReadOnlyList<SearchVinCandidate> vinCandidates = [];
         var needsVinDisambiguation = false;
         var effectiveQuery = query;
+        SearchParsedIntent? parsedIntent = null;
 
         if (mode == SearchMode.NaturalLanguage)
         {
             var naturalLanguage = await SearchNaturalLanguageAsync(query, normalizedText, cancellationToken);
             hits = naturalLanguage.Hits;
             modeUsed = SearchMode.NaturalLanguage;
+            parsedIntent = naturalLanguage.ParsedIntent;
             if (naturalLanguage.VehicleConfigurationId is > 0)
             {
                 effectiveQuery = CloneQuery(
@@ -137,7 +139,7 @@ public sealed class UnifiedSearchService
                     modeUsed,
                     query.Locale,
                     total,
-                    query.VehicleConfigurationId.HasValue,
+                    effectiveQuery.VehicleConfigurationId.HasValue,
                     effectiveQuery.WidenFitment,
                     degraded,
                     stopwatch.ElapsedMilliseconds,
@@ -164,7 +166,8 @@ public sealed class UnifiedSearchService
             IsDegraded = degraded,
             AnalyticsId = analyticsId,
             NeedsDisambiguation = needsVinDisambiguation,
-            VinCandidates = vinCandidates
+            VinCandidates = vinCandidates,
+            ParsedIntent = parsedIntent
         };
     }
 
@@ -252,7 +255,8 @@ public sealed class UnifiedSearchService
         return new NaturalLanguageSearchResult
         {
             Hits = hits,
-            VehicleConfigurationId = intent.VehicleConfigurationId
+            VehicleConfigurationId = intent.VehicleConfigurationId,
+            ParsedIntent = SearchParsedIntent.FromIntent(intent)
         };
     }
 
@@ -261,6 +265,8 @@ public sealed class UnifiedSearchService
         public IReadOnlyList<SearchHit> Hits { get; init; } = [];
 
         public int? VehicleConfigurationId { get; init; }
+
+        public SearchParsedIntent? ParsedIntent { get; init; }
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchKeywordTermsAsync(

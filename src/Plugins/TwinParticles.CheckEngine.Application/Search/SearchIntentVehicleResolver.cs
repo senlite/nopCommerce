@@ -78,6 +78,9 @@ public sealed class SearchIntentVehicleResolver
                 .Where(value => !string.IsNullOrWhiteSpace(value)));
         }
 
-        return intent.Make?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(intent.Make))
+            return intent.Make.Trim();
+
+        return string.Empty;
     }
 }

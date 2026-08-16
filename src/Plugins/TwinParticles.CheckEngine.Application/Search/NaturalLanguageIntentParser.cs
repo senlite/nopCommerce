@@ -135,18 +135,26 @@ public sealed class NaturalLanguageIntentParser
 
     private static SearchIntent BuildHeuristicIntent(string text, string locale)
     {
+        var workingText = text;
+        var partPhrases = NaturalLanguageIntentHeuristics.ExtractPartPhrases(workingText);
+        foreach (var phrase in partPhrases)
+            workingText = workingText.Replace(phrase, " ", StringComparison.OrdinalIgnoreCase);
+
+        var oemNumber = NaturalLanguageIntentHeuristics.TryExtractOemNumber(text);
+        var chassisCode = NaturalLanguageIntentHeuristics.TryExtractChassisCode(workingText);
+
         var yearMatch = YearRegex.Match(text);
         int? year = yearMatch.Success && int.TryParse(yearMatch.Value, out var parsedYear) ? parsedYear : null;
 
-        var tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var tokens = workingText.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         string? make = null;
         string? model = null;
-        var partTerms = new List<string>();
+        var partTerms = new List<string>(partPhrases);
 
         for (var i = 0; i < tokens.Length; i++)
         {
             var token = tokens[i];
-            if (YearRegex.IsMatch(token))
+            if (YearRegex.IsMatch(token) || NaturalLanguageIntentHeuristics.ChassisCodePattern.IsMatch(token))
                 continue;
 
             if (make is null && KnownMakes.Contains(token))
@@ -165,12 +173,16 @@ public sealed class NaturalLanguageIntentParser
                 partTerms.Add(token);
         }
 
+        if (chassisCode is not null && string.IsNullOrWhiteSpace(model))
+            model = chassisCode;
+
         return new SearchIntent
         {
             PartTerms = partTerms,
             Make = make,
             Model = model,
             ModelYear = year,
+            OemNumber = oemNumber,
             KeywordFallback = partTerms.Count > 0 ? string.Join(' ', partTerms) : text,
             Locale = locale,
             ParsedFromNaturalLanguage = false

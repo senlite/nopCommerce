@@ -18,8 +18,7 @@ public class NaturalLanguageIntentParserTests
         var intent = await parser.ParseAsync("2016 BMW 320i water pump", "en", CancellationToken.None);
 
         intent.ModelYear.Should().Be(2016);
-        intent.PartTerms.Should().Contain("water");
-        intent.PartTerms.Should().Contain("pump");
+        intent.PartTerms.Should().Contain("water pump");
     }
 
     [Test]
