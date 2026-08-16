@@ -53,6 +53,9 @@ public class GarageVinDisambiguationContractTests
         storefront.Should().Contain("/check-engine/vin/decode");
         storefront.Should().Contain("NeedsDisambiguation");
         storefront.Should().Contain("vehicleConfigurationId");
+        storefront.Should().Contain("vinDisplayLabel");
+        storefront.Should().Contain("needsDisambiguation");
+        storefront.Should().NotContain("persistGuest(null");
         chrome.Should().Contain("ce-vin-disambiguation");
         chrome.Should().Contain("Garage.VinDisambiguation.Title");
     }

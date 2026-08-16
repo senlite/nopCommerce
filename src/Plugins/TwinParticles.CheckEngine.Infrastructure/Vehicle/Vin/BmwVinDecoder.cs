@@ -29,15 +29,16 @@ public sealed class BmwVinDecoder : IManufacturerVinDecoder
         => _wmiAllowList.Contains(wmi);
 
     public VinDecodeContribution Decode(VinValue vin)
+        => DecodeAsync(vin, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+
+    public async Task<VinDecodeContribution> DecodeAsync(VinValue vin, CancellationToken cancellationToken)
     {
         var segments = vin.ParseSegments();
         if (!CanDecode(segments.Wmi))
             return VinDecodeContribution.Failed("vin.wmi_unknown");
 
         var vdsPrefix = segments.Vds[..3];
-        var patterns = _vinRepository.GetPatternsAsync(CancellationToken.None)
-            .GetAwaiter()
-            .GetResult()
+        var patterns = (await _vinRepository.GetPatternsAsync(cancellationToken))
             .Where(pattern => pattern.IsActive && string.Equals(pattern.Pattern, vdsPrefix, StringComparison.Ordinal))
             .OrderByDescending(pattern => pattern.Priority)
             .ToList();
@@ -50,9 +51,7 @@ public sealed class BmwVinDecoder : IManufacturerVinDecoder
 
         foreach (var pattern in patterns)
         {
-            var resolved = _configurationResolver.ResolveAsync(pattern, modelYear, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+            var resolved = await _configurationResolver.ResolveAsync(pattern, modelYear, cancellationToken);
             candidates.AddRange(resolved);
         }
 

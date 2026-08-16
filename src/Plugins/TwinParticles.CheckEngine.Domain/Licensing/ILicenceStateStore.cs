@@ -9,4 +9,8 @@ public interface ILicenceStateStore
     Task<DateTimeOffset?> GetLastHeartbeatUtcAsync(CancellationToken cancellationToken);
 
     Task SetLastHeartbeatUtcAsync(DateTimeOffset heartbeatUtc, CancellationToken cancellationToken);
+
+    Task<string?> GetActivationKeyAsync(CancellationToken cancellationToken);
+
+    Task SetActivationKeyAsync(string licenceKey, CancellationToken cancellationToken);
 }

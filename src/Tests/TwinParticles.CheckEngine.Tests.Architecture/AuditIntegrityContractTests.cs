@@ -13,11 +13,10 @@ public class AuditIntegrityContractTests
     {
         var source = ReadPluginFile("..", "TwinParticles.CheckEngine.Infrastructure", "Security", "SqlCheckEngineAuditService.cs");
 
-        source.Should().Contain("sp_getapplock");
-        source.Should().Contain("HASHBYTES('SHA2_256'");
+        source.Should().Contain("SHA256");
+        source.Should().Contain("AcquireSessionLock");
         source.Should().Contain("PreviousHash");
         source.Should().Contain("EntryHash");
-        source.Should().Contain("LAG(EntryHash,1,@anchor)");
         source.Should().Contain("TP_CE_AuditChainAnchor");
         source.Should().Contain("LastPrunedHash");
         source.Should().Contain("DELETE FROM TP_CE_AuditEvent WHERE Id<=@pruneId");

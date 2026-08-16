@@ -9,6 +9,7 @@ using Nop.Core.Domain.Catalog;
 using Nop.Data;
 using Nop.Services.Catalog;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Search;
 
@@ -80,14 +81,16 @@ public sealed class SqlProductSearchReadRepository : IProductSearchReadRepositor
             var normalized = text.ToLowerInvariant();
             var like = "%" + EscapeLike(normalized) + "%";
 
-            var rows = await _dataProvider.QueryAsync<ProjectionRow>(@"
-SELECT TOP (5000) ProductId,
+            var rows = await _dataProvider.QueryAsync<ProjectionRow>(
+                CheckEngineSql.SelectTop(
+                    5000,
+                    @"ProductId,
     CASE WHEN Sku = @raw OR Mpn = @raw THEN CAST(1.0 AS decimal(5,4))
          WHEN NormalizedText LIKE @exactWord ESCAPE '\' THEN CAST(0.9 AS decimal(5,4))
-         ELSE CAST(0.75 AS decimal(5,4)) END AS Score
-FROM TP_CE_SearchIndex
+         ELSE CAST(0.75 AS decimal(5,4)) END AS Score",
+                    @"FROM TP_CE_SearchIndex
 WHERE NormalizedText LIKE @like ESCAPE '\' OR Sku = @raw OR Mpn = @raw
-ORDER BY Score DESC, ProductId",
+ORDER BY Score DESC, ProductId"),
                 new DataParameter("like", like),
                 new DataParameter("exactWord", "%" + EscapeLike(normalized) + "%"),
                 new DataParameter("raw", text));

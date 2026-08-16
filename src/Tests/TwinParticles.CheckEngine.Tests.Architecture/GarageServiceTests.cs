@@ -76,6 +76,8 @@ public class GarageServiceTests
 
         var garage = await service.GetAsync(42, CancellationToken.None);
         garage.Vehicles.Should().ContainSingle();
+        garage.Vehicles[0].VehicleConfigurationId.Should().BeNull(
+            "a client-supplied configuration id is ignored unless VIN decode confirms it");
         garage.Oems.Should().ContainSingle();
 
         var payload = await service.GetGuestAsync("guest-1", CancellationToken.None);
@@ -103,7 +105,8 @@ public class GarageServiceTests
         var garage = await service.GetAsync(50, CancellationToken.None);
         garage.ActiveGarageVehicleId.Should().NotBeNull();
         garage.Vehicles.Count(x => x.IsActive).Should().Be(1);
-        garage.Vehicles.Single(x => x.IsActive).VehicleConfigurationId.Should().Be(4001);
+        garage.Vehicles.Single(x => x.IsActive).Vin.Should().Be("WP0ZZZ99ZTS392124");
+        garage.Vehicles.Single(x => x.IsActive).VehicleConfigurationId.Should().BeNull();
     }
 
     [Test]
@@ -158,6 +161,7 @@ public class GarageServiceTests
         garage.Vehicles.Should().ContainSingle();
         garage.Vehicles[0].Vin.Should().Be("WBA8E9G50GNU12345");
         garage.Vehicles[0].Label.Should().Be("Guest BMW");
+        garage.Vehicles[0].VehicleConfigurationId.Should().BeNull();
         garage.ActiveGarageVehicleId.Should().Be(garage.Vehicles[0].Id);
         garage.Vehicles[0].IsActive.Should().BeTrue();
     }
@@ -182,8 +186,8 @@ public class GarageServiceTests
 
         migrated.Should().BeTrue();
         var garage = await service.GetAsync(61, CancellationToken.None);
-        garage.Vehicles.Should().HaveCount(2,
-            "configuration identity or normalized VIN identity is enough to avoid a duplicate");
+        garage.Vehicles.Should().HaveCount(3,
+            "a guest VIN that does not decode cannot piggy-back onto another vehicle's configuration id");
     }
 
     [Test]
@@ -248,7 +252,23 @@ public class GarageServiceTests
         audit.GetViewedCustomerIds().Should().Contain(7);
     }
 
-    private static GarageService CreateService(IGarageAuditService? auditService = null)
+    [Test]
+    public async Task AddVehicleAsync_Should_Never_Put_The_Full_Vin_In_The_Label()
+    {
+        var service = CreateService(privacyService: new Last4PrivacyService());
+        var vin = "WBA8E9G58GNT12345";
+
+        var vehicle = await service.AddVehicleAsync(80, null, vin, null, CancellationToken.None);
+
+        vehicle.Label.Should().Be("VIN …2345");
+        vehicle.Label.Should().NotContain(vin);
+        vehicle.Vin.Should().Be(vin);
+        vehicle.VehicleConfigurationId.Should().BeNull();
+    }
+
+    private static GarageService CreateService(
+        IGarageAuditService? auditService = null,
+        IVinPrivacyService? privacyService = null)
     {
         var repository = new FakeGarageRepository();
         var guestStore = new FakeGarageGuestStore();
@@ -266,7 +286,8 @@ public class GarageServiceTests
             guestStore,
             auditService ?? new FakeGarageAuditService(),
             vinService,
-            oemService);
+            oemService,
+            privacyService);
     }
 
     private sealed class FakeGarageRepository : IGarageRepository
@@ -333,6 +354,16 @@ public class GarageServiceTests
         }
 
         public IReadOnlyList<int> GetViewedCustomerIds() => _ids;
+    }
+
+    private sealed class Last4PrivacyService : IVinPrivacyService
+    {
+        public string? GetLast4(string? normalizedVin)
+            => string.IsNullOrWhiteSpace(normalizedVin) || normalizedVin.Length < 4
+                ? null
+                : normalizedVin[^4..];
+
+        public string CreateHash(string normalizedVin) => normalizedVin;
     }
 
     private sealed class FakeVinRegistry : IVinDecoderRegistry

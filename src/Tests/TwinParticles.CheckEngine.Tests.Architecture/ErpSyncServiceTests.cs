@@ -39,6 +39,22 @@ public class ErpSyncServiceTests
         report.FailedJobs.Should().Be(0);
     }
 
+    [Test]
+    public async Task ProcessPendingAsync_Should_Pull_Inbound_Jobs_Instead_Of_Pushing()
+    {
+        var queue = new InMemoryQueue();
+        var client = new DirectionRecordingClient();
+        var service = new ErpSyncService(queue, client, new StubConflictResolver());
+
+        await service.QueueSyncAsync(ErpSyncEntityType.Product, ErpSyncDirection.PullFromErp, "SKU-IN", "{}", CancellationToken.None);
+
+        var successCount = await service.ProcessPendingAsync(CancellationToken.None);
+
+        successCount.Should().Be(1);
+        client.Pulls.Should().Be(1);
+        client.Pushes.Should().Be(0);
+    }
+
     private sealed class InMemoryQueue : IErpSyncQueueRepository
     {
         private readonly System.Collections.Generic.List<ErpSyncJob> _jobs = [];
@@ -77,10 +93,34 @@ public class ErpSyncServiceTests
             return Task.FromResult(!job.Payload.Contains("force-fail"));
         }
 
+        public Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken)
+            => PushAsync(job, cancellationToken);
+
         public Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>("{\"items\":[]}");
         }
+    }
+
+    private sealed class DirectionRecordingClient : IErpClientAdapter
+    {
+        public int Pushes { get; private set; }
+        public int Pulls { get; private set; }
+
+        public Task<bool> PushAsync(ErpSyncJob job, CancellationToken cancellationToken)
+        {
+            Pushes++;
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken)
+        {
+            Pulls++;
+            return Task.FromResult(true);
+        }
+
+        public Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken)
+            => Task.FromResult<string?>("{}");
     }
 
     private sealed class StubConflictResolver : IErpConflictResolutionService

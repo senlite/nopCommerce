@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
 using TwinParticles.CheckEngine.Domain.Garage;
+using TwinParticles.CheckEngine.Domain.Vehicle;
 
 namespace TwinParticles.CheckEngine.Application.Garage;
 
@@ -16,19 +17,22 @@ public sealed class GarageService
     private readonly IGarageRepository _repository;
     private readonly OemResolveService _oemResolveService;
     private readonly VinDecodeApplicationService _vinDecodeService;
+    private readonly IVinPrivacyService? _vinPrivacyService;
 
     public GarageService(
         IGarageRepository repository,
         IGarageGuestStore guestStore,
         IGarageAuditService auditService,
         VinDecodeApplicationService vinDecodeService,
-        OemResolveService oemResolveService)
+        OemResolveService oemResolveService,
+        IVinPrivacyService? vinPrivacyService = null)
     {
         _repository = repository;
         _guestStore = guestStore;
         _auditService = auditService;
         _vinDecodeService = vinDecodeService;
         _oemResolveService = oemResolveService;
+        _vinPrivacyService = vinPrivacyService;
     }
 
     public async Task<Domain.Garage.Garage> GetAsync(int customerId, CancellationToken cancellationToken)
@@ -40,25 +44,12 @@ public sealed class GarageService
     {
         var garage = await _repository.GetOrCreateAsync(customerId, cancellationToken);
 
-        var normalizedVin = string.IsNullOrWhiteSpace(vin) ? null : vin.Trim().ToUpperInvariant();
-        int? resolvedConfigurationId = vehicleConfigurationId;
-
-        if (!string.IsNullOrWhiteSpace(normalizedVin))
-        {
-            var decode = await _vinDecodeService.DecodeAsync(normalizedVin, cancellationToken);
-            if (!resolvedConfigurationId.HasValue &&
-                string.Equals(decode.Outcome, "NeedsDisambiguation", StringComparison.Ordinal))
-            {
-                throw new GarageVinDisambiguationException(decode.Candidates);
-            }
-
-            if (!resolvedConfigurationId.HasValue &&
-                string.Equals(decode.Outcome, "SingleMatch", StringComparison.Ordinal) &&
-                decode.Candidates.Count == 1)
-            {
-                resolvedConfigurationId = decode.Candidates[0].VehicleConfigurationId;
-            }
-        }
+        var normalizedVin = NormalizeVin(vin);
+        var resolvedConfigurationId = await ResolveConfigurationIdAsync(
+            normalizedVin,
+            vehicleConfigurationId,
+            throwOnDisambiguation: true,
+            cancellationToken);
 
         var id = garage.Vehicles.Count == 0 ? 1 : garage.Vehicles.Max(x => x.Id) + 1;
         var vehicle = new GarageVehicle
@@ -67,7 +58,7 @@ public sealed class GarageService
             GarageId = garage.Id,
             VehicleConfigurationId = resolvedConfigurationId,
             Vin = normalizedVin,
-            Label = string.IsNullOrWhiteSpace(label) ? BuildLabel(resolvedConfigurationId, normalizedVin) : label!.Trim(),
+            Label = BuildLabel(resolvedConfigurationId, normalizedVin, label),
             IsActive = garage.ActiveGarageVehicleId is null,
             CreatedUtc = DateTime.UtcNow
         };
@@ -197,6 +188,7 @@ public sealed class GarageService
     /// Merges the browser-local guest garage into the authenticated customer's SQL garage.
     /// The inline payload is authoritative when supplied; the process-local guest store remains
     /// only as a backwards-compatible fallback for older callers and tests.
+    /// Client-supplied configuration ids are re-validated against VIN decode and never trusted alone.
     /// </summary>
     public async Task<bool> MigrateGuestAsync(
         int customerId,
@@ -216,10 +208,15 @@ public sealed class GarageService
             var guestVehicle = payload.Vehicles[index];
             var guestVehicleId = guestVehicle.Id > 0 ? guestVehicle.Id : index + 1;
             var normalizedVin = NormalizeVin(guestVehicle.Vin);
+            var resolvedConfigurationId = await ResolveConfigurationIdAsync(
+                normalizedVin,
+                guestVehicle.VehicleConfigurationId,
+                throwOnDisambiguation: false,
+                cancellationToken);
 
             var existingVehicle = garage.Vehicles.FirstOrDefault(x =>
-                (guestVehicle.VehicleConfigurationId.HasValue &&
-                 x.VehicleConfigurationId == guestVehicle.VehicleConfigurationId) ||
+                (resolvedConfigurationId.HasValue &&
+                 x.VehicleConfigurationId == resolvedConfigurationId) ||
                 (!string.IsNullOrWhiteSpace(normalizedVin) &&
                  string.Equals(NormalizeVin(x.Vin), normalizedVin, StringComparison.Ordinal)));
 
@@ -234,11 +231,9 @@ public sealed class GarageService
             {
                 Id = nextId,
                 GarageId = garage.Id,
-                VehicleConfigurationId = guestVehicle.VehicleConfigurationId,
+                VehicleConfigurationId = resolvedConfigurationId,
                 Vin = normalizedVin,
-                Label = string.IsNullOrWhiteSpace(guestVehicle.Label)
-                    ? BuildLabel(guestVehicle.VehicleConfigurationId, normalizedVin)
-                    : guestVehicle.Label.Trim(),
+                Label = BuildLabel(resolvedConfigurationId, normalizedVin, guestVehicle.Label),
                 IsActive = false,
                 CreatedUtc = DateTime.UtcNow
             });
@@ -302,16 +297,57 @@ public sealed class GarageService
         return _guestStore.SetAsync(guestKey, payload, cancellationToken);
     }
 
-    private static string BuildLabel(int? vehicleConfigurationId, string? vin)
+    private async Task<int?> ResolveConfigurationIdAsync(
+        string? normalizedVin,
+        int? requestedConfigurationId,
+        bool throwOnDisambiguation,
+        CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(normalizedVin))
+            return requestedConfigurationId is > 0 ? requestedConfigurationId : null;
+
+        var decode = await _vinDecodeService.DecodeAsync(normalizedVin, cancellationToken);
+        var candidateIds = decode.Candidates.Select(candidate => candidate.VehicleConfigurationId).ToHashSet();
+
+        if (string.Equals(decode.Outcome, "NeedsDisambiguation", StringComparison.Ordinal))
+        {
+            if (requestedConfigurationId is > 0 && candidateIds.Contains(requestedConfigurationId.Value))
+                return requestedConfigurationId;
+
+            if (throwOnDisambiguation)
+                throw new GarageVinDisambiguationException(decode.Candidates);
+
+            return null;
+        }
+
+        if (string.Equals(decode.Outcome, "SingleMatch", StringComparison.Ordinal) && decode.Candidates.Count == 1)
+            return decode.Candidates[0].VehicleConfigurationId;
+
+        return null;
+    }
+
+    private string BuildLabel(int? vehicleConfigurationId, string? vin, string? requestedLabel)
+    {
+        if (!string.IsNullOrWhiteSpace(requestedLabel))
+        {
+            var trimmed = requestedLabel.Trim();
+            if (!ContainsFullVin(trimmed, vin))
+                return trimmed;
+        }
+
         if (vehicleConfigurationId.HasValue)
             return $"Vehicle #{vehicleConfigurationId.Value}";
 
-        if (!string.IsNullOrWhiteSpace(vin))
-            return $"VIN {vin}";
+        var last4 = _vinPrivacyService?.GetLast4(vin);
+        if (!string.IsNullOrWhiteSpace(last4))
+            return $"VIN …{last4}";
 
         return "Garage Vehicle";
     }
+
+    private static bool ContainsFullVin(string label, string? vin)
+        => !string.IsNullOrWhiteSpace(vin) &&
+           label.Contains(vin, StringComparison.OrdinalIgnoreCase);
 
     private static string? NormalizeVin(string? vin)
         => string.IsNullOrWhiteSpace(vin) ? null : vin.Trim().ToUpperInvariant();

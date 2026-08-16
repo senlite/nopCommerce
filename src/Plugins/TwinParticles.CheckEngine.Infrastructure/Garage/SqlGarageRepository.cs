@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Garage;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Garage;
 
@@ -30,7 +31,7 @@ public sealed class SqlGarageRepository : IGarageRepository
         var inserted = await _dataProvider.QueryAsync<ScalarIntRow>(
             @"INSERT INTO TP_CE_Garage (CustomerId, ActiveGarageVehicleId, CreatedUtc, UpdatedUtc)
 VALUES (@customerId, NULL, @createdUtc, @updatedUtc);
-SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+" + CheckEngineSql.SelectInsertedIntId(),
             new DataParameter("customerId", customerId),
             new DataParameter("createdUtc", now),
             new DataParameter("updatedUtc", now));
@@ -103,7 +104,7 @@ FROM TP_CE_GarageOem WHERE GarageId = @garageId ORDER BY Id",
             var inserted = await _dataProvider.QueryAsync<ScalarIntRow>(
                 @"INSERT INTO TP_CE_Garage (CustomerId, ActiveGarageVehicleId, CreatedUtc, UpdatedUtc)
 VALUES (@customerId, @activeGarageVehicleId, @createdUtc, @updatedUtc);
-SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+" + CheckEngineSql.SelectInsertedIntId(),
                 new DataParameter("customerId", garage.CustomerId),
                 new DataParameter("activeGarageVehicleId", garage.ActiveGarageVehicleId),
                 new DataParameter("createdUtc", garage.CreatedUtc == default ? garage.UpdatedUtc : garage.CreatedUtc),
@@ -137,7 +138,7 @@ WHERE Id = @id",
 (GarageId, VehicleConfigurationId, Vin, Label, IsActive, CreatedUtc)
 VALUES
 (@garageId, @vehicleConfigurationId, @vin, @label, @isActive, @createdUtc);
-SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+" + CheckEngineSql.SelectInsertedIntId(),
                 new DataParameter("garageId", garage.Id),
                 new DataParameter("vehicleConfigurationId", vehicle.VehicleConfigurationId),
                 new DataParameter("vin", _vinProtector.Protect(vehicle.Vin)),
@@ -167,7 +168,7 @@ SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
             var insertedOem = await _dataProvider.QueryAsync<ScalarIntRow>(
                 @"INSERT INTO TP_CE_GarageOem (GarageId, OemNumberId, DisplayNumber, CreatedUtc)
 VALUES (@garageId, @oemNumberId, @displayNumber, @createdUtc);
-SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+" + CheckEngineSql.SelectInsertedIntId(),
                 new DataParameter("garageId", garage.Id),
                 new DataParameter("oemNumberId", oem.OemNumberId),
                 new DataParameter("displayNumber", oem.DisplayNumber),
@@ -180,27 +181,24 @@ SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
 
     public async Task<bool> DeleteByCustomerIdAsync(int customerId, CancellationToken cancellationToken)
     {
-        var rows = await _dataProvider.QueryAsync<ScalarIntRow>(@"
-SET XACT_ABORT ON;
-BEGIN TRANSACTION;
-
-DECLARE @garageId int = (SELECT Id FROM TP_CE_Garage WHERE CustomerId=@customerId);
-IF @garageId IS NULL
-BEGIN
-    COMMIT TRANSACTION;
-    SELECT 0 AS Value;
-    RETURN;
-END;
-
-DELETE FROM TP_CE_GarageOem WHERE GarageId=@garageId;
-DELETE FROM TP_CE_GarageVehicle WHERE GarageId=@garageId;
-DELETE FROM TP_CE_Garage WHERE Id=@garageId;
-
-COMMIT TRANSACTION;
-SELECT 1 AS Value;",
+        var garageRows = await _dataProvider.QueryAsync<GarageRow>(
+            "SELECT Id, CustomerId, ActiveGarageVehicleId, CreatedUtc, UpdatedUtc FROM TP_CE_Garage WHERE CustomerId = @customerId",
             new DataParameter("customerId", customerId));
+        var garage = garageRows.FirstOrDefault();
+        if (garage is null)
+            return false;
 
-        return rows.Single().Value == 1;
+        await _dataProvider.ExecuteNonQueryAsync(
+            "DELETE FROM TP_CE_GarageOem WHERE GarageId=@garageId",
+            new DataParameter("garageId", garage.Id));
+        await _dataProvider.ExecuteNonQueryAsync(
+            "DELETE FROM TP_CE_GarageVehicle WHERE GarageId=@garageId",
+            new DataParameter("garageId", garage.Id));
+        await _dataProvider.ExecuteNonQueryAsync(
+            "DELETE FROM TP_CE_Garage WHERE Id=@garageId",
+            new DataParameter("garageId", garage.Id));
+
+        return true;
     }
 
     private sealed class ScalarIntRow

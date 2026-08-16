@@ -41,6 +41,8 @@
     detailCta: 'Complete vehicle details',
     selectLabel: 'Select your vehicle',
     selectHint: 'Choose a vehicle to check whether this part fits.',
+    unmatchedLabel: 'VIN not matched yet',
+    unmatchedHint: 'We could not map this VIN to a vehicle configuration, so fitment cannot be checked yet.',
     fitmentCta: 'Add your vehicle',
     facetsTitle: 'Refine',
     facetCategory: 'Category',
@@ -62,6 +64,7 @@
     fits: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/>',
     unfit: '<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6" stroke-linecap="round"/>',
     unknown: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12h7" stroke-linecap="round"/>',
+    unmatched: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12h7" stroke-linecap="round"/>',
     detail: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3 2.45V14" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 17h.01" stroke-linecap="round"/>',
     select: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4" stroke-linecap="round"/><path d="M12 16h.01" stroke-linecap="round"/>'
   };
@@ -332,6 +335,27 @@
     var analyticsId = payload && (payload.analyticsId || payload.AnalyticsId);
     var total = payload && (payload.total != null ? payload.total : payload.Total);
     var recovery = (payload && (payload.recovery || payload.Recovery)) || [];
+    var needsDisambiguation = payload && (payload.needsDisambiguation || payload.NeedsDisambiguation);
+    var vinCandidates = (payload && (payload.vinCandidates || payload.VinCandidates)) || [];
+
+    if (needsDisambiguation && vinCandidates.length) {
+      var input = document.getElementById('ce-sticky-search-input');
+      var vin = input ? input.value.trim() : '';
+      showVinDisambiguationPicker(vin, vinCandidates).then(function (selectedId) {
+        selectedSuggestionVehicleId = selectedId;
+        runSearch();
+      }).catch(function () {
+        openResults(
+          '<div class="ce-results__empty">' +
+          '<span class="ce-results__empty-title">' + escapeHtml(TEXT.searchEmptyTitle) + '</span>' +
+          '<p class="ce-results__hint">' + escapeHtml(TEXT.searchEmptyHint) + '</p>' +
+          renderRecovery(recovery) +
+          '</div>'
+        );
+        bindResultActions();
+      });
+      return;
+    }
 
     if (!hits.length) {
       openResults(
@@ -641,7 +665,7 @@
     }
     var active = activeVehicleOf(ctx.garage);
     if (active) {
-      value.textContent = active.label || active.Label || TEXT.garageSelect;
+      value.textContent = vinDisplayLabel(active.vin || active.Vin, active.label || active.Label || TEXT.garageSelect);
       chip.setAttribute('data-ce-state', 'active');
     } else {
       value.textContent = TEXT.garageSelect;
@@ -668,7 +692,7 @@
       vehicles.forEach(function (vehicle) {
         var option = document.createElement('option');
         option.value = String(vehicle.id || vehicle.Id || '');
-        option.textContent = vehicle.label || vehicle.Label || ('#' + option.value);
+        option.textContent = vinDisplayLabel(vehicle.vin || vehicle.Vin, vehicle.label || vehicle.Label || ('#' + option.value));
         if (active && String(active.id || active.Id) === option.value) {
           option.selected = true;
         }
@@ -683,6 +707,16 @@
       updateGarageChip(ctx);
       return ctx;
     });
+  }
+
+  function vinDisplayLabel(vin, label) {
+    if (label && (!vin || String(label).toUpperCase().indexOf(String(vin).toUpperCase()) === -1)) {
+      return label;
+    }
+    if (vin && String(vin).length >= 4) {
+      return 'VIN …' + String(vin).slice(-4);
+    }
+    return label || 'Garage Vehicle';
   }
 
   function addVehicleByVin(vin, vehicleConfigurationId) {
@@ -700,7 +734,7 @@
           var candidates = (payload && (payload.candidates || payload.Candidates)) || [];
           if (!candidates.length) {
             window.alert(TEXT.garageAddFailed);
-            return;
+            return false;
           }
           return showVinDisambiguationPicker(vin, candidates).then(function (selectedId) {
             return addVehicleByVin(vin, selectedId);
@@ -712,12 +746,17 @@
       }
       if (!response.ok) {
         window.alert(TEXT.garageAddFailed);
+        return false;
       }
+      return true;
     });
   }
 
   function addGuestVehicleByVin(vin, vehicleConfigurationId, label) {
     function persistGuest(configId, displayLabel) {
+      if (!configId) {
+        return false;
+      }
       var payload = getGuestPayload();
       payload.vehicles = payload.vehicles || [];
       var nextId = payload.vehicles.reduce(function (max, vehicle) {
@@ -726,19 +765,20 @@
       payload.vehicles.push({
         id: nextId,
         vin: vin,
-        vehicleConfigurationId: configId || null,
-        label: displayLabel || ('VIN ' + vin),
+        vehicleConfigurationId: configId,
+        label: vinDisplayLabel(vin, displayLabel),
         isActive: payload.vehicles.length === 0
       });
       if (!payload.activeVehicleId) {
         payload.activeVehicleId = nextId;
       }
       saveGuestPayload(payload);
+      return true;
     }
 
     if (vehicleConfigurationId) {
       persistGuest(vehicleConfigurationId, label);
-      return Promise.resolve();
+      return Promise.resolve(true);
     }
 
     return jsonFetch('/check-engine/vin/decode', {
@@ -746,41 +786,40 @@
       body: JSON.stringify({ vin: vin })
     }).then(function (response) {
       if (!response.ok) {
-        persistGuest(null, 'VIN ' + vin);
-        return null;
+        window.alert(TEXT.garageAddFailed);
+        return false;
       }
-      return response.json();
-    }).then(function (decode) {
-      if (!decode) {
-        return;
-      }
-      var outcome = decode.outcome || decode.Outcome;
-      var candidates = (decode.candidates || decode.Candidates) || [];
-      if (outcome === 'NeedsDisambiguation' && candidates.length) {
-        return showVinDisambiguationPicker(vin, candidates).then(function (selectedId) {
-          var selected = null;
-          for (var i = 0; i < candidates.length; i++) {
-            var candidate = candidates[i];
-            var configId = candidate.vehicleConfigurationId || candidate.VehicleConfigurationId;
-            if (configId === selectedId) {
-              selected = candidate;
-              break;
+      return response.json().then(function (decode) {
+        var outcome = decode.outcome || decode.Outcome;
+        var candidates = (decode.candidates || decode.Candidates) || [];
+        if (outcome === 'NeedsDisambiguation' && candidates.length) {
+          return showVinDisambiguationPicker(vin, candidates).then(function (selectedId) {
+            var selected = null;
+            for (var i = 0; i < candidates.length; i++) {
+              var candidate = candidates[i];
+              var configId = candidate.vehicleConfigurationId || candidate.VehicleConfigurationId;
+              if (configId === selectedId) {
+                selected = candidate;
+                break;
+              }
             }
-          }
-          var selectedLabel = selected && (selected.label || selected.Label);
-          return addGuestVehicleByVin(vin, selectedId, selectedLabel);
-        });
-      }
-      if (outcome === 'SingleMatch' && candidates.length === 1) {
-        var match = candidates[0];
-        persistGuest(
-          match.vehicleConfigurationId || match.VehicleConfigurationId,
-          match.label || match.Label || ('VIN ' + vin));
-        return;
-      }
-      persistGuest(null, 'VIN ' + vin);
+            var selectedLabel = selected && (selected.label || selected.Label);
+            return addGuestVehicleByVin(vin, selectedId, selectedLabel);
+          });
+        }
+        if (outcome === 'SingleMatch' && candidates.length === 1) {
+          var match = candidates[0];
+          persistGuest(
+            match.vehicleConfigurationId || match.VehicleConfigurationId,
+            match.label || match.Label);
+          return true;
+        }
+        window.alert(TEXT.garageAddFailed);
+        return false;
+      });
     }).catch(function () {
-      persistGuest(null, 'VIN ' + vin);
+      window.alert(TEXT.garageAddFailed);
+      return false;
     });
   }
 
@@ -891,11 +930,15 @@
     if (!vin) {
       return Promise.resolve(false);
     }
-    return addVehicleByVin(vin.trim()).then(function () {
-      return populateVehicleSelector();
-    }).then(function () {
-      evaluateFitmentBand();
-      return true;
+    return addVehicleByVin(vin.trim()).then(function (added) {
+      if (!added) {
+        return false;
+      }
+      return populateVehicleSelector().then(function () {
+        return evaluateFitmentBand();
+      }).then(function () {
+        return true;
+      });
     });
   }
 
@@ -972,6 +1015,7 @@
       fits: [TEXT.fitsLabel, TEXT.fitsHint],
       unfit: [TEXT.unfitLabel, TEXT.unfitHint],
       unknown: [TEXT.unknownLabel, TEXT.unknownHint],
+      unmatched: [TEXT.unmatchedLabel, TEXT.unmatchedHint],
       detail: [TEXT.detailLabel, TEXT.detailHint],
       select: [TEXT.selectLabel, TEXT.selectHint]
     };
@@ -1015,13 +1059,18 @@
         (active.vehicleConfigurationId || active.VehicleConfigurationId);
 
       if (!configurationId) {
-        setFitmentState(band, 'select');
+        setFitmentState(band, active ? 'unmatched' : 'select');
         return null;
       }
 
       return jsonFetch('/check-engine/fitment/evaluate', {
         method: 'POST',
-        body: JSON.stringify({ productId: productId, vehicleConfigurationId: configurationId })
+        body: JSON.stringify({
+          productId: productId,
+          vehicleConfigurationId: configurationId,
+          driveType: active.driveType || active.DriveType || null,
+          transmissionType: active.transmissionType || active.TransmissionType || null
+        })
       }).then(function (response) {
         if (!response.ok) {
           setFitmentState(band, 'unknown');
@@ -1170,8 +1219,9 @@
     bindVinDisambiguationModal();
     bindHero();
     bindMegaMenu();
-    populateVehicleSelector();
-    evaluateFitmentBand();
+    populateVehicleSelector().then(function () {
+      evaluateFitmentBand();
+    });
     maybeMigrateGuestOnLogin();
   }
 

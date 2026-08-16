@@ -57,7 +57,7 @@ ORDER BY Priority DESC, Pattern")).ToList();
     public async Task UpsertPatternAsync(VinPattern entity, CancellationToken cancellationToken)
     {
         var existing = (await _dataProvider.QueryAsync<int>(
-            "SELECT Id FROM TP_CE_VinPattern WHERE Pattern=@pattern AND ModelCode=@model AND GenerationCode=@generation AND ISNULL(EngineCode,'')=ISNULL(@engine,'')",
+            "SELECT Id FROM TP_CE_VinPattern WHERE Pattern=@pattern AND ModelCode=@model AND GenerationCode=@generation AND COALESCE(EngineCode,'')=COALESCE(@engine,'')",
             new DataParameter("pattern", entity.Pattern),
             new DataParameter("model", entity.ModelCode),
             new DataParameter("generation", entity.GenerationCode),

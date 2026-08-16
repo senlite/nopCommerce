@@ -8,6 +8,7 @@ using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Oem;
 using TwinParticles.CheckEngine.Domain.Oem.Admin;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Oem;
 
@@ -84,53 +85,86 @@ public sealed class SqlOemAdminRepository : IOemAdminRepository, IOemRelationRea
         for (var offset = 0; offset < numbers.Count; offset += BulkUpsertBatchSize)
         {
             var batch = numbers.Skip(offset).Take(BulkUpsertBatchSize).ToList();
-            var parameters = new List<DataParameter>(batch.Count * 4);
-            var values = new StringBuilder();
+            var parameters = new List<DataParameter>(batch.Count * 2);
 
             for (var i = 0; i < batch.Count; i++)
             {
                 var entity = batch[i];
-                if (i > 0)
-                    values.Append(',');
-
-                values.Append($"(@m{i},@d{i},@n{i},@o{i})");
                 parameters.Add(new DataParameter($"m{i}", entity.ManufacturerId));
-                parameters.Add(new DataParameter($"d{i}", entity.DisplayNumber));
                 parameters.Add(new DataParameter($"n{i}", entity.NormalizedNumber));
-                parameters.Add(new DataParameter($"o{i}", entity.IsObsolete));
             }
 
-            // MERGE keyed on (ManufacturerId, NormalizedNumber) per FR-236. Matched rows keep their Id so
+            // Keyed on (ManufacturerId, NormalizedNumber) per FR-236. Matched rows keep their Id so
             // relations and product maps that reference them survive; unmatched rows are inserted active.
-            var sql = $@"
-SET NOCOUNT ON;
-DECLARE @actions TABLE(act nvarchar(10));
-MERGE INTO TP_CE_OemNumber AS T
-USING (VALUES {values}) AS S (ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete)
-    ON T.ManufacturerId = S.ManufacturerId AND T.NormalizedNumber = S.NormalizedNumber
-WHEN MATCHED THEN
-    UPDATE SET DisplayNumber = S.DisplayNumber, IsObsolete = S.IsObsolete, IsActive = 1
-WHEN NOT MATCHED THEN
-    INSERT (ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive)
-    VALUES (S.ManufacturerId, S.DisplayNumber, S.NormalizedNumber, S.IsObsolete, 1)
-OUTPUT $action INTO @actions;
-SELECT
-    SUM(CASE WHEN act = 'INSERT' THEN 1 ELSE 0 END) AS Inserted,
-    SUM(CASE WHEN act = 'UPDATE' THEN 1 ELSE 0 END) AS Updated
-FROM @actions;";
+            // Implemented as UPDATE-then-INSERT so the same statements run on SQL Server and MySQL.
+            var matchSql = new StringBuilder();
+            for (var i = 0; i < batch.Count; i++)
+            {
+                if (i > 0)
+                    matchSql.Append(" OR ");
+                matchSql.Append($"(ManufacturerId=@m{i} AND NormalizedNumber=@n{i})");
+            }
 
-            var row = (await _dataProvider.QueryAsync<BulkUpsertCountRow>(sql, parameters.ToArray())).First();
-            inserted += row.Inserted;
-            updated += row.Updated;
+            var existing = await _dataProvider.QueryAsync<OemNumberKeyRow>(
+                $"SELECT ManufacturerId, NormalizedNumber FROM TP_CE_OemNumber WHERE {matchSql}",
+                parameters.ToArray());
+            var existingKeys = existing
+                .Select(row => (row.ManufacturerId, row.NormalizedNumber))
+                .ToHashSet();
+
+            for (var i = 0; i < batch.Count; i++)
+            {
+                var entity = batch[i];
+                if (!existingKeys.Contains((entity.ManufacturerId, entity.NormalizedNumber)))
+                    continue;
+
+                updated += await _dataProvider.ExecuteNonQueryAsync(
+                    @"UPDATE TP_CE_OemNumber
+SET DisplayNumber=@displayNumber, IsObsolete=@isObsolete, IsActive=1
+WHERE ManufacturerId=@manufacturerId AND NormalizedNumber=@normalizedNumber",
+                    new DataParameter("displayNumber", entity.DisplayNumber),
+                    new DataParameter("isObsolete", entity.IsObsolete),
+                    new DataParameter("manufacturerId", entity.ManufacturerId),
+                    new DataParameter("normalizedNumber", entity.NormalizedNumber));
+            }
+
+            var insertValues = new StringBuilder();
+            var insertParameters = new List<DataParameter>();
+            var insertCount = 0;
+            for (var i = 0; i < batch.Count; i++)
+            {
+                var entity = batch[i];
+                if (existingKeys.Contains((entity.ManufacturerId, entity.NormalizedNumber)))
+                    continue;
+
+                if (insertCount > 0)
+                    insertValues.Append(',');
+                insertValues.Append($"(@im{insertCount},@id{insertCount},@in{insertCount},@io{insertCount})");
+                insertParameters.Add(new DataParameter($"im{insertCount}", entity.ManufacturerId));
+                insertParameters.Add(new DataParameter($"id{insertCount}", entity.DisplayNumber));
+                insertParameters.Add(new DataParameter($"in{insertCount}", entity.NormalizedNumber));
+                insertParameters.Add(new DataParameter($"io{insertCount}", entity.IsObsolete));
+                insertCount++;
+            }
+
+            if (insertCount > 0)
+            {
+                await _dataProvider.ExecuteNonQueryAsync(
+                    $@"INSERT INTO TP_CE_OemNumber (ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive)
+VALUES {insertValues}",
+                    insertParameters.ToArray());
+                inserted += insertCount;
+            }
         }
 
         return new OemBulkUpsertResult { Inserted = inserted, Updated = updated };
     }
 
-    private sealed class BulkUpsertCountRow
+    private sealed class OemNumberKeyRow
     {
-        public int Inserted { get; set; }
-        public int Updated { get; set; }
+        public int ManufacturerId { get; set; }
+
+        public string NormalizedNumber { get; set; } = string.Empty;
     }
 
     public async Task<IReadOnlyList<OemRelation>> GetRelationsAsync(CancellationToken cancellationToken)
@@ -189,7 +223,10 @@ FROM @actions;";
         // Prefix match on the indexed normalized column. The LIKE pattern is parameterized; the caller
         // supplies an already-normalized token so we only append the wildcard.
         return (await _dataProvider.QueryAsync<OemNumber>(
-            $"SELECT TOP ({limit}) Id, ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive FROM TP_CE_OemNumber WHERE NormalizedNumber LIKE @prefix AND IsActive=1 ORDER BY NormalizedNumber, ManufacturerId, Id",
+            CheckEngineSql.SelectTop(
+                limit,
+                "Id, ManufacturerId, DisplayNumber, NormalizedNumber, IsObsolete, IsActive",
+                "FROM TP_CE_OemNumber WHERE NormalizedNumber LIKE @prefix AND IsActive=1 ORDER BY NormalizedNumber, ManufacturerId, Id"),
             new DataParameter("prefix", normalizedPrefix + "%"))).ToList();
     }
 }

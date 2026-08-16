@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -54,6 +55,8 @@ public sealed class UnifiedSearchService
 
         IReadOnlyList<SearchHit> hits;
         var modeUsed = mode;
+        IReadOnlyList<SearchVinCandidate> vinCandidates = [];
+        var needsVinDisambiguation = false;
 
         if (mode == SearchMode.NaturalLanguage)
         {
@@ -73,11 +76,18 @@ public sealed class UnifiedSearchService
                 modeUsed = SearchMode.Keyword;
             }
         }
+        else if (mode == SearchMode.Vin)
+        {
+            var lane = await SearchVinLaneAsync(query, normalizedText, cancellationToken);
+            hits = lane.Hits;
+            needsVinDisambiguation = lane.NeedsDisambiguation;
+            vinCandidates = lane.Candidates;
+            modeUsed = SearchMode.Vin;
+        }
         else
         {
             hits = mode switch
             {
-                SearchMode.Vin => await SearchVinAsync(query, normalizedText, cancellationToken),
                 SearchMode.Oem => await SearchOemAsync(query, normalizedText, cancellationToken),
                 SearchMode.VehicleTree => await _productSearchReadRepository.SearchByVehicleTreeAsync(query, cancellationToken),
                 SearchMode.Category => await _productSearchReadRepository.SearchByCategoryAsync(query, cancellationToken),
@@ -146,7 +156,9 @@ public sealed class UnifiedSearchService
             Suggestions = recovery.Select(action => action.Label).ToList(),
             Recovery = recovery,
             IsDegraded = degraded,
-            AnalyticsId = analyticsId
+            AnalyticsId = analyticsId,
+            NeedsDisambiguation = needsVinDisambiguation,
+            VinCandidates = vinCandidates
         };
     }
 
@@ -216,22 +228,47 @@ public sealed class UnifiedSearchService
         }
     }
 
-    private async Task<IReadOnlyList<SearchHit>> SearchVinAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)
+    private async Task<VinSearchLaneResult> SearchVinLaneAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)
     {
         var decode = await _vinDecodeService.DecodeAsync(normalizedText, cancellationToken);
-        if (!string.Equals(decode.Outcome, "SingleMatch", StringComparison.Ordinal) || decode.Candidates.Count != 1)
-            return [];
+        if (string.Equals(decode.Outcome, "NeedsDisambiguation", StringComparison.Ordinal) && decode.Candidates.Count > 0)
+        {
+            return new VinSearchLaneResult
+            {
+                Hits = [],
+                NeedsDisambiguation = true,
+                Candidates = decode.Candidates.Select(candidate => new SearchVinCandidate
+                {
+                    VehicleConfigurationId = candidate.VehicleConfigurationId,
+                    ModelYear = candidate.ModelYear,
+                    Confidence = candidate.Confidence.Value,
+                    Label = candidate.ModelYear is int year
+                        ? $"Vehicle #{candidate.VehicleConfigurationId} ({year})"
+                        : $"Vehicle #{candidate.VehicleConfigurationId}"
+                }).ToList()
+            };
+        }
 
-        // A VIN is vehicle context, not a product keyword. Search the published fitment projection
-        // for the one decoded configuration; passing the 17-character VIN into keyword search
-        // cannot match a catalog title and previously fell through to invented demo products.
+        if (!string.Equals(decode.Outcome, "SingleMatch", StringComparison.Ordinal) || decode.Candidates.Count != 1)
+            return new VinSearchLaneResult { Hits = [] };
+
         var vehicleQuery = CloneQuery(
             query,
             string.Empty,
             SearchMode.VehicleTree,
             decode.Candidates[0].VehicleConfigurationId);
 
-        return await _productSearchReadRepository.SearchByVehicleTreeAsync(vehicleQuery, cancellationToken);
+        var hits = await _productSearchReadRepository.SearchByVehicleTreeAsync(vehicleQuery, cancellationToken);
+        return new VinSearchLaneResult { Hits = hits };
+    }
+
+    private sealed class VinSearchLaneResult
+    {
+        public IReadOnlyList<SearchHit> Hits { get; init; } = [];
+
+        public bool NeedsDisambiguation { get; init; }
+
+        public IReadOnlyList<SearchVinCandidate> Candidates { get; init; } = [];
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchOemAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)

@@ -15,19 +15,22 @@ public sealed class FitmentReviewService
     private readonly IFitmentReviewQueueRepository _reviewQueueRepository;
     private readonly ICheckEngineAuditService _auditService;
     private readonly ISeoLandingRegenerationTrigger? _seoLandingRegenerationTrigger;
+    private readonly IFitmentCache? _fitmentCache;
 
     public FitmentReviewService(
         IFitmentClaimReadRepository readRepository,
         IFitmentClaimWriteRepository writeRepository,
         IFitmentReviewQueueRepository reviewQueueRepository,
         ICheckEngineAuditService auditService,
-        ISeoLandingRegenerationTrigger? seoLandingRegenerationTrigger = null)
+        ISeoLandingRegenerationTrigger? seoLandingRegenerationTrigger = null,
+        IFitmentCache? fitmentCache = null)
     {
         _readRepository = readRepository;
         _writeRepository = writeRepository;
         _reviewQueueRepository = reviewQueueRepository;
         _auditService = auditService;
         _seoLandingRegenerationTrigger = seoLandingRegenerationTrigger;
+        _fitmentCache = fitmentCache;
     }
 
     public Task<IReadOnlyList<FitmentClaim>> GetQueueAsync(CancellationToken cancellationToken)
@@ -52,7 +55,7 @@ public sealed class FitmentReviewService
             afterJson: "{\"status\":\"Fits\",\"isPublished\":true}",
             cancellationToken);
 
-        await RegenerateLandingsAsync(claimId, cancellationToken);
+        await AfterPublicationChangedAsync(claimId, cancellationToken);
     }
 
     public async Task RejectAsync(int claimId, CancellationToken cancellationToken, string actor = "system")
@@ -73,22 +76,21 @@ public sealed class FitmentReviewService
             afterJson: "{\"status\":\"Rejected\",\"isPublished\":false}",
             cancellationToken);
 
-        await RegenerateLandingsAsync(claimId, cancellationToken);
+        await AfterPublicationChangedAsync(claimId, cancellationToken);
     }
 
-    // Refresh the fitment-gated landings for the claim's product/vehicle so indexability flips
-    // in step with the review decision. The claim lookup is best-effort: if it cannot be resolved
-    // (e.g. a legacy repository without id lookup), regeneration is skipped rather than failing
-    // the review action.
-    private async Task RegenerateLandingsAsync(int claimId, CancellationToken cancellationToken)
+    // Refresh the fitment-gated landings and drop cached verdicts for the claim's product/vehicle
+    // so indexability and storefront Fits flip in step with the review decision.
+    private async Task AfterPublicationChangedAsync(int claimId, CancellationToken cancellationToken)
     {
-        if (_seoLandingRegenerationTrigger is null)
-            return;
-
         var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
         if (claim is null)
             return;
 
-        await _seoLandingRegenerationTrigger.OnFitmentPublicationChangedAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
+        if (_fitmentCache is not null)
+            await _fitmentCache.InvalidateAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
+
+        if (_seoLandingRegenerationTrigger is not null)
+            await _seoLandingRegenerationTrigger.OnFitmentPublicationChangedAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
     }
 }

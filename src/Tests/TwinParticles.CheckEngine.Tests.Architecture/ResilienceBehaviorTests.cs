@@ -107,6 +107,9 @@ public class ResilienceBehaviorTests
         public Task<bool> PushAsync(ErpSyncJob job, CancellationToken cancellationToken)
             => Task.FromResult(!job.Payload.Contains("force-fail"));
 
+        public Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken)
+            => PushAsync(job, cancellationToken);
+
         public Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken)
             => Task.FromResult<string?>("{\"items\":[]}");
     }

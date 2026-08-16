@@ -11,6 +11,7 @@ public sealed class LicenceStateMigration : AutoReversingMigration
         Create.Table("TP_CE_LicenceState")
             .WithColumn("Id").AsInt32().PrimaryKey()
             .WithColumn("LastHeartbeatUtc").AsDateTime2().Nullable()
+            .WithColumn("ActivationKeyProtected").AsString(2048).Nullable()
             .WithColumn("UpdatedUtc").AsDateTime2().NotNullable();
     }
 }

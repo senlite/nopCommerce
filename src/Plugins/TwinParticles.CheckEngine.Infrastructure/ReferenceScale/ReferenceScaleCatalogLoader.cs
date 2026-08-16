@@ -13,6 +13,7 @@ using TwinParticles.CheckEngine.Domain.Oem.Admin;
 using TwinParticles.CheckEngine.Domain.ReferenceScale;
 using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 using TwinParticles.CheckEngine.Infrastructure.Vehicle.Admin;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.ReferenceScale;
 
@@ -167,46 +168,34 @@ WHERE p.Sku LIKE @skuPrefix;",
             "SELECT COUNT(*) FROM TP_CE_VehicleConfiguration WHERE Fingerprint LIKE @prefix",
             new DataParameter("prefix", ReferenceScaleManifest.ConfigurationFingerprintPrefix + "%"));
 
-        var inserted = await _dataProvider.ExecuteNonQueryAsync(@"
-;WITH template AS (
-    SELECT TOP (1)
-        GenerationId,
-        BodyId,
-        EngineId,
-        MarketId,
-        TrimName,
-        ProductionFromYear,
-        ProductionToYear
-    FROM TP_CE_VehicleConfiguration
-    WHERE IsActive = 1
-    ORDER BY Id
-),
-tally AS (
-    SELECT TOP (@count) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
-    FROM sys.all_objects o1
-    CROSS JOIN sys.all_objects o2
-)
-INSERT INTO TP_CE_VehicleConfiguration
+        var templates = (await _dataProvider.QueryAsync<ConfigurationTemplateRow>(
+            CheckEngineSql.SelectTop(
+                1,
+                "GenerationId, BodyId, EngineId, MarketId, TrimName, ProductionFromYear, ProductionToYear",
+                "FROM TP_CE_VehicleConfiguration WHERE IsActive = 1 ORDER BY Id"))).ToList();
+        var template = templates.FirstOrDefault();
+        if (template is null)
+            return 0;
+
+        var inserted = 0;
+        for (var n = 1; n <= syntheticNeeded; n++)
+        {
+            var fingerprint = ReferenceScaleManifest.ConfigurationFingerprintPrefix +
+                              (existingSynthetic + n).ToString("00000000");
+            inserted += await _dataProvider.ExecuteNonQueryAsync(
+                @"INSERT INTO TP_CE_VehicleConfiguration
     (GenerationId, BodyId, EngineId, MarketId, TrimName, ProductionFromYear, ProductionToYear, Fingerprint, IsActive)
-SELECT
-    template.GenerationId,
-    template.BodyId,
-    template.EngineId,
-    template.MarketId,
-    CONCAT(template.TrimName, ' REF ', tally.n),
-    template.ProductionFromYear,
-    template.ProductionToYear,
-    CONCAT(@fingerprintPrefix, RIGHT('00000000' + CAST(@existingSynthetic + tally.n AS varchar(8)), 8)),
-    CAST(1 AS bit)
-FROM tally
-CROSS JOIN template
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM TP_CE_VehicleConfiguration existing
-    WHERE existing.Fingerprint = CONCAT(@fingerprintPrefix, RIGHT('00000000' + CAST(@existingSynthetic + tally.n AS varchar(8)), 8)));",
-            new DataParameter("count", syntheticNeeded),
-            new DataParameter("existingSynthetic", existingSynthetic),
-            new DataParameter("fingerprintPrefix", ReferenceScaleManifest.ConfigurationFingerprintPrefix));
+SELECT @generationId, @bodyId, @engineId, @marketId, @trimName, @fromYear, @toYear, @fingerprint, 1
+WHERE NOT EXISTS (SELECT 1 FROM TP_CE_VehicleConfiguration existing WHERE existing.Fingerprint = @fingerprint)",
+                new DataParameter("generationId", template.GenerationId),
+                new DataParameter("bodyId", template.BodyId),
+                new DataParameter("engineId", template.EngineId),
+                new DataParameter("marketId", template.MarketId),
+                new DataParameter("trimName", $"{template.TrimName} REF {n}"),
+                new DataParameter("fromYear", template.ProductionFromYear),
+                new DataParameter("toYear", template.ProductionToYear),
+                new DataParameter("fingerprint", fingerprint));
+        }
 
         return inserted;
     }
@@ -330,84 +319,71 @@ WHERE NOT EXISTS (
 
         var claimsPerProduct = Math.Max(1, (int)Math.Ceiling(targetClaims / (double)productCount));
 
-        return await _dataProvider.ExecuteNonQueryAsync(@"
-;WITH products AS (
-    SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) - 1 AS productIndex
-    FROM Product
-    WHERE Sku LIKE @skuPrefix
-),
-configs AS (
-    SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) - 1 AS configIndex
-    FROM TP_CE_VehicleConfiguration
-    WHERE IsActive = 1
-),
-slots AS (
-    SELECT TOP (@claimsPerProduct) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) - 1 AS slot
-    FROM sys.all_objects
-),
-configCount AS (
-    SELECT COUNT(*) AS total FROM configs
-)
-INSERT INTO TP_CE_FitmentClaim
+        var products = (await _dataProvider.QueryAsync<IdRow>(
+            "SELECT Id FROM Product WHERE Sku LIKE @skuPrefix ORDER BY Id",
+            new DataParameter("skuPrefix", ReferenceScaleManifest.ProductSkuPrefix + "%"))).ToList();
+        var configs = (await _dataProvider.QueryAsync<IdRow>(
+            "SELECT Id FROM TP_CE_VehicleConfiguration WHERE IsActive = 1 ORDER BY Id")).ToList();
+        if (products.Count == 0 || configs.Count == 0)
+            return 0;
+
+        var inserted = 0;
+        var now = DateTime.UtcNow;
+        for (var productIndex = 0; productIndex < products.Count; productIndex++)
+        {
+            for (var slot = 0; slot < claimsPerProduct; slot++)
+            {
+                var sourceReference =
+                    $"{ReferenceScaleManifest.ProvenancePrefix}:claim:{(productIndex + 1):00000000}:{slot}";
+                var config = configs[(productIndex * claimsPerProduct + slot) % configs.Count];
+                inserted += await _dataProvider.ExecuteNonQueryAsync(
+                    @"INSERT INTO TP_CE_FitmentClaim
     (ProductId, VehicleConfigurationId, OemNumberId, FitmentStatusId, Confidence, SafetyClassId,
      SourceKindId, SourceReference, CreatedBy, ProvenanceCreatedUtc, LastVerifiedUtc,
      ValidFromUtc, ValidToUtc, IsPublished, IsActive)
-SELECT
-    p.Id,
-    c.Id,
-    NULL,
-    @fitsStatus,
-    CAST(0.9500 AS decimal(5,4)),
-    @standardSafety,
-    @importedFeedSource,
-    CONCAT(@provenancePrefix, ':claim:', RIGHT('00000000' + CAST(p.productIndex + 1 AS varchar(8)), 8), ':', s.slot),
-    @createdBy,
-    SYSUTCDATETIME(),
-    SYSUTCDATETIME(),
-    NULL,
-    NULL,
-    CAST(1 AS bit),
-    CAST(1 AS bit)
-FROM products p
-CROSS JOIN slots s
-CROSS JOIN configCount cc
-INNER JOIN configs c
-    ON c.configIndex = ((p.productIndex * @claimsPerProduct + s.slot) % NULLIF(cc.total, 0))
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM TP_CE_FitmentClaim existing
-    WHERE existing.SourceReference = CONCAT(@provenancePrefix, ':claim:', RIGHT('00000000' + CAST(p.productIndex + 1 AS varchar(8)), 8), ':', s.slot));",
-            new DataParameter("skuPrefix", ReferenceScaleManifest.ProductSkuPrefix + "%"),
-            new DataParameter("claimsPerProduct", claimsPerProduct),
-            new DataParameter("fitsStatus", (int)FitmentStatus.Fits),
-            new DataParameter("standardSafety", (int)SafetyClass.Standard),
-            new DataParameter("importedFeedSource", (int)FitmentSourceKind.ImportedFeed),
-            new DataParameter("provenancePrefix", ReferenceScaleManifest.ProvenancePrefix),
-            new DataParameter("createdBy", ReferenceScaleManifest.CreatedBy));
+SELECT @productId, @configurationId, NULL, @fitsStatus, 0.9500, @standardSafety, @importedFeedSource,
+       @sourceReference, @createdBy, @now, @now, NULL, NULL, 1, 1
+WHERE NOT EXISTS (SELECT 1 FROM TP_CE_FitmentClaim existing WHERE existing.SourceReference = @sourceReference)",
+                    new DataParameter("productId", products[productIndex].Id),
+                    new DataParameter("configurationId", config.Id),
+                    new DataParameter("fitsStatus", (int)FitmentStatus.Fits),
+                    new DataParameter("standardSafety", (int)SafetyClass.Standard),
+                    new DataParameter("importedFeedSource", (int)FitmentSourceKind.ImportedFeed),
+                    new DataParameter("sourceReference", sourceReference),
+                    new DataParameter("createdBy", ReferenceScaleManifest.CreatedBy),
+                    new DataParameter("now", now));
+            }
+        }
+
+        return inserted;
     }
 
     private async Task<int> InsertProductOemMapsAsync(CancellationToken cancellationToken)
     {
-        return await _dataProvider.ExecuteNonQueryAsync(@"
-;WITH products AS (
-    SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS seq
-    FROM Product
-    WHERE Sku LIKE @skuPrefix
-),
-oems AS (
-    SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS seq
-    FROM TP_CE_OemNumber
-    WHERE NormalizedNumber LIKE @oemPrefix
-)
-INSERT INTO TP_CE_ProductOemMap (ProductId, OemNumberId, IsPrimary, CreatedUtc)
-SELECT p.Id, o.Id, CAST(1 AS bit), SYSUTCDATETIME()
-FROM products p
-INNER JOIN oems o ON o.seq = p.seq
+        var products = (await _dataProvider.QueryAsync<IdRow>(
+            "SELECT Id FROM Product WHERE Sku LIKE @skuPrefix ORDER BY Id",
+            new DataParameter("skuPrefix", ReferenceScaleManifest.ProductSkuPrefix + "%"))).ToList();
+        var oems = (await _dataProvider.QueryAsync<IdRow>(
+            "SELECT Id FROM TP_CE_OemNumber WHERE NormalizedNumber LIKE @oemPrefix ORDER BY Id",
+            new DataParameter("oemPrefix", ReferenceScaleManifest.OemNormalizedPrefix + "%"))).ToList();
+
+        var count = Math.Min(products.Count, oems.Count);
+        var inserted = 0;
+        var now = DateTime.UtcNow;
+        for (var i = 0; i < count; i++)
+        {
+            inserted += await _dataProvider.ExecuteNonQueryAsync(
+                @"INSERT INTO TP_CE_ProductOemMap (ProductId, OemNumberId, IsPrimary, CreatedUtc)
+SELECT @productId, @oemNumberId, 1, @now
 WHERE NOT EXISTS (
     SELECT 1 FROM TP_CE_ProductOemMap existing
-    WHERE existing.ProductId = p.Id AND existing.OemNumberId = o.Id);",
-            new DataParameter("skuPrefix", ReferenceScaleManifest.ProductSkuPrefix + "%"),
-            new DataParameter("oemPrefix", ReferenceScaleManifest.OemNormalizedPrefix + "%"));
+    WHERE existing.ProductId = @productId AND existing.OemNumberId = @oemNumberId)",
+                new DataParameter("productId", products[i].Id),
+                new DataParameter("oemNumberId", oems[i].Id),
+                new DataParameter("now", now));
+        }
+
+        return inserted;
     }
 
     private async Task<int> ScalarCountAsync(string sql)
@@ -419,5 +395,21 @@ WHERE NOT EXISTS (
     private sealed class ScalarRow
     {
         public int Value { get; set; }
+    }
+
+    private sealed class IdRow
+    {
+        public int Id { get; set; }
+    }
+
+    private sealed class ConfigurationTemplateRow
+    {
+        public int GenerationId { get; set; }
+        public int? BodyId { get; set; }
+        public int? EngineId { get; set; }
+        public int? MarketId { get; set; }
+        public string TrimName { get; set; } = string.Empty;
+        public int? ProductionFromYear { get; set; }
+        public int? ProductionToYear { get; set; }
     }
 }

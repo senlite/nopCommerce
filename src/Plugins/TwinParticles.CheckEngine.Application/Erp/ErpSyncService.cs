@@ -57,7 +57,9 @@ public sealed class ErpSyncService
             job.AttemptCount++;
             job.LastAttemptUtc = DateTime.UtcNow;
 
-            var success = await TryPushAsync(job, cancellationToken);
+            var success = job.Direction == ErpSyncDirection.PullFromErp
+                ? await TryPullAsync(job, cancellationToken)
+                : await TryPushAsync(job, cancellationToken);
             if (success)
             {
                 job.Status = "Succeeded";
@@ -67,12 +69,16 @@ public sealed class ErpSyncService
             }
             else
             {
-                job.ConflictCode = "erp.push_failed";
+                job.ConflictCode = job.Direction == ErpSyncDirection.PullFromErp
+                    ? "erp.pull_failed"
+                    : "erp.push_failed";
 
                 if (_conflictResolutionService.CanAutoResolve(job))
                 {
                     _conflictResolutionService.ApplyAutoResolution(job);
-                    var retried = await TryPushAsync(job, cancellationToken);
+                    var retried = job.Direction == ErpSyncDirection.PullFromErp
+                        ? await TryPullAsync(job, cancellationToken)
+                        : await TryPushAsync(job, cancellationToken);
                     if (retried)
                     {
                         job.Status = "Succeeded";
@@ -176,6 +182,18 @@ public sealed class ErpSyncService
         try
         {
             return await _clientAdapter.PushAsync(job, cancellationToken);
+        }
+        catch when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+    }
+
+    private async Task<bool> TryPullAsync(ErpSyncJob job, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _clientAdapter.PullAsync(job, cancellationToken);
         }
         catch when (!cancellationToken.IsCancellationRequested)
         {

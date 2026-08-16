@@ -1,16 +1,21 @@
 using System;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Core.Domain.Security;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Security;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Security;
 
 public sealed class SqlCheckEngineAuditService : ICheckEngineAuditService, IAuditIntegrityService
 {
     private const string ZeroHash = "0000000000000000000000000000000000000000000000000000000000000000";
+    private const string LockResource = "TP_CE_AuditEvent.HashChain";
     private readonly INopDataProvider _dataProvider;
     private readonly string _chainSecret;
 
@@ -20,7 +25,7 @@ public sealed class SqlCheckEngineAuditService : ICheckEngineAuditService, IAudi
         _chainSecret = securitySettings.EncryptionKey;
     }
 
-    public Task AppendAsync(
+    public async Task AppendAsync(
         string actor,
         string action,
         string entityType,
@@ -30,135 +35,239 @@ public sealed class SqlCheckEngineAuditService : ICheckEngineAuditService, IAudi
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        await AcquireLockAsync();
+        try
+        {
+            await BackfillLegacyHashesAsync();
 
-        return _dataProvider.ExecuteNonQueryAsync(
-            @"SET XACT_ABORT ON;
-BEGIN TRANSACTION;
-EXEC sp_getapplock @Resource='TP_CE_AuditEvent.HashChain', @LockMode='Exclusive',
-    @LockOwner='Transaction', @LockTimeout=10000;
+            var createdUtc = DateTime.UtcNow;
+            var previousHash = await GetTipHashAsync() ?? ZeroHash;
+            var entryHash = ComputeEntryHash(
+                previousHash,
+                actor ?? string.Empty,
+                action ?? string.Empty,
+                entityType ?? string.Empty,
+                entityId ?? string.Empty,
+                beforeJson,
+                afterJson,
+                createdUtc);
 
-DECLARE @previousHash varchar(64) = COALESCE(
-    (SELECT TOP (1) EntryHash FROM TP_CE_AuditEvent WHERE EntryHash IS NOT NULL ORDER BY Id DESC),
-    (SELECT LastPrunedHash FROM TP_CE_AuditChainAnchor WHERE Id=1),
-    @zeroHash);
-
--- One-time upgrade path: chain legacy rows created before hash columns existed.
-DECLARE @legacyId int, @legacyActor nvarchar(256), @legacyAction nvarchar(128),
-        @legacyType nvarchar(128), @legacyEntityId nvarchar(128),
-        @legacyBefore nvarchar(max), @legacyAfter nvarchar(max), @legacyCreated datetime2;
-DECLARE legacy CURSOR LOCAL FAST_FORWARD FOR
-    SELECT Id, Actor, Action, EntityType, EntityId, BeforeJson, AfterJson, CreatedUtc
-    FROM TP_CE_AuditEvent WHERE EntryHash IS NULL ORDER BY Id;
-OPEN legacy;
-FETCH NEXT FROM legacy INTO @legacyId, @legacyActor, @legacyAction, @legacyType,
-    @legacyEntityId, @legacyBefore, @legacyAfter, @legacyCreated;
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    DECLARE @legacyHash varchar(64) = CONVERT(varchar(64), HASHBYTES('SHA2_256',
-        CONCAT(@secret, NCHAR(31), @previousHash, NCHAR(31), @legacyActor, NCHAR(31),
-        @legacyAction, NCHAR(31), @legacyType, NCHAR(31), @legacyEntityId, NCHAR(31),
-        COALESCE(@legacyBefore,N''), NCHAR(31), COALESCE(@legacyAfter,N''), NCHAR(31),
-        CONVERT(nvarchar(33),@legacyCreated,126))), 2);
-    UPDATE TP_CE_AuditEvent SET PreviousHash=@previousHash, EntryHash=@legacyHash WHERE Id=@legacyId;
-    SET @previousHash=@legacyHash;
-    FETCH NEXT FROM legacy INTO @legacyId, @legacyActor, @legacyAction, @legacyType,
-        @legacyEntityId, @legacyBefore, @legacyAfter, @legacyCreated;
-END;
-CLOSE legacy;
-DEALLOCATE legacy;
-
-DECLARE @entryHash varchar(64) = CONVERT(varchar(64), HASHBYTES('SHA2_256',
-    CONCAT(@secret, NCHAR(31), @previousHash, NCHAR(31), @actor, NCHAR(31), @action,
-    NCHAR(31), @entityType, NCHAR(31), @entityId, NCHAR(31), COALESCE(@beforeJson,N''),
-    NCHAR(31), COALESCE(@afterJson,N''), NCHAR(31), CONVERT(nvarchar(33),@createdUtc,126))), 2);
-
-INSERT INTO TP_CE_AuditEvent
+            await _dataProvider.ExecuteNonQueryAsync(
+                @"INSERT INTO TP_CE_AuditEvent
     (Actor, Action, EntityType, EntityId, BeforeJson, AfterJson, CreatedUtc, PreviousHash, EntryHash)
 VALUES
-    (@actor, @action, @entityType, @entityId, @beforeJson, @afterJson, @createdUtc, @previousHash, @entryHash);
-COMMIT TRANSACTION;",
-            new DataParameter("actor", actor ?? string.Empty),
-            new DataParameter("action", action ?? string.Empty),
-            new DataParameter("entityType", entityType ?? string.Empty),
-            new DataParameter("entityId", entityId ?? string.Empty),
-            new DataParameter("beforeJson", (object?)beforeJson ?? DBNull.Value),
-            new DataParameter("afterJson", (object?)afterJson ?? DBNull.Value),
-            new DataParameter("createdUtc", DateTime.UtcNow),
-            new DataParameter("secret", _chainSecret),
-            new DataParameter("zeroHash", ZeroHash));
+    (@actor, @action, @entityType, @entityId, @beforeJson, @afterJson, @createdUtc, @previousHash, @entryHash)",
+                new DataParameter("actor", actor ?? string.Empty),
+                new DataParameter("action", action ?? string.Empty),
+                new DataParameter("entityType", entityType ?? string.Empty),
+                new DataParameter("entityId", entityId ?? string.Empty),
+                new DataParameter("beforeJson", (object?)beforeJson ?? DBNull.Value),
+                new DataParameter("afterJson", (object?)afterJson ?? DBNull.Value),
+                new DataParameter("createdUtc", createdUtc),
+                new DataParameter("previousHash", previousHash),
+                new DataParameter("entryHash", entryHash));
+        }
+        finally
+        {
+            await ReleaseLockAsync();
+        }
     }
 
     public async Task<AuditIntegrityResult> VerifyAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var rows = await _dataProvider.QueryAsync<IntegrityRow>(
-            @"DECLARE @anchor varchar(64)=COALESCE(
-    (SELECT LastPrunedHash FROM TP_CE_AuditChainAnchor WHERE Id=1), @zeroHash);
-;WITH chain AS
-(
-    SELECT *, LAG(EntryHash,1,@anchor) OVER (ORDER BY Id) AS ExpectedPreviousHash
-    FROM TP_CE_AuditEvent
-)
-SELECT COUNT(*) AS CheckedEntries,
-       COALESCE(SUM(CASE WHEN EntryHash IS NULL OR PreviousHash<>ExpectedPreviousHash
-         OR EntryHash<>CONVERT(varchar(64),HASHBYTES('SHA2_256',
-            CONCAT(@secret,NCHAR(31),PreviousHash,NCHAR(31),Actor,NCHAR(31),Action,
-            NCHAR(31),EntityType,NCHAR(31),EntityId,NCHAR(31),COALESCE(BeforeJson,N''),
-            NCHAR(31),COALESCE(AfterJson,N''),NCHAR(31),CONVERT(nvarchar(33),CreatedUtc,126))),2)
-         THEN 1 ELSE 0 END),0) AS InvalidEntries
-FROM chain;",
-            new DataParameter("secret", _chainSecret),
-            new DataParameter("zeroHash", ZeroHash));
-        var row = rows[0];
+        var rows = (await _dataProvider.QueryAsync<AuditRow>(
+            @"SELECT Id, Actor, Action, EntityType, EntityId, BeforeJson, AfterJson, CreatedUtc, PreviousHash, EntryHash
+FROM TP_CE_AuditEvent
+ORDER BY Id")).ToList();
+
+        var expectedPrevious = (await GetAnchorHashAsync()) ?? ZeroHash;
+        var invalid = 0;
+        foreach (var row in rows)
+        {
+            if (string.IsNullOrWhiteSpace(row.EntryHash) ||
+                !string.Equals(row.PreviousHash, expectedPrevious, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(
+                    row.EntryHash,
+                    ComputeEntryHash(
+                        row.PreviousHash ?? ZeroHash,
+                        row.Actor,
+                        row.Action,
+                        row.EntityType,
+                        row.EntityId,
+                        row.BeforeJson,
+                        row.AfterJson,
+                        row.CreatedUtc),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                invalid++;
+            }
+
+            expectedPrevious = row.EntryHash ?? expectedPrevious;
+        }
+
         return new AuditIntegrityResult
         {
-            IsValid = row.InvalidEntries == 0,
-            CheckedEntries = row.CheckedEntries,
-            InvalidEntries = row.InvalidEntries
+            IsValid = invalid == 0,
+            CheckedEntries = rows.Count,
+            InvalidEntries = invalid
         };
     }
 
     public async Task<int> PruneAsync(DateTime retainFromUtc, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var rows = await _dataProvider.QueryAsync<PruneRow>(
-            @"SET XACT_ABORT ON;
-BEGIN TRANSACTION;
-EXEC sp_getapplock @Resource='TP_CE_AuditEvent.HashChain', @LockMode='Exclusive',
-    @LockOwner='Transaction', @LockTimeout=10000;
-DECLARE @pruneId int, @pruneHash varchar(64);
-SELECT TOP (1) @pruneId=Id, @pruneHash=EntryHash
+        await AcquireLockAsync();
+        try
+        {
+            var tip = (await _dataProvider.QueryAsync<PruneTipRow>(
+                CheckEngineSql.SelectTop(
+                    1,
+                    "Id, EntryHash",
+                    "FROM TP_CE_AuditEvent WHERE CreatedUtc<@retainFromUtc AND EntryHash IS NOT NULL ORDER BY Id DESC"),
+                new DataParameter("retainFromUtc", retainFromUtc))).FirstOrDefault();
+
+            if (tip is null || tip.Id <= 0)
+                return 0;
+
+            var updated = await _dataProvider.ExecuteNonQueryAsync(
+                @"UPDATE TP_CE_AuditChainAnchor
+SET LastPrunedAuditEventId=@pruneId, LastPrunedHash=@pruneHash, PrunedUtc=@prunedUtc
+WHERE Id=1",
+                new DataParameter("pruneId", tip.Id),
+                new DataParameter("pruneHash", tip.EntryHash),
+                new DataParameter("prunedUtc", DateTime.UtcNow));
+
+            if (updated == 0)
+            {
+                await _dataProvider.ExecuteNonQueryAsync(
+                    @"INSERT INTO TP_CE_AuditChainAnchor (Id, LastPrunedAuditEventId, LastPrunedHash, PrunedUtc)
+VALUES (1, @pruneId, @pruneHash, @prunedUtc)",
+                    new DataParameter("pruneId", tip.Id),
+                    new DataParameter("pruneHash", tip.EntryHash),
+                    new DataParameter("prunedUtc", DateTime.UtcNow));
+            }
+
+            return await _dataProvider.ExecuteNonQueryAsync(
+                "DELETE FROM TP_CE_AuditEvent WHERE Id<=@pruneId",
+                new DataParameter("pruneId", tip.Id));
+        }
+        finally
+        {
+            await ReleaseLockAsync();
+        }
+    }
+
+    private async Task BackfillLegacyHashesAsync()
+    {
+        var legacy = (await _dataProvider.QueryAsync<AuditRow>(
+            @"SELECT Id, Actor, Action, EntityType, EntityId, BeforeJson, AfterJson, CreatedUtc, PreviousHash, EntryHash
 FROM TP_CE_AuditEvent
-WHERE CreatedUtc<@retainFromUtc AND EntryHash IS NOT NULL
-ORDER BY Id DESC;
-IF @pruneId IS NULL
-BEGIN
-    COMMIT TRANSACTION;
-    SELECT 0 AS Deleted;
-    RETURN;
-END;
-MERGE TP_CE_AuditChainAnchor WITH (HOLDLOCK) AS target
-USING (SELECT 1 AS Id) AS source ON target.Id=source.Id
-WHEN MATCHED THEN UPDATE SET LastPrunedAuditEventId=@pruneId,
-    LastPrunedHash=@pruneHash, PrunedUtc=SYSUTCDATETIME()
-WHEN NOT MATCHED THEN INSERT (Id,LastPrunedAuditEventId,LastPrunedHash,PrunedUtc)
-    VALUES (1,@pruneId,@pruneHash,SYSUTCDATETIME());
-DELETE FROM TP_CE_AuditEvent WHERE Id<=@pruneId;
-DECLARE @deleted int=@@ROWCOUNT;
-COMMIT TRANSACTION;
-SELECT @deleted AS Deleted;",
-            new DataParameter("retainFromUtc", retainFromUtc));
-        return rows[0].Deleted;
+WHERE EntryHash IS NULL
+ORDER BY Id")).ToList();
+
+        if (legacy.Count == 0)
+            return;
+
+        var previousHash = await GetTipHashAsync() ?? (await GetAnchorHashAsync()) ?? ZeroHash;
+        foreach (var row in legacy)
+        {
+            var entryHash = ComputeEntryHash(
+                previousHash,
+                row.Actor,
+                row.Action,
+                row.EntityType,
+                row.EntityId,
+                row.BeforeJson,
+                row.AfterJson,
+                row.CreatedUtc);
+
+            await _dataProvider.ExecuteNonQueryAsync(
+                "UPDATE TP_CE_AuditEvent SET PreviousHash=@previousHash, EntryHash=@entryHash WHERE Id=@id",
+                new DataParameter("previousHash", previousHash),
+                new DataParameter("entryHash", entryHash),
+                new DataParameter("id", row.Id));
+
+            previousHash = entryHash;
+        }
     }
 
-    private sealed class IntegrityRow
+    private async Task<string?> GetTipHashAsync()
     {
-        public int CheckedEntries { get; set; }
-        public int InvalidEntries { get; set; }
+        var rows = await _dataProvider.QueryAsync<HashRow>(
+            CheckEngineSql.SelectTop(
+                1,
+                "EntryHash",
+                "FROM TP_CE_AuditEvent WHERE EntryHash IS NOT NULL ORDER BY Id DESC"));
+        return rows.Select(row => row.EntryHash).FirstOrDefault();
     }
 
-    private sealed class PruneRow
+    private async Task<string?> GetAnchorHashAsync()
     {
-        public int Deleted { get; set; }
+        var rows = await _dataProvider.QueryAsync<HashRow>(
+            "SELECT LastPrunedHash AS EntryHash FROM TP_CE_AuditChainAnchor WHERE Id=1");
+        return rows.Select(row => row.EntryHash).FirstOrDefault();
+    }
+
+    private string ComputeEntryHash(
+        string previousHash,
+        string actor,
+        string action,
+        string entityType,
+        string entityId,
+        string? beforeJson,
+        string? afterJson,
+        DateTime createdUtc)
+    {
+        // HASHBYTES('SHA2_256', CONCAT(..., NCHAR(31), ...)) equivalent, computed in-process so MySQL
+        // does not need HASHBYTES. sp_getapplock remains available via CheckEngineSql for SQL Server.
+        var payload = string.Join(
+            '\u001f',
+            _chainSecret,
+            previousHash,
+            actor,
+            action,
+            entityType,
+            entityId,
+            beforeJson ?? string.Empty,
+            afterJson ?? string.Empty,
+            createdUtc.ToString("yyyy-MM-ddTHH:mm:ss.FFFFFFF"));
+
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+    }
+
+    private Task AcquireLockAsync()
+        => _dataProvider.ExecuteNonQueryAsync(
+            CheckEngineSql.AcquireSessionLock(),
+            new DataParameter("resource", LockResource));
+
+    private Task ReleaseLockAsync()
+        => _dataProvider.ExecuteNonQueryAsync(
+            CheckEngineSql.ReleaseSessionLock(),
+            new DataParameter("resource", LockResource));
+
+    private sealed class AuditRow
+    {
+        public int Id { get; set; }
+        public string Actor { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string EntityType { get; set; } = string.Empty;
+        public string EntityId { get; set; } = string.Empty;
+        public string? BeforeJson { get; set; }
+        public string? AfterJson { get; set; }
+        public DateTime CreatedUtc { get; set; }
+        public string? PreviousHash { get; set; }
+        public string? EntryHash { get; set; }
+    }
+
+    private sealed class HashRow
+    {
+        public string? EntryHash { get; set; }
+    }
+
+    private sealed class PruneTipRow
+    {
+        public int Id { get; set; }
+        public string EntryHash { get; set; } = string.Empty;
     }
 }

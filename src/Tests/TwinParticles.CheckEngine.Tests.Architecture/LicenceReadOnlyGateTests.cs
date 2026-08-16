@@ -79,6 +79,50 @@ public class LicenceReadOnlyGateTests
     }
 
     [Test]
+    public async Task HeartbeatAsync_Should_Not_Stamp_Without_A_Stored_Valid_Key()
+    {
+        var now = new DateTimeOffset(2026, 8, 14, 12, 0, 0, TimeSpan.Zero);
+        var store = new InMemoryLicenceStateStore();
+        var service = new DefaultLicenceService(store, new MutableClock(now), AcceptAllLegacyDevKeysValidator.Instance);
+
+        var status = await service.HeartbeatAsync(CancellationToken.None);
+
+        status.State.Should().Be("inactive");
+        (await store.GetLastHeartbeatUtcAsync(CancellationToken.None)).Should().BeNull();
+    }
+
+    [Test]
+    public async Task HeartbeatAsync_Should_Not_Extend_Grace_When_Stored_Key_Is_Rejected()
+    {
+        var now = new DateTimeOffset(2026, 8, 14, 12, 0, 0, TimeSpan.Zero);
+        var store = new InMemoryLicenceStateStore();
+        await store.SetActivationKeyAsync("expired-key", CancellationToken.None);
+        await store.SetLastHeartbeatUtcAsync(now.AddDays(-10), CancellationToken.None);
+        var service = new DefaultLicenceService(store, new MutableClock(now), RejectAllValidator.Instance);
+
+        var status = await service.HeartbeatAsync(CancellationToken.None);
+
+        status.State.Should().Be("active");
+        (await store.GetLastHeartbeatUtcAsync(CancellationToken.None)).Should().Be(now.AddDays(-10));
+    }
+
+    [Test]
+    public async Task HeartbeatAsync_Should_Stamp_When_Stored_Key_Still_Validates()
+    {
+        var now = new DateTimeOffset(2026, 8, 14, 12, 0, 0, TimeSpan.Zero);
+        var store = new InMemoryLicenceStateStore();
+        var service = new DefaultLicenceService(store, new MutableClock(now), AcceptAllLegacyDevKeysValidator.Instance);
+        await service.ActivateAsync("demo-key", CancellationToken.None);
+        var later = new MutableClock(now.AddDays(1));
+        var laterService = new DefaultLicenceService(store, later, AcceptAllLegacyDevKeysValidator.Instance);
+
+        var status = await laterService.HeartbeatAsync(CancellationToken.None);
+
+        status.IsActive.Should().BeTrue();
+        (await store.GetLastHeartbeatUtcAsync(CancellationToken.None)).Should().Be(later.UtcNow);
+    }
+
+    [Test]
     public async Task CheckEngineLicenceGate_Should_Delegate_To_Licence_Status()
     {
         var now = new DateTimeOffset(2026, 8, 14, 12, 0, 0, TimeSpan.Zero);
@@ -109,6 +153,14 @@ public class LicenceReadOnlyGateTests
                 : new LicenceKeyValidationResult { IsValid = true };
     }
 
+    private sealed class RejectAllValidator : ILicenceKeyValidator
+    {
+        public static RejectAllValidator Instance { get; } = new();
+
+        public LicenceKeyValidationResult Validate(string licenceKey)
+            => new() { IsValid = false, ReasonCode = "licence.invalid_key" };
+    }
+
     private sealed class InMemoryLicenceStateStore : ILicenceStateStore
     {
         private DateTimeOffset? _heartbeatUtc;
@@ -121,6 +173,17 @@ public class LicenceReadOnlyGateTests
             _heartbeatUtc = heartbeatUtc;
             return Task.CompletedTask;
         }
+
+        public Task<string?> GetActivationKeyAsync(CancellationToken cancellationToken)
+            => Task.FromResult(_activationKey);
+
+        public Task SetActivationKeyAsync(string licenceKey, CancellationToken cancellationToken)
+        {
+            _activationKey = licenceKey;
+            return Task.CompletedTask;
+        }
+
+        private string? _activationKey;
     }
 
     private sealed class MutableClock : ICheckEngineClock
