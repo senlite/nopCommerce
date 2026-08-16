@@ -1,0 +1,133 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+        <a class="btn btn-info" href="@Url.Action("ReviewBoard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.Infer")</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>Product id</label>
+                        <input id="ce-fit-product" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>Configuration id</label>
+                        <input id="ce-fit-config" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Product name</label>
+                        <input id="ce-fit-name" type="text" class="form-control" placeholder="Water pump" />
+                    </div>
+                    <div class="form-group col-md-2 d-flex align-items-end">
+                        <button id="ce-fit-infer" type="button" class="btn btn-primary btn-block">Infer</button>
+                    </div>
+                </div>
+                <pre id="ce-fit-infer-result" class="mt-2" style="white-space: pre-wrap;"></pre>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.Hint")</p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-fit-table">
+                        <thead>
+                            <tr>
+                                <th>Claim id</th>
+                                <th>Product</th>
+                                <th>Configuration</th>
+                                <th>Status</th>
+                                <th>Confidence</th>
+                                <th>Source</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  function render(items) {
+    var tbody = document.querySelector('#ce-fit-table tbody');
+    tbody.innerHTML = '';
+    (items || []).forEach(function (item) {
+      var tr = document.createElement('tr');
+      var source = item.provenance ? item.provenance.sourceKind : '';
+      tr.innerHTML =
+        '<td>' + item.id + '</td>' +
+        '<td>' + item.productId + '</td>' +
+        '<td>' + item.vehicleConfigurationId + '</td>' +
+        '<td>' + item.status + '</td>' +
+        '<td>' + item.confidence + '</td>' +
+        '<td>' + source + '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-action="approve">Approve</button>' +
+        '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-action="reject">Reject</button></td>';
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('button[data-id]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        review(parseInt(btn.getAttribute('data-id'), 10), btn.getAttribute('data-action') === 'approve');
+      });
+    });
+  }
+  function load() {
+    fetch('/Admin/CheckEngine/FitmentAdmin/AiQueue', { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(render);
+  }
+  function review(claimId, approved) {
+    var url = approved ? '/Admin/CheckEngine/FitmentAdmin/Approve' : '/Admin/CheckEngine/FitmentAdmin/Reject';
+    fetch(url, {
+      method: 'POST',
+      headers: headers(true),
+      body: JSON.stringify({ claimId: claimId })
+    }).then(load);
+  }
+  document.getElementById('ce-fit-infer').addEventListener('click', function () {
+    var productId = parseInt(document.getElementById('ce-fit-product').value, 10);
+    var configurationId = parseInt(document.getElementById('ce-fit-config').value, 10);
+    var productName = document.getElementById('ce-fit-name').value;
+    fetch('/Admin/CheckEngine/FitmentAdmin/Infer', {
+      method: 'POST',
+      headers: headers(true),
+      body: JSON.stringify({ productId: productId, vehicleConfigurationId: configurationId, productName: productName })
+    }).then(function (r) { return r.text(); })
+      .then(function (text) {
+        document.getElementById('ce-fit-infer-result').textContent = text;
+        load();
+      });
+  });
+  load();
+})();
+</script>

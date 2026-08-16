@@ -1,0 +1,131 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Ai.Review").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+        <a class="btn btn-info" href="@Url.Action("Configure", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Configuration")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</h3>
+            </div>
+            <div class="card-body">
+                <pre id="ce-ai-dashboard" style="white-space: pre-wrap;">Loading…</pre>
+                <button id="ce-ai-ack-disclosure" type="button" class="btn btn-warning">@T("Plugins.TwinParticles.CheckEngine.Ai.AcknowledgeDisclosure")</button>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Candidates")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Hint")</p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-ai-table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Type</th>
+                                <th>Entity</th>
+                                <th>Locale</th>
+                                <th>Feature</th>
+                                <th>Preview</th>
+                                <th>Score</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment")</h3>
+            </div>
+            <div class="card-body">
+                <pre id="ce-ai-fitment" style="white-space: pre-wrap;">Loading…</pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  function preview(text) {
+    if (!text) return '';
+    return text.length > 120 ? text.substring(0, 120) + '…' : text;
+  }
+  function renderCandidates(items) {
+    var tbody = document.querySelector('#ce-ai-table tbody');
+    tbody.innerHTML = '';
+    (items || []).forEach(function (item) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + item.id + '</td>' +
+        '<td>' + item.entityType + '</td>' +
+        '<td>' + item.entityId + '</td>' +
+        '<td>' + (item.locale || '') + '</td>' +
+        '<td>' + (item.featureKey || '') + '</td>' +
+        '<td><code>' + preview(item.outputText) + '</code></td>' +
+        '<td>' + (item.qualityScore == null ? '' : item.qualityScore) + '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-approved="true">Approve</button>' +
+        '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-approved="false">Reject</button></td>';
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('button[data-id]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        review(parseInt(btn.getAttribute('data-id'), 10), btn.getAttribute('data-approved') === 'true');
+      });
+    });
+  }
+  function loadDashboard() {
+    fetch('/Admin/CheckEngine/AiAdmin/DashboardData', { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { document.getElementById('ce-ai-dashboard').textContent = JSON.stringify(data, null, 2); });
+  }
+  function load() {
+    fetch('/Admin/CheckEngine/AiAdmin/Queue', { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(renderCandidates);
+    fetch('/Admin/CheckEngine/FitmentAdmin/AiQueue', { headers: headers(false) })
+      .then(function (r) { return r.text(); })
+      .then(function (text) { document.getElementById('ce-ai-fitment').textContent = text; });
+    loadDashboard();
+  }
+  function review(id, approved) {
+    fetch('/Admin/CheckEngine/AiAdmin/Review', {
+      method: 'POST',
+      headers: headers(true),
+      body: JSON.stringify({ id: id, approved: approved })
+    }).then(load);
+  }
+  document.getElementById('ce-ai-ack-disclosure').addEventListener('click', function () {
+    fetch('/Admin/CheckEngine/AiAdmin/AcknowledgeDisclosure', {
+      method: 'POST',
+      headers: headers(false)
+    }).then(loadDashboard);
+  });
+  load();
+})();
+</script>

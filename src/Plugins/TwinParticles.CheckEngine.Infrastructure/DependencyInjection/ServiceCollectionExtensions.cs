@@ -152,9 +152,45 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IErpReconciliationDataSource, NopErpReconciliationDataSource>();
 
         services.AddSingleton(_ => CheckEngineAiOptions.Current);
-        services.AddSingleton<IAiCompletionPort, OpenAiCompatibleCompletionPort>();
-        services.AddSingleton<IAiUsageLedger, InMemoryAiUsageLedger>();
+        services.AddSingleton<OpenAiCompatibleCompletionPort>();
+        services.AddSingleton<AzureOpenAiCompletionPort>();
+        services.AddSingleton<AnthropicCompletionPort>();
+        services.AddSingleton<AiCompletionProviderRouter>();
+        services.AddSingleton<MemoryAiCompletionCache>();
+        services.AddSingleton<IAiCompletionCache>(sp =>
+        {
+            var memory = sp.GetRequiredService<MemoryAiCompletionCache>();
+            var staticCache = sp.GetService<Nop.Core.Caching.IStaticCacheManager>();
+            if (staticCache is null)
+                return memory;
+
+            var distributed = new NopStaticCacheAiCompletionCache(staticCache, sp.GetRequiredService<CheckEngineAiOptions>());
+            return new LayeredAiCompletionCache(memory, distributed);
+        });
+        services.AddSingleton<CachingAiCompletionPort>(sp => new CachingAiCompletionPort(
+            sp.GetRequiredService<AiCompletionProviderRouter>(),
+            sp.GetRequiredService<IAiCompletionCache>(),
+            sp.GetRequiredService<CheckEngineAiOptions>()));
+        services.AddSingleton<MemoryAiEmbeddingCache>();
+        services.AddSingleton<IAiEmbeddingCache>(sp => sp.GetRequiredService<MemoryAiEmbeddingCache>());
+        services.AddSingleton<CachingAiEmbeddingPort>(sp => new CachingAiEmbeddingPort(
+            sp.GetRequiredService<AiEmbeddingProviderRouter>(),
+            sp.GetRequiredService<IAiEmbeddingCache>(),
+            sp.GetRequiredService<CheckEngineAiOptions>()));
+        services.AddSingleton<IAiSpendPolicy, SettingsAiSpendPolicy>();
         services.AddSingleton<IAiFeatureToggle, SettingsAiFeatureToggle>();
+        services.AddSingleton<OpenAiCompatibleEmbeddingPort>();
+        services.AddSingleton<AzureOpenAiEmbeddingPort>();
+        services.AddSingleton<DeterministicTextEmbeddingPort>();
+        services.AddSingleton<AiEmbeddingProviderRouter>();
+        services.AddSingleton<IAiDisclosureAcknowledgement, SettingsAiDisclosureAcknowledgement>();
+        services.AddSingleton<IAiPromptStore, EmbeddedAiPromptStore>();
+        services.AddScoped<ISearchEmbeddingIndex, SqlSearchEmbeddingIndex>();
+        services.AddScoped<ISearchEmbeddingCatalogSource, SqlSearchEmbeddingCatalogSource>();
+        services.AddSingleton<IAiUsageLedger, SqlAiUsageLedger>();
+        services.AddSingleton<IAiDataDisclosureCatalog, DefaultAiDataDisclosureCatalog>();
+        services.AddScoped<IAiGenerationRepository, SqlAiGenerationRepository>();
+        services.AddScoped<IAiContentApplicator, NopAiContentApplicator>();
         services.AddScoped<ICheckEngineDatabaseHealthProbe, NopDataProviderDatabaseHealthProbe>();
 
         return services;

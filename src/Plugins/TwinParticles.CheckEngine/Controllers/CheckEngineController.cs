@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Core;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
@@ -42,10 +41,7 @@ public sealed class CheckEngineController : BasePluginController
             return AccessDeniedView();
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
-        var model = new ConfigurationModel
-        {
-            Enabled = settings.Enabled
-        };
+        var model = CheckEngineConfigurationMapper.ToModel(settings);
 
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Configure.cshtml", model);
     }
@@ -59,8 +55,15 @@ public sealed class CheckEngineController : BasePluginController
         if (!ModelState.IsValid)
             return await Configure();
 
+        if (CheckEngineConfigurationMapper.HasAnyAiFeatureEnabled(model) && !model.AiDisclosureAcknowledged)
+        {
+            _notificationService.ErrorNotification(
+                await _localizationService.GetResourceAsync("Plugins.TwinParticles.CheckEngine.Configuration.Ai.DisclosureRequired"));
+            return await Configure();
+        }
+
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
-        settings.Enabled = model.Enabled;
+        CheckEngineConfigurationMapper.ApplyModel(settings, model);
         await _settingService.SaveSettingAsync(settings);
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));

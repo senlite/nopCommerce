@@ -333,7 +333,7 @@ public class ImportPipelineOrchestratorServiceTests
             new ImportOemMatchingService(resolveService),
             new ImportVehicleMatchingService(),
             new ImportAiEnrichmentHookService(),
-            new ImportTranslationHookService(),
+            new ImportTranslationHookService(new TwinParticles.CheckEngine.Application.L10n.AutomotiveGlossaryService()),
             new ImportSeoGenerationHookService(),
             new ImportCategorizationService(),
             new ImportImageAssignmentService(),

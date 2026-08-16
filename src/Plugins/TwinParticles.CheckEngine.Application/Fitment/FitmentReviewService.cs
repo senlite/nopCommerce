@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Fitment;
@@ -38,10 +39,25 @@ public sealed class FitmentReviewService
         return _readRepository.GetReviewQueueAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<FitmentClaim>> GetAiQueueAsync(CancellationToken cancellationToken)
+    {
+        var queue = await _readRepository.GetReviewQueueAsync(cancellationToken);
+        return queue.Where(claim => claim.SourceKindIsAi()).ToList();
+    }
+
     public async Task ApproveAsync(int claimId, CancellationToken cancellationToken, string actor = "system")
     {
         if (claimId <= 0)
             throw new ArgumentException("Claim id must be positive.", nameof(claimId));
+
+        var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
+        if (claim is not null && claim.SourceKindIsAi())
+        {
+            claim.Provenance.SourceKind = FitmentSourceKind.CuratorManual;
+            claim.Provenance.SourceReference = "ai.review.promoted";
+            claim.Provenance.CreatedBy = actor;
+            await _writeRepository.UpsertAsync(claim, cancellationToken);
+        }
 
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Fits, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, true, cancellationToken);

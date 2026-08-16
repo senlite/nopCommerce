@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
-using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Search;
 
@@ -15,7 +14,8 @@ namespace TwinParticles.CheckEngine.Application.Search;
 
 public sealed class UnifiedSearchService
 {
-    private readonly IAiCompletionPort? _aiCompletionPort;
+    private readonly NaturalLanguageIntentParser _naturalLanguageIntentParser;
+    private readonly SemanticSearchService? _semanticSearchService;
     private readonly IBilingualSearchTextNormalizer _bilingualNormalizer;
     private readonly FitmentEvaluationService _fitmentEvaluationService;
     private readonly OemResolveService _oemResolveService;
@@ -31,8 +31,9 @@ public sealed class UnifiedSearchService
         FitmentEvaluationService fitmentEvaluationService,
         ISearchIndexHealthService searchIndexHealthService,
         IBilingualSearchTextNormalizer bilingualNormalizer,
-        IAiCompletionPort? aiCompletionPort = null,
-        ISearchAnalyticsService? searchAnalyticsService = null)
+        NaturalLanguageIntentParser naturalLanguageIntentParser,
+        ISearchAnalyticsService? searchAnalyticsService = null,
+        SemanticSearchService? semanticSearchService = null)
     {
         _productSearchReadRepository = productSearchReadRepository;
         _vinDecodeService = vinDecodeService;
@@ -40,8 +41,9 @@ public sealed class UnifiedSearchService
         _fitmentEvaluationService = fitmentEvaluationService;
         _searchIndexHealthService = searchIndexHealthService;
         _bilingualNormalizer = bilingualNormalizer;
-        _aiCompletionPort = aiCompletionPort;
+        _naturalLanguageIntentParser = naturalLanguageIntentParser;
         _searchAnalyticsService = searchAnalyticsService;
+        _semanticSearchService = semanticSearchService;
     }
 
     public async Task<SearchResult> SearchAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -60,21 +62,15 @@ public sealed class UnifiedSearchService
 
         if (mode == SearchMode.NaturalLanguage)
         {
-            var (keywords, succeeded) = await ExtractNaturalLanguageKeywordsAsync(normalizedText, cancellationToken);
-            if (succeeded)
-            {
-                hits = await _productSearchReadRepository.SearchKeywordAsync(
-                    CloneQuery(query, keywords, SearchMode.Keyword),
-                    cancellationToken);
-                modeUsed = SearchMode.NaturalLanguage;
-            }
-            else
-            {
-                hits = await _productSearchReadRepository.SearchKeywordAsync(
-                    CloneQuery(query, normalizedText, SearchMode.Keyword),
-                    cancellationToken);
-                modeUsed = SearchMode.Keyword;
-            }
+            hits = await SearchNaturalLanguageAsync(query, normalizedText, cancellationToken);
+            modeUsed = SearchMode.NaturalLanguage;
+        }
+        else if (mode == SearchMode.Semantic)
+        {
+            hits = _semanticSearchService is null
+                ? []
+                : await _semanticSearchService.SearchAsync(CloneQuery(query, normalizedText, SearchMode.Semantic), cancellationToken);
+            modeUsed = SearchMode.Semantic;
         }
         else if (mode == SearchMode.Vin)
         {
@@ -199,33 +195,111 @@ public sealed class UnifiedSearchService
         if (oemResolved.Success)
             return SearchMode.Oem;
 
+        var wordCount = normalizedText.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+        if (wordCount >= 2)
+            return SearchMode.NaturalLanguage;
+
         return SearchMode.Keyword;
     }
 
-    private async Task<(string Keywords, bool Succeeded)> ExtractNaturalLanguageKeywordsAsync(string text, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<SearchHit>> SearchNaturalLanguageAsync(
+        SearchQuery query,
+        string normalizedText,
+        CancellationToken cancellationToken)
     {
-        if (_aiCompletionPort is null)
-            return (text, false);
+        var intent = await _naturalLanguageIntentParser.ParseAsync(normalizedText, query.Locale, cancellationToken);
 
-        try
+        if (intent.VehicleConfigurationId is > 0)
         {
-            var result = await _aiCompletionPort.CompleteAsync(new AiCompletionRequest
+            return await _productSearchReadRepository.SearchByVehicleTreeAsync(
+                CloneQuery(query, string.Empty, SearchMode.VehicleTree, intent.VehicleConfigurationId),
+                cancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(intent.OemNumber))
+        {
+            return await SearchOemAsync(query, intent.OemNumber, cancellationToken);
+        }
+
+        var keywords = intent.PartTerms.Count > 0
+            ? string.Join(' ', intent.PartTerms)
+            : intent.KeywordFallback;
+
+        if (string.IsNullOrWhiteSpace(keywords))
+            keywords = normalizedText;
+
+        var keywordHits = await SearchKeywordTermsAsync(query, intent, keywords, cancellationToken);
+
+        if (_semanticSearchService is null)
+            return keywordHits;
+
+        var semanticHits = await _semanticSearchService.SearchAsync(
+            CloneQuery(query, normalizedText, SearchMode.Semantic),
+            cancellationToken);
+
+        return MergeHits(keywordHits, semanticHits);
+    }
+
+    private async Task<IReadOnlyList<SearchHit>> SearchKeywordTermsAsync(
+        SearchQuery query,
+        SearchIntent intent,
+        string keywords,
+        CancellationToken cancellationToken)
+    {
+        if (intent.PartTerms.Count <= 1)
+        {
+            return await _productSearchReadRepository.SearchKeywordAsync(
+                CloneQuery(query, keywords, SearchMode.Keyword),
+                cancellationToken);
+        }
+
+        IReadOnlyList<SearchHit> merged = [];
+        foreach (var term in intent.PartTerms)
+        {
+            if (string.IsNullOrWhiteSpace(term))
+                continue;
+
+            var termHits = await _productSearchReadRepository.SearchKeywordAsync(
+                CloneQuery(query, term, SearchMode.Keyword),
+                cancellationToken);
+            merged = MergeHits(merged, termHits);
+        }
+
+        return merged.Count > 0
+            ? merged
+            : await _productSearchReadRepository.SearchKeywordAsync(
+                CloneQuery(query, keywords, SearchMode.Keyword),
+                cancellationToken);
+    }
+
+    private static IReadOnlyList<SearchHit> MergeHits(
+        IReadOnlyList<SearchHit> primary,
+        IReadOnlyList<SearchHit> secondary)
+    {
+        if (secondary.Count == 0)
+            return primary;
+
+        var merged = new Dictionary<int, SearchHit>();
+        foreach (var hit in primary)
+            merged[hit.ProductId] = hit;
+
+        foreach (var hit in secondary)
+        {
+            if (merged.TryGetValue(hit.ProductId, out var existing))
             {
-                PromptKey = "search.natural_language",
-                Prompt = $"Extract plain search keywords from this automotive query. Return only keywords, no punctuation.\nQuery: {text}",
-                MaxTokens = 64,
-                Temperature = 0
-            }, cancellationToken);
-
-            if (!result.Success || string.IsNullOrWhiteSpace(result.Text))
-                return (text, false);
-
-            return (result.Text.Trim(), true);
+                if (hit.Score > existing.Score)
+                    merged[hit.ProductId] = hit;
+            }
+            else
+            {
+                merged[hit.ProductId] = hit;
+            }
         }
-        catch
-        {
-            return (text, false);
-        }
+
+        return merged.Values
+            .OrderByDescending(hit => hit.Score)
+            .ThenBy(hit => hit.ProductId)
+            .ToList();
     }
 
     private async Task<VinSearchLaneResult> SearchVinLaneAsync(SearchQuery query, string normalizedText, CancellationToken cancellationToken)

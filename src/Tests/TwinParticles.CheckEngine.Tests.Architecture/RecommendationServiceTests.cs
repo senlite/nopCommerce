@@ -23,9 +23,10 @@ public class RecommendationServiceTests
 
         var recommendations = await service.GetRecommendationsAsync(777, take: 10, CancellationToken.None);
 
-        recommendations.Should().HaveCount(1);
-        recommendations[0].ProductId.Should().Be(1001);
-        recommendations.Should().OnlyContain(x => x.FitsActiveContext);
+        recommendations.VehicleScoped.Should().BeTrue();
+        recommendations.Hits.Should().HaveCount(1);
+        recommendations.Hits[0].ProductId.Should().Be(1001);
+        recommendations.Hits.Should().OnlyContain(x => x.FitsActiveContext);
     }
 
     [Test]
@@ -37,17 +38,52 @@ public class RecommendationServiceTests
 
         var recommendations = await service.GetRecommendationsAsync(777, take: 10, CancellationToken.None);
 
-        recommendations.Select(x => x.ProductId).Should().NotContain(1002);
-        recommendations.Select(x => x.ProductId).Should().NotContain(1003);
+        recommendations.Hits.Select(x => x.ProductId).Should().NotContain(1002);
+        recommendations.Hits.Select(x => x.ProductId).Should().NotContain(1003);
+    }
+
+    [Test]
+    public async Task GetRecommendationsAsync_Should_Prefer_Same_Category_As_Seed()
+    {
+        var service = new RecommendationService(
+            new FakeRepository(),
+            new FitmentEvaluationService(new AllFitsFitmentRepository(), new FakeFitmentCache()));
+
+        var recommendations = await service.GetRecommendationsAsync(777, take: 2, CancellationToken.None, seedProductId: 1001);
+
+        recommendations.Hits.Should().NotContain(x => x.ProductId == 1001);
+        recommendations.Hits[0].ProductId.Should().Be(1003);
+    }
+
+    [Test]
+    public async Task GetRecommendationsAsync_Should_Label_Unscoped_When_No_Vehicle()
+    {
+        var service = new RecommendationService(
+            new FakeRepository(),
+            new FitmentEvaluationService(new FakeFitmentRepository(), new FakeFitmentCache()));
+
+        var recommendations = await service.GetRecommendationsAsync(null, take: 2, CancellationToken.None);
+
+        recommendations.VehicleScoped.Should().BeFalse();
+        recommendations.Hits.Should().NotBeEmpty();
+    }
+
+    [Test]
+    public void GetRecommendationsAsync_Should_Not_Accept_Customer_Identifiers()
+    {
+        var method = typeof(RecommendationService).GetMethod(nameof(RecommendationService.GetRecommendationsAsync));
+        method.Should().NotBeNull();
+        method!.GetParameters().Select(p => p.Name ?? string.Empty)
+            .Should().NotContain(name => name.Contains("customer", System.StringComparison.OrdinalIgnoreCase));
     }
 
     private sealed class FakeRepository : IProductSearchReadRepository
     {
         public Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<SearchHit>>([
-                new SearchHit { ProductId = 1001, Name = "Oil Filter", Score = 0.9m },
-                new SearchHit { ProductId = 1002, Name = "Hose", Score = 0.8m },
-                new SearchHit { ProductId = 1003, Name = "Belt", Score = 0.7m }
+                new SearchHit { ProductId = 1001, Name = "Oil Filter", CategoryId = 10, Score = 0.9m },
+                new SearchHit { ProductId = 1002, Name = "Hose", CategoryId = 20, Score = 0.8m },
+                new SearchHit { ProductId = 1003, Name = "Belt", CategoryId = 10, Score = 0.7m }
             ]);
 
         public Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken)
@@ -99,5 +135,27 @@ public class RecommendationServiceTests
 
         public Task InvalidateAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
             => Task.CompletedTask;
+    }
+
+    private sealed class AllFitsFitmentRepository : IFitmentClaimReadRepository
+    {
+        public Task<IReadOnlyList<FitmentClaim>> GetClaimsAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<FitmentClaim>>([
+                new FitmentClaim
+                {
+                    Id = productId,
+                    ProductId = productId,
+                    VehicleConfigurationId = vehicleConfigurationId,
+                    Status = FitmentStatus.Fits,
+                    Confidence = 0.95m,
+                    IsPublished = true,
+                    IsActive = true
+                }
+            ]);
+        }
+
+        public Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
     }
 }

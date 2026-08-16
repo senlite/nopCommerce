@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Services;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Observability;
 using TwinParticles.CheckEngine.Domain.Oem;
@@ -14,6 +16,7 @@ using TwinParticles.CheckEngine.Domain.Search;
 using TwinParticles.CheckEngine.Domain.Security;
 using TwinParticles.CheckEngine.Domain.Vehicle;
 using TwinParticles.CheckEngine.Domain.Vehicle.Aliases;
+using TwinParticles.CheckEngine.Infrastructure.Ai;
 using TwinParticles.CheckEngine.Infrastructure.Search;
 using TwinParticles.CheckEngine.Infrastructure.Vehicle.Aliases;
 
@@ -30,7 +33,8 @@ internal static class SearchTestSupport
         Dictionary<int, FitmentStatus>? fitmentMap = null,
         IReadOnlyList<OemNumber>? oemMatches = null,
         bool indexHealthy = true,
-        ISearchAnalyticsService? analyticsService = null)
+        ISearchAnalyticsService? analyticsService = null,
+        SemanticSearchService? semanticSearchService = null)
     {
         var vinService = new VinDecodeApplicationService(new EmptyVinRegistry(), new NoopTelemetry());
         var oemService = new OemResolveService(
@@ -47,8 +51,47 @@ internal static class SearchTestSupport
             fitmentService,
             new FakeSearchIndexHealthService(indexHealthy),
             new DefaultBilingualSearchTextNormalizer(),
-            aiCompletionPort: null,
-            searchAnalyticsService: analyticsService);
+            new NaturalLanguageIntentParser(),
+            searchAnalyticsService: analyticsService,
+            semanticSearchService: semanticSearchService);
+    }
+
+    public static async Task<UnifiedSearchService> BuildSearchServiceWithSemanticAsync(
+        IProductSearchReadRepository? repository = null,
+        Dictionary<int, FitmentStatus>? fitmentMap = null)
+    {
+        return await BuildSearchServiceWithCatalogAsync(
+            new InMemorySearchEmbeddingCatalogSource(),
+            repository,
+            fitmentMap);
+    }
+
+    public static async Task<UnifiedSearchService> BuildReferenceScaleSearchServiceAsync(
+        IProductSearchReadRepository? repository = null,
+        Dictionary<int, FitmentStatus>? fitmentMap = null)
+    {
+        var catalog = ReferenceScaleSearchEmbeddingCatalogSource.LoadCatalog().Documents;
+        return await BuildSearchServiceWithCatalogAsync(
+            new InMemorySearchEmbeddingCatalogSource(catalog),
+            repository,
+            fitmentMap);
+    }
+
+    private static async Task<UnifiedSearchService> BuildSearchServiceWithCatalogAsync(
+        InMemorySearchEmbeddingCatalogSource catalogSource,
+        IProductSearchReadRepository? repository,
+        Dictionary<int, FitmentStatus>? fitmentMap)
+    {
+        var index = new InMemorySearchEmbeddingIndex();
+        var builder = new SearchEmbeddingIndexBuilderService(
+            catalogSource,
+            index,
+            new DeterministicTextEmbeddingPort());
+        await builder.RebuildAsync("en", CancellationToken.None);
+        await builder.RebuildAsync("ar", CancellationToken.None);
+
+        var semantic = new SemanticSearchService(index, new DeterministicTextEmbeddingPort(), new AlwaysOnAiToggle());
+        return BuildSearchService(repository, fitmentMap, semanticSearchService: semantic);
     }
 
     public static SearchAutocompleteService BuildAutocompleteService(
@@ -200,5 +243,10 @@ internal static class SearchTestSupport
     private sealed class FixedClock : ICheckEngineClock
     {
         public System.DateTimeOffset UtcNow { get; } = new(2026, 8, 13, 12, 0, 0, System.TimeSpan.Zero);
+    }
+
+    private sealed class AlwaysOnAiToggle : IAiFeatureToggle
+    {
+        public bool IsEnabled(string featureKey) => true;
     }
 }

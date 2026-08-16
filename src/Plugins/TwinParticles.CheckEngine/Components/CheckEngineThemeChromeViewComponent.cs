@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Services.Catalog;
 using Nop.Services.Localization;
@@ -6,6 +10,8 @@ using Nop.Services.Seo;
 using Nop.Web.Framework.Components;
 using Nop.Web.Framework.Infrastructure;
 using Nop.Web.Models.Catalog;
+using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Infrastructure.Ai;
 
 namespace TwinParticles.CheckEngine.Components;
 
@@ -35,7 +41,10 @@ public sealed class CheckEngineThemeChromeViewComponent : NopViewComponent
             WidgetZone = widgetZone,
             ProductId = ResolveProductId(additionalData),
             MenuGroups = await BuildMenuGroupsAsync(widgetZone),
-            MenuText = await BuildMenuTextAsync(widgetZone)
+            MenuText = await BuildMenuTextAsync(widgetZone),
+            EnableSearchNaturalLanguage = IsFeatureEnabled(AiFeatureKeys.SearchNaturalLanguage),
+            EnableSearchSemantic = IsFeatureEnabled(AiFeatureKeys.SearchSemantic),
+            EnableCustomerAssistant = IsFeatureEnabled(AiFeatureKeys.CustomerAssistant)
         };
 
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Shared/Components/CheckEngineThemeChrome/Default.cshtml", model);
@@ -117,6 +126,12 @@ public sealed class CheckEngineThemeChromeViewComponent : NopViewComponent
         return groups;
     }
 
+    private static bool IsFeatureEnabled(string featureKey)
+    {
+        var enabled = CheckEngineAiOptions.Current.EnabledFeatures;
+        return enabled?.Contains(featureKey, StringComparer.OrdinalIgnoreCase) == true;
+    }
+
     /// <summary>
     /// The product detail widget zones hand us the page's view model. Reading the product id here
     /// keeps the fitment band working regardless of the host theme's markup.
@@ -138,6 +153,12 @@ public sealed class CheckEngineThemeChromeViewComponent : NopViewComponent
         public IReadOnlyList<MegaMenuGroup> MenuGroups { get; init; } = [];
 
         public MegaMenuText MenuText { get; init; } = new();
+
+        public bool EnableSearchNaturalLanguage { get; init; }
+
+        public bool EnableSearchSemantic { get; init; }
+
+        public bool EnableCustomerAssistant { get; init; }
     }
 
     public sealed class MegaMenuGroup

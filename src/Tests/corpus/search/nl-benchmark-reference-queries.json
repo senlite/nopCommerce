@@ -1,0 +1,22 @@
+{
+  "description": "Reference-scale natural-language benchmark (20-product synthetic catalog, EN + AR).",
+  "recallAtKThreshold": 0.85,
+  "k": 5,
+  "queries": [
+    { "id": "rs-oil-filter", "rawText": "oil filter for bmw engine", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2001] },
+    { "id": "rs-radiator-hose", "rawText": "upper radiator coolant hose", "mode": "Semantic", "locale": "en", "expectedProductIds": [2002] },
+    { "id": "rs-cabin-filter", "rawText": "pollen cabin air filter", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2003] },
+    { "id": "rs-brake-pads", "rawText": "front brake pads for disc brakes", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2004] },
+    { "id": "rs-spark-plug", "rawText": "iridium spark plug ignition", "mode": "Semantic", "locale": "en", "expectedProductIds": [2005] },
+    { "id": "rs-timing-belt", "rawText": "timing belt kit camshaft", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2006] },
+    { "id": "rs-alternator", "rawText": "140 amp alternator charging", "mode": "Semantic", "locale": "en", "expectedProductIds": [2007] },
+    { "id": "rs-shock", "rawText": "rear shock absorber suspension", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2008] },
+    { "id": "rs-bearing", "rawText": "front wheel bearing hub", "mode": "Semantic", "locale": "en", "expectedProductIds": [2009] },
+    { "id": "rs-fuel-pump", "rawText": "fuel pump in tank module", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2010] },
+    { "id": "rs-ar-oil", "rawText": "فلتر زيت", "mode": "Semantic", "locale": "ar", "expectedProductIds": [2001] },
+    { "id": "rs-ar-brake", "rawText": "فحمات فرامل", "mode": "Semantic", "locale": "ar", "expectedProductIds": [2004] },
+    { "id": "rs-ar-timing", "rawText": "سير التوقيت", "mode": "NaturalLanguage", "locale": "ar", "expectedProductIds": [2006] },
+    { "id": "rs-ar-fuel", "rawText": "طرمبة بنزين", "mode": "Semantic", "locale": "ar", "expectedProductIds": [2010] },
+    { "id": "rs-misspelled-cabin", "rawText": "cabn air filtr", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [2003] }
+  ]
+}

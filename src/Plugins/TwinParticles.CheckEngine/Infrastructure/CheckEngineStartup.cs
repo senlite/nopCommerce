@@ -2,9 +2,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
+using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Application.DependencyInjection;
 using TwinParticles.CheckEngine.Application.Licensing;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Configuration;
+using TwinParticles.CheckEngine.Infrastructure.Ai;
 using TwinParticles.CheckEngine.Infrastructure.DependencyInjection;
 using TwinParticles.CheckEngine.Infrastructure.Filters;
 
@@ -20,6 +23,29 @@ public sealed class CheckEngineStartup : INopStartup
 
         services.AddCheckEngineApplication();
         services.AddCheckEngineInfrastructure();
+
+        services.AddSingleton<AiSpendAlertService>();
+        services.AddSingleton<AiSpendGuardService>(sp => new AiSpendGuardService(
+            sp.GetService<IAiFeatureToggle>(),
+            sp.GetService<IAiSpendPolicy>(),
+            sp.GetService<IAiUsageLedger>(),
+            sp.GetRequiredService<AiSpendAlertService>()));
+
+        services.AddSingleton<AiCompletionGateService>(sp =>
+            new AiCompletionGateService(
+                sp.GetRequiredService<CachingAiCompletionPort>(),
+                sp.GetRequiredService<AiSpendGuardService>(),
+                sp.GetService<IAiUsageLedger>(),
+                sp.GetService<IAiSpendPolicy>()));
+        services.AddSingleton<IAiCompletionPort>(sp => sp.GetRequiredService<AiCompletionGateService>());
+
+        services.AddSingleton<AiEmbeddingGateService>(sp =>
+            new AiEmbeddingGateService(
+                sp.GetRequiredService<CachingAiEmbeddingPort>(),
+                sp.GetRequiredService<AiSpendGuardService>(),
+                sp.GetService<IAiUsageLedger>(),
+                sp.GetService<IAiSpendPolicy>()));
+        services.AddSingleton<IAiEmbeddingPort>(sp => sp.GetRequiredService<AiEmbeddingGateService>());
 
         services.AddScoped<CheckEngineLicenceWriteFilter>();
         services.AddMvc(options => options.Filters.AddService<CheckEngineLicenceWriteFilter>());

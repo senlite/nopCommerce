@@ -45,6 +45,11 @@ public static class CheckEngineSql
     public static string UtcNow()
         => IsMySql() ? "UTC_TIMESTAMP()" : "SYSUTCDATETIME()";
 
+    public static string ScalarSubqueryLimitOne(string selectExpression, string fromWhereOrderBy)
+        => IsMySql()
+            ? $"(SELECT {selectExpression} {fromWhereOrderBy} LIMIT 1)"
+            : $"(SELECT TOP 1 {selectExpression} {fromWhereOrderBy})";
+
     public static string AcquireSessionLock(string resourceParameter = "@resource")
         => IsMySql()
             ? $"SELECT GET_LOCK({resourceParameter}, 10);"

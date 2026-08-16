@@ -20,6 +20,7 @@ using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Import;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Services;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
 using TwinParticles.CheckEngine.Domain.Licensing;
+using TwinParticles.CheckEngine.Domain.Search;
 
 namespace TwinParticles.CheckEngine.Application.DependencyInjection;
 
@@ -74,6 +75,17 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<SeoLandingService>();
         services.AddScoped<TwinParticles.CheckEngine.Domain.Seo.ISeoLandingRegenerationTrigger, SeoLandingRegenerationTrigger>();
+
+        services.AddScoped<AutomotiveGlossaryService>();
+        services.AddScoped<AiContentCandidateService>();
+        services.AddScoped<AiPromptResolver>();
+        services.AddScoped<NaturalLanguageIntentParser>();
+        services.AddScoped<FitmentInferenceService>();
+        services.AddSingleton<BilingualSearchSynonymService>();
+        services.AddScoped<SemanticSearchService>();
+        services.AddScoped<SearchEmbeddingIndexBuilderService>();
+        services.AddScoped<AiDisclosureService>();
+        services.AddScoped<CustomerAssistantService>();
 
         services.AddScoped<AiProposalService>();
 

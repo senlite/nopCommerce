@@ -142,7 +142,8 @@ public class UnifiedSearchServiceTests
             oemService,
             new FitmentEvaluationService(new FakeFitmentReadRepository(null), new FakeFitmentCache()),
             new FakeSearchIndexHealthService(true),
-            new LowerNormalizer());
+            new LowerNormalizer(),
+            new NaturalLanguageIntentParser());
 
         var result = await service.SearchAsync(new SearchQuery
         {
@@ -173,7 +174,8 @@ public class UnifiedSearchServiceTests
             oemService,
             fitmentService,
             new FakeSearchIndexHealthService(indexHealthy),
-            new LowerNormalizer());
+            new LowerNormalizer(),
+            new NaturalLanguageIntentParser());
     }
 
     private sealed class LowerNormalizer : IBilingualSearchTextNormalizer

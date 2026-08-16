@@ -1,0 +1,25 @@
+{
+  "description": "Reference-scale search embedding catalog for NL/semantic benchmark (synthetic BMW-scale parts subset).",
+  "documents": [
+    { "productId": 2001, "locale": "en", "name": "BMW Oil Filter", "categoryName": "Engine", "brand": "BMW", "price": 24.90, "text": "BMW Oil Filter engine lubrication filtration" },
+    { "productId": 2002, "locale": "en", "name": "Radiator Hose Upper", "categoryName": "Cooling", "brand": "Conti", "price": 79.00, "text": "Radiator Hose Upper cooling system coolant" },
+    { "productId": 2003, "locale": "en", "name": "Cabin Air Filter", "categoryName": "HVAC", "brand": "Mann", "price": 18.50, "text": "Cabin Air Filter hvac pollen interior air" },
+    { "productId": 2004, "locale": "en", "name": "Brake Pad Set Front", "categoryName": "Brakes", "brand": "Brembo", "price": 145.00, "text": "Brake Pad Set Front disc braking friction" },
+    { "productId": 2005, "locale": "en", "name": "Spark Plug Iridium", "categoryName": "Ignition", "brand": "NGK", "price": 12.50, "text": "Spark Plug Iridium ignition combustion" },
+    { "productId": 2006, "locale": "en", "name": "Timing Belt Kit", "categoryName": "Engine", "brand": "Gates", "price": 210.00, "text": "Timing Belt Kit engine camshaft synchronization" },
+    { "productId": 2007, "locale": "en", "name": "Alternator 140A", "categoryName": "Electrical", "brand": "Bosch", "price": 320.00, "text": "Alternator 140A charging electrical system" },
+    { "productId": 2008, "locale": "en", "name": "Shock Absorber Rear", "categoryName": "Suspension", "brand": "Bilstein", "price": 189.00, "text": "Shock Absorber Rear suspension damping" },
+    { "productId": 2009, "locale": "en", "name": "Wheel Bearing Hub", "categoryName": "Suspension", "brand": "SKF", "price": 95.00, "text": "Wheel Bearing Hub front axle rotation" },
+    { "productId": 2010, "locale": "en", "name": "Fuel Pump Module", "categoryName": "Fuel", "brand": "Valeo", "price": 275.00, "text": "Fuel Pump Module tank delivery gasoline" },
+    { "productId": 2001, "locale": "ar", "name": "فلتر زيت BMW", "categoryName": "محرك", "brand": "BMW", "price": 24.90, "text": "فلتر زيت BMW oil filter engine lubrication" },
+    { "productId": 2002, "locale": "ar", "name": "خرطوم رديتر علوي", "categoryName": "تبريد", "brand": "Conti", "price": 79.00, "text": "خرطوم رديتر radiator hose cooling coolant" },
+    { "productId": 2003, "locale": "ar", "name": "فلتر هواء المقصورة", "categoryName": "تكييف", "brand": "Mann", "price": 18.50, "text": "فلتر هواء المقصورة cabin air filter hvac" },
+    { "productId": 2004, "locale": "ar", "name": "فحمات فرامل أمامية", "categoryName": "فرامل", "brand": "Brembo", "price": 145.00, "text": "فحمات فرامل brake pad front disc" },
+    { "productId": 2005, "locale": "ar", "name": "شمعة إشعال", "categoryName": "إشعال", "brand": "NGK", "price": 12.50, "text": "شمعة إشعال spark plug ignition" },
+    { "productId": 2006, "locale": "ar", "name": "طقم سير التوقيت", "categoryName": "محرك", "brand": "Gates", "price": 210.00, "text": "سير التوقيت timing belt engine camshaft" },
+    { "productId": 2007, "locale": "ar", "name": "دينامo 140A", "categoryName": "كهرباء", "brand": "Bosch", "price": 320.00, "text": "دينامo alternator charging electrical" },
+    { "productId": 2008, "locale": "ar", "name": "مساعد خلفي", "categoryName": "تعليق", "brand": "Bilstein", "price": 189.00, "text": "مساعد shock absorber rear suspension" },
+    { "productId": 2009, "locale": "ar", "name": "رولمان عجلة", "categoryName": "تعليق", "brand": "SKF", "price": 95.00, "text": "رولمان عجلة wheel bearing hub" },
+    { "productId": 2010, "locale": "ar", "name": "طرمبة بنزين", "categoryName": "وقود", "brand": "Valeo", "price": 275.00, "text": "طرمبة بنزين fuel pump module gasoline" }
+  ]
+}

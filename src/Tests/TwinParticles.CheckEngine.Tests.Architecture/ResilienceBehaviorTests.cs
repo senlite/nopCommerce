@@ -93,7 +93,8 @@ public class ResilienceBehaviorTests
             oemService,
             fitmentService,
             new FakeSearchIndexHealthService(indexHealthy),
-            new LowerNormalizer());
+            new LowerNormalizer(),
+            new NaturalLanguageIntentParser());
     }
 
     private sealed class ThrowingAiCompletionPort : IAiCompletionPort

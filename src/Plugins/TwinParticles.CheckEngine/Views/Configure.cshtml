@@ -8,6 +8,7 @@
     <div class="card card-default">
         <div class="card-body">
             <a class="btn btn-info" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+            <a class="btn btn-secondary ml-2" href="@Url.Action("ReviewBoard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a>
         </div>
     </div>
 </div>
@@ -17,6 +18,9 @@
 <form asp-controller="CheckEngine" asp-action="Configure" method="post">
     <div class="cards-group">
         <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Configuration.General")</h3>
+            </div>
             <div class="card-body">
                 <div class="form-group row">
                     <div class="col-md-3">
@@ -25,6 +29,114 @@
                     <div class="col-md-9">
                         <nop-editor asp-for="Enabled" />
                         <span asp-validation-for="Enabled"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Configuration.Ai")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Ai.Hint")</p>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-label asp-for="AiProviderKind" />
+                    </div>
+                    <div class="col-md-9">
+                        <select asp-for="AiProviderKind" class="form-control">
+                            <option value="1">OpenAI-compatible</option>
+                            <option value="2">Azure OpenAI</option>
+                            <option value="3">Anthropic</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiBaseUrl" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiBaseUrl" /><span asp-validation-for="AiBaseUrl"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiApiKey" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiApiKey" /><span asp-validation-for="AiApiKey"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiModel" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiModel" /><span asp-validation-for="AiModel"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <nop-label asp-for="AiEmbeddingProviderKind" />
+                    </div>
+                    <div class="col-md-9">
+                        <select asp-for="AiEmbeddingProviderKind" class="form-control">
+                            <option value="0">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.SameAsCompletion")</option>
+                            <option value="1">OpenAI-compatible</option>
+                            <option value="2">Azure OpenAI</option>
+                            <option value="3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Deterministic")</option>
+                        </select>
+                        <small class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Hint")</small>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiEmbeddingBaseUrl" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiEmbeddingBaseUrl" /><span asp-validation-for="AiEmbeddingBaseUrl"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiEmbeddingApiKey" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiEmbeddingApiKey" /><span asp-validation-for="AiEmbeddingApiKey"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiEmbeddingModel" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiEmbeddingModel" /><span asp-validation-for="AiEmbeddingModel"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiAzureDeploymentName" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiAzureDeploymentName" /><span asp-validation-for="AiAzureDeploymentName"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiAzureEmbeddingDeploymentName" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiAzureEmbeddingDeploymentName" /><span asp-validation-for="AiAzureEmbeddingDeploymentName"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiDailyTokenCeiling" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiDailyTokenCeiling" /><span asp-validation-for="AiDailyTokenCeiling"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiTokenCostPer1KUsd" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiTokenCostPer1KUsd" /><span asp-validation-for="AiTokenCostPer1KUsd"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiResponseCacheTtlMinutes" /></div>
+                    <div class="col-md-9"><nop-editor asp-for="AiResponseCacheTtlMinutes" /><span asp-validation-for="AiResponseCacheTtlMinutes"></span></div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiPerFeatureDailyTokenCeilings" /></div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="AiPerFeatureDailyTokenCeilings" />
+                        <span asp-validation-for="AiPerFeatureDailyTokenCeilings"></span>
+                        <small class="form-text text-muted">import.ai.enrichment=50000;assistant.customer=20000</small>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="AiDisclosureAcknowledged" /></div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="AiDisclosureAcknowledged" />
+                        <span asp-validation-for="AiDisclosureAcknowledged"></span>
+                        <p class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Ai.DisclosureSummary")</p>
+                        <div id="ce-ai-disclosure-panel" class="border rounded p-3 bg-light small"></div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiFeatures")</div>
+                    <div class="col-md-9" id="ce-ai-feature-toggles">
+                        <div class="form-check"><input asp-for="EnableImportEnrichment" class="form-check-input" /><label asp-for="EnableImportEnrichment" class="form-check-label"></label></div>
+                        <div class="form-check"><input asp-for="EnableImportTranslation" class="form-check-input" /><label asp-for="EnableImportTranslation" class="form-check-label"></label></div>
+                        <div class="form-check"><input asp-for="EnableImportSeo" class="form-check-input" /><label asp-for="EnableImportSeo" class="form-check-label"></label></div>
+                        <div class="form-check"><input asp-for="EnableSearchNaturalLanguage" class="form-check-input" /><label asp-for="EnableSearchNaturalLanguage" class="form-check-label"></label></div>
+                        <div class="form-check"><input asp-for="EnableSearchSemantic" class="form-check-input" /><label asp-for="EnableSearchSemantic" class="form-check-label"></label></div>
+                        <div class="form-check"><input asp-for="EnableFitmentInference" class="form-check-input" /><label asp-for="EnableFitmentInference" class="form-check-label"></label></div>
+                        <div class="form-check"><input asp-for="EnableCustomerAssistant" class="form-check-input" /><label asp-for="EnableCustomerAssistant" class="form-check-label"></label></div>
                     </div>
                 </div>
                 <div class="form-group row">
@@ -36,3 +148,58 @@
         </div>
     </div>
 </form>
+
+<script>
+(function () {
+  var features = [
+    'import.ai.enrichment',
+    'import.ai.translation',
+    'import.ai.seo',
+    'search.natural_language',
+    'search.semantic',
+    'fitment.inference',
+    'assistant.customer'
+  ];
+  var panel = document.getElementById('ce-ai-disclosure-panel');
+  var ack = document.getElementById('AiDisclosureAcknowledged');
+  var toggleRoot = document.getElementById('ce-ai-feature-toggles');
+
+  function setFeatureInputsEnabled(enabled) {
+    if (!toggleRoot) return;
+    toggleRoot.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+      input.disabled = !enabled;
+    });
+  }
+
+  function renderDisclosure() {
+    if (!panel) return;
+    panel.innerHTML = '<p>Loading disclosure categories…</p>';
+    Promise.all(features.map(function (featureKey) {
+      return fetch('/Admin/CheckEngine/AiAdmin/Disclosure?featureKey=' + encodeURIComponent(featureKey), {
+        headers: { 'Accept': 'application/json' }
+      }).then(function (r) { return r.json(); }).then(function (items) {
+        return { featureKey: featureKey, items: items || [] };
+      });
+    })).then(function (rows) {
+      panel.innerHTML = rows.map(function (row) {
+        var items = row.items.map(function (item) {
+          return '<li><strong>' + item.category + ':</strong> ' + item.description + '</li>';
+        }).join('');
+        return '<div class="mb-2"><code>' + row.featureKey + '</code><ul class="mb-0">' + items + '</ul></div>';
+      }).join('');
+    }).catch(function () {
+      panel.textContent = 'Unable to load disclosure catalog.';
+    });
+  }
+
+  function syncToggleState() {
+    setFeatureInputsEnabled(!!(ack && ack.checked));
+  }
+
+  if (ack) {
+    ack.addEventListener('change', syncToggleState);
+    syncToggleState();
+  }
+  renderDisclosure();
+})();
+</script>

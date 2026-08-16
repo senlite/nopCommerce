@@ -59,7 +59,8 @@ public class GarageContextSearchServiceTests
             new OemResolveService(new FakeOemNormalizationService(), new FakeOemSearchRepository(), new OemSupersessionService(new FakeOemRelationRepository()), new EmptyProductOemMapRepository()),
             new FitmentEvaluationService(new FakeFitmentRepository(), new FakeFitmentCache()),
             new FakeSearchIndexHealthService(),
-            new LowerNormalizer());
+            new LowerNormalizer(),
+            new NaturalLanguageIntentParser());
 
         return new GarageContextSearchService(searchService);
     }

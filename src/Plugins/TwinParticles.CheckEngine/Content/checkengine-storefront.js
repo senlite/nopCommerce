@@ -53,11 +53,19 @@
     recoveryTitle: 'Try one of these',
     suggestVehicles: 'Vehicles',
     suggestOems: 'OEM numbers',
-    suggestProducts: 'Products'
+    suggestProducts: 'Products',
+    assistantTitle: 'Parts assistant',
+    assistantPlaceholder: 'Ask about a part in your catalog…',
+    assistantSend: 'Ask',
+    assistantUnavailable: 'The assistant is unavailable right now.',
+    assistantOpen: 'Open parts assistant',
+    recommendTitle: 'Also fits your vehicle',
+    recommendUnscopedTitle: 'You may also like',
+    recommendFitmentBadge: 'Fits your vehicle'
   };
 
   var MODE_NAMES = {
-    1: 'Auto', 2: 'VIN', 3: 'OEM', 4: 'Vehicle', 5: 'Category', 6: 'Keyword', 7: 'Natural language'
+    1: 'Auto', 2: 'VIN', 3: 'OEM', 4: 'Vehicle', 5: 'Category', 6: 'Keyword', 7: 'Natural language', 8: 'Semantic'
   };
 
   var ICONS = {
@@ -413,6 +421,22 @@
     announce(total + ' ' + TEXT.searchResultsCount);
   }
 
+  function resolveSearchMode() {
+    if (selectedSuggestionVehicleId) {
+      return 4;
+    }
+
+    var modeSelect = document.getElementById('ce-search-mode');
+    if (modeSelect && modeSelect.value) {
+      var mode = parseInt(modeSelect.value, 10);
+      if (mode > 0) {
+        return mode;
+      }
+    }
+
+    return 1;
+  }
+
   function runSearch() {
     var input = document.getElementById('ce-sticky-search-input');
     var widen = document.getElementById('ce-widen-fitment');
@@ -436,7 +460,7 @@
         brand: currentFilters.brand || null,
         priceMin: currentFilters.priceMin != null ? currentFilters.priceMin : null,
         priceMax: currentFilters.priceMax != null ? currentFilters.priceMax : null,
-        mode: selectedSuggestionVehicleId ? 4 : 1,
+        mode: resolveSearchMode(),
         vehicleConfigurationId: selectedSuggestionVehicleId || null,
         locale: document.documentElement.lang || 'en'
       })
@@ -1211,6 +1235,120 @@
     });
   }
 
+  function appendAssistantLine(role, text) {
+    var log = document.getElementById('ce-assistant-log');
+    if (!log) {
+      return;
+    }
+    var line = document.createElement('p');
+    line.className = 'ce-assistant__line ce-assistant__line--' + role;
+    line.textContent = text;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function bindAssistant() {
+    var toggle = document.getElementById('ce-assistant-toggle');
+    var panel = document.getElementById('ce-assistant-panel');
+    var form = document.getElementById('ce-assistant-form');
+    var input = document.getElementById('ce-assistant-input');
+    if (!toggle || !panel || !form || !input) {
+      return;
+    }
+
+    toggle.addEventListener('click', function () {
+      var open = panel.hasAttribute('hidden');
+      if (open) {
+        panel.removeAttribute('hidden');
+      } else {
+        panel.setAttribute('hidden', 'hidden');
+      }
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var question = input.value.trim();
+      if (!question) {
+        return;
+      }
+      appendAssistantLine('user', question);
+      input.value = '';
+
+      loadGarageContext().then(function (ctx) {
+        var active = activeVehicleOf(ctx.garage);
+        var vehicleId = active && (active.vehicleConfigurationId || active.VehicleConfigurationId);
+        return jsonFetch('/check-engine/assistant/ask', {
+          method: 'POST',
+          body: JSON.stringify({
+            question: question,
+            vehicleConfigurationId: vehicleId || null,
+            locale: (document.documentElement.lang || 'en').split('-')[0]
+          })
+        });
+      }).then(function (response) {
+        return response.json().then(function (payload) {
+          if (!response.ok || payload.errorCode) {
+            appendAssistantLine('assistant', TEXT.assistantUnavailable);
+            return;
+          }
+          appendAssistantLine('assistant', payload.answer || payload.Answer || TEXT.assistantUnavailable);
+        });
+      }).catch(function () {
+        appendAssistantLine('assistant', TEXT.assistantUnavailable);
+      });
+    });
+  }
+
+  function loadRecommendations() {
+    var rail = document.querySelector('[data-ce-theme="recommendations"]');
+    var list = document.getElementById('ce-recommend-list');
+    if (!rail || !list) {
+      return;
+    }
+
+    var productId = parseInt(rail.getAttribute('data-ce-product-id') || '0', 10);
+    loadGarageContext().then(function (ctx) {
+      var active = activeVehicleOf(ctx.garage);
+      var vehicleId = active && (active.vehicleConfigurationId || active.VehicleConfigurationId);
+      var url = '/check-engine/search/recommend?take=4';
+      if (vehicleId) {
+        url += '&vehicleConfigurationId=' + encodeURIComponent(vehicleId);
+      }
+      if (productId > 0) {
+        url += '&seedProductId=' + encodeURIComponent(productId);
+      }
+      return jsonFetch(url, { method: 'GET' });
+    }).then(function (response) {
+      if (!response.ok) {
+        return [];
+      }
+      return response.json();
+    }).then(function (payload) {
+      list.innerHTML = '';
+      var hits = Array.isArray(payload) ? payload : (payload.hits || payload.Hits || []);
+      var vehicleScoped = Array.isArray(payload) ? true : (payload.vehicleScoped ?? payload.VehicleScoped);
+      var title = document.querySelector('.ce-recommend__title');
+      if (title) {
+        title.textContent = vehicleScoped === false ? TEXT.recommendUnscopedTitle : TEXT.recommendTitle;
+      }
+      hits.forEach(function (hit) {
+        var item = document.createElement('li');
+        var name = hit.name || hit.Name || ('#' + (hit.productId || hit.ProductId));
+        var badge = vehicleScoped === true
+          ? '<span class="ce-recommend__badge">' + escapeHtml(TEXT.recommendFitmentBadge) + '</span> '
+          : '';
+        item.innerHTML = badge + '<a href="/search?q=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>';
+        list.appendChild(item);
+      });
+      if (list.children.length) {
+        rail.removeAttribute('hidden');
+      }
+    }).catch(function () {
+      /* recommendations are optional */
+    });
+  }
+
   function boot() {
     loadText();
     ensureGuestKey();
@@ -1219,8 +1357,10 @@
     bindVinDisambiguationModal();
     bindHero();
     bindMegaMenu();
+    bindAssistant();
     populateVehicleSelector().then(function () {
       evaluateFitmentBand();
+      loadRecommendations();
     });
     maybeMigrateGuestOnLogin();
   }

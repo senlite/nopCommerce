@@ -1,0 +1,17 @@
+{
+  "description": "Natural-language search benchmark (FR-419 / AC-092.1). Recall@5 against the in-memory reference catalog with semantic index enabled.",
+  "recallAtKThreshold": 0.83,
+  "k": 5,
+  "queries": [
+    { "id": "nl-oil-filter-bmw", "rawText": "oil filter for my bmw", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1001] },
+    { "id": "nl-cooling-hose", "rawText": "cooling radiator hose", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1002] },
+    { "id": "nl-cabin-air", "rawText": "cabin air filter", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1003] },
+    { "id": "nl-misspelled-filter", "rawText": "cabin filtr", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1003] },
+    { "id": "nl-semantic-radiator", "rawText": "hose for radiator cooling system", "mode": "Semantic", "locale": "en", "expectedProductIds": [1002] },
+    { "id": "nl-bmw-engine-part", "rawText": "bmw engine oil filtration", "mode": "NaturalLanguage", "locale": "en", "expectedProductIds": [1001] },
+    { "id": "nl-ar-oil-filter", "rawText": "فلتر زيت", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1001] },
+    { "id": "nl-ar-radiator-hose", "rawText": "خرطوم رديتر", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1002] },
+    { "id": "nl-ar-cabin-filter", "rawText": "فلتر مقصورة", "mode": "NaturalLanguage", "locale": "ar", "expectedProductIds": [1003] },
+    { "id": "nl-ar-cooling", "rawText": "تبريد راديتر", "mode": "Semantic", "locale": "ar", "expectedProductIds": [1002] }
+  ]
+}

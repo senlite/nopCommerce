@@ -129,7 +129,7 @@ public sealed class SearchController : BasePublicController
     [HttpGet]
     [HttpPost]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> Recommend(int? vehicleConfigurationId, int take = 8, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Recommend(int? vehicleConfigurationId, int take = 8, int? seedProductId = null, CancellationToken cancellationToken = default)
     {
         if (take <= 0)
             take = 8;
@@ -146,7 +146,15 @@ public sealed class SearchController : BasePublicController
             }
         }
 
-        var recommendations = await _recommendationService.GetRecommendationsAsync(vehicleConfigurationId, take, cancellationToken);
-        return Json(recommendations);
+        var recommendations = await _recommendationService.GetRecommendationsAsync(
+            vehicleConfigurationId,
+            take,
+            cancellationToken,
+            seedProductId);
+        return Json(new
+        {
+            vehicleScoped = recommendations.VehicleScoped,
+            hits = recommendations.Hits
+        });
     }
 }
