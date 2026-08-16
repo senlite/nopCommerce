@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.ScheduleTasks;
 using Nop.Data.Migrations;
 using Nop.Services.Cms;
@@ -89,6 +90,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await EnsureScheduleTasksAsync();
 
         await AddOrUpdateLocaleResourcesAsync();
+        await EnsureWidgetActiveAsync();
 
         await base.InstallAsync();
     }
@@ -465,6 +467,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.NoMatter);
         await EnsureScheduleTasksAsync();
         await AddOrUpdateLocaleResourcesAsync();
+        await EnsureWidgetActiveAsync();
         await base.UpdateAsync(currentVersion, targetVersion);
     }
 
@@ -498,6 +501,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         if (searchEmbeddingTask is not null)
             await _scheduleTaskService.DeleteTaskAsync(searchEmbeddingTask);
 
+        await DeactivateWidgetAsync();
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.TwinParticles.CheckEngine");
@@ -533,6 +537,26 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             typeof(Tasks.SearchEmbeddingRefreshTask).FullName!,
             "Check Engine search embedding refresh",
             15 * 60);
+    }
+
+    private async Task EnsureWidgetActiveAsync()
+    {
+        var widgetSettings = await _settingService.LoadSettingAsync<WidgetSettings>();
+        var systemName = PluginDescriptor.SystemName;
+        if (widgetSettings.ActiveWidgetSystemNames.Contains(systemName, StringComparer.OrdinalIgnoreCase))
+            return;
+
+        widgetSettings.ActiveWidgetSystemNames.Add(systemName);
+        await _settingService.SaveSettingAsync(widgetSettings);
+    }
+
+    private async Task DeactivateWidgetAsync()
+    {
+        var widgetSettings = await _settingService.LoadSettingAsync<WidgetSettings>();
+        var removed = widgetSettings.ActiveWidgetSystemNames.RemoveAll(name =>
+            string.Equals(name, PluginDescriptor.SystemName, StringComparison.OrdinalIgnoreCase));
+        if (removed > 0)
+            await _settingService.SaveSettingAsync(widgetSettings);
     }
 
     private async Task EnsureScheduleTaskAsync(string type, string name, int seconds)

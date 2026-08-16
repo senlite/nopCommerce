@@ -24,6 +24,9 @@
     <None Remove="Views\Admin\SearchAdmin.cshtml" />
     <None Remove="Views\Admin\AiDashboard.cshtml" />
     <None Remove="Views\Admin\GlossaryAdmin.cshtml" />
+    <None Remove="Views\Admin\SpecKeysAdmin.cshtml" />
+    <None Remove="Views\Admin\AiReview.cshtml" />
+    <None Remove="Views\Admin\FitmentAiReview.cshtml" />
     <None Remove="Views\Seo\Landing.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
     <None Remove="Views\Shared\Components\UninstallPreparation\Default.cshtml" />
@@ -53,6 +56,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Admin\GlossaryAdmin.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\SpecKeysAdmin.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Admin\FitmentAiReview.cshtml">
