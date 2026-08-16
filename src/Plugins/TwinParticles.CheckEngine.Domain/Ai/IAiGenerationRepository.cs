@@ -19,4 +19,6 @@ public interface IAiGenerationRepository
         => Task.FromResult<IReadOnlyList<AiGenerationCandidate>>([]);
 
     Task MarkReviewedAsync(int id, bool approved, string reviewer, CancellationToken cancellationToken);
+
+    Task RebindImportRowEntityAsync(int importRowNumber, int productId, CancellationToken cancellationToken);
 }

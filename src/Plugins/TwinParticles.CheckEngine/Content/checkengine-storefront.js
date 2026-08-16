@@ -59,6 +59,7 @@
     assistantSend: 'Ask',
     assistantUnavailable: 'The assistant is unavailable right now.',
     assistantOpen: 'Open parts assistant',
+    assistantSources: 'Catalog sources',
     recommendTitle: 'Also fits your vehicle',
     recommendUnscopedTitle: 'You may also like',
     recommendFitmentBadge: 'Fits your vehicle'
@@ -1235,7 +1236,7 @@
     });
   }
 
-  function appendAssistantLine(role, text) {
+  function appendAssistantLine(role, text, citations) {
     var log = document.getElementById('ce-assistant-log');
     if (!log) {
       return;
@@ -1244,6 +1245,26 @@
     line.className = 'ce-assistant__line ce-assistant__line--' + role;
     line.textContent = text;
     log.appendChild(line);
+
+    if (role === 'assistant' && citations && citations.length) {
+      var sources = document.createElement('ul');
+      sources.className = 'ce-assistant__citations';
+      citations.forEach(function (citation) {
+        var item = document.createElement('li');
+        var productMatch = String(citation).match(/ProductId=(\d+)/i);
+        if (productMatch) {
+          var link = document.createElement('a');
+          link.href = '/search?q=' + encodeURIComponent('ProductId ' + productMatch[1]);
+          link.textContent = citation;
+          item.appendChild(link);
+        } else {
+          item.textContent = citation;
+        }
+        sources.appendChild(item);
+      });
+      log.appendChild(sources);
+    }
+
     log.scrollTop = log.scrollHeight;
   }
 
@@ -1292,7 +1313,11 @@
             appendAssistantLine('assistant', TEXT.assistantUnavailable);
             return;
           }
-          appendAssistantLine('assistant', payload.answer || payload.Answer || TEXT.assistantUnavailable);
+          var citations = payload.citations || payload.Citations || [];
+          appendAssistantLine(
+            'assistant',
+            payload.answer || payload.Answer || TEXT.assistantUnavailable,
+            citations);
         });
       }).catch(function () {
         appendAssistantLine('assistant', TEXT.assistantUnavailable);

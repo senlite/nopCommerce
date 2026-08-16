@@ -172,7 +172,16 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IAiCompletionCache>(),
             sp.GetRequiredService<CheckEngineAiOptions>()));
         services.AddSingleton<MemoryAiEmbeddingCache>();
-        services.AddSingleton<IAiEmbeddingCache>(sp => sp.GetRequiredService<MemoryAiEmbeddingCache>());
+        services.AddSingleton<IAiEmbeddingCache>(sp =>
+        {
+            var memory = sp.GetRequiredService<MemoryAiEmbeddingCache>();
+            var staticCache = sp.GetService<Nop.Core.Caching.IStaticCacheManager>();
+            if (staticCache is null)
+                return memory;
+
+            var distributed = new NopStaticCacheAiEmbeddingCache(staticCache, sp.GetRequiredService<CheckEngineAiOptions>());
+            return new LayeredAiEmbeddingCache(memory, distributed);
+        });
         services.AddSingleton<CachingAiEmbeddingPort>(sp => new CachingAiEmbeddingPort(
             sp.GetRequiredService<AiEmbeddingProviderRouter>(),
             sp.GetRequiredService<IAiEmbeddingCache>(),

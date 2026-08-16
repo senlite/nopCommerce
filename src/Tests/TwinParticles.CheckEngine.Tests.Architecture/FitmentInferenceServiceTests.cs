@@ -27,6 +27,33 @@ public class FitmentInferenceServiceTests
         queueRepo.LastReason.Should().Be("fitment.ai_inference");
     }
 
+    [Test]
+    public async Task InferCandidateAsync_Should_Parse_Json_Verdict_From_Prompt_Store()
+    {
+        var writeRepo = new InMemoryFitmentWriteRepository();
+        var queueRepo = new RecordingQueueRepository();
+        var service = new FitmentInferenceService(writeRepo, queueRepo, new JsonVerdictPort());
+
+        var claim = await service.InferCandidateAsync(10, 20, "Brake Pad", CancellationToken.None);
+
+        claim.Should().NotBeNull();
+        claim!.Status.Should().Be(FitmentStatus.DoesNotFit);
+    }
+
+    private sealed class JsonVerdictPort : IAiCompletionPort
+    {
+        public Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken ct)
+        {
+            return Task.FromResult(new AiCompletionResult
+            {
+                Success = true,
+                Text = """[{"productId":10,"configurationId":20,"verdict":"DoesNotFit","confidence":0.4}]""",
+                ProviderName = "test",
+                PromptHash = "abc"
+            });
+        }
+    }
+
     private sealed class FitsPort : IAiCompletionPort
     {
         public Task<AiCompletionResult> CompleteAsync(AiCompletionRequest request, CancellationToken ct)

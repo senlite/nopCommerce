@@ -132,7 +132,7 @@ public class FitmentPolicyAndReviewServiceTests
     }
 
     [Test]
-    public async Task RejectAsync_Should_Set_Rejected_Unpublish_And_Enqueue_Reason_And_Reject_Invalid_Id()
+    public async Task RejectAsync_Should_Set_Rejected_And_Unpublish_Without_Reenqueue()
     {
         var readRepository = new FakeReadRepository();
         var writeRepository = new FakeWriteRepository();
@@ -143,7 +143,7 @@ public class FitmentPolicyAndReviewServiceTests
 
         writeRepository.StatusByClaimId[301].Should().Be(FitmentStatus.Rejected);
         writeRepository.PublishedByClaimId[301].Should().BeFalse();
-        queueRepository.Enqueued.Should().ContainSingle(x => x.claimId == 301 && x.reasonCode == "fitment.rejected_by_reviewer");
+        queueRepository.Enqueued.Should().BeEmpty();
 
         Func<Task> invalidAct = async () => await service.RejectAsync(-1, CancellationToken.None);
         await invalidAct.Should().ThrowAsync<ArgumentException>();

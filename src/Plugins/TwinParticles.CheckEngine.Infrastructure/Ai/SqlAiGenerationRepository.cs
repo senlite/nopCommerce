@@ -98,6 +98,16 @@ WHERE Id = @id",
             new DataParameter("isPublished", approved));
     }
 
+    public Task RebindImportRowEntityAsync(int importRowNumber, int productId, CancellationToken cancellationToken)
+    {
+        return _dataProvider.ExecuteNonQueryAsync(@"
+UPDATE TP_CE_AiGeneration
+SET EntityId = @productId
+WHERE EntityId = @importRowNumber AND ReviewStatus = 'pending'",
+            new DataParameter("importRowNumber", importRowNumber),
+            new DataParameter("productId", productId));
+    }
+
     private static AiGenerationCandidate Map(AiGenerationRow row)
     {
         return new AiGenerationCandidate

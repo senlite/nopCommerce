@@ -17,13 +17,16 @@ public sealed class NaturalLanguageIntentParser
 
     private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly AiPromptResolver? _promptResolver;
+    private readonly SearchIntentVehicleResolver? _vehicleResolver;
 
     public NaturalLanguageIntentParser(
         IAiCompletionPort? aiCompletionPort = null,
-        AiPromptResolver? promptResolver = null)
+        AiPromptResolver? promptResolver = null,
+        SearchIntentVehicleResolver? vehicleResolver = null)
     {
         _aiCompletionPort = aiCompletionPort;
         _promptResolver = promptResolver;
+        _vehicleResolver = vehicleResolver;
     }
 
     public async Task<SearchIntent> ParseAsync(string queryText, string locale, CancellationToken cancellationToken)
@@ -34,14 +37,41 @@ public sealed class NaturalLanguageIntentParser
             return new SearchIntent { Locale = locale, KeywordFallback = normalized };
         }
 
+        SearchIntent intent;
         if (_aiCompletionPort is not null)
         {
             var structured = await TryParseWithLlmAsync(normalized, locale, cancellationToken);
-            if (structured is not null)
-                return structured;
+            intent = structured ?? BuildHeuristicIntent(normalized, locale);
+        }
+        else
+        {
+            intent = BuildHeuristicIntent(normalized, locale);
         }
 
-        return BuildHeuristicIntent(normalized, locale);
+        return await EnrichWithVehicleAsync(intent, cancellationToken);
+    }
+
+    private async Task<SearchIntent> EnrichWithVehicleAsync(SearchIntent intent, CancellationToken cancellationToken)
+    {
+        if (_vehicleResolver is null)
+            return intent;
+
+        var configurationId = await _vehicleResolver.ResolveConfigurationIdAsync(intent, cancellationToken);
+        if (configurationId is not > 0)
+            return intent;
+
+        return new SearchIntent
+        {
+            PartTerms = intent.PartTerms,
+            Make = intent.Make,
+            Model = intent.Model,
+            ModelYear = intent.ModelYear,
+            VehicleConfigurationId = configurationId,
+            OemNumber = intent.OemNumber,
+            Locale = intent.Locale,
+            KeywordFallback = intent.KeywordFallback,
+            ParsedFromNaturalLanguage = intent.ParsedFromNaturalLanguage
+        };
     }
 
     private async Task<SearchIntent?> TryParseWithLlmAsync(string text, string locale, CancellationToken cancellationToken)

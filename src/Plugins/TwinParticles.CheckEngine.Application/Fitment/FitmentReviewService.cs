@@ -81,7 +81,6 @@ public sealed class FitmentReviewService
 
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Rejected, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, false, cancellationToken);
-        await _reviewQueueRepository.EnqueueAsync(claimId, "fitment.rejected_by_reviewer", cancellationToken);
 
         await _auditService.AppendAsync(
             actor,

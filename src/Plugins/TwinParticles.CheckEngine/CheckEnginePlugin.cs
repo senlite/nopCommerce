@@ -444,6 +444,9 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         var searchIndexTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.SearchIndexRefreshTask).FullName!);
         if (searchIndexTask is not null)
             await _scheduleTaskService.DeleteTaskAsync(searchIndexTask);
+        var searchEmbeddingTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.SearchEmbeddingRefreshTask).FullName!);
+        if (searchEmbeddingTask is not null)
+            await _scheduleTaskService.DeleteTaskAsync(searchEmbeddingTask);
 
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
@@ -476,6 +479,10 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             typeof(Tasks.SearchIndexRefreshTask).FullName!,
             "Check Engine search index refresh",
             60);
+        await EnsureScheduleTaskAsync(
+            typeof(Tasks.SearchEmbeddingRefreshTask).FullName!,
+            "Check Engine search embedding refresh",
+            15 * 60);
     }
 
     private async Task EnsureScheduleTaskAsync(string type, string name, int seconds)

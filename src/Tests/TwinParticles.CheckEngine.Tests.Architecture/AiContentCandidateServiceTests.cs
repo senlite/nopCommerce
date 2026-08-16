@@ -40,6 +40,34 @@ public class AiContentCandidateServiceTests
         applicator.LastCandidate!.OutputText.Should().Be("candidate text");
     }
 
+    [Test]
+    public async Task RebindImportRowEntityAsync_Should_Point_Pending_Candidates_To_Product()
+    {
+        var store = new InMemoryGenerationRepository();
+        var service = new AiImportCandidateRebindService(store);
+
+        await store.InsertAsync(new AiGenerationCandidate
+        {
+            EntityType = AiGenerationEntityType.ProductDescription,
+            EntityId = 3,
+            FeatureKey = AiFeatureKeys.ImportEnrichment,
+            Locale = "en",
+            OutputText = "text",
+            PromptKey = AiFeatureKeys.ImportEnrichment,
+            PromptHash = "hash",
+            ReviewStatus = "pending"
+        }, CancellationToken.None);
+
+        await service.RebindImportRowAsync(3, 9001, CancellationToken.None);
+
+        var pending = await store.GetPendingByEntityAsync(
+            AiGenerationEntityType.ProductDescription,
+            9001,
+            CancellationToken.None);
+
+        pending.Should().ContainSingle();
+    }
+
     private sealed class InMemoryGenerationRepository : IAiGenerationRepository
     {
         private readonly Dictionary<int, AiGenerationCandidate> _items = new();
@@ -75,6 +103,14 @@ public class AiContentCandidateServiceTests
                 candidate.IsPublished = approved;
                 candidate.Reviewer = reviewer;
             }
+
+            return Task.CompletedTask;
+        }
+
+        public Task RebindImportRowEntityAsync(int importRowNumber, int productId, CancellationToken cancellationToken)
+        {
+            foreach (var candidate in _items.Values.Where(x => x.EntityId == importRowNumber && x.ReviewStatus == "pending"))
+                candidate.EntityId = productId;
 
             return Task.CompletedTask;
         }

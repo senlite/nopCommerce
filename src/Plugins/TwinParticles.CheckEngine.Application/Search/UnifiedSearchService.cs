@@ -59,11 +59,21 @@ public sealed class UnifiedSearchService
         var modeUsed = mode;
         IReadOnlyList<SearchVinCandidate> vinCandidates = [];
         var needsVinDisambiguation = false;
+        var effectiveQuery = query;
 
         if (mode == SearchMode.NaturalLanguage)
         {
-            hits = await SearchNaturalLanguageAsync(query, normalizedText, cancellationToken);
+            var naturalLanguage = await SearchNaturalLanguageAsync(query, normalizedText, cancellationToken);
+            hits = naturalLanguage.Hits;
             modeUsed = SearchMode.NaturalLanguage;
+            if (naturalLanguage.VehicleConfigurationId is > 0)
+            {
+                effectiveQuery = CloneQuery(
+                    query,
+                    query.RawText,
+                    SearchMode.NaturalLanguage,
+                    naturalLanguage.VehicleConfigurationId);
+            }
         }
         else if (mode == SearchMode.Semantic)
         {
@@ -96,15 +106,15 @@ public sealed class UnifiedSearchService
             hits = await _productSearchReadRepository.SearchKeywordAsync(CloneQuery(query, query.RawText, SearchMode.Keyword), cancellationToken);
         }
 
-        if (query.VehicleConfigurationId.HasValue)
-            hits = await ApplyFitmentFilterAsync(hits, query.VehicleConfigurationId.Value, query.WidenFitment, cancellationToken);
+        if (effectiveQuery.VehicleConfigurationId.HasValue)
+            hits = await ApplyFitmentFilterAsync(hits, effectiveQuery.VehicleConfigurationId.Value, effectiveQuery.WidenFitment, cancellationToken);
 
         // Drill-down filters are applied uniformly here so facet selections work across every lane
         // (vehicle-tree and OEM projections never saw brand/price filters at the repository).
-        var filtered = ApplyFacetFilters(hits, query.Filters);
+        var filtered = ApplyFacetFilters(hits, effectiveQuery.Filters);
 
         // Facets and total describe the whole filtered result, so both are computed before paging.
-        var facets = SearchFacetAggregator.Aggregate(filtered, query.VehicleConfigurationId.HasValue);
+        var facets = SearchFacetAggregator.Aggregate(filtered, effectiveQuery.VehicleConfigurationId.HasValue);
         var total = filtered.Count;
 
         var ranked = filtered
@@ -114,7 +124,7 @@ public sealed class UnifiedSearchService
             .Take(query.PageSize)
             .ToList();
 
-        var recovery = total == 0 ? BuildRecovery(query) : [];
+        var recovery = total == 0 ? BuildRecovery(effectiveQuery) : [];
 
         long? analyticsId = null;
         if (_searchAnalyticsService is not null)
@@ -128,7 +138,7 @@ public sealed class UnifiedSearchService
                     query.Locale,
                     total,
                     query.VehicleConfigurationId.HasValue,
-                    query.WidenFitment,
+                    effectiveQuery.WidenFitment,
                     degraded,
                     stopwatch.ElapsedMilliseconds,
                     cancellationToken);
@@ -202,23 +212,19 @@ public sealed class UnifiedSearchService
         return SearchMode.Keyword;
     }
 
-    private async Task<IReadOnlyList<SearchHit>> SearchNaturalLanguageAsync(
+    private async Task<NaturalLanguageSearchResult> SearchNaturalLanguageAsync(
         SearchQuery query,
         string normalizedText,
         CancellationToken cancellationToken)
     {
         var intent = await _naturalLanguageIntentParser.ParseAsync(normalizedText, query.Locale, cancellationToken);
 
-        if (intent.VehicleConfigurationId is > 0)
-        {
-            return await _productSearchReadRepository.SearchByVehicleTreeAsync(
-                CloneQuery(query, string.Empty, SearchMode.VehicleTree, intent.VehicleConfigurationId),
-                cancellationToken);
-        }
-
         if (!string.IsNullOrWhiteSpace(intent.OemNumber))
         {
-            return await SearchOemAsync(query, intent.OemNumber, cancellationToken);
+            return new NaturalLanguageSearchResult
+            {
+                Hits = await SearchOemAsync(query, intent.OemNumber, cancellationToken)
+            };
         }
 
         var keywords = intent.PartTerms.Count > 0
@@ -230,14 +236,31 @@ public sealed class UnifiedSearchService
 
         var keywordHits = await SearchKeywordTermsAsync(query, intent, keywords, cancellationToken);
 
+        IReadOnlyList<SearchHit> hits;
         if (_semanticSearchService is null)
-            return keywordHits;
+        {
+            hits = keywordHits;
+        }
+        else
+        {
+            var semanticHits = await _semanticSearchService.SearchAsync(
+                CloneQuery(query, normalizedText, SearchMode.Semantic),
+                cancellationToken);
+            hits = MergeHits(keywordHits, semanticHits);
+        }
 
-        var semanticHits = await _semanticSearchService.SearchAsync(
-            CloneQuery(query, normalizedText, SearchMode.Semantic),
-            cancellationToken);
+        return new NaturalLanguageSearchResult
+        {
+            Hits = hits,
+            VehicleConfigurationId = intent.VehicleConfigurationId
+        };
+    }
 
-        return MergeHits(keywordHits, semanticHits);
+    private sealed class NaturalLanguageSearchResult
+    {
+        public IReadOnlyList<SearchHit> Hits { get; init; } = [];
+
+        public int? VehicleConfigurationId { get; init; }
     }
 
     private async Task<IReadOnlyList<SearchHit>> SearchKeywordTermsAsync(
