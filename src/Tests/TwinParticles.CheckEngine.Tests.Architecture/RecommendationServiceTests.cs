@@ -69,6 +69,19 @@ public class RecommendationServiceTests
     }
 
     [Test]
+    public async Task GetRecommendationsAsync_Should_Preserve_SeName_For_Storefront_Links()
+    {
+        var service = new RecommendationService(
+            new SeNameRepository(),
+            new FitmentEvaluationService(new FakeFitmentRepository(), new FakeFitmentCache()));
+
+        var recommendations = await service.GetRecommendationsAsync(777, take: 5, CancellationToken.None);
+
+        recommendations.Hits.Should().ContainSingle();
+        recommendations.Hits[0].SeName.Should().Be("oil-filter-bmw");
+    }
+
+    [Test]
     public void GetRecommendationsAsync_Should_Not_Accept_Customer_Identifiers()
     {
         var method = typeof(RecommendationService).GetMethod(nameof(RecommendationService.GetRecommendationsAsync));
@@ -77,9 +90,17 @@ public class RecommendationServiceTests
             .Should().NotContain(name => name.Contains("customer", System.StringComparison.OrdinalIgnoreCase));
     }
 
-    private sealed class FakeRepository : IProductSearchReadRepository
+    private sealed class SeNameRepository : FakeRepository
     {
-        public Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
+        public override Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<SearchHit>>([
+                new SearchHit { ProductId = 1001, Name = "Oil Filter", CategoryId = 10, Score = 0.9m, SeName = "oil-filter-bmw" }
+            ]);
+    }
+
+    private class FakeRepository : IProductSearchReadRepository
+    {
+        public virtual Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<SearchHit>>([
                 new SearchHit { ProductId = 1001, Name = "Oil Filter", CategoryId = 10, Score = 0.9m },
                 new SearchHit { ProductId = 1002, Name = "Hose", CategoryId = 20, Score = 0.8m },
@@ -89,7 +110,7 @@ public class RecommendationServiceTests
         public Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken)
             => SearchKeywordAsync(query, cancellationToken);
 
-        public Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken)
+        public virtual Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken)
             => SearchKeywordAsync(query, cancellationToken);
 
         public Task<IReadOnlyList<SearchHit>> SearchByOemIdAsync(int oemNumberId, SearchQuery query, CancellationToken cancellationToken)
