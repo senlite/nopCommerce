@@ -246,7 +246,7 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 | H2.7 | Enforce the controlled automotive translation glossary | partial | Embedded JSON + audited admin overrides UI; glossary validation blocks approval when `qualityScore < 1` |
 | H2.8 | Complete reviewable AI fitment candidate workflow | partial | JSON verdict + rationale in review queue; reject deactivates claim; AI queue excludes rejected/published; approve preserves DoesNotFit and records dequeue events |
 | H2.9 | Productionize fitment-constrained recommendations | partial | Fitment-only results, category affinity, `SeName` product URLs in PDP rail, `EnableRecommendations` feature flag, rate limiting on `/recommend` |
-| H2.10 | Build the grounded customer assistant | partial | Storefront assistant renders grounded citations; rate limiting on `/assistant/ask`; feature-gated widget with VIN-redacted catalog context |
+| H2.10 | Build the grounded customer assistant | partial | Structured citations with SeName URLs, vehicle-scoped context hint, loading and rate-limit UX; feature-gated widget with VIN-redacted catalog context |
 
 ### Horizon 3 — Marketplace / v1.2 (`EP-22`–`EP-24`)
 

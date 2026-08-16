@@ -63,17 +63,20 @@ public sealed class CustomerAssistantService
             vehicleConfigurationId,
             locale,
             cancellationToken);
-        if (catalogContext.Count == 0)
+        if (catalogContext.Citations.Count == 0)
         {
             return new CustomerAssistantResponse
             {
-                Answer = "I could not find matching catalog items for that question.",
-                Grounded = true
+                Answer = vehicleConfigurationId.HasValue
+                    ? "I could not find catalog items verified to fit your active vehicle for that question."
+                    : "I could not find matching catalog items for that question.",
+                Grounded = true,
+                VehicleScoped = vehicleConfigurationId.HasValue
             };
         }
 
         var redactedQuestion = AiPromptPrivacy.RedactVins(normalizedQuestion);
-        var contextBlock = string.Join('\n', catalogContext.Select((line, index) => $"{index + 1}. {line}"));
+        var contextBlock = AssistantCitationFormatter.BuildContextBlock(catalogContext.Citations);
         var prompt = _promptResolver is not null
             ? _promptResolver.Format(AiFeatureKeys.CustomerAssistant, new Dictionary<string, string?>
             {
@@ -104,9 +107,12 @@ public sealed class CustomerAssistantService
         {
             Answer = result.Text,
             Grounded = true,
-            Citations = catalogContext
+            Citations = catalogContext.Citations,
+            VehicleScoped = catalogContext.VehicleScoped
         };
     }
+
+    private sealed record CatalogContextResult(IReadOnlyList<AssistantCitation> Citations, bool VehicleScoped);
 
     private static string BuildFallbackPrompt(string question, string contextBlock) =>
         $"""
@@ -118,19 +124,22 @@ public sealed class CustomerAssistantService
             {contextBlock}
             """;
 
-    private async Task<IReadOnlyList<string>> BuildCatalogContextAsync(
+    private async Task<CatalogContextResult> BuildCatalogContextAsync(
         string question,
         int? vehicleConfigurationId,
         string locale,
         CancellationToken cancellationToken)
     {
         var hits = await RetrieveQuestionRelevantHitsAsync(question, locale, cancellationToken);
+        var vehicleScoped = vehicleConfigurationId.HasValue && _fitmentEvaluationService is not null;
         hits = await FilterToVerifiedFitAsync(hits, vehicleConfigurationId, cancellationToken);
 
-        return hits
+        var citations = hits
             .Take(5)
-            .Select(FormatCitation)
+            .Select(AssistantCitationFormatter.FromHit)
             .ToList();
+
+        return new CatalogContextResult(citations, vehicleScoped);
     }
 
     private async Task<IReadOnlyList<SearchHit>> RetrieveQuestionRelevantHitsAsync(
@@ -186,17 +195,6 @@ public sealed class CustomerAssistantService
 
         return fitting;
     }
-
-    private static string FormatCitation(SearchHit hit)
-    {
-        var parts = new List<string> { $"ProductId={hit.ProductId}", $"Name={hit.Name}" };
-        if (!string.IsNullOrWhiteSpace(hit.Brand))
-            parts.Add($"Brand={hit.Brand}");
-        if (hit.Price.HasValue)
-            parts.Add($"Price={hit.Price.Value:0.##}");
-
-        return string.Join("; ", parts);
-    }
 }
 
 public sealed class CustomerAssistantResponse
@@ -207,5 +205,7 @@ public sealed class CustomerAssistantResponse
 
     public string? ErrorCode { get; init; }
 
-    public IReadOnlyList<string> Citations { get; init; } = [];
+    public IReadOnlyList<AssistantCitation> Citations { get; init; } = [];
+
+    public bool VehicleScoped { get; init; }
 }

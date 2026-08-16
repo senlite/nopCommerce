@@ -222,6 +222,11 @@ else if (zone == "header_after")
                 "assistantSend": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Send")",
                 "assistantUnavailable": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Unavailable")",
                 "assistantOpen": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Open")",
+                "assistantSources": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Sources")",
+                "assistantThinking": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Thinking")",
+                "assistantRateLimited": "@T("Plugins.TwinParticles.CheckEngine.Assistant.RateLimited")",
+                "assistantVehicleScoped": "@T("Plugins.TwinParticles.CheckEngine.Assistant.VehicleScoped")",
+                "assistantVehicleUnscoped": "@T("Plugins.TwinParticles.CheckEngine.Assistant.VehicleUnscoped")",
                 "recommendTitle": "@T("Plugins.TwinParticles.CheckEngine.Recommend.Title")",
                 "recommendUnscopedTitle": "@T("Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle")",
                 "recommendFitmentBadge": "@T("Plugins.TwinParticles.CheckEngine.Recommend.FitmentBadge")"
@@ -236,6 +241,7 @@ else if (zone == "header_after")
             </button>
             <div id="ce-assistant-panel" class="ce-assistant__panel" hidden>
                 <h2 class="ce-assistant__title">@T("Plugins.TwinParticles.CheckEngine.Assistant.Title")</h2>
+                <p id="ce-assistant-context" class="ce-assistant__context text-muted" hidden></p>
                 <div id="ce-assistant-log" class="ce-assistant__log" role="log" aria-live="polite"></div>
                 <form id="ce-assistant-form" class="ce-assistant__form">
                     <label class="ce-visually-hidden" for="ce-assistant-input">@T("Plugins.TwinParticles.CheckEngine.Assistant.Placeholder")</label>

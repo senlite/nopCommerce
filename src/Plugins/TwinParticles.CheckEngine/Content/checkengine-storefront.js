@@ -60,6 +60,10 @@
     assistantUnavailable: 'The assistant is unavailable right now.',
     assistantOpen: 'Open parts assistant',
     assistantSources: 'Catalog sources',
+    assistantThinking: 'Searching the catalog…',
+    assistantRateLimited: 'Too many questions — please wait a moment and try again.',
+    assistantVehicleScoped: 'Answers are limited to parts verified for your active vehicle.',
+    assistantVehicleUnscoped: 'Select a vehicle to filter answers to verified-fit parts.',
     recommendTitle: 'Also fits your vehicle',
     recommendUnscopedTitle: 'You may also like',
     recommendFitmentBadge: 'Fits your vehicle'
@@ -1236,29 +1240,53 @@
     });
   }
 
-  function appendAssistantLine(role, text, citations) {
+  function appendAssistantLine(role, text, citations, options) {
     var log = document.getElementById('ce-assistant-log');
     if (!log) {
-      return;
+      return null;
     }
     var line = document.createElement('p');
     line.className = 'ce-assistant__line ce-assistant__line--' + role;
+    if (options && options.thinking) {
+      line.className += ' ce-assistant__line--thinking';
+    }
     line.textContent = text;
     log.appendChild(line);
 
     if (role === 'assistant' && citations && citations.length) {
+      var heading = document.createElement('p');
+      heading.className = 'ce-assistant__sources-title';
+      heading.textContent = TEXT.assistantSources;
+      log.appendChild(heading);
+
       var sources = document.createElement('ul');
       sources.className = 'ce-assistant__citations';
       citations.forEach(function (citation) {
         var item = document.createElement('li');
-        var productMatch = String(citation).match(/ProductId=(\d+)/i);
-        if (productMatch) {
+        var label;
+        var href;
+        if (citation && typeof citation === 'object') {
+          label = citation.name || citation.Name || ('#' + (citation.productId || citation.ProductId));
+          var seName = citation.seName || citation.SeName;
+          href = seName ? ('/' + seName) : null;
+          if (!href) {
+            var productId = citation.productId || citation.ProductId;
+            if (productId) {
+              href = '/search?q=' + encodeURIComponent('ProductId ' + productId);
+            }
+          }
+        } else {
+          label = String(citation);
+          var productMatch = label.match(/ProductId=(\d+)/i);
+          href = productMatch ? ('/search?q=' + encodeURIComponent('ProductId ' + productMatch[1])) : null;
+        }
+        if (href) {
           var link = document.createElement('a');
-          link.href = '/search?q=' + encodeURIComponent('ProductId ' + productMatch[1]);
-          link.textContent = citation;
+          link.href = href;
+          link.textContent = label;
           item.appendChild(link);
         } else {
-          item.textContent = citation;
+          item.textContent = label;
         }
         sources.appendChild(item);
       });
@@ -1266,6 +1294,21 @@
     }
 
     log.scrollTop = log.scrollHeight;
+    return line;
+  }
+
+  function updateAssistantContext(vehicleId) {
+    var context = document.getElementById('ce-assistant-context');
+    if (!context) {
+      return;
+    }
+    if (vehicleId) {
+      context.textContent = TEXT.assistantVehicleScoped;
+      context.removeAttribute('hidden');
+    } else {
+      context.textContent = TEXT.assistantVehicleUnscoped;
+      context.removeAttribute('hidden');
+    }
   }
 
   function bindAssistant() {
@@ -1281,6 +1324,11 @@
       var open = panel.hasAttribute('hidden');
       if (open) {
         panel.removeAttribute('hidden');
+        loadGarageContext().then(function (ctx) {
+          var active = activeVehicleOf(ctx.garage);
+          var vehicleId = active && (active.vehicleConfigurationId || active.VehicleConfigurationId);
+          updateAssistantContext(vehicleId);
+        });
       } else {
         panel.setAttribute('hidden', 'hidden');
       }
@@ -1295,10 +1343,12 @@
       }
       appendAssistantLine('user', question);
       input.value = '';
+      var thinkingLine = appendAssistantLine('assistant', TEXT.assistantThinking, null, { thinking: true });
 
       loadGarageContext().then(function (ctx) {
         var active = activeVehicleOf(ctx.garage);
         var vehicleId = active && (active.vehicleConfigurationId || active.VehicleConfigurationId);
+        updateAssistantContext(vehicleId);
         return jsonFetch('/check-engine/assistant/ask', {
           method: 'POST',
           body: JSON.stringify({
@@ -1306,8 +1356,18 @@
             vehicleConfigurationId: vehicleId || null,
             locale: (document.documentElement.lang || 'en').split('-')[0]
           })
+        }).then(function (response) {
+          return { response: response, vehicleId: vehicleId };
         });
-      }).then(function (response) {
+      }).then(function (result) {
+        if (thinkingLine && thinkingLine.parentNode) {
+          thinkingLine.parentNode.removeChild(thinkingLine);
+        }
+        var response = result.response;
+        if (response.status === 429) {
+          appendAssistantLine('assistant', TEXT.assistantRateLimited);
+          return;
+        }
         return response.json().then(function (payload) {
           if (!response.ok || payload.errorCode) {
             appendAssistantLine('assistant', TEXT.assistantUnavailable);
@@ -1320,6 +1380,9 @@
             citations);
         });
       }).catch(function () {
+        if (thinkingLine && thinkingLine.parentNode) {
+          thinkingLine.parentNode.removeChild(thinkingLine);
+        }
         appendAssistantLine('assistant', TEXT.assistantUnavailable);
       });
     });

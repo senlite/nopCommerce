@@ -27,6 +27,8 @@ public class CustomerAssistantServiceTests
         response.Grounded.Should().BeTrue();
         response.Answer.Should().Contain("ProductId=42");
         response.Citations.Should().NotBeEmpty();
+        response.Citations[0].ProductId.Should().Be(42);
+        response.Citations[0].DisplayText.Should().Contain("ProductId=42");
     }
 
     [Test]
@@ -67,8 +69,36 @@ public class CustomerAssistantServiceTests
         var response = await service.AskAsync("water pump", 777, CancellationToken.None);
 
         response.Citations.Should().ContainSingle();
-        response.Citations[0].Should().Contain("ProductId=42");
-        response.Citations[0].Should().NotContain("ProductId=99");
+        response.Citations[0].ProductId.Should().Be(42);
+        response.Citations[0].DisplayText.Should().NotContain("ProductId=99");
+        response.VehicleScoped.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task AskAsync_Should_Return_Structured_Citations_With_SeName()
+    {
+        var service = new CustomerAssistantService(new GroundedPort(), new SeNameStubRepository());
+
+        var response = await service.AskAsync("water pump", null, CancellationToken.None);
+
+        response.Citations.Should().ContainSingle();
+        response.Citations[0].SeName.Should().Be("water-pump");
+        response.Citations[0].Name.Should().Be("Water Pump");
+    }
+
+    [Test]
+    public async Task AskAsync_Should_Set_VehicleScoped_When_No_Fits_Found()
+    {
+        var service = new CustomerAssistantService(
+            new GroundedPort(),
+            new VehicleTreeStubRepository(),
+            fitmentEvaluationService: new FitmentEvaluationService(new NoFitAssistantRepository(), new NoopFitmentCache()));
+
+        var response = await service.AskAsync("water pump", 777, CancellationToken.None);
+
+        response.VehicleScoped.Should().BeTrue();
+        response.Citations.Should().BeEmpty();
+        response.Answer.Should().Contain("verified to fit your active vehicle");
     }
 
     [Test]
@@ -91,7 +121,7 @@ public class CustomerAssistantServiceTests
         var response = await service.AskAsync("فلتر زيت", null, CancellationToken.None, "ar");
 
         response.Citations.Should().NotBeEmpty();
-        response.Citations[0].Should().Contain("ProductId=1001");
+        response.Citations[0].ProductId.Should().Be(1001);
         port.LastPrompt.Should().Contain("ProductId=1001");
     }
 
@@ -161,6 +191,48 @@ public class CustomerAssistantServiceTests
                 PromptHash = "abc"
             });
         }
+    }
+
+    private sealed class SeNameStubRepository : IProductSearchReadRepository
+    {
+        public Task<IReadOnlyList<SearchHit>> SearchKeywordAsync(SearchQuery query, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<SearchHit>>([
+                new SearchHit { ProductId = 42, Name = "Water Pump", SeName = "water-pump", Score = 1 }
+            ]);
+        }
+
+        public Task<IReadOnlyList<SearchHit>> SearchByVehicleTreeAsync(SearchQuery query, CancellationToken cancellationToken) =>
+            SearchKeywordAsync(query, cancellationToken);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByOemIdAsync(int oemNumberId, SearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SearchHit>>([]);
+
+        public Task<IReadOnlyList<SearchHit>> SearchByCategoryAsync(SearchQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SearchHit>>([]);
+    }
+
+    private sealed class NoFitAssistantRepository : IFitmentClaimReadRepository
+    {
+        public Task<IReadOnlyList<FitmentClaim>> GetClaimsAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<FitmentClaim>>([
+                new FitmentClaim
+                {
+                    Id = productId,
+                    ProductId = productId,
+                    VehicleConfigurationId = vehicleConfigurationId,
+                    Status = FitmentStatus.DoesNotFit,
+                    Confidence = 0.95m,
+                    IsPublished = true,
+                    IsActive = true
+                }
+            ]);
+
+        public Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
+
+        public Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken) =>
+            Task.FromResult<FitmentClaim?>(null);
     }
 
     private sealed class StubSearchRepository : IProductSearchReadRepository
