@@ -5,6 +5,7 @@ using Nop.Core;
 using Nop.Services.Customers;
 using Nop.Web.Controllers;
 using TwinParticles.CheckEngine.Application.Ai;
+using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Search;
 using TwinParticles.CheckEngine.Models;
 
@@ -16,25 +17,33 @@ public sealed class AssistantController : BasePublicController
     private readonly ICustomerService _customerService;
     private readonly ISearchRateLimiter _searchRateLimiter;
     private readonly IWorkContext _workContext;
+    private readonly IAiFeatureToggle? _featureToggle;
 
     public AssistantController(
         CustomerAssistantService assistantService,
         ICustomerService customerService,
         ISearchRateLimiter searchRateLimiter,
-        IWorkContext workContext)
+        IWorkContext workContext,
+        IAiFeatureToggle? featureToggle = null)
     {
         _assistantService = assistantService;
         _customerService = customerService;
         _searchRateLimiter = searchRateLimiter;
         _workContext = workContext;
+        _featureToggle = featureToggle;
     }
 
     [HttpPost]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Ask([FromBody] AssistantRequestModel model, CancellationToken cancellationToken)
     {
+        if (_featureToggle is not null && !_featureToggle.IsEnabled(AiFeatureKeys.CustomerAssistant))
+        {
+            return Json(new CustomerAssistantResponse { ErrorCode = "ai.disabled" });
+        }
+
         if (model is null || string.IsNullOrWhiteSpace(model.Question))
-            return BadRequest();
+            return BadRequest(new { reasonCode = "assistant.empty_question" });
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         var isGuest = await _customerService.IsGuestAsync(customer);

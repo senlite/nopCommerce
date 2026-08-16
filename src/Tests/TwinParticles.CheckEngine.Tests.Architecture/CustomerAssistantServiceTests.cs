@@ -148,6 +148,16 @@ public class CustomerAssistantServiceTests
     }
 
     [Test]
+    public async Task AskAsync_Should_Return_Empty_Question_Error()
+    {
+        var service = new CustomerAssistantService(new GroundedPort(), new StubSearchRepository());
+
+        var response = await service.AskAsync("   ", null, CancellationToken.None);
+
+        response.ErrorCode.Should().Be("assistant.empty_question");
+    }
+
+    [Test]
     public async Task AskAsync_Should_Return_Disabled_When_Port_Missing()
     {
         var service = new CustomerAssistantService();
