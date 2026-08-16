@@ -179,19 +179,63 @@ public class FitmentPolicyAndReviewServiceTests
     }
 
     [Test]
-    public async Task RejectAsync_Should_Record_Dequeue_Event()
+    public async Task RejectAsync_Should_Deactivate_Claim()
     {
+        var claim = new FitmentClaim
+        {
+            Id = 304,
+            ProductId = 10,
+            VehicleConfigurationId = 20,
+            Status = FitmentStatus.Unknown,
+            IsPublished = false,
+            IsActive = true,
+            Provenance = new FitmentClaimProvenance { SourceKind = FitmentSourceKind.AiInference }
+        };
         var writeRepository = new FakeWriteRepository();
         var queueRepository = new FakeReviewQueueRepository();
         var service = new FitmentReviewService(
-            new FakeReadRepository(),
+            new FakeReadRepository(claim),
             writeRepository,
             queueRepository,
             new NoOpAuditService());
 
-        await service.RejectAsync(303, CancellationToken.None);
+        await service.RejectAsync(304, CancellationToken.None);
 
-        queueRepository.Dequeued.Should().ContainSingle(x => x.claimId == 303 && x.reasonCode == "fitment.review.rejected");
+        writeRepository.LastUpsertedClaim.Should().NotBeNull();
+        writeRepository.LastUpsertedClaim!.IsActive.Should().BeFalse();
+        writeRepository.LastUpsertedClaim.Status.Should().Be(FitmentStatus.Rejected);
+    }
+
+    [Test]
+    public async Task ApproveAsync_Should_Promote_Ai_Source_To_CuratorManual()
+    {
+        var claim = new FitmentClaim
+        {
+            Id = 305,
+            ProductId = 10,
+            VehicleConfigurationId = 20,
+            Status = FitmentStatus.Fits,
+            IsPublished = false,
+            IsActive = true,
+            Provenance = new FitmentClaimProvenance
+            {
+                SourceKind = FitmentSourceKind.AiInference,
+                SourceReference = "hash|rationale"
+            }
+        };
+        var writeRepository = new FakeWriteRepository();
+        var service = new FitmentReviewService(
+            new FakeReadRepository(claim),
+            writeRepository,
+            new FakeReviewQueueRepository(),
+            new NoOpAuditService());
+
+        await service.ApproveAsync(305, CancellationToken.None, "nour");
+
+        writeRepository.LastUpsertedClaim.Should().NotBeNull();
+        writeRepository.LastUpsertedClaim!.Provenance.SourceKind.Should().Be(FitmentSourceKind.CuratorManual);
+        writeRepository.LastUpsertedClaim.Provenance.SourceReference.Should().Be("ai.review.promoted");
+        writeRepository.LastUpsertedClaim.Provenance.CreatedBy.Should().Be("nour");
     }
 
     [Test]

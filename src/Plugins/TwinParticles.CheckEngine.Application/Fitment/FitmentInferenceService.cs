@@ -64,12 +64,15 @@ public sealed class FitmentInferenceService
             return null;
 
         var status = ParseStatus(result.Text, out var rationale, out var confidence);
+        var cappedConfidence = confidence.HasValue
+            ? Math.Min(confidence.Value, AiInferenceConfidenceCap)
+            : AiInferenceConfidenceCap;
         var claim = new FitmentClaim
         {
             ProductId = productId,
             VehicleConfigurationId = vehicleConfigurationId,
             Status = status,
-            Confidence = confidence ?? AiInferenceConfidenceCap,
+            Confidence = cappedConfidence,
             SafetyClass = SafetyClass.Standard,
             IsPublished = false,
             IsActive = true,
