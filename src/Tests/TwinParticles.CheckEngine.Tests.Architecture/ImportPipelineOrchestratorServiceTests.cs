@@ -178,6 +178,30 @@ public class ImportPipelineOrchestratorServiceTests
     }
 
     [Test]
+    public async Task Link_Decision_Should_Publish_To_The_Original_Product_Not_A_New_One()
+    {
+        var publisher = new RecordingImportProductPublisher();
+        var orchestrator = CreateOrchestrator(productPublisher: publisher);
+        var csv = "oem,name,vehicleConfigurationId,category\n11-51-7-586-925,Oil Filter,1001,Engine\n11-51-7-586-925,Oil Filter,1001,Engine\n";
+        var run = await orchestrator.RunAsync(new ImportPipelineRunRequest
+        {
+            Format = ImportSourceFormat.Csv,
+            FileName = "dupes.csv",
+            Content = Encoding.UTF8.GetBytes(csv),
+            DryRun = false
+        }, CancellationToken.None);
+
+        (await orchestrator.SetDuplicateDecisionAsync(
+            run.BatchId, rowNumber: 2, decision: "Link", actor: "admin", CancellationToken.None)).Should().BeTrue();
+
+        var publish = await orchestrator.PublishAsync(run.BatchId, dryRun: false, CancellationToken.None);
+        publish.PublishedRows.Should().Be(2);
+        publisher.PublishedRows.Should().HaveCount(2);
+        publisher.PublishedRows[1].Fields.Should().ContainKey("publishedProductId");
+        publisher.PublishedRows[1].Fields["publishedProductId"].Should().Be("5001");
+    }
+
+    [Test]
     public async Task SetDuplicateDecision_Should_Reject_Invalid_Decision_And_NonDuplicate_Rows()
     {
         var orchestrator = CreateOrchestrator();

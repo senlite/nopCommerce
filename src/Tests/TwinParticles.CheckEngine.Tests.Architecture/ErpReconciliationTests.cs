@@ -100,6 +100,7 @@ public class ErpReconciliationTests
     private sealed class StubClient : IErpClientAdapter
     {
         public Task<bool> PushAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.FromResult(true);
         public Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken) => Task.FromResult<string?>("{}");
     }
 

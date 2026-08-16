@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Ai;
 
@@ -28,17 +29,25 @@ public sealed class SqlAiUsageLedger : IAiUsageLedger
         CancellationToken cancellationToken)
     {
         var day = DateTime.UtcNow.Date;
+        var updated = await _dataProvider.ExecuteNonQueryAsync(@"
+UPDATE TP_CE_AiUsageDaily
+SET TokenUsage = TokenUsage + @tokenUsage,
+    EstimatedCostUsd = EstimatedCostUsd + @estimatedCostUsd,
+    AttemptCount = AttemptCount + 1,
+    FailureCount = FailureCount + @failureIncrement
+WHERE FeatureKey = @featureKey AND UsageDay = @usageDay",
+            new DataParameter("featureKey", featureKey),
+            new DataParameter("usageDay", day),
+            new DataParameter("tokenUsage", Math.Max(0, tokenUsage)),
+            new DataParameter("estimatedCostUsd", Math.Max(0m, estimatedCostUsd)),
+            new DataParameter("failureIncrement", success ? 0 : 1));
+
+        if (updated > 0)
+            return;
+
         await _dataProvider.ExecuteNonQueryAsync(@"
-MERGE TP_CE_AiUsageDaily AS target
-USING (SELECT @featureKey AS FeatureKey, @usageDay AS UsageDay) AS source
-ON target.FeatureKey = source.FeatureKey AND target.UsageDay = source.UsageDay
-WHEN MATCHED THEN UPDATE SET
-    TokenUsage = target.TokenUsage + @tokenUsage,
-    EstimatedCostUsd = target.EstimatedCostUsd + @estimatedCostUsd,
-    AttemptCount = target.AttemptCount + 1,
-    FailureCount = target.FailureCount + @failureIncrement
-WHEN NOT MATCHED THEN INSERT (FeatureKey, UsageDay, TokenUsage, EstimatedCostUsd, AttemptCount, FailureCount)
-VALUES (@featureKey, @usageDay, @tokenUsage, @estimatedCostUsd, 1, @failureIncrement);",
+INSERT INTO TP_CE_AiUsageDaily (FeatureKey, UsageDay, TokenUsage, EstimatedCostUsd, AttemptCount, FailureCount)
+VALUES (@featureKey, @usageDay, @tokenUsage, @estimatedCostUsd, 1, @failureIncrement)",
             new DataParameter("featureKey", featureKey),
             new DataParameter("usageDay", day),
             new DataParameter("tokenUsage", Math.Max(0, tokenUsage)),

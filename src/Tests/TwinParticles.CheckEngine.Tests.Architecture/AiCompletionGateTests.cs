@@ -43,7 +43,7 @@ public class AiCompletionGateTests
     public async Task CompleteAsync_Should_Record_Tokens_And_Cost_On_Success()
     {
         var ledger = new TrackingLedger(10_000);
-        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10_000, disclosureAcknowledged: true, costPer1K: 1m));
+        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10_000, disclosureAcknowledged: true, costPer1K: 1m, globalCeiling: 10_000));
 
         await gate.CompleteAsync(Request(), CancellationToken.None);
 
@@ -100,18 +100,20 @@ public class AiCompletionGateTests
 
     private sealed class FixedSpendPolicy : IAiSpendPolicy
     {
-        public FixedSpendPolicy(int ceiling, bool disclosureAcknowledged, decimal costPer1K = 0.002m)
+        public FixedSpendPolicy(int featureCeiling, bool disclosureAcknowledged, decimal costPer1K = 0.002m, int globalCeiling = 0)
         {
-            _ceiling = ceiling;
+            _ceiling = featureCeiling;
+            _globalCeiling = globalCeiling;
             DisclosureAcknowledged = disclosureAcknowledged;
             TokenCostPer1KUsd = costPer1K;
         }
 
         private readonly int _ceiling;
+        private readonly int _globalCeiling;
 
         public bool DisclosureAcknowledged { get; }
 
-        public int GlobalDailyCeiling => _ceiling;
+        public int GlobalDailyCeiling => _globalCeiling;
 
         public decimal TokenCostPer1KUsd { get; }
 

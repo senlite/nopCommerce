@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.ImportPipeline;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.ImportPipeline;
 
@@ -83,7 +84,7 @@ WHERE Id = @id",
 (CorrelationId, FileName, SourceFormatId, Status, UploadedByCustomerId, [RowCount], ErrorSummary, SourceContent, RunOptionsJson, CurrentStage, CompletedStagesCsv, CreatedUtc, UpdatedUtc)
 VALUES
 (@correlationId, @fileName, @sourceFormatId, @status, @uploadedByCustomerId, @rowCount, @errorSummary, @sourceContent, @runOptionsJson, @currentStage, @completedStagesCsv, @createdUtc, @updatedUtc);
-SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+" + CheckEngineSql.SelectInsertedIntId() + @"",
             new DataParameter("correlationId", batch.CorrelationId),
             new DataParameter("fileName", batch.FileName),
             new DataParameter("sourceFormatId", (int)batch.SourceFormat),

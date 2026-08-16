@@ -12,6 +12,9 @@ public sealed class StubErpClientAdapter : IErpClientAdapter
         return Task.FromResult(success);
     }
 
+    public Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken)
+        => PushAsync(job, cancellationToken);
+
     public Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken)
     {
         return Task.FromResult<string?>("{\"warehouse\":\"MAIN\",\"items\":[]}");

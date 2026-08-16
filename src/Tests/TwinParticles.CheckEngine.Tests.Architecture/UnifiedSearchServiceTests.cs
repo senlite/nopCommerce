@@ -127,6 +127,37 @@ public class UnifiedSearchServiceTests
         result.Suggestions.Should().NotBeEmpty();
     }
 
+    [Test]
+    public async Task SearchAsync_Should_Return_Vin_Disambiguation_Candidates_Instead_Of_Empty_Hits()
+    {
+        var vinService = new VinDecodeApplicationService(new AmbiguousVinRegistry(), new NoopTelemetry());
+        var oemService = new OemResolveService(
+            new FakeOemNormalizationService(),
+            new FakeOemSearchReadRepository([]),
+            new OemSupersessionService(new FakeOemRelationReadRepository()),
+            new EmptyProductOemMapRepository());
+        var service = new UnifiedSearchService(
+            new DefaultRepository(),
+            vinService,
+            oemService,
+            new FitmentEvaluationService(new FakeFitmentReadRepository(null), new FakeFitmentCache()),
+            new FakeSearchIndexHealthService(true),
+            new LowerNormalizer(),
+            new NaturalLanguageIntentParser());
+
+        var result = await service.SearchAsync(new SearchQuery
+        {
+            RawText = "1HGCM82633A004352",
+            Mode = SearchMode.Vin,
+            Locale = "en"
+        }, CancellationToken.None);
+
+        result.NeedsDisambiguation.Should().BeTrue();
+        result.VinCandidates.Should().HaveCount(2);
+        result.VinCandidates.Should().OnlyContain(candidate => !string.IsNullOrWhiteSpace(candidate.Label));
+        result.Hits.Should().BeEmpty();
+    }
+
     private static UnifiedSearchService CreateService(
         IReadOnlyList<OemNumber>? oemMatches = null,
         Dictionary<int, FitmentStatus>? fitmentMap = null,
@@ -243,6 +274,24 @@ public class UnifiedSearchServiceTests
                 return new FakeVinDecoder();
 
             return null;
+        }
+    }
+
+    private sealed class AmbiguousVinRegistry : IVinDecoderRegistry
+    {
+        public IManufacturerVinDecoder? Resolve(string wmi) => new AmbiguousVinDecoder();
+    }
+
+    private sealed class AmbiguousVinDecoder : IManufacturerVinDecoder
+    {
+        public bool CanDecode(string wmi) => true;
+
+        public VinDecodeContribution Decode(Vin vin)
+        {
+            return VinDecodeContribution.WithCandidates([
+                new VinDecodeCandidate { VehicleConfigurationId = 111, Confidence = Confidence.Create(0.7m), ModelYear = 2016 },
+                new VinDecodeCandidate { VehicleConfigurationId = 222, Confidence = Confidence.Create(0.68m), ModelYear = 2017 }
+            ]);
         }
     }
 

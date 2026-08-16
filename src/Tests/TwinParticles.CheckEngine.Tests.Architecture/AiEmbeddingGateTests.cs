@@ -43,7 +43,7 @@ public class AiEmbeddingGateTests
     public async Task EmbedAsync_Should_Record_Tokens_On_Success()
     {
         var ledger = new TrackingLedger(10_000);
-        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10_000, disclosureAcknowledged: true));
+        var gate = CreateGate(new SuccessPort(), new AlwaysOnToggle(), ledger, new FixedSpendPolicy(10_000, disclosureAcknowledged: true, globalCeiling: 10_000));
 
         await gate.EmbedAsync(Request(), CancellationToken.None);
 
@@ -111,17 +111,19 @@ public class AiEmbeddingGateTests
 
     private sealed class FixedSpendPolicy : IAiSpendPolicy
     {
-        public FixedSpendPolicy(int ceiling, bool disclosureAcknowledged)
+        public FixedSpendPolicy(int featureCeiling, bool disclosureAcknowledged, int globalCeiling = 0)
         {
-            _ceiling = ceiling;
+            _ceiling = featureCeiling;
+            _globalCeiling = globalCeiling;
             DisclosureAcknowledged = disclosureAcknowledged;
         }
 
         private readonly int _ceiling;
+        private readonly int _globalCeiling;
 
         public bool DisclosureAcknowledged { get; }
 
-        public int GlobalDailyCeiling => _ceiling;
+        public int GlobalDailyCeiling => _globalCeiling;
 
         public decimal TokenCostPer1KUsd => 0.002m;
 

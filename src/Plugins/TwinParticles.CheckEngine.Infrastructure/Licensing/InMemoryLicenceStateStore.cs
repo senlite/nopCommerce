@@ -9,6 +9,7 @@ public sealed class InMemoryLicenceStateStore : ILicenceStateStore
 {
     private readonly object _syncRoot = new();
     private DateTimeOffset? _lastHeartbeatUtc;
+    private string? _activationKey;
 
     public Task<DateTimeOffset?> GetLastHeartbeatUtcAsync(CancellationToken cancellationToken)
     {
@@ -23,6 +24,24 @@ public sealed class InMemoryLicenceStateStore : ILicenceStateStore
         lock (_syncRoot)
         {
             _lastHeartbeatUtc = heartbeatUtc;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task<string?> GetActivationKeyAsync(CancellationToken cancellationToken)
+    {
+        lock (_syncRoot)
+        {
+            return Task.FromResult(_activationKey);
+        }
+    }
+
+    public Task SetActivationKeyAsync(string licenceKey, CancellationToken cancellationToken)
+    {
+        lock (_syncRoot)
+        {
+            _activationKey = licenceKey;
         }
 
         return Task.CompletedTask;

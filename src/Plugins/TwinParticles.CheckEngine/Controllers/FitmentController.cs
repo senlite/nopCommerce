@@ -30,7 +30,9 @@ public sealed class FitmentController : BasePublicController
             VehicleConfigurationId = model.VehicleConfigurationId,
             ProductionYear = model.ProductionYear,
             SteeringSide = model.SteeringSide,
-            MarketRegion = model.MarketRegion
+            MarketRegion = model.MarketRegion,
+            DriveType = model.DriveType,
+            TransmissionType = model.TransmissionType
         }, cancellationToken);
 
         return Json(result);

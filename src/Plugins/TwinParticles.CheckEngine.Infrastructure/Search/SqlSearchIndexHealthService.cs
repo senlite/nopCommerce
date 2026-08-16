@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Search;
 
@@ -52,8 +53,8 @@ public sealed class SqlSearchIndexHealthService : ISearchIndexHealthService, ISe
 
     public Task ReportDegradedAsync(string reason, CancellationToken cancellationToken)
         => UpsertAsync(
-            @"UPDATE TP_CE_SearchIndexState
-SET IsHealthy = 0, LastDegradedReason = @reason, LastDegradedUtc = SYSUTCDATETIME()
+            $@"UPDATE TP_CE_SearchIndexState
+SET IsHealthy = 0, LastDegradedReason = @reason, LastDegradedUtc = {CheckEngineSql.UtcNow()}
 WHERE Id = 1;",
             new DataParameter("reason", reason ?? "unknown"));
 
@@ -69,8 +70,8 @@ WHERE Id = 1;",
             .First().Value;
 
         await _dataProvider.ExecuteNonQueryAsync(
-            @"UPDATE TP_CE_SearchIndexState
-SET IsHealthy = 1, LastRebuildUtc = SYSUTCDATETIME(),
+            $@"UPDATE TP_CE_SearchIndexState
+SET IsHealthy = 1, LastRebuildUtc = {CheckEngineSql.UtcNow()},
     LastCursorUtc = (SELECT MAX(UpdatedUtc) FROM TP_CE_SearchIndex),
     IndexedCount = @count, LastDegradedReason = NULL, LastDegradedUtc = NULL
 WHERE Id = 1;",
@@ -95,41 +96,39 @@ WHERE Id = 1;",
             new DataParameter("count", count));
     }
 
-    // MERGE keeps existing projection rows current and inserts new ones. Deleted/unpublished products
-    // are removed so they never surface. NormalizedText is lowercased name+sku+mpn for LIKE matching.
-    private Task ProjectCatalogAsync(bool sinceCursor)
+    // Delete+insert keeps existing projection rows current without MERGE, which MySQL does not
+    // support. Deleted/unpublished products are removed so they never surface. NormalizedText is
+    // lowercased name+sku+mpn for LIKE matching.
+    private async Task ProjectCatalogAsync(bool sinceCursor)
     {
         var cursorFilter = sinceCursor
             ? "AND p.UpdatedOnUtc > COALESCE((SELECT LastCursorUtc FROM TP_CE_SearchIndexState WHERE Id = 1), '1900-01-01')"
             : string.Empty;
+        var utcNow = CheckEngineSql.UtcNow();
 
-        return _dataProvider.ExecuteNonQueryAsync($@"
-MERGE TP_CE_SearchIndex AS target
-USING (
-    SELECT p.Id AS ProductId,
-           p.Name,
-           LOWER(CONCAT(p.Name, ' ', COALESCE(p.Sku, ''), ' ', COALESCE(p.ManufacturerPartNumber, ''))) AS NormalizedText,
-           p.Sku,
-           p.ManufacturerPartNumber AS Mpn,
-           p.Price,
-           p.UpdatedOnUtc AS UpdatedUtc
-    FROM Product p
-    WHERE p.Deleted = 0 AND p.Published = 1 AND p.VisibleIndividually = 1 {cursorFilter}
-) AS source
-    ON target.ProductId = source.ProductId
-WHEN MATCHED THEN
-    UPDATE SET Name = source.Name, NormalizedText = source.NormalizedText, Sku = source.Sku,
-               Mpn = source.Mpn, Price = source.Price, UpdatedUtc = source.UpdatedUtc,
-               IndexedUtc = SYSUTCDATETIME()
-WHEN NOT MATCHED THEN
-    INSERT (ProductId, Name, NormalizedText, Sku, Mpn, Price, UpdatedUtc, IndexedUtc)
-    VALUES (source.ProductId, source.Name, source.NormalizedText, source.Sku, source.Mpn,
-            source.Price, source.UpdatedUtc, SYSUTCDATETIME());
+        await _dataProvider.ExecuteNonQueryAsync($@"
+DELETE si FROM TP_CE_SearchIndex si
+INNER JOIN Product p ON p.Id = si.ProductId
+WHERE p.Deleted = 0 AND p.Published = 1 AND p.VisibleIndividually = 1 {cursorFilter}");
 
+        await _dataProvider.ExecuteNonQueryAsync($@"
+INSERT INTO TP_CE_SearchIndex (ProductId, Name, NormalizedText, Sku, Mpn, Price, UpdatedUtc, IndexedUtc)
+SELECT p.Id,
+       p.Name,
+       LOWER(CONCAT(p.Name, ' ', COALESCE(p.Sku, ''), ' ', COALESCE(p.ManufacturerPartNumber, ''))),
+       p.Sku,
+       p.ManufacturerPartNumber,
+       p.Price,
+       p.UpdatedOnUtc,
+       {utcNow}
+FROM Product p
+WHERE p.Deleted = 0 AND p.Published = 1 AND p.VisibleIndividually = 1 {cursorFilter}");
+
+        await _dataProvider.ExecuteNonQueryAsync(@"
 DELETE si FROM TP_CE_SearchIndex si
 WHERE NOT EXISTS (
     SELECT 1 FROM Product p
-    WHERE p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 1 AND p.VisibleIndividually = 1);");
+    WHERE p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 1 AND p.VisibleIndividually = 1)");
     }
 
     private async Task<SearchIndexState> LoadStateAsync()
@@ -149,8 +148,9 @@ WHERE NOT EXISTS (
 
     private Task EnsureStateRowAsync()
         => _dataProvider.ExecuteNonQueryAsync(
-            @"IF NOT EXISTS (SELECT 1 FROM TP_CE_SearchIndexState WHERE Id = 1)
-    INSERT INTO TP_CE_SearchIndexState (Id, IsHealthy, IndexedCount) VALUES (1, 1, 0);");
+            @"INSERT INTO TP_CE_SearchIndexState (Id, IsHealthy, IndexedCount)
+SELECT 1, 1, 0
+WHERE NOT EXISTS (SELECT 1 FROM TP_CE_SearchIndexState WHERE Id = 1);");
 
     private async Task UpsertAsync(string sql, params DataParameter[] parameters)
     {

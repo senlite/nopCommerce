@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Plugin.Payments.Paymob.Components;
+using Nop.Plugin.Payments.Paymob.Services;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
@@ -20,6 +21,8 @@ public class PaymobPaymentProcessor : BasePlugin, IPaymentMethod
     private readonly IOrderTotalCalculationService _orderTotalCalculationService;
     private readonly ISettingService _settingService;
     private readonly IWebHelper _webHelper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly PaymobCheckoutService _checkoutService;
     private readonly PaymobPaymentSettings _settings;
 
     public PaymobPaymentProcessor(
@@ -27,23 +30,33 @@ public class PaymobPaymentProcessor : BasePlugin, IPaymentMethod
         IOrderTotalCalculationService orderTotalCalculationService,
         ISettingService settingService,
         IWebHelper webHelper,
+        IHttpContextAccessor httpContextAccessor,
+        PaymobCheckoutService checkoutService,
         PaymobPaymentSettings settings)
     {
         _localizationService = localizationService;
         _orderTotalCalculationService = orderTotalCalculationService;
         _settingService = settingService;
         _webHelper = webHelper;
+        _httpContextAccessor = httpContextAccessor;
+        _checkoutService = checkoutService;
         _settings = settings;
     }
 
     public Task<ProcessPaymentResult> ProcessPaymentAsync(ProcessPaymentRequest processPaymentRequest)
         => Task.FromResult(new ProcessPaymentResult());
 
-    public Task PostProcessPaymentAsync(PostProcessPaymentRequest postProcessPaymentRequest)
+    public async Task PostProcessPaymentAsync(PostProcessPaymentRequest postProcessPaymentRequest)
     {
-        // A redirection method sends the customer to the Paymob hosted iframe. When credentials are
-        // absent the plugin stays inert rather than attempting an unauthenticated redirect.
-        return Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(postProcessPaymentRequest);
+
+        var checkoutUrl = await _checkoutService.CreateCheckoutUrlAsync(
+            postProcessPaymentRequest.Order,
+            CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(checkoutUrl))
+            return;
+
+        _httpContextAccessor.HttpContext?.Response.Redirect(checkoutUrl);
     }
 
     public Task<bool> HidePaymentMethodAsync(IList<ShoppingCartItem> cart)

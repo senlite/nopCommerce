@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Fitment;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Fitment;
 
@@ -195,7 +196,7 @@ WHERE Id = @id";
 (ProductId, VehicleConfigurationId, OemNumberId, FitmentStatusId, Confidence, SafetyClassId, SourceKindId, SourceReference, CreatedBy, ProvenanceCreatedUtc, LastVerifiedUtc, ValidFromUtc, ValidToUtc, IsPublished, IsActive)
 VALUES
 (@productId, @vehicleConfigurationId, @oemNumberId, @fitmentStatusId, @confidence, @safetyClassId, @sourceKindId, @sourceReference, @createdBy, @provenanceCreatedUtc, @lastVerifiedUtc, @validFromUtc, @validToUtc, @isPublished, @isActive);
-SELECT CAST(SCOPE_IDENTITY() as int) AS Value;",
+" + CheckEngineSql.SelectInsertedIntId() + @"",
                 new DataParameter("productId", claim.ProductId),
                 new DataParameter("vehicleConfigurationId", claim.VehicleConfigurationId),
                 new DataParameter("oemNumberId", claim.OemNumberId),

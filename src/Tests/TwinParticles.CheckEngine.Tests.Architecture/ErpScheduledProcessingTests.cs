@@ -134,6 +134,7 @@ public class ErpScheduledProcessingTests
     private sealed class AlwaysFailAdapter : IErpClientAdapter
     {
         public Task<bool> PushAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken) => Task.FromResult<string?>(null);
     }
 

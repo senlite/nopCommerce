@@ -43,6 +43,12 @@ public class LicenceOfflineActivationTests
         validator.Validate("demo-key").ReasonCode.Should().Be("licence.unsigned_key_not_allowed");
     }
 
+    [Test]
+    public void AllowLegacyDevKeys_Should_Default_To_False()
+    {
+        new CheckEngineSettings.LicenceOptions().AllowLegacyDevKeys.Should().BeFalse();
+    }
+
     private static HmacLicenceKeyValidator CreateValidator(bool allowLegacyDevKeys)
     {
         var settings = Options.Create(new CheckEngineSettings

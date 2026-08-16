@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Search;
 
@@ -38,7 +39,7 @@ INSERT INTO TP_CE_SearchAnalytics
 (QueryFingerprint, ModeId, Locale, ResultCount, HasVehicleContext, WidenFitment, IsDegraded, DurationBucketMs, CreatedUtc, ClickedProductId, ClickedUtc)
 VALUES
 (@queryFingerprint, @modeId, @locale, @resultCount, @hasVehicleContext, @widenFitment, @isDegraded, @durationBucketMs, @createdUtc, NULL, NULL);
-SELECT CAST(SCOPE_IDENTITY() AS bigint) AS Value;",
+" + CheckEngineSql.SelectInsertedLongId() + @"",
             new DataParameter("queryFingerprint", _fingerprintService.Create(normalizedQuery)),
             new DataParameter("modeId", (int)mode),
             new DataParameter("locale", NormalizeLocale(locale)),

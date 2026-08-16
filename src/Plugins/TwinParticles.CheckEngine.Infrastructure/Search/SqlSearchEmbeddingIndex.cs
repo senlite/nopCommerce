@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Search;
 
@@ -32,21 +33,17 @@ public sealed class SqlSearchEmbeddingIndex : ISearchEmbeddingIndex
     public async Task UpsertAsync(SearchEmbeddingDocument document, float[] embedding, string modelHash, CancellationToken cancellationToken)
     {
         var embeddingJson = JsonSerializer.Serialize(embedding);
-        await _dataProvider.ExecuteNonQueryAsync(@"
-MERGE TP_CE_SearchEmbedding AS target
-USING (SELECT @productId AS ProductId, @locale AS Locale) AS source
-ON target.ProductId = source.ProductId AND target.Locale = source.Locale
-WHEN MATCHED THEN UPDATE SET
-    Name = @name,
+        var updatedUtc = DateTime.UtcNow;
+        var updated = await _dataProvider.ExecuteNonQueryAsync(@"
+UPDATE TP_CE_SearchEmbedding
+SET Name = @name,
     CategoryName = @categoryName,
     Brand = @brand,
     Price = @price,
     EmbeddingJson = @embeddingJson,
     ModelHash = @modelHash,
     UpdatedUtc = @updatedUtc
-WHEN NOT MATCHED THEN INSERT
-    (ProductId, Locale, Name, CategoryName, Brand, Price, EmbeddingJson, ModelHash, UpdatedUtc)
-    VALUES (@productId, @locale, @name, @categoryName, @brand, @price, @embeddingJson, @modelHash, @updatedUtc);",
+WHERE ProductId = @productId AND Locale = @locale",
             new DataParameter("productId", document.ProductId),
             new DataParameter("locale", document.Locale),
             new DataParameter("name", document.Name),
@@ -55,7 +52,24 @@ WHEN NOT MATCHED THEN INSERT
             new DataParameter("price", document.Price ?? (object)DBNull.Value),
             new DataParameter("embeddingJson", embeddingJson),
             new DataParameter("modelHash", modelHash),
-            new DataParameter("updatedUtc", DateTime.UtcNow));
+            new DataParameter("updatedUtc", updatedUtc));
+
+        if (updated > 0)
+            return;
+
+        await _dataProvider.ExecuteNonQueryAsync(@"
+INSERT INTO TP_CE_SearchEmbedding
+    (ProductId, Locale, Name, CategoryName, Brand, Price, EmbeddingJson, ModelHash, UpdatedUtc)
+VALUES (@productId, @locale, @name, @categoryName, @brand, @price, @embeddingJson, @modelHash, @updatedUtc)",
+            new DataParameter("productId", document.ProductId),
+            new DataParameter("locale", document.Locale),
+            new DataParameter("name", document.Name),
+            new DataParameter("categoryName", document.CategoryName ?? (object)DBNull.Value),
+            new DataParameter("brand", document.Brand ?? (object)DBNull.Value),
+            new DataParameter("price", document.Price ?? (object)DBNull.Value),
+            new DataParameter("embeddingJson", embeddingJson),
+            new DataParameter("modelHash", modelHash),
+            new DataParameter("updatedUtc", updatedUtc));
     }
 
     public async Task<IReadOnlyList<SearchHit>> SearchSimilarAsync(

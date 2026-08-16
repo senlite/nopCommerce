@@ -19,4 +19,8 @@ public sealed class SearchResult
     public bool IsDegraded { get; init; }
 
     public long? AnalyticsId { get; init; }
+
+    public bool NeedsDisambiguation { get; init; }
+
+    public IReadOnlyList<SearchVinCandidate> VinCandidates { get; init; } = [];
 }

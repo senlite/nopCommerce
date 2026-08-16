@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Ai;
 
@@ -25,7 +26,7 @@ INSERT INTO TP_CE_AiGeneration
 (EntityTypeId, EntityId, FeatureKey, Locale, OutputText, PromptKey, PromptHash, QualityScore, IsPublished, ReviewStatus, Reviewer, CreatedUtc, ReviewedUtc)
 VALUES
 (@entityTypeId, @entityId, @featureKey, @locale, @outputText, @promptKey, @promptHash, @qualityScore, @isPublished, @reviewStatus, @reviewer, @createdUtc, @reviewedUtc);
-SELECT CAST(SCOPE_IDENTITY() AS INT);",
+" + CheckEngineSql.SelectInsertedIntId() + @";",
             new DataParameter("entityTypeId", (int)candidate.EntityType),
             new DataParameter("entityId", candidate.EntityId),
             new DataParameter("featureKey", candidate.FeatureKey),

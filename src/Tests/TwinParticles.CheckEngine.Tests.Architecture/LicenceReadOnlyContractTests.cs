@@ -27,7 +27,19 @@ public class LicenceReadOnlyContractTests
         filter.Should().Contain("Status403Forbidden");
         filter.Should().Contain("DiagnosticsAdminController");
         filter.Should().Contain("UninstallAdminController");
+        filter.Should().Contain("ADR-009");
+        filter.Should().Contain("Missing area = storefront");
         filter.Should().NotContain("BasePublicController");
+    }
+
+    [Test]
+    public void Heartbeat_Should_Revalidate_The_Stored_Activation_Key()
+    {
+        var service = ReadPluginFile(
+            "TwinParticles.CheckEngine.Application", "Licensing", "DefaultLicenceService.cs");
+
+        service.Should().Contain("GetActivationKeyAsync");
+        service.Should().Contain("_licenceKeyValidator.Validate(storedKey)");
     }
 
     [Test]

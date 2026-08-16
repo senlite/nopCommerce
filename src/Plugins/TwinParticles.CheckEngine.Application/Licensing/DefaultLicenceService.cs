@@ -53,12 +53,21 @@ public sealed class DefaultLicenceService : ILicenceService
             };
         }
 
+        await _stateStore.SetActivationKeyAsync(licenceKey.Trim(), cancellationToken);
         await _stateStore.SetLastHeartbeatUtcAsync(_clock.UtcNow, cancellationToken);
         return await GetStatusAsync(cancellationToken);
     }
 
     public async Task<LicenceStatus> HeartbeatAsync(CancellationToken cancellationToken)
     {
+        var storedKey = await _stateStore.GetActivationKeyAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(storedKey))
+            return await GetStatusAsync(cancellationToken);
+
+        var validation = _licenceKeyValidator.Validate(storedKey);
+        if (!validation.IsValid)
+            return await GetStatusAsync(cancellationToken);
+
         await _stateStore.SetLastHeartbeatUtcAsync(_clock.UtcNow, cancellationToken);
         return await GetStatusAsync(cancellationToken);
     }

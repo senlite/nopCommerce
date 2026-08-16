@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Search;
 
@@ -42,7 +43,12 @@ SELECT si.ProductId,
        si.Sku,
        si.Mpn,
        si.Price,
-       c.CategoryName,
+       {CheckEngineSql.ScalarSubqueryLimitOne(
+           "cat.Name",
+           @"FROM Product_Category_Mapping pcm
+INNER JOIN Category cat ON cat.Id = pcm.CategoryId AND cat.Deleted = 0 AND cat.Published = 1
+WHERE pcm.ProductId = p.Id
+ORDER BY pcm.DisplayOrder, cat.Id")} AS CategoryName,
        m.Name AS Brand
 FROM TP_CE_SearchIndex si
 INNER JOIN Product p ON p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 1
@@ -51,13 +57,6 @@ LEFT JOIN LocalizedProperty lp ON lp.EntityId = p.Id
     AND lp.LocaleKeyGroup = N'Product'
     AND lp.LocaleKey = N'Name'
     AND lp.LanguageId = lang.Id
-OUTER APPLY (
-    SELECT TOP (1) cat.Name AS CategoryName
-    FROM Product_Category_Mapping pcm
-    INNER JOIN Category cat ON cat.Id = pcm.CategoryId AND cat.Deleted = 0 AND cat.Published = 1
-    WHERE pcm.ProductId = p.Id
-    ORDER BY pcm.DisplayOrder, cat.Id
-) c
 LEFT JOIN Manufacturer m ON m.Id = p.ManufacturerId AND m.Deleted = 0
 {staleFilter}
 ORDER BY si.ProductId",

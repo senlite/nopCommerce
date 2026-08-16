@@ -24,7 +24,8 @@ public sealed class CheckEngineLicenceWriteFilter : IAsyncActionFilter
             return;
         }
 
-        if (context.RouteData.Values.TryGetValue("area", out var area) &&
+        // ADR-009: only Admin mutations are gated. Missing area = storefront; never block it.
+        if (!context.RouteData.Values.TryGetValue("area", out var area) ||
             !string.Equals(area?.ToString(), AreaNames.ADMIN, StringComparison.OrdinalIgnoreCase))
         {
             await next();
