@@ -237,16 +237,16 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H2.1 | Complete multi-provider AI abstraction | partial | Completion + Azure embedding adapters; Anthropic uses deterministic embeddings; layered response cache |
+| H2.1 | Complete multi-provider AI abstraction | done | Completion + Azure embedding adapters; Anthropic deterministic embeddings; layered completion + embedding cache (L1 memory + L2 nop static) |
 | H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | done | `AiSpendGuardService` enforces per-feature + global daily token ceilings with `ai.budget_exceeded` / `ai.global_budget_exceeded`; estimated USD cost in SQL ledger; deduped budget alerts via audit; FR-590 dashboard with cost columns and recent alerts; configure disclosure gate blocks AI features until acknowledged. Ledger day boundaries remain UTC |
-| H2.3 | Parse natural language into structured vehicle/part intent | partial | `NaturalLanguageIntentParser` uses versioned prompt store; outbound prompts redact full VINs |
-| H2.4 | Implement vector/semantic bilingual search | partial | Semantic index + SQL/reference-scale catalog sources; batched embedding rebuild |
+| H2.3 | Parse natural language into structured vehicle/part intent | partial | `SearchIntentVehicleResolver` resolves make/model/year to configuration; NL queries combine part keywords + semantic with fitment filter; versioned prompt store + VIN redaction |
+| H2.4 | Implement vector/semantic bilingual search | partial | Semantic index + SQL catalog source; scheduled `SearchEmbeddingRefreshTask`; bilingual code-switch synonym expansion |
 | H2.5 | Pass the published natural-language/semantic accuracy benchmark | partial | In-memory + 20-product reference-scale corpus with recall@5 gate |
-| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Review board applies approved candidates to nopCommerce product fields via `NopAiContentApplicator` |
+| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Import publish rebinds pending candidates from row number to `publishedProductId`; review board applies approved candidates via `NopAiContentApplicator` |
 | H2.7 | Enforce the controlled automotive translation glossary | partial | `AutomotiveGlossaryService` injects glossary into versioned translation prompts and validates output terms |
-| H2.8 | Complete reviewable AI fitment candidate workflow | partial | Fitment AI review board with infer form and inline approve/reject |
+| H2.8 | Complete reviewable AI fitment candidate workflow | partial | Fitment inference parses JSON verdict from versioned prompt; reject no longer re-enqueues to review queue |
 | H2.9 | Productionize fitment-constrained recommendations | partial | Fitment-only results, category affinity vs seed product, no customer-id inputs; PDP rail |
-| H2.10 | Build the grounded customer assistant | partial | Storefront assistant widget + VIN-redacted grounded answers from catalog context |
+| H2.10 | Build the grounded customer assistant | partial | Storefront assistant renders grounded citations under answers; feature-gated widget with VIN-redacted catalog context |
 
 ### Horizon 3 — Marketplace / v1.2 (`EP-22`–`EP-24`)
 
