@@ -146,7 +146,7 @@ public class VendorOnboardingServiceTests
 
         queue.Select(item => item.Vendor.Id).Should().Contain(applied.Snapshot!.Vendor.Id);
         queue.Select(item => item.Vendor.Id).Should().NotContain(active);
-        queue.Select(item => item.Vendor.BankingSecretProtected).Should().OnlyContain(secret => secret is null);
+        queue.Select(item => item.Vendor.BankingSecretProtected).Should().OnlyContain(secret => secret == null);
     }
 
     private static async Task<int> SeedUnderReviewAsync(Harness harness)
@@ -214,7 +214,9 @@ public class VendorOnboardingServiceTests
     private sealed class PrefixSecretProtector : IVendorSecretProtector
     {
         public string? Protect(string? plaintext)
-            => string.IsNullOrWhiteSpace(plaintext) ? null : "enc:" + plaintext.Trim();
+            => string.IsNullOrWhiteSpace(plaintext)
+                ? null
+                : "enc:" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(plaintext.Trim()));
     }
 
     private sealed class FixedClock : ICheckEngineClock
