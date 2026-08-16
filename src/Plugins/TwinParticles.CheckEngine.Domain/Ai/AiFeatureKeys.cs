@@ -3,6 +3,7 @@ namespace TwinParticles.CheckEngine.Domain.Ai;
 public static class AiFeatureKeys
 {
     public const string ImportEnrichment = "import.ai.enrichment";
+    public const string ImportSpecification = "import.ai.specification";
     public const string ImportTranslation = "import.ai.translation";
     public const string ImportSeo = "import.ai.seo";
     public const string SearchNaturalLanguage = "search.natural_language";

@@ -49,6 +49,9 @@ public sealed class CheckEngineStartup : INopStartup
 
         services.AddScoped<CheckEngineLicenceWriteFilter>();
         services.AddMvc(options => options.Filters.AddService<CheckEngineLicenceWriteFilter>());
+
+        services.AddScoped<TwinParticles.CheckEngine.Domain.L10n.IAutomotiveGlossaryOverridesSource,
+            TwinParticles.CheckEngine.L10n.PluginAutomotiveGlossaryOverridesSource>();
     }
 
     public void Configure(IApplicationBuilder application)

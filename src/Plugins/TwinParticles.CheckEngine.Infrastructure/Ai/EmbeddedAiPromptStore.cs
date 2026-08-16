@@ -18,6 +18,16 @@ public sealed class EmbeddedAiPromptStore : IAiPromptStore
                 Version = "1",
                 Body = "Write a concise automotive product description. Do not invent OEM numbers, fitment, price, or stock. Name={name}; OEM={oem}."
             },
+            [AiFeatureKeys.ImportSpecification] = new()
+            {
+                PromptKey = AiFeatureKeys.ImportSpecification,
+                Version = "1",
+                Body = """
+                    Extract automotive product specifications as a JSON array of objects with keys "key" and "value".
+                    Only extract facts implied by the product name and OEM; do not invent dimensions, fitment, or compatibility.
+                    Return only JSON. Name={name}; OEM={oem}
+                    """
+            },
             [AiFeatureKeys.ImportTranslation] = new()
             {
                 PromptKey = AiFeatureKeys.ImportTranslation,

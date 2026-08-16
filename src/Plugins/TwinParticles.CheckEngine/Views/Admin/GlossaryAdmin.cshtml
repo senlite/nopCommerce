@@ -1,0 +1,97 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Glossary.Admin").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Glossary.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("ReviewBoard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a>
+        <a class="btn btn-info" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Glossary.Admin")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Glossary.Hint")</p>
+                <p id="ce-glossary-summary" class="small text-muted"></p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-glossary-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Glossary.English")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Glossary.Arabic")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Glossary.Source")</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="ce-glossary-overrides">@T("Plugins.TwinParticles.CheckEngine.Glossary.OverridesJson")</label>
+                    <textarea id="ce-glossary-overrides" class="form-control" rows="8" spellcheck="false"></textarea>
+                </div>
+                <button id="ce-glossary-save" type="button" class="btn btn-primary">@T("Admin.Common.Save")</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  function render(data) {
+    document.getElementById('ce-glossary-summary').textContent =
+      'Embedded: ' + data.embeddedCount + ', overrides: ' + data.overrideCount;
+    var tbody = document.querySelector('#ce-glossary-table tbody');
+    tbody.innerHTML = '';
+    (data.terms || []).forEach(function (row) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + row.english + '</td>' +
+        '<td dir="rtl">' + row.arabic + '</td>' +
+        '<td>' + row.source + '</td>';
+      tbody.appendChild(tr);
+    });
+    var overrides = {};
+    (data.terms || []).forEach(function (row) {
+      if (row.source === 'override') overrides[row.english] = row.arabic;
+    });
+    document.getElementById('ce-glossary-overrides').value = JSON.stringify(overrides, null, 2);
+  }
+  function load() {
+    fetch('/Admin/CheckEngine/AiAdmin/GlossaryData', { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(render);
+  }
+  document.getElementById('ce-glossary-save').addEventListener('click', function () {
+    var overrides;
+    try {
+      overrides = JSON.parse(document.getElementById('ce-glossary-overrides').value || '{}');
+    } catch (e) {
+      alert('Invalid JSON');
+      return;
+    }
+    fetch('/Admin/CheckEngine/AiAdmin/SaveGlossary', {
+      method: 'POST',
+      headers: headers(true),
+      body: JSON.stringify({ overrides: overrides })
+    }).then(function () { load(); });
+  });
+  load();
+})();
+</script>

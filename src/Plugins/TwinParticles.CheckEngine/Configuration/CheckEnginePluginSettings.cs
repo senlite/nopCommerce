@@ -41,4 +41,7 @@ public sealed class CheckEnginePluginSettings : ISettings
 
     /// <summary>Semicolon-separated feature=ceiling pairs.</summary>
     public string? AiPerFeatureDailyTokenCeilings { get; set; }
+
+    /// <summary>JSON object of EN→AR glossary overrides merged onto the embedded catalog (FR-941).</summary>
+    public string? AutomotiveGlossaryOverridesJson { get; set; }
 }

@@ -10,7 +10,10 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Domain.Security;
+using TwinParticles.CheckEngine.L10n;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -31,6 +34,8 @@ public sealed class AiAdminController : BasePluginController
     private readonly ISettingService _settingService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
     private readonly AiSpendAlertService _spendAlertService;
+    private readonly AutomotiveGlossaryService _glossaryService;
+    private readonly ICheckEngineAuditService _auditService;
 
     public AiAdminController(
         IAiUsageLedger usageLedger,
@@ -42,7 +47,9 @@ public sealed class AiAdminController : BasePluginController
         FitmentReviewService fitmentReviewService,
         ISettingService settingService,
         Nop.Services.Security.IPermissionService permissionService,
-        AiSpendAlertService spendAlertService)
+        AiSpendAlertService spendAlertService,
+        AutomotiveGlossaryService glossaryService,
+        ICheckEngineAuditService auditService)
     {
         _usageLedger = usageLedger;
         _disclosureCatalog = disclosureCatalog;
@@ -54,6 +61,8 @@ public sealed class AiAdminController : BasePluginController
         _settingService = settingService;
         _permissionService = permissionService;
         _spendAlertService = spendAlertService;
+        _glossaryService = glossaryService;
+        _auditService = auditService;
     }
 
     private async Task<bool> AuthorizedAsync() =>
@@ -191,5 +200,63 @@ public sealed class AiAdminController : BasePluginController
             pendingContentCount = pendingContent.Count,
             pendingFitmentAiCount = pendingFitmentAi.Count
         });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GlossaryBoard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/GlossaryAdmin.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GlossaryData(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var overrides = PluginAutomotiveGlossaryOverridesSource.ParseOverrides(settings.AutomotiveGlossaryOverridesJson);
+        var embedded = new AutomotiveGlossaryService().GetTerms();
+        var merged = _glossaryService.GetTerms();
+
+        var rows = merged
+            .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(pair => new
+            {
+                english = pair.Key,
+                arabic = pair.Value,
+                source = overrides.ContainsKey(pair.Key) ? "override" : "embedded"
+            });
+
+        return Json(new
+        {
+            embeddedCount = embedded.Count,
+            overrideCount = overrides.Count,
+            terms = rows
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveGlossary([FromBody] GlossarySaveModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (model?.Overrides is null)
+            return BadRequest();
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var before = settings.AutomotiveGlossaryOverridesJson;
+        settings.AutomotiveGlossaryOverridesJson = PluginAutomotiveGlossaryOverridesSource.SerializeOverrides(model.Overrides);
+        await _settingService.SaveSettingAsync(settings);
+
+        await _auditService.AppendAsync(
+            "admin",
+            "glossary.overrides_saved",
+            "AutomotiveGlossary",
+            "global",
+            before,
+            settings.AutomotiveGlossaryOverridesJson,
+            cancellationToken);
+
+        return Json(new { saved = true, overrideCount = model.Overrides.Count });
     }
 }

@@ -10,9 +10,9 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>TwinParticles.CheckEngine</AssemblyName>
     <RootNamespace>TwinParticles.CheckEngine</RootNamespace>
-    <Version>0.38.0</Version>
-    <AssemblyVersion>0.38.0.0</AssemblyVersion>
-    <FileVersion>0.38.0.0</FileVersion>
+    <Version>0.39.0</Version>
+    <AssemblyVersion>0.39.0.0</AssemblyVersion>
+    <FileVersion>0.39.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -23,7 +23,7 @@
     <None Remove="Views\Admin\Dashboard.cshtml" />
     <None Remove="Views\Admin\SearchAdmin.cshtml" />
     <None Remove="Views\Admin\AiDashboard.cshtml" />
-    <None Remove="Views\Admin\FitmentAiReview.cshtml" />
+    <None Remove="Views\Admin\GlossaryAdmin.cshtml" />
     <None Remove="Views\Seo\Landing.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
     <None Remove="Views\Shared\Components\UninstallPreparation\Default.cshtml" />
@@ -50,6 +50,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Admin\AiDashboard.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\GlossaryAdmin.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Admin\FitmentAiReview.cshtml">

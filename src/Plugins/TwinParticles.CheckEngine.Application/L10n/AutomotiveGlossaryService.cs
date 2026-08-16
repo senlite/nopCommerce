@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TwinParticles.CheckEngine.Domain.L10n;
 
 namespace TwinParticles.CheckEngine.Application.L10n;
 
@@ -37,24 +38,43 @@ public sealed class AutomotiveGlossaryService
         ["head gasket"] = "جوان رأس"
     };
 
-    private readonly IReadOnlyDictionary<string, string> _englishToArabic;
+    private readonly IAutomotiveGlossaryOverridesSource? _overridesSource;
 
-    public AutomotiveGlossaryService()
-        : this(EmbeddedGlossary.Value)
+    public AutomotiveGlossaryService(IAutomotiveGlossaryOverridesSource? overridesSource = null)
     {
+        _overridesSource = overridesSource;
     }
 
     public AutomotiveGlossaryService(IReadOnlyDictionary<string, string> englishToArabic)
     {
-        _englishToArabic = englishToArabic;
+        _overridesSource = null;
+        _fixedTerms = englishToArabic;
+    }
+
+    private readonly IReadOnlyDictionary<string, string>? _fixedTerms;
+
+    public IReadOnlyDictionary<string, string> GetTerms()
+    {
+        if (_fixedTerms is not null)
+            return _fixedTerms;
+
+        var merged = new Dictionary<string, string>(EmbeddedGlossary.Value, StringComparer.OrdinalIgnoreCase);
+        if (_overridesSource is not null)
+        {
+            foreach (var pair in _overridesSource.GetOverrides())
+                merged[pair.Key] = pair.Value;
+        }
+
+        return merged;
     }
 
     public string BuildGlossaryPromptSection()
     {
-        if (_englishToArabic.Count == 0)
+        var terms = GetTerms();
+        if (terms.Count == 0)
             return string.Empty;
 
-        var lines = _englishToArabic
+        var lines = terms
             .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
             .Take(50)
             .Select(pair => $"- {pair.Key} => {pair.Value}");
@@ -67,7 +87,7 @@ public sealed class AutomotiveGlossaryService
         if (string.IsNullOrWhiteSpace(englishTerm) || string.IsNullOrWhiteSpace(translatedText))
             return true;
 
-        foreach (var pair in _englishToArabic)
+        foreach (var pair in GetTerms())
         {
             if (!englishTerm.Contains(pair.Key, StringComparison.OrdinalIgnoreCase))
                 continue;
