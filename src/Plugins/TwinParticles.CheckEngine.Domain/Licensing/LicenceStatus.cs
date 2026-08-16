@@ -16,4 +16,11 @@ public sealed class LicenceStatus
     /// When false, Check Engine admin mutations return 403 but the storefront keeps working.
     /// </summary>
     public bool AllowsAdminWrite { get; init; }
+
+    public LicenceTier Tier { get; init; }
+
+    /// <summary>
+    /// Business-tier and above (FR-870). Independent of <see cref="AllowsAdminWrite"/>.
+    /// </summary>
+    public bool MarketplaceModuleEntitlement { get; init; }
 }

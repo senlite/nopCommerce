@@ -10,6 +10,7 @@ using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
 using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Licensing;
+using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Observability;
 using TwinParticles.CheckEngine.Application.ReferenceScale;
@@ -21,6 +22,7 @@ using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Services;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Licensing;
+using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Domain.Search;
 
 namespace TwinParticles.CheckEngine.Application.DependencyInjection;
@@ -94,6 +96,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<AiProposalService>();
 
         services.AddScoped<ILicenceService, DefaultLicenceService>();
+        services.AddSingleton<IMarketplaceOnboardingPolicy>(_ => MarketplaceOnboardingOptions.Current);
+        services.AddScoped<MarketplaceLicenceGate>();
+        services.AddScoped<VendorOnboardingService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<ErpInboundWebhookService>();
         services.AddScoped<CheckEngineHealthService>();

@@ -7,6 +7,10 @@ public sealed class LicenceKeyValidationResult
     public string? ReasonCode { get; init; }
 
     public DateTimeOffset? ExpiresUtc { get; init; }
+
+    public LicenceTier Tier { get; init; }
+
+    public bool MarketplaceModuleEntitlement { get; init; }
 }
 
 /// <summary>

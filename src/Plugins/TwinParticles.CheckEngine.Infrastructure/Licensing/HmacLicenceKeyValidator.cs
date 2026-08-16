@@ -73,7 +73,15 @@ public sealed class HmacLicenceKeyValidator : ILicenceKeyValidator
             if (expiresUtc <= DateTimeOffset.UtcNow)
                 return Invalid("licence.bundle_expired");
 
-            return Valid(expiresUtc);
+            var tier = LicenceTier.Unknown;
+            if (document.RootElement.TryGetProperty("tier", out var tierElement))
+                tier = LicenceTierEntitlements.ParseTier(tierElement.GetString());
+
+            var marketplace = LicenceTierEntitlements.GrantsMarketplace(tier);
+            if (TryReadMarketplaceFlag(document.RootElement, out var explicitMarketplace))
+                marketplace = explicitMarketplace;
+
+            return Valid(expiresUtc, tier, marketplace);
         }
         catch
         {
@@ -81,10 +89,42 @@ public sealed class HmacLicenceKeyValidator : ILicenceKeyValidator
         }
     }
 
-    private static LicenceKeyValidationResult Valid(DateTimeOffset? expiresUtc) => new()
+    private static bool TryReadMarketplaceFlag(JsonElement root, out bool marketplace)
+    {
+        foreach (var name in new[] { "marketplace", "MarketplaceModuleEntitlement" })
+        {
+            if (!root.TryGetProperty(name, out var element))
+                continue;
+
+            if (element.ValueKind == JsonValueKind.True)
+            {
+                marketplace = true;
+                return true;
+            }
+
+            if (element.ValueKind == JsonValueKind.False)
+            {
+                marketplace = false;
+                return true;
+            }
+
+            if (element.ValueKind == JsonValueKind.String && bool.TryParse(element.GetString(), out var parsed))
+            {
+                marketplace = parsed;
+                return true;
+            }
+        }
+
+        marketplace = false;
+        return false;
+    }
+
+    private static LicenceKeyValidationResult Valid(DateTimeOffset? expiresUtc, LicenceTier tier = LicenceTier.Unknown, bool marketplace = false) => new()
     {
         IsValid = true,
-        ExpiresUtc = expiresUtc
+        ExpiresUtc = expiresUtc,
+        Tier = tier,
+        MarketplaceModuleEntitlement = marketplace
     };
 
     private static LicenceKeyValidationResult Invalid(string reasonCode) => new()

@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-15
+**Last updated:** 2026-08-16
 
 ## Status legend
 - `pending` = not started
@@ -254,7 +254,7 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status |
 |---|---|---|
-| H3.1 | Supplier onboarding, verification and agreement acceptance | pending |
+| H3.1 | Supplier onboarding, verification and agreement acceptance | done | Vendor lifecycle Applied→UnderReview→Active/Rejected, Suspend/Reinstate/Close; versioned `TP_CE_VendorAgreementAcceptance`; activate blocked without current agreement; banking encrypted and omitted from APIs/audit; marketplace admin/apply gated by `MarketplaceModuleEntitlement` (Business+) plus operator applications flag |
 | H3.2 | Vendor catalog/order/customer isolation and upgrade path | pending |
 | H3.3 | Vendor dashboards, inventory and performance analytics | pending |
 | H3.4 | Flat, percentage, tiered and category-specific commissions | pending |

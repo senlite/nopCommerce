@@ -10,6 +10,7 @@ using TwinParticles.CheckEngine.Domain.Images;
 using TwinParticles.CheckEngine.Domain.ImportPipeline;
 using TwinParticles.CheckEngine.Domain.L10n;
 using TwinParticles.CheckEngine.Domain.Licensing;
+using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Domain.Observability;
 using TwinParticles.CheckEngine.Domain.Seo;
 using TwinParticles.CheckEngine.Domain.Oem;
@@ -29,6 +30,7 @@ using TwinParticles.CheckEngine.Infrastructure.Images;
 using TwinParticles.CheckEngine.Infrastructure.ImportPipeline;
 using TwinParticles.CheckEngine.Infrastructure.L10n;
 using TwinParticles.CheckEngine.Infrastructure.Licensing;
+using TwinParticles.CheckEngine.Infrastructure.Marketplace;
 using TwinParticles.CheckEngine.Infrastructure.Oem;
 using TwinParticles.CheckEngine.Infrastructure.Seo;
 using TwinParticles.CheckEngine.Infrastructure.Observability;
@@ -137,6 +139,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<SqlLicenceStateStore>();
         services.AddScoped<ILicenceStateStore>(sp => sp.GetRequiredService<SqlLicenceStateStore>());
         services.AddSingleton<ILicenceKeyValidator, HmacLicenceKeyValidator>();
+        services.AddScoped<IVendorSecretProtector, NopVendorSecretProtector>();
+        services.AddScoped<IVendorRepository, SqlVendorRepository>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();

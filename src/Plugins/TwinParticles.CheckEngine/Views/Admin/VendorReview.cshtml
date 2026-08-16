@@ -1,0 +1,105 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Marketplace.Review").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Review")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Review.Queue")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Review.Hint")</p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-vendor-table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Legal name</th>
+                                <th>Email</th>
+                                <th>Categories</th>
+                                <th>Status</th>
+                                <th>Agreement</th>
+                                <th>Banking on file</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <pre id="ce-vendor-result" class="mt-2" style="white-space: pre-wrap;"></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+
+  function loadQueue() {
+    fetch('/Admin/CheckEngine/VendorAdmin/Queue', { headers: headers(false) })
+      .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+      .then(function (res) {
+        var tbody = document.querySelector('#ce-vendor-table tbody');
+        tbody.innerHTML = '';
+        if (!res.ok) {
+          document.getElementById('ce-vendor-result').textContent = JSON.stringify(res.body);
+          return;
+        }
+        (res.body || []).forEach(function (row) {
+          var vendor = row.vendor || row.Vendor || {};
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + (vendor.id || vendor.Id || '') + '</td>' +
+            '<td>' + (vendor.legalName || vendor.LegalName || '') + '</td>' +
+            '<td>' + (vendor.contactEmail || vendor.ContactEmail || '') + '</td>' +
+            '<td>' + (vendor.categoriesCsv || vendor.CategoriesCsv || '') + '</td>' +
+            '<td>' + (vendor.status || vendor.Status || '') + '</td>' +
+            '<td>' + (row.acceptedAgreementVersion || row.AcceptedAgreementVersion || '—') + '</td>' +
+            '<td>' + ((vendor.hasBankingDetails || vendor.HasBankingDetails) ? 'yes' : 'no') + '</td>' +
+            '<td>' +
+              '<button type="button" class="btn btn-sm btn-secondary" data-act="Submit">Review</button> ' +
+              '<button type="button" class="btn btn-sm btn-success" data-act="Approve">Approve</button> ' +
+              '<button type="button" class="btn btn-sm btn-danger" data-act="Reject">Reject</button>' +
+            '</td>';
+          tr.querySelectorAll('button').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              act(btn.getAttribute('data-act'), vendor.id || vendor.Id);
+            });
+          });
+          tbody.appendChild(tr);
+        });
+      });
+  }
+
+  function act(action, vendorId) {
+    fetch('/Admin/CheckEngine/VendorAdmin/' + action, {
+      method: 'POST',
+      headers: headers(true),
+      body: JSON.stringify({ vendorId: vendorId })
+    }).then(function (r) { return r.text(); }).then(function (text) {
+      document.getElementById('ce-vendor-result').textContent = text;
+      loadQueue();
+    });
+  }
+
+  loadQueue();
+})();
+</script>

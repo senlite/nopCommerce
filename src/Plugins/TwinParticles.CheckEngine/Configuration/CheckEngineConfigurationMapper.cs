@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Infrastructure.Ai;
 using TwinParticles.CheckEngine.Models;
 
@@ -40,7 +42,11 @@ public static class CheckEngineConfigurationMapper
             EnableSearchSemantic = enabled.Contains(AiFeatureKeys.SearchSemantic),
             EnableFitmentInference = enabled.Contains(AiFeatureKeys.FitmentInference),
             EnableCustomerAssistant = enabled.Contains(AiFeatureKeys.CustomerAssistant),
-            EnableRecommendations = enabled.Contains(AiFeatureKeys.Recommendations)
+            EnableRecommendations = enabled.Contains(AiFeatureKeys.Recommendations),
+            EnableMarketplace = settings.EnableMarketplace,
+            MarketplaceAgreementVersion = string.IsNullOrWhiteSpace(settings.MarketplaceAgreementVersion)
+                ? VendorAgreementVersions.Default
+                : settings.MarketplaceAgreementVersion
         };
     }
 
@@ -74,7 +80,13 @@ public static class CheckEngineConfigurationMapper
         if (model.EnableRecommendations) enabledFeatures.Add(AiFeatureKeys.Recommendations);
 
         settings.AiEnabledFeatures = string.Join(',', enabledFeatures);
+        settings.EnableMarketplace = model.EnableMarketplace;
+        settings.MarketplaceAgreementVersion = string.IsNullOrWhiteSpace(model.MarketplaceAgreementVersion)
+            ? VendorAgreementVersions.Default
+            : model.MarketplaceAgreementVersion.Trim();
         CheckEngineAiSettingsSync.Apply(settings);
+        MarketplaceOnboardingOptions.Current.ApplicationsOpen = settings.EnableMarketplace;
+        MarketplaceOnboardingOptions.Current.CurrentAgreementVersion = settings.MarketplaceAgreementVersion;
     }
 
     public static bool HasAnyAiFeatureEnabled(ConfigurationModel model) =>

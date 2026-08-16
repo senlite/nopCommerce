@@ -25,7 +25,8 @@ public sealed class DefaultLicenceService : ILicenceService
     public async Task<LicenceStatus> GetStatusAsync(CancellationToken cancellationToken)
     {
         var lastHeartbeatUtc = await _stateStore.GetLastHeartbeatUtcAsync(cancellationToken);
-        return BuildStatus(lastHeartbeatUtc);
+        var storedKey = await _stateStore.GetActivationKeyAsync(cancellationToken);
+        return BuildStatus(lastHeartbeatUtc, DecodeEntitlements(storedKey));
     }
 
     public async Task<LicenceStatus> ActivateAsync(string licenceKey, CancellationToken cancellationToken)
@@ -55,7 +56,7 @@ public sealed class DefaultLicenceService : ILicenceService
 
         await _stateStore.SetActivationKeyAsync(licenceKey.Trim(), cancellationToken);
         await _stateStore.SetLastHeartbeatUtcAsync(_clock.UtcNow, cancellationToken);
-        return await GetStatusAsync(cancellationToken);
+        return BuildStatus(_clock.UtcNow, validation);
     }
 
     public async Task<LicenceStatus> HeartbeatAsync(CancellationToken cancellationToken)
@@ -72,8 +73,12 @@ public sealed class DefaultLicenceService : ILicenceService
         return await GetStatusAsync(cancellationToken);
     }
 
-    private LicenceStatus BuildStatus(DateTimeOffset? lastHeartbeatUtc)
+    private LicenceStatus BuildStatus(DateTimeOffset? lastHeartbeatUtc, LicenceKeyValidationResult? entitlements)
     {
+        var entitled = entitlements is { IsValid: true };
+        var tier = entitled ? entitlements!.Tier : LicenceTier.Unknown;
+        var marketplace = entitled && entitlements!.MarketplaceModuleEntitlement;
+
         if (!lastHeartbeatUtc.HasValue)
         {
             return new LicenceStatus
@@ -81,7 +86,9 @@ public sealed class DefaultLicenceService : ILicenceService
                 IsActive = false,
                 State = "inactive",
                 AllowsAdminWrite = false,
-                ReasonCode = "licence.not_activated"
+                ReasonCode = "licence.not_activated",
+                Tier = LicenceTier.Unknown,
+                MarketplaceModuleEntitlement = false
             };
         }
 
@@ -93,7 +100,9 @@ public sealed class DefaultLicenceService : ILicenceService
                 IsActive = true,
                 State = "active",
                 LastHeartbeatUtc = lastHeartbeatUtc,
-                AllowsAdminWrite = true
+                AllowsAdminWrite = true,
+                Tier = tier,
+                MarketplaceModuleEntitlement = marketplace
             };
         }
 
@@ -103,7 +112,18 @@ public sealed class DefaultLicenceService : ILicenceService
             State = "read_only",
             LastHeartbeatUtc = lastHeartbeatUtc,
             AllowsAdminWrite = false,
-            ReasonCode = "licence.grace_expired"
+            ReasonCode = "licence.grace_expired",
+            Tier = tier,
+            MarketplaceModuleEntitlement = marketplace
         };
+    }
+
+    private LicenceKeyValidationResult? DecodeEntitlements(string? storedKey)
+    {
+        if (string.IsNullOrWhiteSpace(storedKey))
+            return null;
+
+        var validation = _licenceKeyValidator.Validate(storedKey);
+        return validation.IsValid ? validation : null;
     }
 }

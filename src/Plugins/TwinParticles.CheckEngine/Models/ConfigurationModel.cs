@@ -82,4 +82,10 @@ public record ConfigurationModel : BaseNopModel
 
     [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableRecommendations")]
     public bool EnableRecommendations { get; set; }
+
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableMarketplace")]
+    public bool EnableMarketplace { get; set; }
+
+    [NopResourceDisplayName("Plugins.TwinParticles.CheckEngine.Configuration.Fields.MarketplaceAgreementVersion")]
+    public string MarketplaceAgreementVersion { get; set; } = TwinParticles.CheckEngine.Domain.Marketplace.VendorAgreementVersions.Default;
 }
