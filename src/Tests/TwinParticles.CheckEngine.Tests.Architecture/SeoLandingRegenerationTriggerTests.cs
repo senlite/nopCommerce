@@ -173,6 +173,8 @@ public class SeoLandingRegenerationTriggerTests
     private sealed class FakeReviewQueueRepository : IFitmentReviewQueueRepository
     {
         public Task EnqueueAsync(int claimId, string reasonCode, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task DequeueAsync(int claimId, string reasonCode, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class NoOpAuditService : TwinParticles.CheckEngine.Domain.Security.ICheckEngineAuditService

@@ -20,17 +20,20 @@ public sealed class NopAiContentApplicator : IAiContentApplicator
     private readonly ILocalizedEntityService _localizedEntityService;
     private readonly ILanguageService _languageService;
     private readonly ISpecificationAttributeService _specificationAttributeService;
+    private readonly IAllowedSpecificationKeyCatalog _specificationKeyCatalog;
 
     public NopAiContentApplicator(
         IProductService productService,
         ILocalizedEntityService localizedEntityService,
         ILanguageService languageService,
-        ISpecificationAttributeService specificationAttributeService)
+        ISpecificationAttributeService specificationAttributeService,
+        IAllowedSpecificationKeyCatalog specificationKeyCatalog)
     {
         _productService = productService;
         _localizedEntityService = localizedEntityService;
         _languageService = languageService;
         _specificationAttributeService = specificationAttributeService;
+        _specificationKeyCatalog = specificationKeyCatalog;
     }
 
     public async Task<AiContentApplyResult> ApplyAsync(AiGenerationCandidate candidate, CancellationToken cancellationToken)
@@ -88,6 +91,9 @@ public sealed class NopAiContentApplicator : IAiContentApplicator
 
         foreach (var (key, value) in lines)
         {
+            if (!_specificationKeyCatalog.IsAllowed(key))
+                continue;
+
             var attribute = attributes.FirstOrDefault(x =>
                 x.Name.Equals(key, StringComparison.OrdinalIgnoreCase));
 

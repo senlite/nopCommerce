@@ -24,6 +24,7 @@ public sealed class EmbeddedAiPromptStore : IAiPromptStore
                 Version = "1",
                 Body = """
                     Extract automotive product specifications as a JSON array of objects with keys "key" and "value".
+                    Only use these attribute keys when applicable: Material, Thread, Thread Size, Diameter, Length, Width, Height, Weight, Color, Finish, Voltage, Amperage, Capacity, Volume, Viscosity, Position, Side, Drive Type, Transmission, Engine Code, OEM Number, Manufacturer, Warranty, Quantity, Package Contents, Includes, Notes.
                     Only extract facts implied by the product name and OEM; do not invent dimensions, fitment, or compatibility.
                     Return only JSON. Name={name}; OEM={oem}
                     """

@@ -13,17 +13,20 @@ public sealed class ImportAiEnrichmentHookService
     private readonly IAiFeatureToggle? _featureToggle;
     private readonly AiContentCandidateService? _contentCandidateService;
     private readonly AiPromptResolver? _promptResolver;
+    private readonly IAllowedSpecificationKeyCatalog? _specificationKeyCatalog;
 
     public ImportAiEnrichmentHookService(
         IAiCompletionPort? aiCompletionPort = null,
         IAiFeatureToggle? featureToggle = null,
         AiContentCandidateService? contentCandidateService = null,
-        AiPromptResolver? promptResolver = null)
+        AiPromptResolver? promptResolver = null,
+        IAllowedSpecificationKeyCatalog? specificationKeyCatalog = null)
     {
         _aiCompletionPort = aiCompletionPort;
         _featureToggle = featureToggle;
         _contentCandidateService = contentCandidateService;
         _promptResolver = promptResolver;
+        _specificationKeyCatalog = specificationKeyCatalog;
     }
 
     public void Apply(IReadOnlyList<ImportPipelineRowState> rows, bool enabled)
@@ -83,24 +86,33 @@ public sealed class ImportAiEnrichmentHookService
             }) ?? $"Extract specifications. Name={name}; Oem={oem}";
 
             var specificationResult = Complete(specificationPrompt, AiFeatureKeys.ImportEnrichment, AiFeatureKeys.ImportSpecification);
-            if (specificationResult.Success &&
-                AiSpecificationCandidateFormatter.TryFormat(specificationResult.Text, out var formattedSpecification))
+            if (specificationResult.Success)
             {
-                row.Fields = new Dictionary<string, string?>(row.Fields)
+                var catalog = _specificationKeyCatalog ?? new AllowedSpecificationKeyCatalog();
+                var validation = AiSpecificationCandidateFormatter.Validate(specificationResult.Text, catalog);
+                if (!string.IsNullOrWhiteSpace(validation.FormattedText))
                 {
-                    ["aiSpecificationCandidate"] = formattedSpecification
-                };
+                    var fields = new Dictionary<string, string?>(row.Fields)
+                    {
+                        ["aiSpecificationCandidate"] = validation.FormattedText
+                    };
 
-                _contentCandidateService?.SaveCandidateAsync(
-                    AiGenerationEntityType.Specification,
-                    row.RowNumber,
-                    AiFeatureKeys.ImportSpecification,
-                    "en",
-                    formattedSpecification,
-                    AiFeatureKeys.ImportSpecification,
-                    specificationResult.PromptHash,
-                    null,
-                    default).GetAwaiter().GetResult();
+                    if (validation.UnknownKeys.Count > 0)
+                        fields["aiSpecificationUnknownKeys"] = string.Join(", ", validation.UnknownKeys);
+
+                    row.Fields = fields;
+
+                    _contentCandidateService?.SaveCandidateAsync(
+                        AiGenerationEntityType.Specification,
+                        row.RowNumber,
+                        AiFeatureKeys.ImportSpecification,
+                        "en",
+                        validation.FormattedText,
+                        AiFeatureKeys.ImportSpecification,
+                        specificationResult.PromptHash,
+                        validation.QualityScore,
+                        default).GetAwaiter().GetResult();
+                }
             }
         }
     }

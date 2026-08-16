@@ -23,4 +23,12 @@ VALUES (@claimId, @reasonCode, @createdUtc)",
             new DataParameter("claimId", claimId),
             new DataParameter("reasonCode", reasonCode),
             new DataParameter("createdUtc", DateTime.UtcNow));
+
+    public Task DequeueAsync(int claimId, string reasonCode, CancellationToken cancellationToken)
+        => _dataProvider.ExecuteNonQueryAsync(
+            @"INSERT INTO TP_CE_FitmentReviewQueueEvent (ClaimId, ReasonCode, CreatedUtc)
+VALUES (@claimId, @reasonCode, @createdUtc)",
+            new DataParameter("claimId", claimId),
+            new DataParameter("reasonCode", reasonCode),
+            new DataParameter("createdUtc", DateTime.UtcNow));
 }

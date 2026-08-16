@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="L10n\automotive-glossary.json" />
+    <EmbeddedResource Include="Ai\allowed-specification-keys.json" />
   </ItemGroup>
 
 </Project>

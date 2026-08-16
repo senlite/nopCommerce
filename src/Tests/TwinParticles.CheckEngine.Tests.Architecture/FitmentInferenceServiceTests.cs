@@ -97,5 +97,8 @@ public class FitmentInferenceServiceTests
             LastReason = reasonCode;
             return Task.CompletedTask;
         }
+
+        public Task DequeueAsync(int claimId, string reasonCode, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
     }
 }

@@ -37,4 +37,29 @@ public class AiSpecificationCandidateFormatterTests
         lines[0].Key.Should().Be("Material");
         lines[0].Value.Should().Be("Steel");
     }
+
+    [Test]
+    public void Validate_Should_Flag_Unknown_Keys_And_Compute_Quality_Score()
+    {
+        var catalog = new AllowedSpecificationKeyCatalog(["Material", "Thread"]);
+        var result = AiSpecificationCandidateFormatter.Validate(
+            """[{"key":"Material","value":"Steel"},{"key":"FooBar","value":"X"}]""",
+            catalog);
+
+        result.UnknownKeys.Should().ContainSingle().Which.Should().Be("FooBar");
+        result.QualityScore.Should().Be(0.5m);
+        result.Lines.Should().HaveCount(2);
+    }
+
+    [Test]
+    public void Validate_Should_Return_Perfect_Score_When_All_Keys_Allowed()
+    {
+        var catalog = new AllowedSpecificationKeyCatalog(["Material", "Thread"]);
+        var result = AiSpecificationCandidateFormatter.Validate(
+            """[{"key":"Material","value":"Steel"},{"key":"Thread","value":"M14x1.5"}]""",
+            catalog);
+
+        result.UnknownKeys.Should().BeEmpty();
+        result.QualityScore.Should().Be(1m);
+    }
 }

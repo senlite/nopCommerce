@@ -54,16 +54,20 @@ public sealed class FitmentReviewService
             throw new ArgumentException("Claim id must be positive.", nameof(claimId));
 
         var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
+        var publishStatus = ResolveApprovedStatus(claim);
+
         if (claim is not null && claim.SourceKindIsAi())
         {
             claim.Provenance.SourceKind = FitmentSourceKind.CuratorManual;
             claim.Provenance.SourceReference = "ai.review.promoted";
             claim.Provenance.CreatedBy = actor;
+            claim.Status = publishStatus;
             await _writeRepository.UpsertAsync(claim, cancellationToken);
         }
 
-        await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Fits, cancellationToken);
+        await _writeRepository.SetStatusAsync(claimId, publishStatus, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, true, cancellationToken);
+        await _reviewQueueRepository.DequeueAsync(claimId, "fitment.review.approved", cancellationToken);
 
         await _auditService.AppendAsync(
             actor,
@@ -71,7 +75,7 @@ public sealed class FitmentReviewService
             "FitmentClaim",
             claimId.ToString(),
             beforeJson: null,
-            afterJson: "{\"status\":\"Fits\",\"isPublished\":true}",
+            afterJson: $"{{\"status\":\"{publishStatus}\",\"isPublished\":true}}",
             cancellationToken);
 
         await AfterPublicationChangedAsync(claimId, cancellationToken);
@@ -84,6 +88,7 @@ public sealed class FitmentReviewService
 
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Rejected, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, false, cancellationToken);
+        await _reviewQueueRepository.DequeueAsync(claimId, "fitment.review.rejected", cancellationToken);
 
         var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
         if (claim is not null)
@@ -120,4 +125,12 @@ public sealed class FitmentReviewService
         if (_seoLandingRegenerationTrigger is not null)
             await _seoLandingRegenerationTrigger.OnFitmentPublicationChangedAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
     }
+
+    private static FitmentStatus ResolveApprovedStatus(FitmentClaim? claim) =>
+        claim?.Status switch
+        {
+            FitmentStatus.DoesNotFit => FitmentStatus.DoesNotFit,
+            FitmentStatus.Fits => FitmentStatus.Fits,
+            _ => FitmentStatus.Fits
+        };
 }

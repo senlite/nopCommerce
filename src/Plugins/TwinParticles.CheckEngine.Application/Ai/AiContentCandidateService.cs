@@ -88,6 +88,13 @@ public sealed class AiContentCandidateService
             return false;
         }
 
+        if (approved
+            && existing.EntityType == AiGenerationEntityType.Specification
+            && existing.QualityScore is < 1m)
+        {
+            return false;
+        }
+
         await _generationRepository.MarkReviewedAsync(id, approved, reviewer, cancellationToken);
 
         if (approved && _contentApplicator is not null)

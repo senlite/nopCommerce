@@ -151,6 +151,50 @@ public class FitmentPolicyAndReviewServiceTests
     }
 
     [Test]
+    public async Task ApproveAsync_Should_Preserve_DoesNotFit_Verdict()
+    {
+        var claim = new FitmentClaim
+        {
+            Id = 302,
+            ProductId = 10,
+            VehicleConfigurationId = 20,
+            Status = FitmentStatus.DoesNotFit,
+            IsPublished = false,
+            IsActive = true,
+            Provenance = new FitmentClaimProvenance { SourceKind = FitmentSourceKind.AiInference }
+        };
+        var writeRepository = new FakeWriteRepository();
+        var queueRepository = new FakeReviewQueueRepository();
+        var service = new FitmentReviewService(
+            new FakeReadRepository(claim),
+            writeRepository,
+            queueRepository,
+            new NoOpAuditService());
+
+        await service.ApproveAsync(302, CancellationToken.None);
+
+        writeRepository.StatusByClaimId[302].Should().Be(FitmentStatus.DoesNotFit);
+        writeRepository.PublishedByClaimId[302].Should().BeTrue();
+        queueRepository.Dequeued.Should().ContainSingle(x => x.claimId == 302 && x.reasonCode == "fitment.review.approved");
+    }
+
+    [Test]
+    public async Task RejectAsync_Should_Record_Dequeue_Event()
+    {
+        var writeRepository = new FakeWriteRepository();
+        var queueRepository = new FakeReviewQueueRepository();
+        var service = new FitmentReviewService(
+            new FakeReadRepository(),
+            writeRepository,
+            queueRepository,
+            new NoOpAuditService());
+
+        await service.RejectAsync(303, CancellationToken.None);
+
+        queueRepository.Dequeued.Should().ContainSingle(x => x.claimId == 303 && x.reasonCode == "fitment.review.rejected");
+    }
+
+    [Test]
     public async Task ApproveAsync_Should_Invalidate_Fitment_Cache_For_The_Claim()
     {
         var claim = new FitmentClaim
@@ -305,10 +349,17 @@ public class FitmentPolicyAndReviewServiceTests
     private sealed class FakeReviewQueueRepository : IFitmentReviewQueueRepository
     {
         public List<(int claimId, string reasonCode)> Enqueued { get; } = [];
+        public List<(int claimId, string reasonCode)> Dequeued { get; } = [];
 
         public Task EnqueueAsync(int claimId, string reasonCode, CancellationToken cancellationToken)
         {
             Enqueued.Add((claimId, reasonCode));
+            return Task.CompletedTask;
+        }
+
+        public Task DequeueAsync(int claimId, string reasonCode, CancellationToken cancellationToken)
+        {
+            Dequeued.Add((claimId, reasonCode));
             return Task.CompletedTask;
         }
     }

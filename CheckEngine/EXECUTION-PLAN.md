@@ -242,9 +242,9 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 | H2.3 | Parse natural language into structured vehicle/part intent | partial | Heuristic make/model/year extraction; vehicle resolver enriches configuration id; NL combines keyword + semantic with fitment filter |
 | H2.4 | Implement vector/semantic bilingual search | partial | Semantic index + SQL catalog source; scheduled `SearchEmbeddingRefreshTask`; bilingual code-switch synonym expansion |
 | H2.5 | Pass the published natural-language/semantic accuracy benchmark | partial | In-memory + reference-scale corpus expanded with vehicle+part and EN/AR code-switch queries; recall@5 gate |
-| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Import enrichment saves description + specification candidates; approved specs map to nopCommerce specification attributes |
+| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Import enrichment saves description + specification candidates; allowed-key catalog flags unknown keys; approval blocked when qualityScore &lt; 1; approved specs map to allowed nopCommerce attributes only |
 | H2.7 | Enforce the controlled automotive translation glossary | partial | Embedded JSON + audited admin overrides UI; glossary validation blocks approval when `qualityScore < 1` |
-| H2.8 | Complete reviewable AI fitment candidate workflow | partial | JSON verdict + rationale in review queue; reject deactivates claim; AI queue excludes rejected/published |
+| H2.8 | Complete reviewable AI fitment candidate workflow | partial | JSON verdict + rationale in review queue; reject deactivates claim; AI queue excludes rejected/published; approve preserves DoesNotFit and records dequeue events |
 | H2.9 | Productionize fitment-constrained recommendations | partial | Fitment-only results, category affinity, `SeName` product URLs in PDP rail, `EnableRecommendations` feature flag, rate limiting on `/recommend` |
 | H2.10 | Build the grounded customer assistant | partial | Storefront assistant renders grounded citations; rate limiting on `/assistant/ask`; feature-gated widget with VIN-redacted catalog context |
 
