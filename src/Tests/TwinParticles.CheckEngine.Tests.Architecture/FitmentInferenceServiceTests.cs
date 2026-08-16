@@ -38,6 +38,7 @@ public class FitmentInferenceServiceTests
 
         claim.Should().NotBeNull();
         claim!.Status.Should().Be(FitmentStatus.DoesNotFit);
+        FitmentAiReference.Parse(claim.Provenance.SourceReference).Rationale.Should().Be("OEM cross-reference missing");
     }
 
     private sealed class JsonVerdictPort : IAiCompletionPort
@@ -47,7 +48,7 @@ public class FitmentInferenceServiceTests
             return Task.FromResult(new AiCompletionResult
             {
                 Success = true,
-                Text = """[{"productId":10,"configurationId":20,"verdict":"DoesNotFit","confidence":0.4}]""",
+                Text = """[{"productId":10,"configurationId":20,"verdict":"DoesNotFit","confidence":0.4,"rationale":"OEM cross-reference missing"}]""",
                 ProviderName = "test",
                 PromptHash = "abc"
             });

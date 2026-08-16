@@ -27,4 +27,14 @@ public class AiSpecificationCandidateFormatterTests
         ok.Should().BeTrue();
         formatted.Should().Be("Weight: 1.2 kg");
     }
+
+    [Test]
+    public void ParseLines_Should_Read_Key_Value_Pairs()
+    {
+        var lines = AiSpecificationCandidateFormatter.ParseLines("Material: Steel\nThread: M14x1.5");
+
+        lines.Should().HaveCount(2);
+        lines[0].Key.Should().Be("Material");
+        lines[0].Value.Should().Be("Steel");
+    }
 }

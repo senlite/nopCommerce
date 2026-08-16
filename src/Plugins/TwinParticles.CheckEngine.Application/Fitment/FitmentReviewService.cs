@@ -42,7 +42,10 @@ public sealed class FitmentReviewService
     public async Task<IReadOnlyList<FitmentClaim>> GetAiQueueAsync(CancellationToken cancellationToken)
     {
         var queue = await _readRepository.GetReviewQueueAsync(cancellationToken);
-        return queue.Where(claim => claim.SourceKindIsAi()).ToList();
+        return queue.Where(claim => claim.SourceKindIsAi()
+            && claim.IsActive
+            && !claim.IsPublished
+            && claim.Status != FitmentStatus.Rejected).ToList();
     }
 
     public async Task ApproveAsync(int claimId, CancellationToken cancellationToken, string actor = "system")
@@ -81,6 +84,15 @@ public sealed class FitmentReviewService
 
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Rejected, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, false, cancellationToken);
+
+        var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
+        if (claim is not null)
+        {
+            claim.IsActive = false;
+            claim.Status = FitmentStatus.Rejected;
+            claim.IsPublished = false;
+            await _writeRepository.UpsertAsync(claim, cancellationToken);
+        }
 
         await _auditService.AppendAsync(
             actor,

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -171,6 +172,69 @@ public class FitmentPolicyAndReviewServiceTests
         await service.ApproveAsync(400, CancellationToken.None);
 
         cache.Invalidations.Should().ContainSingle(x => x.productId == 77 && x.vehicleConfigurationId == 88);
+    }
+
+    [Test]
+    public async Task GetAiQueueAsync_Should_Exclude_Rejected_Inactive_Or_Published_Ai_Claims()
+    {
+        var claims = new List<FitmentClaim>
+        {
+            new()
+            {
+                Id = 1,
+                ProductId = 10,
+                VehicleConfigurationId = 20,
+                Status = FitmentStatus.Unknown,
+                IsPublished = false,
+                IsActive = true,
+                Provenance = new FitmentClaimProvenance { SourceKind = FitmentSourceKind.AiInference }
+            },
+            new()
+            {
+                Id = 2,
+                ProductId = 11,
+                VehicleConfigurationId = 21,
+                Status = FitmentStatus.Rejected,
+                IsPublished = false,
+                IsActive = false,
+                Provenance = new FitmentClaimProvenance { SourceKind = FitmentSourceKind.AiInference }
+            },
+            new()
+            {
+                Id = 3,
+                ProductId = 12,
+                VehicleConfigurationId = 22,
+                Status = FitmentStatus.Fits,
+                IsPublished = true,
+                IsActive = true,
+                Provenance = new FitmentClaimProvenance { SourceKind = FitmentSourceKind.AiInference }
+            }
+        };
+        var service = new FitmentReviewService(
+            new QueueReadRepository(claims),
+            new FakeWriteRepository(),
+            new FakeReviewQueueRepository(),
+            new NoOpAuditService());
+
+        var queue = await service.GetAiQueueAsync(CancellationToken.None);
+
+        queue.Should().ContainSingle(x => x.Id == 1);
+    }
+
+    private sealed class QueueReadRepository : IFitmentClaimReadRepository
+    {
+        private readonly IReadOnlyList<FitmentClaim> _queue;
+
+        public QueueReadRepository(IReadOnlyList<FitmentClaim> queue) => _queue = queue;
+
+        public Task<IReadOnlyList<FitmentClaim>> GetClaimsAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
+
+        public Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken) =>
+            Task.FromResult(_queue.FirstOrDefault(x => x.Id == claimId));
+
+        public Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(_queue);
     }
 
     private sealed class FakeReadRepository : IFitmentClaimReadRepository

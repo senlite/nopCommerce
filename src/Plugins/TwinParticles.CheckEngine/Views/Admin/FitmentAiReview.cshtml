@@ -58,6 +58,7 @@
                                 <th>Status</th>
                                 <th>Confidence</th>
                                 <th>Source</th>
+                                <th>Rationale</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -84,6 +85,8 @@
     (items || []).forEach(function (item) {
       var tr = document.createElement('tr');
       var source = item.provenance ? item.provenance.sourceKind : '';
+      var sourceReference = item.provenance ? (item.provenance.sourceReference || '') : '';
+      var rationale = sourceReference.indexOf('|') >= 0 ? sourceReference.split('|').slice(1).join('|') : '';
       tr.innerHTML =
         '<td>' + item.id + '</td>' +
         '<td>' + item.productId + '</td>' +
@@ -91,6 +94,7 @@
         '<td>' + item.status + '</td>' +
         '<td>' + item.confidence + '</td>' +
         '<td>' + source + '</td>' +
+        '<td><small>' + rationale + '</small></td>' +
         '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-action="approve">Approve</button>' +
         '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-action="reject">Reject</button></td>';
       tbody.appendChild(tr);

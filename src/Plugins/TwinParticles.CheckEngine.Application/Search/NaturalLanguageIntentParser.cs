@@ -14,6 +14,11 @@ namespace TwinParticles.CheckEngine.Application.Search;
 public sealed class NaturalLanguageIntentParser
 {
     private static readonly Regex YearRegex = new(@"\b(19|20)\d{2}\b", RegexOptions.Compiled);
+    private static readonly HashSet<string> KnownMakes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "bmw", "mercedes", "mercedes-benz", "audi", "toyota", "honda", "nissan", "ford",
+        "chevrolet", "volkswagen", "vw", "hyundai", "kia", "mazda", "subaru", "lexus"
+    };
 
     private readonly IAiCompletionPort? _aiCompletionPort;
     private readonly AiPromptResolver? _promptResolver;
@@ -134,21 +139,46 @@ public sealed class NaturalLanguageIntentParser
         int? year = yearMatch.Success && int.TryParse(yearMatch.Value, out var parsedYear) ? parsedYear : null;
 
         var tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var partTerms = tokens
-            .Where(token => !YearRegex.IsMatch(token))
-            .Where(token => token.Length > 2)
-            .Take(6)
-            .ToList();
+        string? make = null;
+        string? model = null;
+        var partTerms = new List<string>();
+
+        for (var i = 0; i < tokens.Length; i++)
+        {
+            var token = tokens[i];
+            if (YearRegex.IsMatch(token))
+                continue;
+
+            if (make is null && KnownMakes.Contains(token))
+            {
+                make = NormalizeMake(token);
+                if (i + 1 < tokens.Length && !YearRegex.IsMatch(tokens[i + 1]) && tokens[i + 1].Length > 1)
+                {
+                    model = tokens[i + 1];
+                    i++;
+                }
+
+                continue;
+            }
+
+            if (token.Length > 2)
+                partTerms.Add(token);
+        }
 
         return new SearchIntent
         {
             PartTerms = partTerms,
+            Make = make,
+            Model = model,
             ModelYear = year,
-            KeywordFallback = string.Join(' ', partTerms),
+            KeywordFallback = partTerms.Count > 0 ? string.Join(' ', partTerms) : text,
             Locale = locale,
             ParsedFromNaturalLanguage = false
         };
     }
+
+    private static string NormalizeMake(string token) =>
+        token.Equals("vw", StringComparison.OrdinalIgnoreCase) ? "Volkswagen" : token;
 
     private static string ExtractJson(string text)
     {

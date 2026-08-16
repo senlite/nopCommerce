@@ -60,4 +60,17 @@ public static class AiSpecificationCandidateFormatter
         var text = value.GetString();
         return string.IsNullOrWhiteSpace(text) ? null : text;
     }
+
+    public static IReadOnlyList<(string Key, string Value)> ParseLines(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
+
+        return text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(line => line.Split(':', 2))
+            .Where(parts => parts.Length == 2)
+            .Select(parts => (parts[0].Trim(), parts[1].Trim()))
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Item1) && !string.IsNullOrWhiteSpace(pair.Item2))
+            .ToList();
+    }
 }

@@ -63,20 +63,20 @@ public sealed class FitmentInferenceService
         if (!result.Success)
             return null;
 
-        var status = ParseStatus(result.Text);
+        var status = ParseStatus(result.Text, out var rationale, out var confidence);
         var claim = new FitmentClaim
         {
             ProductId = productId,
             VehicleConfigurationId = vehicleConfigurationId,
             Status = status,
-            Confidence = AiInferenceConfidenceCap,
+            Confidence = confidence ?? AiInferenceConfidenceCap,
             SafetyClass = SafetyClass.Standard,
             IsPublished = false,
             IsActive = true,
             Provenance = new FitmentClaimProvenance
             {
                 SourceKind = FitmentSourceKind.AiInference,
-                SourceReference = result.PromptHash,
+                SourceReference = FitmentAiReference.Format(result.PromptHash, rationale),
                 CreatedBy = actor,
                 CreatedUtc = DateTimeOffset.UtcNow
             }
@@ -89,9 +89,12 @@ public sealed class FitmentInferenceService
         return claim;
     }
 
-    private static FitmentStatus ParseStatus(string text)
+    private static FitmentStatus ParseStatus(string text, out string? rationale, out decimal? confidence)
     {
-        var structured = TryParseStructuredVerdict(text);
+        rationale = null;
+        confidence = null;
+
+        var structured = TryParseStructuredVerdict(text, out rationale, out confidence);
         if (structured.HasValue)
             return structured.Value;
 
@@ -107,8 +110,11 @@ public sealed class FitmentInferenceService
         return FitmentStatus.Unknown;
     }
 
-    private static FitmentStatus? TryParseStructuredVerdict(string text)
+    private static FitmentStatus? TryParseStructuredVerdict(string text, out string? rationale, out decimal? confidence)
     {
+        rationale = null;
+        confidence = null;
+
         try
         {
             var json = ExtractJson(text);
@@ -119,20 +125,37 @@ public sealed class FitmentInferenceService
             {
                 foreach (var element in root.EnumerateArray())
                 {
-                    if (element.TryGetProperty("verdict", out var verdict))
-                        return MapVerdict(verdict.GetString());
+                    var verdict = ReadStructuredFields(element, out rationale, out confidence);
+                    if (verdict.HasValue)
+                        return verdict;
                 }
 
                 return null;
             }
 
-            if (root.TryGetProperty("verdict", out var singleVerdict))
-                return MapVerdict(singleVerdict.GetString());
+            return ReadStructuredFields(root, out rationale, out confidence);
         }
         catch
         {
             /* fall back to token parsing */
         }
+
+        return null;
+    }
+
+    private static FitmentStatus? ReadStructuredFields(JsonElement element, out string? rationale, out decimal? confidence)
+    {
+        rationale = null;
+        confidence = null;
+
+        if (element.TryGetProperty("rationale", out var rationaleElement) && rationaleElement.ValueKind == JsonValueKind.String)
+            rationale = rationaleElement.GetString();
+
+        if (element.TryGetProperty("confidence", out var confidenceElement) && confidenceElement.ValueKind == JsonValueKind.Number)
+            confidence = confidenceElement.GetDecimal();
+
+        if (element.TryGetProperty("verdict", out var verdictElement))
+            return MapVerdict(verdictElement.GetString());
 
         return null;
     }
