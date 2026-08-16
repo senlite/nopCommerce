@@ -31,8 +31,31 @@ public sealed class SearchEmbeddingIndexBuilderService
 
     public async Task<SearchEmbeddingRebuildResult> RefreshIncrementalAsync(string locale, CancellationToken cancellationToken)
     {
-        var documents = await _catalogSource.GetStaleDocumentsAsync(locale, cancellationToken);
+        var staleOptions = await CreateStaleOptionsAsync(cancellationToken);
+        var documents = await _catalogSource.GetStaleDocumentsAsync(locale, staleOptions, cancellationToken);
         return await IndexDocumentsAsync(locale, documents, cancellationToken);
+    }
+
+    public async Task<SearchEmbeddingStaleOptions?> CreateStaleOptionsAsync(CancellationToken cancellationToken)
+    {
+        var modelHash = await ResolveCurrentModelHashAsync(cancellationToken);
+        return string.IsNullOrWhiteSpace(modelHash)
+            ? null
+            : new SearchEmbeddingStaleOptions { ExpectedModelHash = modelHash };
+    }
+
+    private async Task<string?> ResolveCurrentModelHashAsync(CancellationToken cancellationToken)
+    {
+        var probe = await _embeddingPort.EmbedAsync(new AiEmbeddingRequest
+        {
+            FeatureKey = AiFeatureKeys.SearchSemantic,
+            Text = "catalog",
+            Locale = "en"
+        }, cancellationToken);
+
+        return probe.Success && !string.IsNullOrWhiteSpace(probe.ModelHash)
+            ? probe.ModelHash
+            : null;
     }
 
     private async Task<SearchEmbeddingRebuildResult> IndexDocumentsAsync(

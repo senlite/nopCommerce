@@ -26,4 +26,15 @@ public class SearchEmbeddingCatalogTextBuilderTests
     {
         SearchEmbeddingCatalogTextBuilder.Build(null, " ", string.Empty).Should().BeEmpty();
     }
+
+    [Test]
+    public void BuildForEmbedding_Should_Expand_Arabic_Synonyms_For_Index_Text()
+    {
+        var text = SearchEmbeddingCatalogTextBuilder.BuildForEmbedding(
+            "ar",
+            "فلتر زيت BMW",
+            "محرك");
+
+        text.Should().Contain("oil filter");
+    }
 }

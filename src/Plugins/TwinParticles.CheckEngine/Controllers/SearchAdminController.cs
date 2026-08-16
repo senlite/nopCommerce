@@ -66,7 +66,8 @@ public sealed class SearchAdminController : BasePluginController
         {
             var count = await _embeddingIndex.GetCountAsync(locale, cancellationToken);
             var catalogCount = await _catalogSource.GetCatalogCountAsync(locale, cancellationToken);
-            var staleCount = await _catalogSource.GetStaleCountAsync(locale, cancellationToken);
+            var staleOptions = await _embeddingIndexBuilder.CreateStaleOptionsAsync(cancellationToken);
+            var staleCount = await _catalogSource.GetStaleCountAsync(locale, staleOptions, cancellationToken);
             embeddings.Add(new
             {
                 locale,

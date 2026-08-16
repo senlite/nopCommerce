@@ -19,22 +19,38 @@ public sealed class SqlSearchEmbeddingCatalogSource : ISearchEmbeddingCatalogSou
     }
 
     public Task<IReadOnlyList<SearchEmbeddingDocument>> GetDocumentsAsync(string locale, CancellationToken cancellationToken) =>
-        LoadDocumentsAsync(locale, staleOnly: false, cancellationToken);
+        LoadDocumentsAsync(locale, staleOnly: false, options: null, cancellationToken);
 
-    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(string locale, CancellationToken cancellationToken) =>
-        LoadDocumentsAsync(locale, staleOnly: true, cancellationToken);
+    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(
+        string locale,
+        SearchEmbeddingStaleOptions? options,
+        CancellationToken cancellationToken) =>
+        LoadDocumentsAsync(locale, staleOnly: true, options, cancellationToken);
 
     private async Task<IReadOnlyList<SearchEmbeddingDocument>> LoadDocumentsAsync(
         string locale,
         bool staleOnly,
+        SearchEmbeddingStaleOptions? options,
         CancellationToken cancellationToken)
     {
         var normalizedLocale = string.IsNullOrWhiteSpace(locale) ? "en" : locale.Trim();
-        var staleFilter = staleOnly
-            ? @"
-LEFT JOIN TP_CE_SearchEmbedding se ON se.ProductId = si.ProductId AND se.Locale = @locale
-WHERE se.ProductId IS NULL OR si.UpdatedUtc > se.UpdatedUtc"
+        var expectedModelHash = options?.ExpectedModelHash;
+        var modelHashFilter = !string.IsNullOrWhiteSpace(expectedModelHash)
+            ? " OR se.ModelHash <> @modelHash"
             : string.Empty;
+
+        var staleFilter = staleOnly
+            ? $@"
+LEFT JOIN TP_CE_SearchEmbedding se ON se.ProductId = si.ProductId AND se.Locale = @locale
+WHERE se.ProductId IS NULL OR si.UpdatedUtc > se.UpdatedUtc{modelHashFilter}"
+            : string.Empty;
+
+        var parameters = new List<DataParameter>
+        {
+            new("locale", normalizedLocale)
+        };
+        if (!string.IsNullOrWhiteSpace(expectedModelHash))
+            parameters.Add(new DataParameter("modelHash", expectedModelHash));
 
         var rows = await _dataProvider.QueryAsync<CatalogRow>($@"
 SELECT si.ProductId,
@@ -60,7 +76,7 @@ LEFT JOIN LocalizedProperty lp ON lp.EntityId = p.Id
 LEFT JOIN Manufacturer m ON m.Id = p.ManufacturerId AND m.Deleted = 0
 {staleFilter}
 ORDER BY si.ProductId",
-            new DataParameter("locale", normalizedLocale));
+            parameters.ToArray());
 
         return rows.Select(row => new SearchEmbeddingDocument
         {
@@ -70,7 +86,8 @@ ORDER BY si.ProductId",
             CategoryName = row.CategoryName,
             Brand = row.Brand,
             Price = row.Price,
-            Text = SearchEmbeddingCatalogTextBuilder.Build(
+            Text = SearchEmbeddingCatalogTextBuilder.BuildForEmbedding(
+                normalizedLocale,
                 row.Name,
                 row.CategoryName,
                 row.Brand,
@@ -91,16 +108,28 @@ INNER JOIN Product p ON p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 
         return count.FirstOrDefault();
     }
 
-    public async Task<int> GetStaleCountAsync(string locale, CancellationToken cancellationToken)
+    public async Task<int> GetStaleCountAsync(string locale, SearchEmbeddingStaleOptions? options, CancellationToken cancellationToken)
     {
         var normalizedLocale = string.IsNullOrWhiteSpace(locale) ? "en" : locale.Trim();
-        var count = await _dataProvider.QueryAsync<int>(@"
+        var expectedModelHash = options?.ExpectedModelHash;
+        var modelHashFilter = !string.IsNullOrWhiteSpace(expectedModelHash)
+            ? " OR se.ModelHash <> @modelHash"
+            : string.Empty;
+
+        var parameters = new List<DataParameter>
+        {
+            new("locale", normalizedLocale)
+        };
+        if (!string.IsNullOrWhiteSpace(expectedModelHash))
+            parameters.Add(new DataParameter("modelHash", expectedModelHash));
+
+        var count = await _dataProvider.QueryAsync<int>($@"
 SELECT COUNT(*)
 FROM TP_CE_SearchIndex si
 INNER JOIN Product p ON p.Id = si.ProductId AND p.Deleted = 0 AND p.Published = 1
 LEFT JOIN TP_CE_SearchEmbedding se ON se.ProductId = si.ProductId AND se.Locale = @locale
-WHERE se.ProductId IS NULL OR si.UpdatedUtc > se.UpdatedUtc",
-            new DataParameter("locale", normalizedLocale));
+WHERE se.ProductId IS NULL OR si.UpdatedUtc > se.UpdatedUtc{modelHashFilter}",
+            parameters.ToArray());
         return count.FirstOrDefault();
     }
 
