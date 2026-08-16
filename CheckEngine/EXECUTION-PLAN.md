@@ -238,7 +238,7 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 | ID | Task | Status | Gap |
 |---|---|---|---|
 | H2.1 | Complete multi-provider AI abstraction | partial | Completion + Azure embedding adapters; Anthropic uses deterministic embeddings; layered response cache |
-| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | partial | SQL usage ledger; FR-590 usage dashboard view; persisted disclosure acknowledgement |
+| H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | done | `AiSpendGuardService` enforces per-feature + global daily token ceilings with `ai.budget_exceeded` / `ai.global_budget_exceeded`; estimated USD cost in SQL ledger; deduped budget alerts via audit; FR-590 dashboard with cost columns and recent alerts; configure disclosure gate blocks AI features until acknowledged. Ledger day boundaries remain UTC |
 | H2.3 | Parse natural language into structured vehicle/part intent | partial | `NaturalLanguageIntentParser` uses versioned prompt store; outbound prompts redact full VINs |
 | H2.4 | Implement vector/semantic bilingual search | partial | Semantic index + SQL/reference-scale catalog sources; batched embedding rebuild |
 | H2.5 | Pass the published natural-language/semantic accuracy benchmark | partial | In-memory + 20-product reference-scale corpus with recall@5 gate |
