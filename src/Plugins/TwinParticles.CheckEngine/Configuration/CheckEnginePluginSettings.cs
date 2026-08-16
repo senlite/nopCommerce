@@ -45,6 +45,9 @@ public sealed class CheckEnginePluginSettings : ISettings
     /// <summary>JSON object of EN→AR glossary overrides merged onto the embedded catalog (FR-941).</summary>
     public string? AutomotiveGlossaryOverridesJson { get; set; }
 
+    /// <summary>JSON object of EN→AR search synonym overrides merged onto the embedded catalog (FR-443).</summary>
+    public string? SearchSynonymOverridesJson { get; set; }
+
     /// <summary>JSON object with add/remove arrays for allowed AI specification keys (FR-521).</summary>
     public string? SpecificationKeyOverridesJson { get; set; }
 }

@@ -54,6 +54,36 @@ public class SemanticSearchServiceTests
         hits.Should().BeEmpty();
     }
 
+    [Test]
+    public async Task SearchAsync_Should_Match_Arabic_Query_Via_Synonym_Expansion()
+    {
+        var index = new InMemorySearchEmbeddingIndex();
+        var builder = new SearchEmbeddingIndexBuilderService(
+            new InMemorySearchEmbeddingCatalogSource(),
+            index,
+            new DeterministicTextEmbeddingPort());
+
+        await builder.RebuildAsync("ar", CancellationToken.None);
+
+        var service = new SemanticSearchService(
+            index,
+            new DeterministicTextEmbeddingPort(),
+            new AlwaysOnToggle(),
+            new BilingualSearchSynonymService());
+
+        var hits = await service.SearchAsync(new SearchQuery
+        {
+            RawText = "فلتر زيت",
+            Mode = SearchMode.Semantic,
+            Locale = "ar",
+            Page = 1,
+            PageSize = 5
+        }, CancellationToken.None);
+
+        hits.Should().NotBeEmpty();
+        hits[0].ProductId.Should().Be(1001);
+    }
+
     private sealed class AlwaysOnToggle : IAiFeatureToggle
     {
         public bool IsEnabled(string featureKey) => true;

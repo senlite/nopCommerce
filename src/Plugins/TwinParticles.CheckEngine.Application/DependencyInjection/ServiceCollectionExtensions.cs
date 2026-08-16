@@ -85,7 +85,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<NaturalLanguageIntentParser>();
         services.AddScoped<AiImportCandidateRebindService>();
         services.AddScoped<FitmentInferenceService>();
-        services.AddSingleton<BilingualSearchSynonymService>();
+        services.AddScoped<BilingualSearchSynonymService>();
         services.AddScoped<SemanticSearchService>();
         services.AddScoped<SearchEmbeddingIndexBuilderService>();
         services.AddScoped<AiDisclosureService>();

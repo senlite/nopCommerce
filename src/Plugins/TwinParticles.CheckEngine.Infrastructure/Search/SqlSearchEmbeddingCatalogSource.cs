@@ -12,10 +12,14 @@ namespace TwinParticles.CheckEngine.Infrastructure.Search;
 public sealed class SqlSearchEmbeddingCatalogSource : ISearchEmbeddingCatalogSource
 {
     private readonly INopDataProvider _dataProvider;
+    private readonly BilingualSearchSynonymService _synonyms;
 
-    public SqlSearchEmbeddingCatalogSource(INopDataProvider dataProvider)
+    public SqlSearchEmbeddingCatalogSource(
+        INopDataProvider dataProvider,
+        BilingualSearchSynonymService synonyms)
     {
         _dataProvider = dataProvider;
+        _synonyms = synonyms;
     }
 
     public Task<IReadOnlyList<SearchEmbeddingDocument>> GetDocumentsAsync(string locale, CancellationToken cancellationToken) =>
@@ -86,14 +90,15 @@ ORDER BY si.ProductId",
             CategoryName = row.CategoryName,
             Brand = row.Brand,
             Price = row.Price,
-            Text = SearchEmbeddingCatalogTextBuilder.BuildForEmbedding(
-                normalizedLocale,
-                row.Name,
-                row.CategoryName,
-                row.Brand,
-                row.Sku,
-                row.Mpn,
-                row.NormalizedText)
+            Text = _synonyms.Expand(
+                SearchEmbeddingCatalogTextBuilder.Build(
+                    row.Name,
+                    row.CategoryName,
+                    row.Brand,
+                    row.Sku,
+                    row.Mpn,
+                    row.NormalizedText),
+                normalizedLocale)
         }).ToList();
     }
 

@@ -6,14 +6,14 @@ using System.Text.RegularExpressions;
 namespace TwinParticles.CheckEngine.Domain.Search;
 
 /// <summary>
-/// Controlled EN↔AR automotive synonyms used to expand bilingual semantic queries (FR-416, FR-511).
+/// Controlled EN↔AR automotive synonyms used to expand bilingual semantic queries (FR-416, FR-443, FR-511).
 /// </summary>
 public sealed class BilingualSearchSynonymService
 {
     private static readonly Regex ArabicScript = new(@"[\u0600-\u06FF]", RegexOptions.Compiled);
     private static readonly Regex LatinScript = new(@"[A-Za-z]", RegexOptions.Compiled);
 
-    private static readonly IReadOnlyDictionary<string, string> ArabicToEnglish =
+    private static readonly IReadOnlyDictionary<string, string> EmbeddedArabicToEnglish =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["مضخة مياه"] = "water pump",
@@ -31,9 +31,18 @@ public sealed class BilingualSearchSynonymService
             ["رولمان"] = "wheel bearing"
         };
 
-    private static readonly IReadOnlyDictionary<string, string> EnglishToArabic =
-        ArabicToEnglish.GroupBy(pair => pair.Value, StringComparer.OrdinalIgnoreCase)
+    private readonly IReadOnlyDictionary<string, string> _arabicToEnglish;
+    private readonly IReadOnlyDictionary<string, string> _englishToArabic;
+
+    public BilingualSearchSynonymService(ISearchSynonymOverridesSource? overridesSource = null)
+    {
+        _arabicToEnglish = MergeOverrides(overridesSource?.GetOverrides());
+        _englishToArabic = _arabicToEnglish
+            .GroupBy(pair => pair.Value, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.First().Key, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public IReadOnlyDictionary<string, string> GetArabicToEnglishPairs() => _arabicToEnglish;
 
     public string Expand(string text, string locale)
     {
@@ -41,7 +50,7 @@ public sealed class BilingualSearchSynonymService
             return text ?? string.Empty;
 
         var expanded = text;
-        foreach (var pair in ArabicToEnglish.OrderByDescending(x => x.Key.Length))
+        foreach (var pair in _arabicToEnglish.OrderByDescending(x => x.Key.Length))
         {
             if (expanded.Contains(pair.Key, StringComparison.OrdinalIgnoreCase))
                 expanded = $"{expanded} {pair.Value}";
@@ -49,7 +58,7 @@ public sealed class BilingualSearchSynonymService
 
         if (ContainsCodeSwitch(text))
         {
-            foreach (var pair in EnglishToArabic.OrderByDescending(x => x.Key.Length))
+            foreach (var pair in _englishToArabic.OrderByDescending(x => x.Key.Length))
             {
                 if (expanded.Contains(pair.Key, StringComparison.OrdinalIgnoreCase))
                     expanded = $"{expanded} {pair.Value}";
@@ -57,6 +66,23 @@ public sealed class BilingualSearchSynonymService
         }
 
         return expanded;
+    }
+
+    private static IReadOnlyDictionary<string, string> MergeOverrides(IReadOnlyDictionary<string, string>? overrides)
+    {
+        var merged = new Dictionary<string, string>(EmbeddedArabicToEnglish, StringComparer.OrdinalIgnoreCase);
+        if (overrides is null)
+            return merged;
+
+        foreach (var pair in overrides)
+        {
+            if (string.IsNullOrWhiteSpace(pair.Key) || string.IsNullOrWhiteSpace(pair.Value))
+                continue;
+
+            merged[pair.Key.Trim()] = pair.Value.Trim();
+        }
+
+        return merged;
     }
 
     private static bool ContainsCodeSwitch(string text)
