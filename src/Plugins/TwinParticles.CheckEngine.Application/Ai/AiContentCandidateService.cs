@@ -72,27 +72,27 @@ public sealed class AiContentCandidateService
         return _generationRepository.GetPendingQueueAsync(take, cancellationToken);
     }
 
-    public async Task<bool> ReviewAsync(int id, bool approved, string reviewer, CancellationToken cancellationToken)
+    public async Task<AiReviewResult> ReviewAsync(int id, bool approved, string reviewer, CancellationToken cancellationToken)
     {
         if (_generationRepository is null || id <= 0)
-            return false;
+            return AiReviewResult.NotFound();
 
         var existing = await _generationRepository.GetByIdAsync(id, cancellationToken);
         if (existing is null)
-            return false;
+            return AiReviewResult.NotFound();
 
         if (approved
             && string.Equals(existing.FeatureKey, AiFeatureKeys.ImportTranslation, StringComparison.OrdinalIgnoreCase)
             && existing.QualityScore is < 1m)
         {
-            return false;
+            return AiReviewResult.Blocked("ai.review.glossary_invalid");
         }
 
         if (approved
             && existing.EntityType == AiGenerationEntityType.Specification
             && existing.QualityScore is < 1m)
         {
-            return false;
+            return AiReviewResult.Blocked("ai.review.spec_unknown_keys");
         }
 
         await _generationRepository.MarkReviewedAsync(id, approved, reviewer, cancellationToken);
@@ -101,9 +101,9 @@ public sealed class AiContentCandidateService
         {
             var applyResult = await _contentApplicator.ApplyAsync(existing, cancellationToken);
             if (!applyResult.Success)
-                return false;
+                return AiReviewResult.Blocked(applyResult.ErrorCode ?? "ai.apply.failed");
         }
 
-        return true;
+        return approved ? AiReviewResult.Approved() : AiReviewResult.Rejected();
     }
 }

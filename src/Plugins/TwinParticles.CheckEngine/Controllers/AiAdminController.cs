@@ -135,8 +135,14 @@ public sealed class AiAdminController : BasePluginController
         if (model is null || model.Id <= 0)
             return BadRequest();
 
-        var ok = await _contentCandidateService.ReviewAsync(model.Id, model.Approved, "admin", cancellationToken);
-        return ok ? Ok() : NotFound();
+        var result = await _contentCandidateService.ReviewAsync(model.Id, model.Approved, "admin", cancellationToken);
+        if (result.ReasonCode == "ai.review.not_found")
+            return NotFound();
+
+        if (!result.Success)
+            return BadRequest(new { reasonCode = result.ReasonCode });
+
+        return Ok();
     }
 
     [HttpGet]

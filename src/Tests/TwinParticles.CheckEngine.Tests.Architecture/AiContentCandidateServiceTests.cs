@@ -33,7 +33,7 @@ public class AiContentCandidateServiceTests
         var reviewed = await service.ReviewAsync(id!.Value, approved: true, "nour", CancellationToken.None);
         var stored = await store.GetByIdAsync(id.Value, CancellationToken.None);
 
-        reviewed.Should().BeTrue();
+        reviewed.Success.Should().BeTrue();
         stored!.ReviewStatus.Should().Be("approved");
         stored.IsPublished.Should().BeTrue();
         applicator.Applied.Should().BeTrue();
@@ -61,7 +61,8 @@ public class AiContentCandidateServiceTests
         var reviewed = await service.ReviewAsync(id!.Value, approved: true, "nour", CancellationToken.None);
         var stored = await store.GetByIdAsync(id.Value, CancellationToken.None);
 
-        reviewed.Should().BeFalse();
+        reviewed.Success.Should().BeFalse();
+        reviewed.ReasonCode.Should().Be("ai.review.glossary_invalid");
         stored!.ReviewStatus.Should().Be("pending");
         applicator.Applied.Should().BeFalse();
     }
@@ -87,9 +88,41 @@ public class AiContentCandidateServiceTests
         var reviewed = await service.ReviewAsync(id!.Value, approved: true, "nour", CancellationToken.None);
         var stored = await store.GetByIdAsync(id.Value, CancellationToken.None);
 
-        reviewed.Should().BeFalse();
+        reviewed.Success.Should().BeFalse();
+        reviewed.ReasonCode.Should().Be("ai.review.spec_unknown_keys");
         stored!.ReviewStatus.Should().Be("pending");
         applicator.Applied.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task SaveCandidateAsync_Should_Never_Auto_Publish_For_Any_Content_Type()
+    {
+        var store = new InMemoryGenerationRepository();
+        var service = new AiContentCandidateService(store);
+
+        foreach (var entityType in new[]
+                 {
+                     AiGenerationEntityType.ProductDescription,
+                     AiGenerationEntityType.Specification,
+                     AiGenerationEntityType.Translation,
+                     AiGenerationEntityType.SeoMetadata
+                 })
+        {
+            var id = await service.SaveCandidateAsync(
+                entityType,
+                1,
+                AiFeatureKeys.ImportEnrichment,
+                "en",
+                "candidate",
+                AiFeatureKeys.ImportEnrichment,
+                "hash",
+                1m,
+                CancellationToken.None);
+
+            var stored = await store.GetByIdAsync(id!.Value, CancellationToken.None);
+            stored!.IsPublished.Should().BeFalse();
+            stored.ReviewStatus.Should().Be("pending");
+        }
     }
 
     [Test]

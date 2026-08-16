@@ -78,10 +78,22 @@
     if (!text) return '';
     return text.length > 120 ? text.substring(0, 120) + '…' : text;
   }
+  function approveBlocked(item) {
+    if (item.qualityScore == null || item.qualityScore >= 1) return false;
+    var t = item.entityType;
+    return t === 'Translation' || t === 3 || t === 'Specification' || t === 2;
+  }
+  function approveBlockReason(item) {
+    var t = item.entityType;
+    if (t === 'Translation' || t === 3) return 'Glossary validation failed (qualityScore < 1)';
+    if (t === 'Specification' || t === 2) return 'Unknown specification keys (qualityScore < 1)';
+    return 'Quality score below threshold';
+  }
   function renderCandidates(items) {
     var tbody = document.querySelector('#ce-ai-table tbody');
     tbody.innerHTML = '';
     (items || []).forEach(function (item) {
+      var blocked = approveBlocked(item);
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + item.id + '</td>' +
@@ -91,7 +103,8 @@
         '<td>' + (item.featureKey || '') + '</td>' +
         '<td><code>' + preview(item.outputText) + '</code></td>' +
         '<td>' + (item.qualityScore == null ? '' : item.qualityScore) + '</td>' +
-        '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-approved="true">Approve</button>' +
+        '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-approved="true"' +
+        (blocked ? ' disabled title="' + approveBlockReason(item) + '"' : '') + '>Approve</button>' +
         '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-approved="false">Reject</button></td>';
       tbody.appendChild(tr);
     });
@@ -120,7 +133,14 @@
       method: 'POST',
       headers: headers(true),
       body: JSON.stringify({ id: id, approved: approved })
-    }).then(load);
+    }).then(function (r) {
+      if (!r.ok) {
+        return r.json().catch(function () { return {}; }).then(function (body) {
+          alert('Review blocked: ' + (body.reasonCode || r.statusText));
+        });
+      }
+      return load();
+    });
   }
   document.getElementById('ce-ai-ack-disclosure').addEventListener('click', function () {
     fetch('/Admin/CheckEngine/AiAdmin/AcknowledgeDisclosure', {
