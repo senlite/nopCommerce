@@ -52,6 +52,8 @@ public sealed class CheckEngineStartup : INopStartup
 
         services.AddScoped<TwinParticles.CheckEngine.Domain.L10n.IAutomotiveGlossaryOverridesSource,
             TwinParticles.CheckEngine.L10n.PluginAutomotiveGlossaryOverridesSource>();
+        services.AddScoped<TwinParticles.CheckEngine.Domain.Ai.IAllowedSpecificationKeyOverridesSource,
+            TwinParticles.CheckEngine.Ai.PluginAllowedSpecificationKeyOverridesSource>();
     }
 
     public void Configure(IApplicationBuilder application)

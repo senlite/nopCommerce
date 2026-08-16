@@ -48,9 +48,9 @@ public sealed class AllowedSpecificationKeyCatalog : IAllowedSpecificationKeyCat
 
     private readonly HashSet<string> _keys;
 
-    public AllowedSpecificationKeyCatalog()
+    public AllowedSpecificationKeyCatalog(IAllowedSpecificationKeyOverridesSource? overridesSource = null)
     {
-        _keys = EmbeddedKeys.Value;
+        _keys = MergeKeys(EmbeddedKeys.Value, overridesSource?.GetOverrides());
     }
 
     public AllowedSpecificationKeyCatalog(IEnumerable<string> keys)
@@ -62,6 +62,31 @@ public sealed class AllowedSpecificationKeyCatalog : IAllowedSpecificationKeyCat
 
     public bool IsAllowed(string key) =>
         !string.IsNullOrWhiteSpace(key) && _keys.Contains(key.Trim());
+
+    public static IReadOnlyCollection<string> GetEmbeddedKeys() => EmbeddedKeys.Value;
+
+    public static HashSet<string> MergeKeys(
+        IReadOnlyCollection<string> embedded,
+        SpecificationKeyOverrides? overrides)
+    {
+        var merged = new HashSet<string>(embedded, StringComparer.OrdinalIgnoreCase);
+        if (overrides is null)
+            return merged;
+
+        foreach (var key in overrides.Remove)
+        {
+            if (!string.IsNullOrWhiteSpace(key))
+                merged.Remove(key.Trim());
+        }
+
+        foreach (var key in overrides.Add)
+        {
+            if (!string.IsNullOrWhiteSpace(key))
+                merged.Add(key.Trim());
+        }
+
+        return merged;
+    }
 
     private static HashSet<string> LoadEmbeddedKeys()
     {

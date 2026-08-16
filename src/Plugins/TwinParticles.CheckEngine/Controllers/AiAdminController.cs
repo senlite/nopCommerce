@@ -13,6 +13,7 @@ using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Security;
+using TwinParticles.CheckEngine.Ai;
 using TwinParticles.CheckEngine.L10n;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
@@ -35,6 +36,7 @@ public sealed class AiAdminController : BasePluginController
     private readonly Nop.Services.Security.IPermissionService _permissionService;
     private readonly AiSpendAlertService _spendAlertService;
     private readonly AutomotiveGlossaryService _glossaryService;
+    private readonly IAllowedSpecificationKeyCatalog _specificationKeyCatalog;
     private readonly ICheckEngineAuditService _auditService;
 
     public AiAdminController(
@@ -49,6 +51,7 @@ public sealed class AiAdminController : BasePluginController
         Nop.Services.Security.IPermissionService permissionService,
         AiSpendAlertService spendAlertService,
         AutomotiveGlossaryService glossaryService,
+        IAllowedSpecificationKeyCatalog specificationKeyCatalog,
         ICheckEngineAuditService auditService)
     {
         _usageLedger = usageLedger;
@@ -62,6 +65,7 @@ public sealed class AiAdminController : BasePluginController
         _permissionService = permissionService;
         _spendAlertService = spendAlertService;
         _glossaryService = glossaryService;
+        _specificationKeyCatalog = specificationKeyCatalog;
         _auditService = auditService;
     }
 
@@ -258,5 +262,85 @@ public sealed class AiAdminController : BasePluginController
             cancellationToken);
 
         return Json(new { saved = true, overrideCount = model.Overrides.Count });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SpecKeysBoard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/SpecKeysAdmin.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SpecKeysData(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var overrides = SpecificationKeyOverridesJson.Parse(settings.SpecificationKeyOverridesJson);
+        var embedded = AllowedSpecificationKeyCatalog.GetEmbeddedKeys();
+        var merged = _specificationKeyCatalog.GetAllowedKeys();
+        var added = overrides.Add.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var activeRows = merged
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .Select(key => new
+            {
+                key,
+                source = added.Contains(key) ? "added" : "embedded"
+            });
+
+        var removedRows = overrides.Remove
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .Select(key => new { key, source = "removed" });
+
+        return Json(new
+        {
+            embeddedCount = embedded.Count,
+            addCount = overrides.Add.Count,
+            removeCount = overrides.Remove.Count,
+            mergedCount = merged.Count,
+            keys = activeRows.Concat(removedRows),
+            overrides = new
+            {
+                add = overrides.Add,
+                remove = overrides.Remove
+            }
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveSpecKeys([FromBody] SpecificationKeysSaveModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (model is null)
+            return BadRequest();
+
+        var overrides = new SpecificationKeyOverrides
+        {
+            Add = model.Add ?? [],
+            Remove = model.Remove ?? []
+        };
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var before = settings.SpecificationKeyOverridesJson;
+        settings.SpecificationKeyOverridesJson = SpecificationKeyOverridesJson.Serialize(overrides);
+        await _settingService.SaveSettingAsync(settings);
+
+        await _auditService.AppendAsync(
+            "admin",
+            "specification_keys.overrides_saved",
+            "AllowedSpecificationKeys",
+            "global",
+            before,
+            settings.SpecificationKeyOverridesJson,
+            cancellationToken);
+
+        return Json(new
+        {
+            saved = true,
+            addCount = overrides.Add.Count,
+            removeCount = overrides.Remove.Count
+        });
     }
 }
