@@ -21,6 +21,7 @@ public sealed class VendorController : BasePublicController
     private readonly MarketplaceLicenceGate _marketplaceGate;
     private readonly IMarketplaceOnboardingPolicy _policy;
     private readonly VendorIsolationService _isolationService;
+    private readonly VendorDashboardService _dashboardService;
     private readonly IVendorRepository _vendors;
     private readonly IWorkContext _workContext;
     private readonly ICustomerService _customerService;
@@ -31,6 +32,7 @@ public sealed class VendorController : BasePublicController
         MarketplaceLicenceGate marketplaceGate,
         IMarketplaceOnboardingPolicy policy,
         VendorIsolationService isolationService,
+        VendorDashboardService dashboardService,
         IVendorRepository vendors,
         IWorkContext workContext,
         ICustomerService customerService,
@@ -40,6 +42,7 @@ public sealed class VendorController : BasePublicController
         _marketplaceGate = marketplaceGate;
         _policy = policy;
         _isolationService = isolationService;
+        _dashboardService = dashboardService;
         _vendors = vendors;
         _workContext = workContext;
         _customerService = customerService;
@@ -111,6 +114,63 @@ public sealed class VendorController : BasePublicController
 
         var snapshot = await _onboardingService.GetSnapshotAsync(vendorId, cancellationToken);
         return snapshot is null ? NotFound() : Json(snapshot);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
+    {
+        if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
+            return NotFound();
+
+        var actor = await ResolveActorAsync(cancellationToken);
+        if (actor.VendorId is null && !actor.CanBypassIsolation)
+            return NotFound();
+
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Vendor/Dashboard.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
+    {
+        var snapshot = await _dashboardService.GetDashboardAsync(await ResolveActorAsync(cancellationToken), cancellationToken);
+        return snapshot is null ? Denied(VendorErrorCodes.IsolationUnauthenticated, 403) : Json(snapshot);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Inventory(CancellationToken cancellationToken)
+        => Json(await _dashboardService.ListInventoryAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateInventory([FromBody] VendorInventoryUpdateModel model, CancellationToken cancellationToken)
+    {
+        var result = await _dashboardService.UpdateInventoryAsync(
+            await ResolveActorAsync(cancellationToken), model.ProductId, model.StockQuantity, cancellationToken);
+        return result.Succeeded
+            ? Json(new { model.ProductId, model.StockQuantity })
+            : Denied(result.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Scorecard(CancellationToken cancellationToken)
+    {
+        var scorecard = await _dashboardService.GetScorecardAsync(await ResolveActorAsync(cancellationToken), cancellationToken);
+        return scorecard is null ? Denied(VendorErrorCodes.IsolationUnauthenticated, 403) : Json(scorecard);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> FitmentProposals(CancellationToken cancellationToken)
+        => Json(await _dashboardService.ListFitmentProposalsAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+
+    [HttpPost]
+    public async Task<IActionResult> SubmitFitmentProposal([FromBody] VendorFitmentProposalModel model, CancellationToken cancellationToken)
+    {
+        var result = await _dashboardService.SubmitFitmentProposalAsync(
+            await ResolveActorAsync(cancellationToken),
+            new VendorFitmentProposalRequest { ProductId = model.ProductId, VehicleConfigurationId = model.VehicleConfigurationId },
+            cancellationToken);
+        return result.Succeeded
+            ? Json(new { claimId = result.ClaimId })
+            : Denied(result.ReasonCode ?? VendorErrorCodes.IsolationDenied, 400);
     }
 
     [HttpGet]

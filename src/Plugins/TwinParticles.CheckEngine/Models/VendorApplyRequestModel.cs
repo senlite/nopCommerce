@@ -37,3 +37,17 @@ public sealed class VendorProductEditModel
 {
     public int ProductId { get; set; }
 }
+
+public sealed class VendorInventoryUpdateModel
+{
+    public int ProductId { get; set; }
+
+    public int StockQuantity { get; set; }
+}
+
+public sealed class VendorFitmentProposalModel
+{
+    public int ProductId { get; set; }
+
+    public int VehicleConfigurationId { get; set; }
+}

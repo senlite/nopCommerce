@@ -101,6 +101,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<VendorOnboardingService>();
         services.AddScoped<MarketplaceUpgradeService>();
         services.AddScoped<VendorIsolationService>();
+        services.AddScoped<VendorDashboardService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<ErpInboundWebhookService>();
         services.AddScoped<CheckEngineHealthService>();

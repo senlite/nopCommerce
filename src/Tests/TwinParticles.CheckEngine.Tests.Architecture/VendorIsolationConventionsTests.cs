@@ -8,6 +8,28 @@ namespace TwinParticles.CheckEngine.Tests.Architecture;
 public class VendorIsolationConventionsTests
 {
     [Test]
+    public void Vendor_Dashboard_Should_Expose_Inventory_Scorecard_And_Fitment()
+    {
+        var controller = ReadPluginFile("Controllers", "VendorController.cs");
+        var admin = ReadPluginFile("Controllers", "VendorAdminController.cs");
+        var routes = ReadPluginFile("Infrastructure", "RouteProvider.cs");
+        var service = ReadApplicationFile("Marketplace", "VendorDashboardService.cs");
+
+        controller.Should().Contain("Dashboard");
+        controller.Should().Contain("UpdateInventory");
+        controller.Should().Contain("Scorecard");
+        controller.Should().Contain("SubmitFitmentProposal");
+
+        admin.Should().Contain("Scoreboard");
+        admin.Should().Contain("Scorecards");
+
+        service.Should().Contain("VendorScorecard");
+        service.Should().Contain("VendorSourceReference");
+
+        routes.Should().Contain("check-engine/vendor/{action}");
+    }
+
+    [Test]
     public void Vendor_Apis_Should_Authorize_Catalog_Orders_And_Customers()
     {
         var controller = ReadPluginFile("Controllers", "VendorController.cs");
@@ -51,6 +73,17 @@ public class VendorIsolationConventionsTests
             TestContext.CurrentContext.TestDirectory,
             "..", "..", "..", "..", "..",
             "Plugins", "TwinParticles.CheckEngine",
+            Path.Combine(segments)));
+        File.Exists(path).Should().BeTrue(path);
+        return File.ReadAllText(path);
+    }
+
+    private static string ReadApplicationFile(params string[] segments)
+    {
+        var path = Path.GetFullPath(Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "..", "..", "..", "..", "..",
+            "Plugins", "TwinParticles.CheckEngine.Application",
             Path.Combine(segments)));
         File.Exists(path).Should().BeTrue(path);
         return File.ReadAllText(path);

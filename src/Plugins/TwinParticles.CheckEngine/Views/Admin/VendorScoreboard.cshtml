@@ -1,0 +1,65 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("ReviewBoard", "VendorAdmin")">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Review")</a>
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Hint")</p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-vendor-scoreboard">
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.FillRate")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.CancelRate")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.ClaimRejectRate")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.OnTimeShipment")</th>
+                                <th>Orders</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function pct(v) { return v == null ? '—' : (Math.round(v * 1000) / 10) + '%'; }
+  fetch('/Admin/CheckEngine/VendorAdmin/Scorecards', {
+    headers: { 'Accept': 'application/json', 'RequestVerificationToken': token ? token.value : '' }
+  }).then(function (r) { return r.json(); }).then(function (rows) {
+    var tbody = document.querySelector('#ce-vendor-scoreboard tbody');
+    tbody.innerHTML = '';
+    (rows || []).forEach(function (row) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + (row.vendorName || row.vendorId || '') + '</td>' +
+        '<td>' + pct(row.fillRate) + '</td>' +
+        '<td>' + pct(row.cancelRate) + '</td>' +
+        '<td>' + pct(row.claimRejectionRate) + '</td>' +
+        '<td>' + pct(row.onTimeShipmentRate) + '</td>' +
+        '<td>' + (row.orderSampleSize || 0) + '</td>';
+      tbody.appendChild(tr);
+    });
+  });
+})();
+</script>

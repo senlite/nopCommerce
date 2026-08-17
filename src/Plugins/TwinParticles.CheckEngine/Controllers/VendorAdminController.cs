@@ -20,6 +20,7 @@ public sealed class VendorAdminController : BasePluginController
     private readonly VendorOnboardingService _onboardingService;
     private readonly MarketplaceUpgradeService _upgradeService;
     private readonly VendorIsolationService _isolationService;
+    private readonly VendorDashboardService _dashboardService;
     private readonly MarketplaceLicenceGate _marketplaceGate;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
@@ -27,12 +28,14 @@ public sealed class VendorAdminController : BasePluginController
         VendorOnboardingService onboardingService,
         MarketplaceUpgradeService upgradeService,
         VendorIsolationService isolationService,
+        VendorDashboardService dashboardService,
         MarketplaceLicenceGate marketplaceGate,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _onboardingService = onboardingService;
         _upgradeService = upgradeService;
         _isolationService = isolationService;
+        _dashboardService = dashboardService;
         _marketplaceGate = marketplaceGate;
         _permissionService = permissionService;
     }
@@ -108,6 +111,28 @@ public sealed class VendorAdminController : BasePluginController
         return result.Succeeded
             ? Json(result)
             : Denied(result.ReasonCode ?? VendorErrorCodes.LicenceDenied, 403);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Scoreboard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+        if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
+            return AccessDeniedView();
+
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/VendorScoreboard.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Scorecards(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+        if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
+            return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        return Json(await _dashboardService.ListOperatorScorecardsAsync(VendorActor.OperatorAdmin, cancellationToken));
     }
 
     [HttpPost]

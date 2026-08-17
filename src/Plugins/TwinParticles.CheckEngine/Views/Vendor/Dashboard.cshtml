@@ -1,0 +1,126 @@
+@{
+    Layout = "_ColumnsOne";
+    ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard").Text;
+}
+
+<div class="page vendor-dashboard-page">
+    <div class="page-title">
+        <h1>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard")</h1>
+    </div>
+    <div class="page-body">
+        @Html.AntiForgeryToken()
+        <p>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Hint")</p>
+
+        <div id="ce-vendor-labels" hidden
+             data-products="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Products")"
+             data-stock-units="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.StockUnits")"
+             data-orders="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Orders")"
+             data-customers="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Customers")"
+             data-save="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Save")"
+             data-statements="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Statements.Pending")"></div>
+
+        <div class="vendor-dashboard-summary" id="ce-vendor-summary">
+            <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Loading")</p>
+        </div>
+
+        <h2>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard")</h2>
+        <div id="ce-vendor-scorecard" class="table-responsive"></div>
+
+        <h2>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Inventory")</h2>
+        <div class="table-responsive">
+            <table class="table" id="ce-vendor-inventory">
+                <thead>
+                    <tr>
+                        <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Product")</th>
+                        <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Stock")</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <h2>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Proposals")</h2>
+        <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Hint")</p>
+        <div class="form-inline mb-3">
+            <input id="ce-fitment-product" class="form-control mr-2" type="number" placeholder="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.ProductId")" />
+            <input id="ce-fitment-vehicle" class="form-control mr-2" type="number" placeholder="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.VehicleConfigId")" />
+            <button id="ce-fitment-submit" type="button" class="button-1">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Submit")</button>
+        </div>
+        <pre id="ce-vendor-fitment-list" style="white-space: pre-wrap;"></pre>
+
+        <h2>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Statements")</h2>
+        <p id="ce-vendor-statements" class="text-muted"></p>
+    </div>
+</div>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  function pct(v) { return v == null ? '—' : (Math.round(v * 1000) / 10) + '%'; }
+  var labels = document.getElementById('ce-vendor-labels').dataset;
+
+  fetch('/check-engine/vendor/dashboarddata', { headers: headers(false) })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      document.getElementById('ce-vendor-summary').innerHTML =
+        '<ul>' +
+        '<li>' + labels.products + ': ' + d.productCount + '</li>' +
+        '<li>' + labels.stockUnits + ': ' + d.totalStockUnits + ' (' + d.lowStockCount + ' low)</li>' +
+        '<li>' + labels.orders + ': ' + d.orderCount + '</li>' +
+        '<li>' + labels.customers + ': ' + d.customerCount + '</li>' +
+        '</ul>';
+      var s = d.scorecard || {};
+      document.getElementById('ce-vendor-scorecard').innerHTML =
+        '<table class="table"><tr><th>Fill</th><th>Cancel</th><th>Claim reject</th><th>On-time ship</th></tr>' +
+        '<tr><td>' + pct(s.fillRate) + '</td><td>' + pct(s.cancelRate) + '</td><td>' + pct(s.claimRejectionRate) + '</td><td>' + pct(s.onTimeShipmentRate) + '</td></tr></table>';
+      document.getElementById('ce-vendor-statements').textContent = labels.statements;
+    });
+
+  fetch('/check-engine/vendor/inventory', { headers: headers(false) })
+    .then(function (r) { return r.json(); })
+    .then(function (items) {
+      var tbody = document.querySelector('#ce-vendor-inventory tbody');
+      tbody.innerHTML = '';
+      (items || []).forEach(function (item) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + item.productId + ' — ' + (item.name || '') + '</td>' +
+          '<td><input type="number" class="form-control ce-stock-input" data-product-id="' + item.productId + '" value="' + item.stockQuantity + '" /></td>' +
+          '<td><button type="button" class="button-2 ce-save-stock" data-product-id="' + item.productId + '">' + labels.save + '</button></td>';
+        tbody.appendChild(tr);
+      });
+      tbody.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('ce-save-stock')) return;
+        var pid = parseInt(e.target.getAttribute('data-product-id'), 10);
+        var input = tbody.querySelector('.ce-stock-input[data-product-id="' + pid + '"]');
+        fetch('/check-engine/vendor/updateinventory', {
+          method: 'POST', headers: headers(true),
+          body: JSON.stringify({ productId: pid, stockQuantity: parseInt(input.value, 10) || 0 })
+        }).then(function (r) { return r.json(); }).then(function (j) { alert(JSON.stringify(j)); });
+      });
+    });
+
+  function loadFitment() {
+    fetch('/check-engine/vendor/fitmentproposals', { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(function (list) { document.getElementById('ce-vendor-fitment-list').textContent = JSON.stringify(list, null, 2); });
+  }
+  loadFitment();
+
+  document.getElementById('ce-fitment-submit').addEventListener('click', function () {
+    fetch('/check-engine/vendor/submitfitmentproposal', {
+      method: 'POST', headers: headers(true),
+      body: JSON.stringify({
+        productId: parseInt(document.getElementById('ce-fitment-product').value, 10),
+        vehicleConfigurationId: parseInt(document.getElementById('ce-fitment-vehicle').value, 10)
+      })
+    }).then(function (r) { return r.json(); }).then(function () { loadFitment(); });
+  });
+})();
+</script>
