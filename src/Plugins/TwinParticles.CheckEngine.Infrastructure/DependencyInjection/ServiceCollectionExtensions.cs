@@ -141,6 +141,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILicenceKeyValidator, HmacLicenceKeyValidator>();
         services.AddScoped<IVendorSecretProtector, NopVendorSecretProtector>();
         services.AddScoped<IVendorRepository, SqlVendorRepository>();
+        services.AddScoped<IVendorOwnershipStore, SqlVendorOwnershipStore>();
+        services.AddScoped<IVendorCommerceCatalog, SqlVendorCommerceCatalog>();
+        services.AddScoped<IVendorOrderReadStore, SqlVendorOrderReadStore>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();

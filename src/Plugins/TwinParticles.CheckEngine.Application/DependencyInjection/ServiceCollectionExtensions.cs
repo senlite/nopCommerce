@@ -99,6 +99,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMarketplaceOnboardingPolicy>(_ => MarketplaceOnboardingOptions.Current);
         services.AddScoped<MarketplaceLicenceGate>();
         services.AddScoped<VendorOnboardingService>();
+        services.AddScoped<MarketplaceUpgradeService>();
+        services.AddScoped<VendorIsolationService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<ErpInboundWebhookService>();
         services.AddScoped<CheckEngineHealthService>();

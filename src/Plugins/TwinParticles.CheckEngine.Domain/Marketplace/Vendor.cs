@@ -21,6 +21,11 @@ public sealed class Vendor
     public VendorStatus Status { get; set; } = VendorStatus.Applied;
 
     /// <summary>
+    /// Well-known operator seller created by the single-supplier → marketplace upgrade (FR-890).
+    /// </summary>
+    public bool IsOperator { get; set; }
+
+    /// <summary>
     /// Encrypted banking payload. Never serialize this to admin or storefront responses.
     /// </summary>
     public string? BankingSecretProtected { get; set; }
@@ -45,6 +50,7 @@ public sealed class Vendor
             TaxIdsJson = TaxIdsJson,
             CategoriesCsv = CategoriesCsv,
             Status = Status,
+            IsOperator = IsOperator,
             BankingSecretProtected = null,
             HasBankingDetails = HasBankingDetails || !string.IsNullOrWhiteSpace(BankingSecretProtected),
             ReviewNotes = ReviewNotes,

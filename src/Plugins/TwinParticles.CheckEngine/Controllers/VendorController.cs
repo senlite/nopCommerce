@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Services.Customers;
+using Nop.Services.Security;
 using Nop.Web.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Models;
+using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine.Controllers;
 
@@ -18,21 +20,30 @@ public sealed class VendorController : BasePublicController
     private readonly VendorOnboardingService _onboardingService;
     private readonly MarketplaceLicenceGate _marketplaceGate;
     private readonly IMarketplaceOnboardingPolicy _policy;
+    private readonly VendorIsolationService _isolationService;
+    private readonly IVendorRepository _vendors;
     private readonly IWorkContext _workContext;
     private readonly ICustomerService _customerService;
+    private readonly IPermissionService _permissionService;
 
     public VendorController(
         VendorOnboardingService onboardingService,
         MarketplaceLicenceGate marketplaceGate,
         IMarketplaceOnboardingPolicy policy,
+        VendorIsolationService isolationService,
+        IVendorRepository vendors,
         IWorkContext workContext,
-        ICustomerService customerService)
+        ICustomerService customerService,
+        IPermissionService permissionService)
     {
         _onboardingService = onboardingService;
         _marketplaceGate = marketplaceGate;
         _policy = policy;
+        _isolationService = isolationService;
+        _vendors = vendors;
         _workContext = workContext;
         _customerService = customerService;
+        _permissionService = permissionService;
     }
 
     [HttpGet]
@@ -100,6 +111,68 @@ public sealed class VendorController : BasePublicController
 
         var snapshot = await _onboardingService.GetSnapshotAsync(vendorId, cancellationToken);
         return snapshot is null ? NotFound() : Json(snapshot);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
+        => Json(await _isolationService.ListCatalogAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+
+    [HttpGet]
+    public async Task<IActionResult> Product(int productId, CancellationToken cancellationToken)
+    {
+        var decision = await _isolationService.AuthorizeProductAsync(
+            await ResolveActorAsync(cancellationToken), productId, write: false, cancellationToken);
+        return decision.Allowed ? Json(new { productId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditProduct([FromBody] VendorProductEditModel model, CancellationToken cancellationToken)
+    {
+        var decision = await _isolationService.AuthorizeProductAsync(
+            await ResolveActorAsync(cancellationToken), model.ProductId, write: true, cancellationToken);
+        return decision.Allowed
+            ? Json(new { model.ProductId })
+            : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Orders(CancellationToken cancellationToken)
+        => Json(await _isolationService.ListOrdersAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+
+    [HttpGet]
+    public async Task<IActionResult> Order(int orderId, CancellationToken cancellationToken)
+    {
+        var decision = await _isolationService.AuthorizeOrderAsync(
+            await ResolveActorAsync(cancellationToken), orderId, cancellationToken);
+        return decision.Allowed ? Json(new { orderId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Customers(CancellationToken cancellationToken)
+        => Json(await _isolationService.ListCustomersAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+
+    [HttpGet]
+    public async Task<IActionResult> Customer(int customerId, CancellationToken cancellationToken)
+    {
+        var decision = await _isolationService.AuthorizeCustomerAsync(
+            await ResolveActorAsync(cancellationToken), customerId, cancellationToken);
+        return decision.Allowed ? Json(new { customerId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
+    private async Task<VendorActor> ResolveActorAsync(CancellationToken cancellationToken)
+    {
+        if (await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return VendorActor.OperatorAdmin;
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (await _customerService.IsGuestAsync(customer))
+            return VendorActor.Anonymous;
+
+        var vendor = await _vendors.GetByApplicantCustomerIdAsync(customer.Id, cancellationToken);
+        if (vendor is { Status: VendorStatus.Active } || vendor is { IsOperator: true })
+            return VendorActor.Vendor(vendor.Id);
+
+        return VendorActor.Anonymous;
     }
 
     private static JsonResult Denied(string reasonCode, int statusCode)

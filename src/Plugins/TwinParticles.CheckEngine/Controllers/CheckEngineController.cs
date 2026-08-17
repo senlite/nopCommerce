@@ -7,6 +7,7 @@ using Nop.Services.Security;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
+using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
@@ -22,17 +23,20 @@ public sealed class CheckEngineController : BasePluginController
     private readonly INotificationService _notificationService;
     private readonly IPermissionService _permissionService;
     private readonly ISettingService _settingService;
+    private readonly MarketplaceUpgradeService _marketplaceUpgradeService;
 
     public CheckEngineController(
         ILocalizationService localizationService,
         INotificationService notificationService,
         IPermissionService permissionService,
-        ISettingService settingService)
+        ISettingService settingService,
+        MarketplaceUpgradeService marketplaceUpgradeService)
     {
         _localizationService = localizationService;
         _notificationService = notificationService;
         _permissionService = permissionService;
         _settingService = settingService;
+        _marketplaceUpgradeService = marketplaceUpgradeService;
     }
 
     public async Task<IActionResult> Configure()
@@ -65,6 +69,9 @@ public sealed class CheckEngineController : BasePluginController
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         CheckEngineConfigurationMapper.ApplyModel(settings, model);
         await _settingService.SaveSettingAsync(settings);
+
+        if (model.EnableMarketplace)
+            await _marketplaceUpgradeService.EnableAsync(HttpContext.RequestAborted);
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
 

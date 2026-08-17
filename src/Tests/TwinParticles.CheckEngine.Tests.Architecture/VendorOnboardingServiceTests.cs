@@ -287,6 +287,15 @@ public class VendorOnboardingServiceTests
                 .Select(vendor => Clone(vendor, includeSecret: false))
                 .ToList());
 
+        public Task<Vendor?> GetOperatorAsync(CancellationToken cancellationToken)
+            => Task.FromResult(_vendors.Values.Where(vendor => vendor.IsOperator).Select(vendor => Clone(vendor, includeSecret: false)).FirstOrDefault());
+
+        public Task<Vendor?> GetByApplicantCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+            => Task.FromResult(_vendors.Values
+                .Where(vendor => vendor.ApplicantCustomerId == customerId)
+                .Select(vendor => Clone(vendor, includeSecret: false))
+                .FirstOrDefault());
+
         public Task InsertAgreementAsync(VendorAgreementAcceptance acceptance, CancellationToken cancellationToken)
         {
             acceptance.Id = Interlocked.Increment(ref _nextAgreementId);
@@ -315,6 +324,7 @@ public class VendorOnboardingServiceTests
                 TaxIdsJson = vendor.TaxIdsJson,
                 CategoriesCsv = vendor.CategoriesCsv,
                 Status = vendor.Status,
+                IsOperator = vendor.IsOperator,
                 BankingSecretProtected = includeSecret ? vendor.BankingSecretProtected : null,
                 HasBankingDetails = vendor.HasBankingDetails || !string.IsNullOrWhiteSpace(vendor.BankingSecretProtected),
                 ReviewNotes = vendor.ReviewNotes,

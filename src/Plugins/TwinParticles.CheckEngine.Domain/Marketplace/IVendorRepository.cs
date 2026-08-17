@@ -14,6 +14,10 @@ public interface IVendorRepository
 
     Task<IReadOnlyList<Vendor>> GetByStatusesAsync(IReadOnlyCollection<VendorStatus> statuses, CancellationToken cancellationToken);
 
+    Task<Vendor?> GetOperatorAsync(CancellationToken cancellationToken);
+
+    Task<Vendor?> GetByApplicantCustomerIdAsync(int customerId, CancellationToken cancellationToken);
+
     Task InsertAgreementAsync(VendorAgreementAcceptance acceptance, CancellationToken cancellationToken);
 
     Task<VendorAgreementAcceptance?> GetLatestAgreementAsync(int vendorId, CancellationToken cancellationToken);

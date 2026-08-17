@@ -18,15 +18,21 @@ namespace TwinParticles.CheckEngine.Controllers;
 public sealed class VendorAdminController : BasePluginController
 {
     private readonly VendorOnboardingService _onboardingService;
+    private readonly MarketplaceUpgradeService _upgradeService;
+    private readonly VendorIsolationService _isolationService;
     private readonly MarketplaceLicenceGate _marketplaceGate;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
     public VendorAdminController(
         VendorOnboardingService onboardingService,
+        MarketplaceUpgradeService upgradeService,
+        VendorIsolationService isolationService,
         MarketplaceLicenceGate marketplaceGate,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _onboardingService = onboardingService;
+        _upgradeService = upgradeService;
+        _isolationService = isolationService;
         _marketplaceGate = marketplaceGate;
         _permissionService = permissionService;
     }
@@ -91,6 +97,30 @@ public sealed class VendorAdminController : BasePluginController
     [HttpPost]
     public Task<IActionResult> Close([FromBody] VendorReviewActionModel model, CancellationToken cancellationToken)
         => MutateAsync(model, (id, notes, ct) => _onboardingService.CloseAsync(id, "admin", notes, ct), cancellationToken);
+
+    [HttpPost]
+    public async Task<IActionResult> EnableMarketplace(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+
+        var result = await _upgradeService.EnableAsync(cancellationToken);
+        return result.Succeeded
+            ? Json(result)
+            : Denied(result.ReasonCode ?? VendorErrorCodes.LicenceDenied, 403);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AssignProduct([FromBody] VendorAssignProductModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+        if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
+            return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        await _isolationService.AssignProductAsync(model.VendorId, model.ProductId, cancellationToken);
+        return Json(new { model.VendorId, model.ProductId });
+    }
 
     private async Task<IActionResult> MutateAsync(
         VendorReviewActionModel model,
