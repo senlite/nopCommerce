@@ -181,6 +181,18 @@ public sealed class VendorController : BasePublicController
             : Denied(result.ReasonCode ?? VendorErrorCodes.IsolationDenied, 400);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> RevokeFitmentProposal(int claimId, CancellationToken cancellationToken)
+    {
+        var result = await _dashboardService.RevokeFitmentProposalAsync(
+            await ResolveActorAsync(cancellationToken),
+            claimId,
+            cancellationToken);
+        return result.Succeeded
+            ? Json(new { claimId = result.ClaimId })
+            : Denied(result.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
     [HttpGet]
     public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
         => Json(await _isolationService.ListCatalogAsync(await ResolveActorAsync(cancellationToken), cancellationToken));

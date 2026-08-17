@@ -94,6 +94,7 @@ public class VendorDashboardServiceTests
 
         result.Succeeded.Should().BeTrue();
         result.ClaimId.Should().BeGreaterThan(0);
+        harness.FitmentClaims.Claims.Single().VendorId.Should().Be(1);
         harness.FitmentClaims.Claims.Single().Provenance.SourceReference.Should().Be(VendorSourceReference.ForVendor(1));
         harness.FitmentQueue.Enqueued.Should().Contain(result.ClaimId!.Value);
     }
@@ -137,14 +138,20 @@ public class VendorDashboardServiceTests
                 licenceGate,
                 audit);
 
+            var fitmentContributions = new VendorFitmentContributionService(
+                isolation,
+                fitmentClaims,
+                fitmentClaims,
+                fitmentQueue,
+                licenceGate,
+                audit);
+
             var service = new VendorDashboardService(
                 isolation,
                 inventory,
                 analytics,
                 vendors,
-                fitmentClaims,
-                fitmentClaims,
-                fitmentQueue,
+                fitmentContributions,
                 payout,
                 licenceGate,
                 audit);
@@ -317,6 +324,14 @@ public class VendorDashboardServiceTests
 
         public Task<IReadOnlyList<FitmentClaim>> GetAllClaimsAsync(CancellationToken cancellationToken)
             => Task.FromResult<IReadOnlyList<FitmentClaim>>(_claims.ToList());
+
+        public Task<IReadOnlyList<FitmentClaim>> GetClaimsByVendorIdAsync(int vendorId, CancellationToken cancellationToken)
+        {
+            var prefix = VendorSourceReference.ForVendor(vendorId);
+            return Task.FromResult<IReadOnlyList<FitmentClaim>>(_claims
+                .Where(c => c.VendorId == vendorId || c.Provenance.SourceReference == prefix)
+                .ToList());
+        }
 
         public Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken)
             => Task.FromResult(_claims.FirstOrDefault(c => c.Id == claimId));

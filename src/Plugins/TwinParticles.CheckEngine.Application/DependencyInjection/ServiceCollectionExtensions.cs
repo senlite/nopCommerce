@@ -102,6 +102,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<MarketplaceUpgradeService>();
         services.AddScoped<VendorIsolationService>();
         services.AddScoped<VendorDashboardService>();
+        services.AddScoped<VendorFitmentContributionService>();
         services.AddScoped<CommissionEvaluationService>();
         services.AddScoped<CommissionPlanAdminService>();
         services.AddScoped<CommissionSnapshotService>();

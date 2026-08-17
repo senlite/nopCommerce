@@ -3,7 +3,7 @@ using System;
 namespace TwinParticles.CheckEngine.Domain.Marketplace;
 
 /// <summary>
-/// Vendor attribution on fitment claims until H3.7 adds a dedicated column.
+/// Legacy source-reference encoding for vendor attribution. Prefer <see cref="FitmentClaim.VendorId"/>.
 /// </summary>
 public static class VendorSourceReference
 {

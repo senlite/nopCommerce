@@ -14,17 +14,20 @@ public class VendorIsolationConventionsTests
         var admin = ReadPluginFile("Controllers", "VendorAdminController.cs");
         var routes = ReadPluginFile("Infrastructure", "RouteProvider.cs");
         var service = ReadApplicationFile("Marketplace", "VendorDashboardService.cs");
+        var fitment = ReadApplicationFile("Marketplace", "VendorFitmentContributionService.cs");
 
         controller.Should().Contain("Dashboard");
         controller.Should().Contain("UpdateInventory");
         controller.Should().Contain("Scorecard");
         controller.Should().Contain("SubmitFitmentProposal");
+        controller.Should().Contain("RevokeFitmentProposal");
 
         admin.Should().Contain("Scoreboard");
         admin.Should().Contain("Scorecards");
 
         service.Should().Contain("VendorScorecard");
-        service.Should().Contain("VendorSourceReference");
+        fitment.Should().Contain("VendorId");
+        fitment.Should().Contain("VendorSourceReference");
 
         routes.Should().Contain("check-engine/vendor/{action}");
     }

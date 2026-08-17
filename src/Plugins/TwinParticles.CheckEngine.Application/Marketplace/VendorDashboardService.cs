@@ -22,9 +22,7 @@ public sealed class VendorDashboardService
     private readonly IVendorInventoryStore _inventory;
     private readonly IVendorAnalyticsStore _analytics;
     private readonly IVendorRepository _vendors;
-    private readonly IFitmentClaimReadRepository _fitmentClaims;
-    private readonly IFitmentClaimWriteRepository _fitmentWrites;
-    private readonly IFitmentReviewQueueRepository _fitmentQueue;
+    private readonly VendorFitmentContributionService _fitmentContributions;
     private readonly PayoutStatementService _payoutService;
     private readonly MarketplaceLicenceGate _licenceGate;
     private readonly ICheckEngineAuditService _auditService;
@@ -34,9 +32,7 @@ public sealed class VendorDashboardService
         IVendorInventoryStore inventory,
         IVendorAnalyticsStore analytics,
         IVendorRepository vendors,
-        IFitmentClaimReadRepository fitmentClaims,
-        IFitmentClaimWriteRepository fitmentWrites,
-        IFitmentReviewQueueRepository fitmentQueue,
+        VendorFitmentContributionService fitmentContributions,
         PayoutStatementService payoutService,
         MarketplaceLicenceGate licenceGate,
         ICheckEngineAuditService auditService)
@@ -45,9 +41,7 @@ public sealed class VendorDashboardService
         _inventory = inventory;
         _analytics = analytics;
         _vendors = vendors;
-        _fitmentClaims = fitmentClaims;
-        _fitmentWrites = fitmentWrites;
-        _fitmentQueue = fitmentQueue;
+        _fitmentContributions = fitmentContributions;
         _payoutService = payoutService;
         _licenceGate = licenceGate;
         _auditService = auditService;
@@ -214,70 +208,22 @@ public sealed class VendorDashboardService
         return results;
     }
 
-    public async Task<IReadOnlyList<FitmentClaim>> ListFitmentProposalsAsync(
+    public Task<IReadOnlyList<FitmentClaim>> ListFitmentProposalsAsync(
         VendorActor actor,
         CancellationToken cancellationToken)
-    {
-        if (!await _licenceGate.AllowsMarketplaceAsync(cancellationToken) || actor.VendorId is not int vendorId)
-            return [];
+        => _fitmentContributions.ListProposalsAsync(actor, cancellationToken);
 
-        var productIds = (await _isolation.ListCatalogAsync(actor, cancellationToken)).ToHashSet();
-        var prefix = VendorSourceReference.ForVendor(vendorId);
-        var claims = await _fitmentClaims.GetAllClaimsAsync(cancellationToken);
-
-        return claims
-            .Where(claim => claim.Provenance.SourceReference.StartsWith(prefix, StringComparison.Ordinal)
-                && productIds.Contains(claim.ProductId))
-            .OrderByDescending(claim => claim.Provenance.CreatedUtc)
-            .ToList();
-    }
-
-    public async Task<VendorDashboardMutationResult> SubmitFitmentProposalAsync(
+    public Task<VendorDashboardMutationResult> SubmitFitmentProposalAsync(
         VendorActor actor,
         VendorFitmentProposalRequest request,
         CancellationToken cancellationToken)
-    {
-        if (actor.VendorId is not int vendorId)
-            return VendorDashboardMutationResult.Fail(VendorErrorCodes.IsolationUnauthenticated);
+        => _fitmentContributions.SubmitProposalAsync(actor, request, cancellationToken);
 
-        var decision = await _isolation.AuthorizeProductAsync(actor, request.ProductId, write: false, cancellationToken);
-        if (!decision.Allowed)
-            return VendorDashboardMutationResult.Fail(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied);
-
-        if (request.VehicleConfigurationId <= 0)
-            return VendorDashboardMutationResult.Fail("vendor.fitment.invalid_vehicle");
-
-        var claim = new FitmentClaim
-        {
-            ProductId = request.ProductId,
-            VehicleConfigurationId = request.VehicleConfigurationId,
-            Status = FitmentStatus.Unknown,
-            Confidence = 0.5m,
-            IsPublished = false,
-            IsActive = true,
-            Provenance = new FitmentClaimProvenance
-            {
-                SourceKind = FitmentSourceKind.SupplierCatalog,
-                SourceReference = VendorSourceReference.ForVendor(vendorId),
-                CreatedBy = $"vendor:{vendorId}",
-                CreatedUtc = DateTimeOffset.UtcNow
-            }
-        };
-
-        await _fitmentWrites.UpsertAsync(claim, cancellationToken);
-        await _fitmentQueue.EnqueueAsync(claim.Id, "vendor.fitment.proposed", cancellationToken);
-
-        await _auditService.AppendAsync(
-            vendorId.ToString(),
-            "vendor.fitment.proposed",
-            "FitmentClaim",
-            claim.Id.ToString(),
-            beforeJson: null,
-            afterJson: $"{{\"productId\":{request.ProductId},\"vehicleConfigurationId\":{request.VehicleConfigurationId}}}",
-            cancellationToken);
-
-        return VendorDashboardMutationResult.Ok(claim.Id);
-    }
+    public Task<VendorDashboardMutationResult> RevokeFitmentProposalAsync(
+        VendorActor actor,
+        int claimId,
+        CancellationToken cancellationToken)
+        => _fitmentContributions.RevokeProposalAsync(actor, claimId, cancellationToken);
 }
 
 public sealed class VendorFitmentProposalRequest

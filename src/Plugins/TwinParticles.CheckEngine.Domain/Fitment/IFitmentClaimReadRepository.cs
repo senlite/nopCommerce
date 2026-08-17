@@ -10,6 +10,9 @@ public interface IFitmentClaimReadRepository
 
     Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<FitmentClaim>> GetClaimsByVendorIdAsync(int vendorId, CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
+
     Task<IReadOnlyList<FitmentClaim>> GetAllClaimsAsync(CancellationToken cancellationToken)
         => Task.FromResult<IReadOnlyList<FitmentClaim>>([]);
 

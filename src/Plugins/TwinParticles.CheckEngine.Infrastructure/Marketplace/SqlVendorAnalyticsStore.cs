@@ -77,8 +77,9 @@ public sealed class SqlVendorAnalyticsStore : IVendorAnalyticsStore
         var rows = await _dataProvider.QueryAsync<FitmentCountRow>(@"
 SELECT FitmentStatusId, IsPublished, COUNT(*) AS ClaimCount
 FROM TP_CE_FitmentClaim
-WHERE SourceReference = @prefix
+WHERE VendorId = @vendorId OR SourceReference = @prefix
 GROUP BY FitmentStatusId, IsPublished",
+            new DataParameter("vendorId", vendorId),
             new DataParameter("prefix", prefix));
 
         var pending = 0;

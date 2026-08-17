@@ -12,6 +12,11 @@ public sealed class FitmentClaim
 
     public int? OemNumberId { get; set; }
 
+    /// <summary>
+    /// FR-856: null means operator or system claim; set for vendor-contributed fitment.
+    /// </summary>
+    public int? VendorId { get; set; }
+
     public FitmentStatus Status { get; set; } = FitmentStatus.Unknown;
 
     public FitmentClaimQualifier Qualifier { get; set; } = new();
