@@ -1,0 +1,57 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Commission.Configure").Text;
+    var vendorId = (int)(ViewBag.VendorId ?? 0);
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Scoreboard", "VendorAdmin")">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="card card-default">
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure.Hint")</p>
+                <p>Vendor id: <strong id="ce-commission-vendor">@vendorId</strong></p>
+                <textarea id="ce-commission-json" class="form-control" rows="18" spellcheck="false"></textarea>
+                <div class="mt-3">
+                    <button id="ce-commission-save" type="button" class="btn btn-primary">@T("Plugins.TwinParticles.CheckEngine.Commission.Save")</button>
+                </div>
+                <pre id="ce-commission-result" class="mt-2" style="white-space: pre-wrap;"></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var vendorId = parseInt(document.getElementById('ce-commission-vendor').textContent, 10) || 0;
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  fetch('/Admin/CheckEngine/CommissionAdmin/GetPlan?vendorId=' + vendorId, { headers: headers(false) })
+    .then(function (r) { return r.json(); })
+    .then(function (plan) {
+      document.getElementById('ce-commission-json').value = JSON.stringify(plan, null, 2);
+    });
+  document.getElementById('ce-commission-save').addEventListener('click', function () {
+    var body = JSON.parse(document.getElementById('ce-commission-json').value);
+    body.vendorId = vendorId;
+    fetch('/Admin/CheckEngine/CommissionAdmin/SavePlan', {
+      method: 'POST', headers: headers(true), body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      document.getElementById('ce-commission-result').textContent = JSON.stringify(j, null, 2);
+    }).catch(function (e) { document.getElementById('ce-commission-result').textContent = String(e); });
+  });
+})();
+</script>
