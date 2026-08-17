@@ -99,6 +99,19 @@ public class VendorOnboardingServiceTests
     }
 
     [Test]
+    public async Task CanAccessApplication_Should_Bind_Applicant_And_Allow_Operator()
+    {
+        var harness = Harness.Create(marketplaceEntitled: true, applicationsOpen: true);
+        var result = await harness.Service.ApplyAsync(ValidApplication(applicantCustomerId: 42), CancellationToken.None);
+        var vendorId = result.Snapshot!.Vendor.Id;
+
+        (await harness.Service.CanAccessApplicationAsync(vendorId, 42, isOperator: false, CancellationToken.None)).Should().BeTrue();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, 99, isOperator: false, CancellationToken.None)).Should().BeFalse();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, null, isOperator: false, CancellationToken.None)).Should().BeFalse();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, 99, isOperator: true, CancellationToken.None)).Should().BeTrue();
+    }
+
+    [Test]
     public async Task Apply_Should_Deny_Without_Marketplace_Entitlement()
     {
         var harness = Harness.Create(marketplaceEntitled: false, applicationsOpen: true);
@@ -165,12 +178,13 @@ public class VendorOnboardingServiceTests
         return vendorId;
     }
 
-    private static VendorApplication ValidApplication(string legalName = "GMaster Cooling LLC")
+    private static VendorApplication ValidApplication(string legalName = "GMaster Cooling LLC", int? applicantCustomerId = null)
         => new()
         {
             LegalName = legalName,
             TradingName = "GMaster",
             ContactEmail = "vendor@parts.test",
+            ApplicantCustomerId = applicantCustomerId,
             TaxIdsJson = "[\"VAT-99\"]",
             CategoriesCsv = "cooling",
             BankingDetails = "IBAN-SECRET-0001"

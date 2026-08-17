@@ -103,6 +103,10 @@ public sealed class VendorController : BasePublicController
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
+        var access = await AuthorizeOnboardingAccessAsync(vendorId, cancellationToken);
+        if (access is not null)
+            return access;
+
         var customer = await _workContext.GetCurrentCustomerAsync();
         var result = await _onboardingService.AcceptAgreementAsync(vendorId, customer.Email, cancellationToken);
         return result.Succeeded
@@ -115,6 +119,10 @@ public sealed class VendorController : BasePublicController
     {
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        var access = await AuthorizeOnboardingAccessAsync(vendorId, cancellationToken);
+        if (access is not null)
+            return access;
 
         var snapshot = await _onboardingService.GetSnapshotAsync(vendorId, cancellationToken);
         return snapshot is null ? NotFound() : Json(snapshot);
@@ -268,6 +276,19 @@ public sealed class VendorController : BasePublicController
         var decision = await _isolationService.AuthorizeCustomerAsync(
             await ResolveActorAsync(cancellationToken), customerId, cancellationToken);
         return decision.Allowed ? Json(new { customerId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
+    private async Task<IActionResult?> AuthorizeOnboardingAccessAsync(int vendorId, CancellationToken cancellationToken)
+    {
+        var isOperator = await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var customerId = await _customerService.IsGuestAsync(customer) ? (int?)null : customer.Id;
+        if (await _onboardingService.CanAccessApplicationAsync(vendorId, customerId, isOperator, cancellationToken))
+            return null;
+
+        return Denied(
+            customerId is null ? VendorErrorCodes.IsolationUnauthenticated : VendorErrorCodes.IsolationDenied,
+            403);
     }
 
     private async Task<VendorActor> ResolveActorAsync(CancellationToken cancellationToken)

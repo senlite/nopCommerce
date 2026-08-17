@@ -22,6 +22,8 @@ public class VendorOnboardingConventionsTests
         apply.Should().Contain("MarketplaceLicenceGate");
         apply.Should().Contain("ApplicationsOpen");
         apply.Should().Contain("AcceptAgreement");
+        apply.Should().Contain("AuthorizeOnboardingAccessAsync");
+        apply.Should().Contain("CanAccessApplicationAsync");
         apply.Should().NotContain("BankingSecretProtected");
 
         routes.Should().Contain("Admin/CheckEngine/VendorAdmin/{action}");

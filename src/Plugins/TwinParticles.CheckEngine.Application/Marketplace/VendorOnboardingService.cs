@@ -149,6 +149,33 @@ public sealed class VendorOnboardingService
     public Task<VendorOnboardingSnapshot?> GetSnapshotAsync(int vendorId, CancellationToken cancellationToken)
         => SnapshotAsync(vendorId, cancellationToken);
 
+    /// <summary>
+    /// Applicants may read/accept only their own application. Operators may access any vendor.
+    /// Guests cannot bind to a vendor after apply (Apply already returns the snapshot).
+    /// </summary>
+    public async Task<bool> CanAccessApplicationAsync(
+        int vendorId,
+        int? customerId,
+        bool isOperator,
+        CancellationToken cancellationToken)
+    {
+        if (isOperator)
+            return true;
+
+        if (customerId is not int id)
+            return false;
+
+        var vendor = await _repository.GetByIdAsync(vendorId, cancellationToken);
+        if (vendor is null)
+            return false;
+
+        if (vendor.ApplicantCustomerId == id)
+            return true;
+
+        var owned = await _repository.GetByApplicantCustomerIdAsync(id, cancellationToken);
+        return owned?.Id == vendorId;
+    }
+
     private async Task<VendorOnboardingResult> TransitionAsync(
         int vendorId,
         VendorStatus from,

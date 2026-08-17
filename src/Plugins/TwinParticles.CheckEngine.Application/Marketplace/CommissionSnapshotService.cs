@@ -14,6 +14,7 @@ public sealed class CommissionSnapshotService
     private readonly ICommissionPlanRepository _plans;
     private readonly ICommissionSnapshotStore _snapshots;
     private readonly IVendorOwnershipStore _ownership;
+    private readonly IVendorRepository _vendors;
     private readonly IVendorProductCategoryStore _categories;
     private readonly MarketplaceLicenceGate _licenceGate;
 
@@ -22,6 +23,7 @@ public sealed class CommissionSnapshotService
         ICommissionPlanRepository plans,
         ICommissionSnapshotStore snapshots,
         IVendorOwnershipStore ownership,
+        IVendorRepository vendors,
         IVendorProductCategoryStore categories,
         MarketplaceLicenceGate licenceGate)
     {
@@ -29,6 +31,7 @@ public sealed class CommissionSnapshotService
         _plans = plans;
         _snapshots = snapshots;
         _ownership = ownership;
+        _vendors = vendors;
         _categories = categories;
         _licenceGate = licenceGate;
     }
@@ -51,7 +54,7 @@ public sealed class CommissionSnapshotService
 
         foreach (var item in items)
         {
-            var vendorId = await _ownership.GetProductVendorIdAsync(item.ProductId, cancellationToken);
+            var vendorId = await ResolveVendorIdAsync(item.ProductId, cancellationToken);
             if (!vendorId.HasValue)
                 continue;
 
@@ -111,4 +114,14 @@ public sealed class CommissionSnapshotService
 
     public Task<IReadOnlyList<OrderLineCommissionSnapshot>> GetSnapshotsAsync(int orderId, CancellationToken cancellationToken)
         => _snapshots.GetByOrderIdAsync(orderId, cancellationToken);
+
+    private async Task<int?> ResolveVendorIdAsync(int productId, CancellationToken cancellationToken)
+    {
+        var vendorId = await _ownership.GetProductVendorIdAsync(productId, cancellationToken);
+        if (vendorId.HasValue)
+            return vendorId;
+
+        var operatorVendor = await _vendors.GetOperatorAsync(cancellationToken);
+        return operatorVendor?.Id;
+    }
 }
