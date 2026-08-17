@@ -113,5 +113,5 @@ only cloud-specific caveats.
 ### OneDrive artifact uploads (optional)
 - After saving walkthrough recordings or screenshots with `RecordScreen` (mode `SAVE_RECORDING`), upload them to OneDrive when the environment secret `RCLONE_CONFIG_B64` is configured:
   `bash scripts/upload-artifacts-to-onedrive.sh`
-- One-time setup (OAuth on your PC, base64-encode `rclone.conf`, add secrets in Cursor → Cloud Agents → Environments) is documented in `docs/cloud-agent-onedrive-setup.md`.
+- One-time setup (OAuth on your PC, base64-encode `rclone.conf`, add secret `RCLONE_CONFIG_B64` in Cursor → Cloud Agents → Environments) is documented in `docs/cloud-agent-onedrive-setup.md`. A newly added secret is only injected into **new** agent runs.
 - Uploads go to `CheckEngine/AgentArtifacts/YYYY-MM-DD/{conversation-id}/` and the script prints share links via `rclone link`.

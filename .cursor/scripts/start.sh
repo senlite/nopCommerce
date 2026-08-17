@@ -7,9 +7,14 @@ mkdir -p "$RCLONE_DIR"
 
 if [[ -n "${RCLONE_CONFIG_B64:-}" ]]; then
   # Secret is injected by Cursor environment settings (never commit this value).
-  printf '%s' "$RCLONE_CONFIG_B64" | base64 -d > "$RCLONE_DIR/rclone.conf"
-  chmod 600 "$RCLONE_DIR/rclone.conf"
-  echo "[cloud-agent start] Wrote rclone config from RCLONE_CONFIG_B64."
+  # Invalid secret must not fail environment start — uploads will surface the error.
+  if printf '%s' "$RCLONE_CONFIG_B64" | base64 -d > "$RCLONE_DIR/rclone.conf" 2>/dev/null; then
+    chmod 600 "$RCLONE_DIR/rclone.conf"
+    echo "[cloud-agent start] Wrote rclone config from RCLONE_CONFIG_B64."
+  else
+    rm -f "$RCLONE_DIR/rclone.conf"
+    echo "[cloud-agent start] RCLONE_CONFIG_B64 is not valid base64; OneDrive upload disabled." >&2
+  fi
 elif [[ ! -f "$RCLONE_DIR/rclone.conf" ]]; then
   echo "[cloud-agent start] OneDrive upload not configured (missing RCLONE_CONFIG_B64 secret)." >&2
 fi
