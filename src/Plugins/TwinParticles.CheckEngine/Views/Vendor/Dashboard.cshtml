@@ -64,6 +64,10 @@
     return h;
   }
   function pct(v) { return v == null ? '—' : (Math.round(v * 1000) / 10) + '%'; }
+  function pick(obj, camel, pascal) {
+    if (!obj) return undefined;
+    return obj[camel] !== undefined ? obj[camel] : obj[pascal];
+  }
   var labels = document.getElementById('ce-vendor-labels').dataset;
 
   fetch('/check-engine/vendor/dashboarddata', { headers: headers(false) })
@@ -71,21 +75,22 @@
     .then(function (d) {
       document.getElementById('ce-vendor-summary').innerHTML =
         '<ul>' +
-        '<li>' + labels.products + ': ' + d.productCount + '</li>' +
-        '<li>' + labels.stockUnits + ': ' + d.totalStockUnits + ' (' + d.lowStockCount + ' low)</li>' +
-        '<li>' + labels.orders + ': ' + d.orderCount + '</li>' +
-        '<li>' + labels.customers + ': ' + d.customerCount + '</li>' +
+        '<li>' + labels.products + ': ' + pick(d, 'productCount', 'ProductCount') + '</li>' +
+        '<li>' + labels.stockUnits + ': ' + pick(d, 'totalStockUnits', 'TotalStockUnits') + ' (' + pick(d, 'lowStockCount', 'LowStockCount') + ' low)</li>' +
+        '<li>' + labels.orders + ': ' + pick(d, 'orderCount', 'OrderCount') + '</li>' +
+        '<li>' + labels.customers + ': ' + pick(d, 'customerCount', 'CustomerCount') + '</li>' +
         '</ul>';
-      var s = d.scorecard || {};
+      var s = pick(d, 'scorecard', 'Scorecard') || {};
       document.getElementById('ce-vendor-scorecard').innerHTML =
         '<table class="table"><tr><th>Fill</th><th>Cancel</th><th>Claim reject</th><th>On-time ship</th></tr>' +
-        '<tr><td>' + pct(s.fillRate) + '</td><td>' + pct(s.cancelRate) + '</td><td>' + pct(s.claimRejectionRate) + '</td><td>' + pct(s.onTimeShipmentRate) + '</td></tr></table>';
+        '<tr><td>' + pct(pick(s, 'fillRate', 'FillRate')) + '</td><td>' + pct(pick(s, 'cancelRate', 'CancelRate')) + '</td><td>' + pct(pick(s, 'claimRejectionRate', 'ClaimRejectionRate')) + '</td><td>' + pct(pick(s, 'onTimeShipmentRate', 'OnTimeShipmentRate')) + '</td></tr></table>';
       document.getElementById('ce-vendor-statements').textContent = labels.statements;
-      if (d.statements && d.statements.available) {
+      var statements = pick(d, 'statements', 'Statements') || {};
+      if (pick(statements, 'available', 'Available')) {
         document.getElementById('ce-vendor-statements').textContent =
-          'Statement #' + d.statements.statementId + ': net ' + d.statements.netPayout + ' (' + d.statements.status + ')';
-      } else if (d.statements && d.statements.messageKey) {
-        document.getElementById('ce-vendor-statements').textContent = d.statements.messageKey;
+          'Statement #' + pick(statements, 'statementId', 'StatementId') + ': net ' + pick(statements, 'netPayout', 'NetPayout') + ' (' + pick(statements, 'status', 'Status') + ')';
+      } else if (pick(statements, 'messageKey', 'MessageKey')) {
+        document.getElementById('ce-vendor-statements').textContent = pick(statements, 'messageKey', 'MessageKey');
       }
     });
 
@@ -95,10 +100,13 @@
       var tbody = document.querySelector('#ce-vendor-inventory tbody');
       tbody.innerHTML = '';
       (items || []).forEach(function (item) {
+        var productId = pick(item, 'productId', 'ProductId');
+        var name = pick(item, 'name', 'Name') || '';
+        var stock = pick(item, 'stockQuantity', 'StockQuantity');
         var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + item.productId + ' — ' + (item.name || '') + '</td>' +
-          '<td><input type="number" class="form-control ce-stock-input" data-product-id="' + item.productId + '" value="' + item.stockQuantity + '" /></td>' +
-          '<td><button type="button" class="button-2 ce-save-stock" data-product-id="' + item.productId + '">' + labels.save + '</button></td>';
+        tr.innerHTML = '<td>' + productId + ' — ' + name + '</td>' +
+          '<td><input type="number" class="form-control ce-stock-input" data-product-id="' + productId + '" value="' + stock + '" /></td>' +
+          '<td><button type="button" class="button-2 ce-save-stock" data-product-id="' + productId + '">' + labels.save + '</button></td>';
         tbody.appendChild(tr);
       });
       tbody.addEventListener('click', function (e) {
