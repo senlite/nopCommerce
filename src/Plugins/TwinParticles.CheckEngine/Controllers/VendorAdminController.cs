@@ -21,6 +21,7 @@ public sealed class VendorAdminController : BasePluginController
     private readonly MarketplaceUpgradeService _upgradeService;
     private readonly VendorIsolationService _isolationService;
     private readonly VendorDashboardService _dashboardService;
+    private readonly OrderVendorSplitService _splitService;
     private readonly MarketplaceLicenceGate _marketplaceGate;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
@@ -29,6 +30,7 @@ public sealed class VendorAdminController : BasePluginController
         MarketplaceUpgradeService upgradeService,
         VendorIsolationService isolationService,
         VendorDashboardService dashboardService,
+        OrderVendorSplitService splitService,
         MarketplaceLicenceGate marketplaceGate,
         Nop.Services.Security.IPermissionService permissionService)
     {
@@ -36,6 +38,7 @@ public sealed class VendorAdminController : BasePluginController
         _upgradeService = upgradeService;
         _isolationService = isolationService;
         _dashboardService = dashboardService;
+        _splitService = splitService;
         _marketplaceGate = marketplaceGate;
         _permissionService = permissionService;
     }
@@ -133,6 +136,22 @@ public sealed class VendorAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         return Json(await _dashboardService.ListOperatorScorecardsAsync(VendorActor.OperatorAdmin, cancellationToken));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> OrderSplits(int orderId, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+        if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
+            return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        var group = await _splitService.GetCheckoutGroupAsync(orderId, cancellationToken);
+        if (group is null)
+            return NotFound();
+
+        var shipments = await _splitService.GetShipmentMapsAsync(orderId, cancellationToken);
+        return Json(new { checkout = group, shipments });
     }
 
     [HttpPost]

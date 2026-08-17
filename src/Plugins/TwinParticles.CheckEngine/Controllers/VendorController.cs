@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,7 @@ public sealed class VendorController : BasePublicController
     private readonly IMarketplaceOnboardingPolicy _policy;
     private readonly VendorIsolationService _isolationService;
     private readonly VendorDashboardService _dashboardService;
+    private readonly OrderVendorSplitService _splitService;
     private readonly IVendorRepository _vendors;
     private readonly IWorkContext _workContext;
     private readonly ICustomerService _customerService;
@@ -33,6 +35,7 @@ public sealed class VendorController : BasePublicController
         IMarketplaceOnboardingPolicy policy,
         VendorIsolationService isolationService,
         VendorDashboardService dashboardService,
+        OrderVendorSplitService splitService,
         IVendorRepository vendors,
         IWorkContext workContext,
         ICustomerService customerService,
@@ -43,6 +46,7 @@ public sealed class VendorController : BasePublicController
         _policy = policy;
         _isolationService = isolationService;
         _dashboardService = dashboardService;
+        _splitService = splitService;
         _vendors = vendors;
         _workContext = workContext;
         _customerService = customerService;
@@ -209,6 +213,37 @@ public sealed class VendorController : BasePublicController
         var decision = await _isolationService.AuthorizeOrderAsync(
             await ResolveActorAsync(cancellationToken), orderId, cancellationToken);
         return decision.Allowed ? Json(new { orderId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> OrderSplits(int orderId, CancellationToken cancellationToken)
+    {
+        var actor = await ResolveActorAsync(cancellationToken);
+        var decision = await _isolationService.AuthorizeOrderAsync(actor, orderId, cancellationToken);
+        if (!decision.Allowed)
+            return Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
+
+        var group = await _splitService.GetCheckoutGroupAsync(orderId, cancellationToken);
+        if (group is null)
+            return NotFound();
+
+        if (!actor.CanBypassIsolation && actor.VendorId is int vendorId)
+        {
+            var vendorSplits = group.Splits.Where(split => split.VendorId == vendorId).ToList();
+            if (vendorSplits.Count == 0)
+                return Denied(VendorErrorCodes.IsolationDenied, 403);
+
+            group = new OrderCheckoutGroup
+            {
+                CheckoutGroupId = group.CheckoutGroupId,
+                ParentOrderId = group.ParentOrderId,
+                CreatedUtc = group.CreatedUtc,
+                Splits = vendorSplits
+            };
+        }
+
+        var shipments = await _splitService.GetShipmentMapsAsync(orderId, cancellationToken);
+        return Json(new { checkout = group, shipments });
     }
 
     [HttpGet]

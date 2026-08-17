@@ -5,35 +5,40 @@ using NUnit.Framework;
 namespace TwinParticles.CheckEngine.Tests.Architecture;
 
 [TestFixture]
-public class CommissionConventionsTests
+public class OrderVendorSplitConventionsTests
 {
     [Test]
-    public void Commission_Schema_Should_Define_Plans_Rules_And_Snapshots()
+    public void Split_Schema_Should_Define_Splits_Lines_And_Shipment_Map()
     {
-        var migration = ReadInfrastructureFile("Migrations", "202608171500_CommissionSchema.cs");
-        migration.Should().Contain("TP_CE_CommissionPlan");
-        migration.Should().Contain("TP_CE_CommissionRule");
-        migration.Should().Contain("TP_CE_CommissionTierBand");
-        migration.Should().Contain("TP_CE_OrderLineCommissionSnapshot");
+        var migration = ReadInfrastructureFile("Migrations", "202608171700_OrderVendorSplitSchema.cs");
+        migration.Should().Contain("TP_CE_OrderVendorSplit");
+        migration.Should().Contain("TP_CE_OrderVendorSplitLine");
+        migration.Should().Contain("TP_CE_ShipmentVendorMap");
     }
 
     [Test]
-    public void Order_Placed_Should_Snapshot_Commissions_And_Split_Vendors()
+    public void Order_Placed_Should_Create_Vendor_Splits()
     {
         var consumer = ReadPluginFile("Consumers", "MarketplaceOrderPlacedConsumer.cs");
         consumer.Should().Contain("OrderPlacedEvent");
-        consumer.Should().Contain("CommissionSnapshotService");
         consumer.Should().Contain("OrderVendorSplitService");
     }
 
     [Test]
-    public void Commission_Admin_Should_Expose_Plan_Configuration()
+    public void Shipment_Created_Should_Map_Vendors()
     {
-        var controller = ReadPluginFile("Controllers", "CommissionAdminController.cs");
-        var routes = ReadPluginFile("Infrastructure", "RouteProvider.cs");
-        controller.Should().Contain("SavePlan");
-        controller.Should().Contain("GetPlan");
-        routes.Should().Contain("CommissionAdmin");
+        var consumer = ReadPluginFile("Consumers", "MarketplaceShipmentCreatedConsumer.cs");
+        consumer.Should().Contain("ShipmentCreatedEvent");
+        consumer.Should().Contain("MapShipmentAsync");
+    }
+
+    [Test]
+    public void Vendor_And_Admin_Should_Expose_Order_Splits()
+    {
+        var vendor = ReadPluginFile("Controllers", "VendorController.cs");
+        var admin = ReadPluginFile("Controllers", "VendorAdminController.cs");
+        vendor.Should().Contain("OrderSplits");
+        admin.Should().Contain("OrderSplits");
     }
 
     private static string ReadPluginFile(params string[] segments)

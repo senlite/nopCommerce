@@ -259,7 +259,7 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 | H3.3 | Vendor dashboards, inventory and performance analytics | done | Vendor dashboard at `/check-engine/vendor/dashboard` (catalog counts, inventory CRUD scoped by isolation, fitment proposal submit/list, statement placeholder); FR-860 scorecards (fill/cancel/claim-reject/on-time shipment) vendor + operator scoreboard; EN/AR locale resources; plugin 0.56.0 |
 | H3.4 | Flat, percentage, tiered and category-specific commissions | done | `TP_CE_CommissionPlan` / `Rule` / `TierBand`; pure `CommissionEvaluationService`; `TP_CE_OrderLineCommissionSnapshot` on `OrderPlacedEvent` (AC-19.6); admin configure at `/Admin/CheckEngine/CommissionAdmin/Configure` |
 | H3.5 | Payout reconciliation and statements integrated with ERPNext | done | `TP_CE_PayoutStatement` / lines / adjustments; `PayoutStatementBuilder` (sales − commission − refunds + adjustments); finalize → `ErpSyncEntityType.PayoutJournal` push → cent-level reconcile; vendor dashboard statement summary; admin `/Admin/CheckEngine/PayoutAdmin` |
-| H3.6 | Multi-vendor cart, split orders and split shipments | pending |
+| H3.6 | Multi-vendor cart, split orders and split shipments | done | `TP_CE_OrderVendorSplit` / lines / `TP_CE_ShipmentVendorMap`; `OrderVendorSplitService` on `OrderPlacedEvent` + `ShipmentCreatedEvent` (AC-19.2); vendor/admin `OrderSplits` JSON APIs; plugin 0.59.0 |
 | H3.7 | Attributed, reviewable and revocable vendor fitment contributions | pending |
 
 ### Horizon 4 — Vertical portals / v1.3–v1.5 (`EP-25`–`EP-27`)
