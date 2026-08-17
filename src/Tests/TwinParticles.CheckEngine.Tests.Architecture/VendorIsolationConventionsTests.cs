@@ -32,8 +32,10 @@ public class VendorIsolationConventionsTests
         routes.Should().Contain("check-engine/vendor/{action}");
 
         var dashboardView = ReadPluginFile("Views", "Vendor", "Dashboard.cshtml");
-        dashboardView.Should().Contain("pick(d, 'productCount', 'ProductCount')");
-        dashboardView.Should().Contain("pick(item, 'productId', 'ProductId')");
+        var marketplaceJs = ReadPluginFile("Content", "checkengine-marketplace.js");
+        dashboardView.Should().Contain("data-ce-page=\"dashboard\"");
+        marketplaceJs.Should().Contain("pick(d, 'productCount', 'ProductCount')");
+        marketplaceJs.Should().Contain("pick(item, 'productId', 'ProductId')");
     }
 
     [Test]
