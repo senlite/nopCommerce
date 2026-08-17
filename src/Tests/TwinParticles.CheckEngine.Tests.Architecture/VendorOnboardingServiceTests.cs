@@ -29,6 +29,7 @@ public class VendorOnboardingServiceTests
         result.Snapshot!.Vendor.Status.Should().Be(VendorStatus.Applied);
         result.Snapshot.Vendor.HasBankingDetails.Should().BeTrue();
         result.Snapshot.Vendor.BankingSecretProtected.Should().BeNull();
+        result.Snapshot.ApplicantAccessToken.Should().NotBeNullOrWhiteSpace();
         harness.Repository.StoredSecretFor(result.Snapshot.Vendor.Id).Should().StartWith("enc:");
         harness.Repository.StoredSecretFor(result.Snapshot.Vendor.Id).Should().NotContain("IBAN-SECRET");
     }
@@ -109,6 +110,22 @@ public class VendorOnboardingServiceTests
         (await harness.Service.CanAccessApplicationAsync(vendorId, 99, isOperator: false, CancellationToken.None)).Should().BeFalse();
         (await harness.Service.CanAccessApplicationAsync(vendorId, null, isOperator: false, CancellationToken.None)).Should().BeFalse();
         (await harness.Service.CanAccessApplicationAsync(vendorId, 99, isOperator: true, CancellationToken.None)).Should().BeTrue();
+    }
+
+    [Test]
+    public async Task CanAccessApplication_Should_Allow_Guest_With_Matching_Token()
+    {
+        var harness = Harness.Create(marketplaceEntitled: true, applicationsOpen: true);
+        var result = await harness.Service.ApplyAsync(ValidApplication(), CancellationToken.None);
+        var vendorId = result.Snapshot!.Vendor.Id;
+        var token = result.Snapshot.ApplicantAccessToken;
+
+        (await harness.Service.CanAccessApplicationAsync(vendorId, null, isOperator: false, CancellationToken.None, token)).Should().BeTrue();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, null, isOperator: false, CancellationToken.None, "deadbeef")).Should().BeFalse();
+        (await harness.Service.GetSnapshotAsync(vendorId, CancellationToken.None))!
+            .ApplicantAccessToken.Should().BeNull();
+        harness.Repository.StoredTokenHashFor(vendorId).Should().Be(ApplicantAccessToken.Hash(token!));
+        harness.Repository.StoredTokenHashFor(vendorId).Should().NotBe(token);
     }
 
     [Test]
@@ -275,6 +292,9 @@ public class VendorOnboardingServiceTests
         public string? StoredSecretFor(int vendorId)
             => _vendors.TryGetValue(vendorId, out var vendor) ? vendor.BankingSecretProtected : null;
 
+        public string? StoredTokenHashFor(int vendorId)
+            => _vendors.TryGetValue(vendorId, out var vendor) ? vendor.ApplicantAccessTokenHash : null;
+
         public Task<int> InsertAsync(Vendor vendor, CancellationToken cancellationToken)
         {
             vendor.Id = Interlocked.Increment(ref _nextId);
@@ -326,6 +346,9 @@ public class VendorOnboardingServiceTests
         public Task<bool> HasAcceptedAgreementAsync(int vendorId, string agreementVersion, CancellationToken cancellationToken)
             => Task.FromResult(_agreements.Any(item => item.VendorId == vendorId && item.AgreementVersion == agreementVersion));
 
+        public Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken)
+            => Task.FromResult(_vendors.TryGetValue(vendorId, out var vendor) ? vendor.ApplicantAccessTokenHash : null);
+
         private static Vendor Clone(Vendor vendor, bool includeSecret)
         {
             return new Vendor
@@ -339,6 +362,7 @@ public class VendorOnboardingServiceTests
                 CategoriesCsv = vendor.CategoriesCsv,
                 Status = vendor.Status,
                 IsOperator = vendor.IsOperator,
+                ApplicantAccessTokenHash = includeSecret ? vendor.ApplicantAccessTokenHash : null,
                 BankingSecretProtected = includeSecret ? vendor.BankingSecretProtected : null,
                 HasBankingDetails = vendor.HasBankingDetails || !string.IsNullOrWhiteSpace(vendor.BankingSecretProtected),
                 ReviewNotes = vendor.ReviewNotes,

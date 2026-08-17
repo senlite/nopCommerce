@@ -4,6 +4,7 @@ using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Domain.Performance;
 using TwinParticles.CheckEngine.Domain.Security;
+using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 
 namespace TwinParticles.CheckEngine.Application.Marketplace;
 
@@ -22,6 +23,7 @@ public sealed class MarketplaceUpgradeService
     private readonly MarketplaceLicenceGate _licenceGate;
     private readonly ICheckEngineClock _clock;
     private readonly ICheckEngineAuditService _auditService;
+    private readonly IVehicleSeedLoader _vehicleSeedLoader;
 
     public MarketplaceUpgradeService(
         IVendorRepository vendors,
@@ -29,7 +31,8 @@ public sealed class MarketplaceUpgradeService
         IVendorCommerceCatalog catalog,
         MarketplaceLicenceGate licenceGate,
         ICheckEngineClock clock,
-        ICheckEngineAuditService auditService)
+        ICheckEngineAuditService auditService,
+        IVehicleSeedLoader vehicleSeedLoader)
     {
         _vendors = vendors;
         _ownership = ownership;
@@ -37,6 +40,7 @@ public sealed class MarketplaceUpgradeService
         _licenceGate = licenceGate;
         _clock = clock;
         _auditService = auditService;
+        _vehicleSeedLoader = vehicleSeedLoader;
     }
 
     public async Task<MarketplaceUpgradeResult> EnableAsync(CancellationToken cancellationToken)
@@ -45,6 +49,7 @@ public sealed class MarketplaceUpgradeService
             return MarketplaceUpgradeResult.Fail(VendorErrorCodes.LicenceDenied);
 
         var operatorVendor = await EnsureOperatorAsync(cancellationToken);
+        await _vehicleSeedLoader.SeedAsync(cancellationToken);
         var productIds = await _catalog.ListSellableProductIdsAsync(cancellationToken);
         var newlyAssigned = await _ownership.AssignUnmappedProductsAsync(operatorVendor.Id, productIds, cancellationToken);
 

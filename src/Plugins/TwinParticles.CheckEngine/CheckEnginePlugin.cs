@@ -15,6 +15,7 @@ using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 using Nop.Web.Framework.Infrastructure;
 using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine;
@@ -28,6 +29,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     private readonly IScheduleTaskService _scheduleTaskService;
     private readonly ISettingService _settingService;
     private readonly IWebHelper _webHelper;
+    private readonly IVehicleSeedLoader _vehicleSeedLoader;
 
     public CheckEnginePlugin(ILocalizationService localizationService,
         ILanguageService languageService,
@@ -35,7 +37,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         IPermissionService permissionService,
         IScheduleTaskService scheduleTaskService,
         ISettingService settingService,
-        IWebHelper webHelper)
+        IWebHelper webHelper,
+        IVehicleSeedLoader vehicleSeedLoader)
     {
         _localizationService = localizationService;
         _languageService = languageService;
@@ -44,6 +47,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _scheduleTaskService = scheduleTaskService;
         _settingService = settingService;
         _webHelper = webHelper;
+        _vehicleSeedLoader = vehicleSeedLoader;
     }
 
     /// <summary>
@@ -91,6 +95,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
         await AddOrUpdateLocaleResourcesAsync();
         await EnsureWidgetActiveAsync();
+        await _vehicleSeedLoader.SeedAsync(default);
 
         await base.InstallAsync();
     }
@@ -566,6 +571,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await EnsureScheduleTasksAsync();
         await AddOrUpdateLocaleResourcesAsync();
         await EnsureWidgetActiveAsync();
+        await _vehicleSeedLoader.SeedAsync(default);
         await base.UpdateAsync(currentVersion, targetVersion);
     }
 

@@ -185,6 +185,7 @@ public class OrderVendorSplitServiceTests
         public Task InsertAgreementAsync(VendorAgreementAcceptance acceptance, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<VendorAgreementAcceptance?> GetLatestAgreementAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<VendorAgreementAcceptance?>(null);
         public Task<bool> HasAcceptedAgreementAsync(int vendorId, string agreementVersion, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
     }
 
     private sealed class StubLicenceService : ILicenceService

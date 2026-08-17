@@ -24,6 +24,9 @@ public class VendorOnboardingConventionsTests
         apply.Should().Contain("AcceptAgreement");
         apply.Should().Contain("AuthorizeOnboardingAccessAsync");
         apply.Should().Contain("CanAccessApplicationAsync");
+        apply.Should().Contain("accessToken");
+        apply.Should().Contain("ApplicantAccessToken");
+        apply.Should().NotContain("IgnoreAntiforgeryToken");
         apply.Should().NotContain("BankingSecretProtected");
 
         routes.Should().Contain("Admin/CheckEngine/VendorAdmin/{action}");
@@ -41,6 +44,8 @@ public class VendorOnboardingConventionsTests
         repository.Should().Contain("HasBankingDetails");
         repository.Should().NotContain("SELECT BankingSecretProtected");
         repository.Should().Contain("BankingSecretProtected = null");
+        repository.Should().Contain("ApplicantAccessTokenHash");
+        repository.Should().Contain("GetApplicantAccessTokenHashAsync");
     }
 
     [Test]

@@ -79,7 +79,8 @@ public class MarketplaceUpgradeServiceTests
                 new StaticCatalog(productIds),
                 new MarketplaceLicenceGate(new StubLicenceService(entitled)),
                 new FixedClock(new DateTimeOffset(2026, 8, 17, 12, 0, 0, TimeSpan.Zero)),
-                new InMemoryCheckEngineAuditService());
+                new InMemoryCheckEngineAuditService(),
+                new NoOpVehicleSeedLoader());
 
             return new Harness { Service = service, Ownership = ownership, Vendors = vendors };
         }
@@ -169,6 +170,15 @@ public class MarketplaceUpgradeServiceTests
 
         public Task<bool> HasAcceptedAgreementAsync(int vendorId, string agreementVersion, CancellationToken cancellationToken)
             => Task.FromResult(false);
+
+        public Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken)
+            => Task.FromResult<string?>(null);
+    }
+
+    private sealed class NoOpVehicleSeedLoader : TwinParticles.CheckEngine.Domain.Vehicle.Admin.IVehicleSeedLoader
+    {
+        public Task<TwinParticles.CheckEngine.Domain.Vehicle.Admin.VehicleSeedLoadResult> SeedAsync(CancellationToken cancellationToken)
+            => Task.FromResult(new TwinParticles.CheckEngine.Domain.Vehicle.Admin.VehicleSeedLoadResult());
     }
 
     private sealed class StubLicenceService : ILicenceService

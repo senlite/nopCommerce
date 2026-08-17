@@ -30,38 +30,38 @@ WHERE ParentOrderId = @orderId",
         return count.FirstOrDefault() > 0;
     }
 
-    public async Task SaveCheckoutGroupAsync(OrderCheckoutGroup group, CancellationToken cancellationToken)
-    {
-        foreach (var split in group.Splits)
+    public Task SaveCheckoutGroupAsync(OrderCheckoutGroup group, CancellationToken cancellationToken)
+        => CheckEngineSql.ExecuteInTransactionAsync(async connection =>
         {
-            var splitId = await _dataProvider.QueryAsync<int>(@"
+            foreach (var split in group.Splits)
+            {
+                var id = await CheckEngineSql.QueryScalarAsync<int>(connection, @"
 INSERT INTO TP_CE_OrderVendorSplit
 (CheckoutGroupId, ParentOrderId, VendorId, LineSubtotalExclTax, CreatedUtc)
 VALUES
 (@checkoutGroupId, @parentOrderId, @vendorId, @lineSubtotal, @createdUtc);
 " + CheckEngineSql.SelectInsertedIntId(),
-                new DataParameter("checkoutGroupId", group.CheckoutGroupId),
-                new DataParameter("parentOrderId", group.ParentOrderId),
-                new DataParameter("vendorId", split.VendorId),
-                new DataParameter("lineSubtotal", split.LineSubtotalExclTax),
-                new DataParameter("createdUtc", group.CreatedUtc));
+                    new DataParameter("checkoutGroupId", group.CheckoutGroupId),
+                    new DataParameter("parentOrderId", group.ParentOrderId),
+                    new DataParameter("vendorId", split.VendorId),
+                    new DataParameter("lineSubtotal", split.LineSubtotalExclTax),
+                    new DataParameter("createdUtc", group.CreatedUtc));
 
-            var id = splitId.FirstOrDefault();
-            foreach (var line in split.Lines)
-            {
-                await _dataProvider.ExecuteNonQueryAsync(@"
+                foreach (var line in split.Lines)
+                {
+                    await CheckEngineSql.ExecuteAsync(connection, @"
 INSERT INTO TP_CE_OrderVendorSplitLine
 (SplitId, OrderItemId, ProductId, Quantity, LineSubtotalExclTax)
 VALUES
 (@splitId, @orderItemId, @productId, @quantity, @lineSubtotal)",
-                    new DataParameter("splitId", id),
-                    new DataParameter("orderItemId", line.OrderItemId),
-                    new DataParameter("productId", line.ProductId),
-                    new DataParameter("quantity", line.Quantity),
-                    new DataParameter("lineSubtotal", line.LineSubtotalExclTax));
+                        new DataParameter("splitId", id),
+                        new DataParameter("orderItemId", line.OrderItemId),
+                        new DataParameter("productId", line.ProductId),
+                        new DataParameter("quantity", line.Quantity),
+                        new DataParameter("lineSubtotal", line.LineSubtotalExclTax));
+                }
             }
-        }
-    }
+        }, cancellationToken);
 
     public async Task<OrderCheckoutGroup?> GetByOrderIdAsync(int orderId, CancellationToken cancellationToken)
     {
@@ -127,20 +127,26 @@ WHERE ShipmentId = @shipmentId",
         return count.FirstOrDefault() > 0;
     }
 
-    public async Task SaveShipmentVendorMapsAsync(IReadOnlyCollection<ShipmentVendorMap> maps, CancellationToken cancellationToken)
+    public Task SaveShipmentVendorMapsAsync(IReadOnlyCollection<ShipmentVendorMap> maps, CancellationToken cancellationToken)
     {
-        foreach (var map in maps)
+        if (maps.Count == 0)
+            return Task.CompletedTask;
+
+        return CheckEngineSql.ExecuteInTransactionAsync(async connection =>
         {
-            await _dataProvider.ExecuteNonQueryAsync(@"
+            foreach (var map in maps)
+            {
+                await CheckEngineSql.ExecuteAsync(connection, @"
 INSERT INTO TP_CE_ShipmentVendorMap
 (ShipmentId, OrderId, VendorId, CreatedUtc)
 VALUES
 (@shipmentId, @orderId, @vendorId, @createdUtc)",
-                new DataParameter("shipmentId", map.ShipmentId),
-                new DataParameter("orderId", map.OrderId),
-                new DataParameter("vendorId", map.VendorId),
-                new DataParameter("createdUtc", map.CreatedUtc));
-        }
+                    new DataParameter("shipmentId", map.ShipmentId),
+                    new DataParameter("orderId", map.OrderId),
+                    new DataParameter("vendorId", map.VendorId),
+                    new DataParameter("createdUtc", map.CreatedUtc));
+            }
+        }, cancellationToken);
     }
 
     public async Task<IReadOnlyList<ShipmentVendorMap>> GetShipmentMapsByOrderIdAsync(int orderId, CancellationToken cancellationToken)

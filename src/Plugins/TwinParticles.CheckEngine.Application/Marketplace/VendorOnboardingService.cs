@@ -46,6 +46,7 @@ public sealed class VendorOnboardingService
             return VendorOnboardingResult.Fail(VendorErrorCodes.InvalidApplication);
 
         var now = _clock.UtcNow;
+        var accessToken = ApplicantAccessToken.NewPlaintext();
         var vendor = new Vendor
         {
             LegalName = application.LegalName.Trim(),
@@ -56,6 +57,7 @@ public sealed class VendorOnboardingService
             CategoriesCsv = application.CategoriesCsv.Trim(),
             Status = VendorStatus.Applied,
             BankingSecretProtected = _secretProtector.Protect(application.BankingDetails),
+            ApplicantAccessTokenHash = ApplicantAccessToken.Hash(accessToken),
             HasBankingDetails = !string.IsNullOrWhiteSpace(application.BankingDetails),
             CreatedUtc = now,
             UpdatedUtc = now
@@ -63,7 +65,9 @@ public sealed class VendorOnboardingService
 
         vendor.Id = await _repository.InsertAsync(vendor, cancellationToken);
         await AuditAsync("vendor.apply", vendor.Id, $"{{\"status\":\"Applied\"}}", cancellationToken);
-        return VendorOnboardingResult.Ok(await SnapshotAsync(vendor.Id, cancellationToken) ?? new VendorOnboardingSnapshot { Vendor = vendor.RedactSecrets() });
+        var snapshot = await SnapshotAsync(vendor.Id, cancellationToken)
+            ?? new VendorOnboardingSnapshot { Vendor = vendor.RedactSecrets() };
+        return VendorOnboardingResult.Ok(snapshot.WithAccessToken(accessToken));
     }
 
     public Task<VendorOnboardingResult> SubmitForReviewAsync(int vendorId, string actor, CancellationToken cancellationToken)
@@ -151,29 +155,34 @@ public sealed class VendorOnboardingService
 
     /// <summary>
     /// Applicants may read/accept only their own application. Operators may access any vendor.
-    /// Guests cannot bind to a vendor after apply (Apply already returns the snapshot).
+    /// Guests re-bind with the apply-time access token (plaintext compared to the stored hash).
     /// </summary>
     public async Task<bool> CanAccessApplicationAsync(
         int vendorId,
         int? customerId,
         bool isOperator,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? accessToken = null)
     {
         if (isOperator)
             return true;
 
-        if (customerId is not int id)
-            return false;
+        if (customerId is int id)
+        {
+            var vendor = await _repository.GetByIdAsync(vendorId, cancellationToken);
+            if (vendor is null)
+                return false;
 
-        var vendor = await _repository.GetByIdAsync(vendorId, cancellationToken);
-        if (vendor is null)
-            return false;
+            if (vendor.ApplicantCustomerId == id)
+                return true;
 
-        if (vendor.ApplicantCustomerId == id)
-            return true;
+            var owned = await _repository.GetByApplicantCustomerIdAsync(id, cancellationToken);
+            if (owned?.Id == vendorId)
+                return true;
+        }
 
-        var owned = await _repository.GetByApplicantCustomerIdAsync(id, cancellationToken);
-        return owned?.Id == vendorId;
+        var storedHash = await _repository.GetApplicantAccessTokenHashAsync(vendorId, cancellationToken);
+        return ApplicantAccessToken.Matches(storedHash, accessToken);
     }
 
     private async Task<VendorOnboardingResult> TransitionAsync(

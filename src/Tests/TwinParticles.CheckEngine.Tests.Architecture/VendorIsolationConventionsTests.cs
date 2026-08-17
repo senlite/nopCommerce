@@ -82,6 +82,14 @@ public class VendorIsolationConventionsTests
         configure.Should().Contain("EnableAsync");
     }
 
+    [Test]
+    public void Marketplace_Upgrade_Should_Seed_Reference_Vehicles()
+    {
+        var upgrade = ReadApplicationFile("Marketplace", "MarketplaceUpgradeService.cs");
+        upgrade.Should().Contain("IVehicleSeedLoader");
+        upgrade.Should().Contain("SeedAsync");
+    }
+
     private static string ReadPluginFile(params string[] segments)
     {
         var path = Path.GetFullPath(Path.Combine(

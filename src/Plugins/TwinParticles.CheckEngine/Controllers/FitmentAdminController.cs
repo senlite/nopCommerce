@@ -76,6 +76,24 @@ public sealed class FitmentAdminController : BasePluginController
         return result.Succeeded ? Ok() : BadRequest(new { result.ReasonCode });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> Submit([FromBody] VendorFitmentProposalModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        var result = await _vendorFitment.SubmitProposalAsync(
+            TwinParticles.CheckEngine.Domain.Marketplace.VendorActor.OperatorAdmin,
+            new VendorFitmentProposalRequest
+            {
+                ProductId = model.ProductId,
+                VehicleConfigurationId = model.VehicleConfigurationId,
+                VendorId = model.VendorId
+            },
+            cancellationToken);
+        return result.Succeeded
+            ? Json(new { claimId = result.ClaimId })
+            : BadRequest(new { result.ReasonCode });
+    }
+
     [HttpGet]
     public async Task<IActionResult> ReviewBoard(CancellationToken cancellationToken)
     {

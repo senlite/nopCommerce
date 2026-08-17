@@ -23,4 +23,6 @@ public interface IVendorRepository
     Task<VendorAgreementAcceptance?> GetLatestAgreementAsync(int vendorId, CancellationToken cancellationToken);
 
     Task<bool> HasAcceptedAgreementAsync(int vendorId, string agreementVersion, CancellationToken cancellationToken);
+
+    Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken);
 }

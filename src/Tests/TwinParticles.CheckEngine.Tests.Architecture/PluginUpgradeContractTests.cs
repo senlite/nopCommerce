@@ -85,4 +85,16 @@ public class PluginUpgradeContractTests
         ExtractMethodBody(source, "public override async Task UpdateAsync")
             .Should().Contain("AddOrUpdateLocaleResourcesAsync");
     }
+
+    [Test]
+    public void Install_And_Update_Should_Seed_Reference_Vehicles()
+    {
+        var source = ReadPluginSource();
+        ExtractMethodBody(source, "public override async Task InstallAsync")
+            .Should().Contain("SeedAsync",
+                "fitment submit requires at least one vehicle configuration");
+        ExtractMethodBody(source, "public override async Task UpdateAsync")
+            .Should().Contain("SeedAsync",
+                "upgraded stores must receive the reference vehicle catalog without a reinstall");
+    }
 }

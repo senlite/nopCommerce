@@ -140,6 +140,7 @@ public class VendorDashboardServiceTests
 
             var fitmentContributions = new VendorFitmentContributionService(
                 isolation,
+                vendors,
                 fitmentClaims,
                 fitmentClaims,
                 fitmentQueue,
@@ -182,6 +183,7 @@ public class VendorDashboardServiceTests
         public Task InsertAgreementAsync(VendorAgreementAcceptance acceptance, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<VendorAgreementAcceptance?> GetLatestAgreementAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<VendorAgreementAcceptance?>(null);
         public Task<bool> HasAcceptedAgreementAsync(int vendorId, string agreementVersion, CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
     }
 
     private sealed class InMemoryOwnership : IVendorOwnershipStore

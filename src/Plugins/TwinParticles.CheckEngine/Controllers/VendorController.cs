@@ -85,6 +85,7 @@ public sealed class VendorController : BasePublicController
         if (!result.Succeeded || result.Snapshot is null)
             return Denied(result.ReasonCode ?? VendorErrorCodes.InvalidApplication, 400);
 
+        var accessToken = result.Snapshot.ApplicantAccessToken;
         var vendorId = result.Snapshot.Vendor.Id;
         if (model.AcceptAgreement)
             result = await _onboardingService.AcceptAgreementAsync(vendorId, model.ContactEmail, cancellationToken);
@@ -92,18 +93,26 @@ public sealed class VendorController : BasePublicController
         if (result.Succeeded && model.SubmitForReview)
             result = await _onboardingService.SubmitForReviewAsync(vendorId, model.ContactEmail, cancellationToken);
 
+        if (result.Succeeded && result.Snapshot is not null && accessToken is not null)
+            result = VendorOnboardingResult.Ok(result.Snapshot.WithAccessToken(accessToken));
+
         return result.Succeeded
             ? Json(result.Snapshot)
             : Denied(result.ReasonCode ?? VendorErrorCodes.IllegalTransition, 400);
     }
 
     [HttpPost]
-    public async Task<IActionResult> AcceptAgreement(int vendorId, CancellationToken cancellationToken)
+    public async Task<IActionResult> AcceptAgreement(
+        int vendorId,
+        string? accessToken,
+        [FromBody] VendorOnboardingAccessModel? model,
+        CancellationToken cancellationToken)
     {
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
-        var access = await AuthorizeOnboardingAccessAsync(vendorId, cancellationToken);
+        var token = FirstNonEmpty(accessToken, model?.AccessToken);
+        var access = await AuthorizeOnboardingAccessAsync(vendorId, token, cancellationToken);
         if (access is not null)
             return access;
 
@@ -115,12 +124,12 @@ public sealed class VendorController : BasePublicController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Status(int vendorId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Status(int vendorId, string? accessToken, CancellationToken cancellationToken)
     {
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
-        var access = await AuthorizeOnboardingAccessAsync(vendorId, cancellationToken);
+        var access = await AuthorizeOnboardingAccessAsync(vendorId, accessToken, cancellationToken);
         if (access is not null)
             return access;
 
@@ -182,7 +191,11 @@ public sealed class VendorController : BasePublicController
     {
         var result = await _dashboardService.SubmitFitmentProposalAsync(
             await ResolveActorAsync(cancellationToken),
-            new VendorFitmentProposalRequest { ProductId = model.ProductId, VehicleConfigurationId = model.VehicleConfigurationId },
+            new VendorFitmentProposalRequest
+            {
+                ProductId = model.ProductId,
+                VehicleConfigurationId = model.VehicleConfigurationId
+            },
             cancellationToken);
         return result.Succeeded
             ? Json(new { claimId = result.ClaimId })
@@ -278,16 +291,22 @@ public sealed class VendorController : BasePublicController
         return decision.Allowed ? Json(new { customerId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
     }
 
-    private async Task<IActionResult?> AuthorizeOnboardingAccessAsync(int vendorId, CancellationToken cancellationToken)
+    private async Task<IActionResult?> AuthorizeOnboardingAccessAsync(
+        int vendorId,
+        string? accessToken,
+        CancellationToken cancellationToken)
     {
         var isOperator = await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         var customer = await _workContext.GetCurrentCustomerAsync();
         var customerId = await _customerService.IsGuestAsync(customer) ? (int?)null : customer.Id;
-        if (await _onboardingService.CanAccessApplicationAsync(vendorId, customerId, isOperator, cancellationToken))
+        if (await _onboardingService.CanAccessApplicationAsync(
+                vendorId, customerId, isOperator, cancellationToken, accessToken))
             return null;
 
         return Denied(
-            customerId is null ? VendorErrorCodes.IsolationUnauthenticated : VendorErrorCodes.IsolationDenied,
+            customerId is null && string.IsNullOrWhiteSpace(accessToken)
+                ? VendorErrorCodes.IsolationUnauthenticated
+                : VendorErrorCodes.IsolationDenied,
             403);
     }
 
@@ -309,4 +328,15 @@ public sealed class VendorController : BasePublicController
 
     private static JsonResult Denied(string reasonCode, int statusCode)
         => new(new { reasonCode }) { StatusCode = statusCode };
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+
+        return null;
+    }
 }

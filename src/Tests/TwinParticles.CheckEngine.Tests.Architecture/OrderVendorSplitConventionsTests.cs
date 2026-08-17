@@ -41,6 +41,19 @@ public class OrderVendorSplitConventionsTests
         admin.Should().Contain("OrderSplits");
     }
 
+    [Test]
+    public void Split_Persist_Should_Use_A_Real_Database_Transaction()
+    {
+        var store = ReadInfrastructureFile("Marketplace", "SqlOrderVendorSplitStore.cs");
+        var sql = ReadInfrastructureFile("Data", "CheckEngineSql.cs");
+        store.Should().Contain("ExecuteInTransactionAsync");
+        store.Should().Contain("SaveCheckoutGroupAsync");
+        store.Should().Contain("SaveShipmentVendorMapsAsync");
+        sql.Should().Contain("BeginTransactionAsync");
+        sql.Should().Contain("CreateDataConnection");
+        sql.Should().NotContain("INopDataProvider");
+    }
+
     private static string ReadPluginFile(params string[] segments)
     {
         var path = Path.GetFullPath(Path.Combine(

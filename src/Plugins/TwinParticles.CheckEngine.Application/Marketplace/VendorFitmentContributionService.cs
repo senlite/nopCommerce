@@ -16,6 +16,7 @@ namespace TwinParticles.CheckEngine.Application.Marketplace;
 public sealed class VendorFitmentContributionService
 {
     private readonly VendorIsolationService _isolation;
+    private readonly IVendorRepository _vendors;
     private readonly IFitmentClaimReadRepository _fitmentClaims;
     private readonly IFitmentClaimWriteRepository _fitmentWrites;
     private readonly IFitmentReviewQueueRepository _fitmentQueue;
@@ -24,6 +25,7 @@ public sealed class VendorFitmentContributionService
 
     public VendorFitmentContributionService(
         VendorIsolationService isolation,
+        IVendorRepository vendors,
         IFitmentClaimReadRepository fitmentClaims,
         IFitmentClaimWriteRepository fitmentWrites,
         IFitmentReviewQueueRepository fitmentQueue,
@@ -31,6 +33,7 @@ public sealed class VendorFitmentContributionService
         ICheckEngineAuditService auditService)
     {
         _isolation = isolation;
+        _vendors = vendors;
         _fitmentClaims = fitmentClaims;
         _fitmentWrites = fitmentWrites;
         _fitmentQueue = fitmentQueue;
@@ -61,9 +64,22 @@ public sealed class VendorFitmentContributionService
         if (!await _licenceGate.AllowsMarketplaceAsync(cancellationToken))
             return VendorDashboardMutationResult.Fail(VendorErrorCodes.LicenceDenied);
 
-        if (actor.VendorId is not int vendorId)
+        var vendorId = await ResolveAttributedVendorIdAsync(actor, request, cancellationToken);
+        if (vendorId is null)
+        {
+            if (actor.CanBypassIsolation)
+                return VendorDashboardMutationResult.Fail(VendorErrorCodes.FitmentVendorRequired);
             return VendorDashboardMutationResult.Fail(VendorErrorCodes.IsolationUnauthenticated);
+        }
 
+        if (actor.CanBypassIsolation)
+        {
+            var attributed = await _vendors.GetByIdAsync(vendorId.Value, cancellationToken);
+            if (attributed is null)
+                return VendorDashboardMutationResult.Fail(VendorErrorCodes.NotFound);
+        }
+
+        var attributedVendorId = vendorId.Value;
         var decision = await _isolation.AuthorizeProductAsync(actor, request.ProductId, write: false, cancellationToken);
         if (!decision.Allowed)
             return VendorDashboardMutationResult.Fail(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied);
@@ -75,7 +91,7 @@ public sealed class VendorFitmentContributionService
         {
             ProductId = request.ProductId,
             VehicleConfigurationId = request.VehicleConfigurationId,
-            VendorId = vendorId,
+            VendorId = attributedVendorId,
             Status = FitmentStatus.Unknown,
             Confidence = 0.5m,
             IsPublished = false,
@@ -83,8 +99,8 @@ public sealed class VendorFitmentContributionService
             Provenance = new FitmentClaimProvenance
             {
                 SourceKind = FitmentSourceKind.SupplierCatalog,
-                SourceReference = VendorSourceReference.ForVendor(vendorId),
-                CreatedBy = $"vendor:{vendorId}",
+                SourceReference = VendorSourceReference.ForVendor(attributedVendorId),
+                CreatedBy = actor.CanBypassIsolation ? "operator" : $"vendor:{attributedVendorId}",
                 CreatedUtc = DateTimeOffset.UtcNow
             }
         };
@@ -93,15 +109,26 @@ public sealed class VendorFitmentContributionService
         await _fitmentQueue.EnqueueAsync(claim.Id, "vendor.fitment.proposed", cancellationToken);
 
         await _auditService.AppendAsync(
-            vendorId.ToString(),
+            actor.CanBypassIsolation ? "operator" : attributedVendorId.ToString(),
             "vendor.fitment.proposed",
             "FitmentClaim",
             claim.Id.ToString(),
             beforeJson: null,
-            afterJson: $"{{\"productId\":{request.ProductId},\"vehicleConfigurationId\":{request.VehicleConfigurationId},\"vendorId\":{vendorId}}}",
+            afterJson: $"{{\"productId\":{request.ProductId},\"vehicleConfigurationId\":{request.VehicleConfigurationId},\"vendorId\":{attributedVendorId}}}",
             cancellationToken);
 
         return VendorDashboardMutationResult.Ok(claim.Id);
+    }
+
+    private static Task<int?> ResolveAttributedVendorIdAsync(
+        VendorActor actor,
+        VendorFitmentProposalRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (actor.CanBypassIsolation)
+            return Task.FromResult(request.VendorId is int id && id > 0 ? id : (int?)null);
+
+        return Task.FromResult(actor.VendorId);
     }
 
     public async Task<VendorDashboardMutationResult> RevokeProposalAsync(

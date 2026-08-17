@@ -23,9 +23,9 @@ public sealed class SqlVendorRepository : IVendorRepository
     {
         var id = await _dataProvider.QueryAsync<int>(@"
 INSERT INTO TP_CE_Vendor
-(LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, IsOperator, BankingSecretProtected, ReviewNotes, CreatedUtc, UpdatedUtc)
+(LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, IsOperator, BankingSecretProtected, ApplicantAccessTokenHash, ReviewNotes, CreatedUtc, UpdatedUtc)
 VALUES
-(@legalName, @tradingName, @contactEmail, @applicantCustomerId, @taxIdsJson, @categoriesCsv, @statusId, @isOperator, @bankingSecretProtected, @reviewNotes, @createdUtc, @updatedUtc);
+(@legalName, @tradingName, @contactEmail, @applicantCustomerId, @taxIdsJson, @categoriesCsv, @statusId, @isOperator, @bankingSecretProtected, @applicantAccessTokenHash, @reviewNotes, @createdUtc, @updatedUtc);
 " + CheckEngineSql.SelectInsertedIntId() + @";",
             new DataParameter("legalName", vendor.LegalName),
             new DataParameter("tradingName", vendor.TradingName ?? (object)DBNull.Value),
@@ -36,6 +36,7 @@ VALUES
             new DataParameter("statusId", (int)vendor.Status),
             new DataParameter("isOperator", vendor.IsOperator),
             new DataParameter("bankingSecretProtected", vendor.BankingSecretProtected ?? (object)DBNull.Value),
+            new DataParameter("applicantAccessTokenHash", vendor.ApplicantAccessTokenHash ?? (object)DBNull.Value),
             new DataParameter("reviewNotes", vendor.ReviewNotes ?? (object)DBNull.Value),
             new DataParameter("createdUtc", vendor.CreatedUtc.UtcDateTime),
             new DataParameter("updatedUtc", vendor.UpdatedUtc.UtcDateTime));
@@ -146,6 +147,18 @@ WHERE VendorId = @vendorId AND AgreementVersion = @agreementVersion",
             new DataParameter("agreementVersion", agreementVersion));
 
         return rows.FirstOrDefault() > 0;
+    }
+
+    public async Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<string?>(@"
+SELECT ApplicantAccessTokenHash
+FROM TP_CE_Vendor
+WHERE Id = @id",
+            new DataParameter("id", vendorId));
+
+        var hash = rows.FirstOrDefault();
+        return string.IsNullOrWhiteSpace(hash) ? null : hash;
     }
 
     private static Vendor Map(VendorRow row)

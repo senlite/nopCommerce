@@ -31,11 +31,13 @@ public class VendorFitmentConventionsTests
     }
 
     [Test]
-    public void Fitment_Admin_Should_Expose_Revoke_For_Operator()
+    public void Fitment_Admin_Should_Expose_Submit_And_Revoke_For_Operator()
     {
         var admin = ReadPluginFile("Controllers", "FitmentAdminController.cs");
         admin.Should().Contain("Revoke");
+        admin.Should().Contain("Submit");
         admin.Should().Contain("VendorFitmentContributionService");
+        admin.Should().Contain("VendorId");
     }
 
     private static string ReadPluginFile(params string[] segments)

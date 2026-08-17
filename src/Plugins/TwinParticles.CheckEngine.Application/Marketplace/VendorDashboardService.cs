@@ -231,6 +231,12 @@ public sealed class VendorFitmentProposalRequest
     public int ProductId { get; init; }
 
     public int VehicleConfigurationId { get; init; }
+
+    /// <summary>
+    /// Required when an operator submits on behalf of a vendor. Ignored for vendor actors
+    /// (attribution is always the authenticated vendor).
+    /// </summary>
+    public int? VendorId { get; init; }
 }
 
 public sealed class VendorDashboardMutationResult

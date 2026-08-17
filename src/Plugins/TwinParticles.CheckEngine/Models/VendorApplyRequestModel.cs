@@ -50,4 +50,11 @@ public sealed class VendorFitmentProposalModel
     public int ProductId { get; set; }
 
     public int VehicleConfigurationId { get; set; }
+
+    public int? VendorId { get; set; }
+}
+
+public sealed class VendorOnboardingAccessModel
+{
+    public string? AccessToken { get; set; }
 }

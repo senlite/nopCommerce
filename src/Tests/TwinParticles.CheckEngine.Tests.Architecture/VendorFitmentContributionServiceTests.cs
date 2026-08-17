@@ -69,6 +69,52 @@ public class VendorFitmentContributionServiceTests
     }
 
     [Test]
+    public async Task Submit_Should_Allow_Operator_When_VendorId_Provided()
+    {
+        var harness = Harness.Create();
+        await harness.Ownership.AssignProductAsync(1, 100, CancellationToken.None);
+
+        var submit = await harness.Service.SubmitProposalAsync(
+            VendorActor.OperatorAdmin,
+            new VendorFitmentProposalRequest { ProductId = 100, VehicleConfigurationId = 55, VendorId = 1 },
+            CancellationToken.None);
+
+        submit.Succeeded.Should().BeTrue();
+        harness.Claims.Claims.Single().VendorId.Should().Be(1);
+        harness.Claims.Claims.Single().Provenance.CreatedBy.Should().Be("operator");
+    }
+
+    [Test]
+    public async Task Submit_Should_Deny_Operator_Without_VendorId()
+    {
+        var harness = Harness.Create();
+        await harness.Ownership.AssignProductAsync(1, 100, CancellationToken.None);
+
+        var submit = await harness.Service.SubmitProposalAsync(
+            VendorActor.OperatorAdmin,
+            new VendorFitmentProposalRequest { ProductId = 100, VehicleConfigurationId = 55 },
+            CancellationToken.None);
+
+        submit.Succeeded.Should().BeFalse();
+        submit.ReasonCode.Should().Be(VendorErrorCodes.FitmentVendorRequired);
+    }
+
+    [Test]
+    public async Task Submit_Should_Ignore_Spoofed_VendorId_From_Vendor_Actor()
+    {
+        var harness = Harness.Create();
+        await harness.Ownership.AssignProductAsync(1, 100, CancellationToken.None);
+
+        var submit = await harness.Service.SubmitProposalAsync(
+            VendorActor.Vendor(1),
+            new VendorFitmentProposalRequest { ProductId = 100, VehicleConfigurationId = 55, VendorId = 99 },
+            CancellationToken.None);
+
+        submit.Succeeded.Should().BeTrue();
+        harness.Claims.Claims.Single().VendorId.Should().Be(1);
+    }
+
+    [Test]
     public async Task Revoke_Should_Deny_Operator_Claims_Without_Vendor_Attribution()
     {
         var harness = Harness.Create();
@@ -106,10 +152,26 @@ public class VendorFitmentContributionServiceTests
             var audit = new InMemoryCheckEngineAuditService();
             var licenceGate = new MarketplaceLicenceGate(new StubLicenceService());
             var isolation = new VendorIsolationService(ownership, new EmptyOrders(), licenceGate, audit);
-            var service = new VendorFitmentContributionService(isolation, claims, claims, queue, licenceGate, audit);
+            var service = new VendorFitmentContributionService(isolation, new AllowAnyVendors(), claims, claims, queue, licenceGate, audit);
 
             return new Harness { Service = service, Ownership = ownership, Claims = claims };
         }
+    }
+
+    private sealed class AllowAnyVendors : IVendorRepository
+    {
+        public Task<int> InsertAsync(Vendor vendor, CancellationToken cancellationToken) => Task.FromResult(vendor.Id);
+        public Task UpdateAsync(Vendor vendor, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<Vendor?> GetByIdAsync(int id, CancellationToken cancellationToken)
+            => Task.FromResult<Vendor?>(new Vendor { Id = id, LegalName = $"Vendor {id}", Status = VendorStatus.Active });
+        public Task<IReadOnlyList<Vendor>> GetByStatusesAsync(IReadOnlyCollection<VendorStatus> statuses, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<Vendor>>([]);
+        public Task<Vendor?> GetOperatorAsync(CancellationToken cancellationToken) => Task.FromResult<Vendor?>(null);
+        public Task<Vendor?> GetByApplicantCustomerIdAsync(int customerId, CancellationToken cancellationToken) => Task.FromResult<Vendor?>(null);
+        public Task InsertAgreementAsync(VendorAgreementAcceptance acceptance, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<VendorAgreementAcceptance?> GetLatestAgreementAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<VendorAgreementAcceptance?>(null);
+        public Task<bool> HasAcceptedAgreementAsync(int vendorId, string agreementVersion, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
     }
 
     private sealed class EmptyOrders : IVendorOrderReadStore
