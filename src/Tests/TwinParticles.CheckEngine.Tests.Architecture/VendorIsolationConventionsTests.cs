@@ -30,6 +30,10 @@ public class VendorIsolationConventionsTests
         fitment.Should().Contain("VendorSourceReference");
 
         routes.Should().Contain("check-engine/vendor/{action}");
+
+        var dashboardView = ReadPluginFile("Views", "Vendor", "Dashboard.cshtml");
+        dashboardView.Should().Contain("pick(d, 'productCount', 'ProductCount')");
+        dashboardView.Should().Contain("pick(item, 'productId', 'ProductId')");
     }
 
     [Test]
