@@ -149,6 +149,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICommissionPlanRepository, SqlCommissionPlanRepository>();
         services.AddScoped<ICommissionSnapshotStore, SqlCommissionSnapshotStore>();
         services.AddScoped<IVendorProductCategoryStore, SqlVendorProductCategoryStore>();
+        services.AddScoped<IPayoutStatementRepository, SqlPayoutStatementRepository>();
+        services.AddScoped<IPayoutStatementDataSource, SqlPayoutStatementDataSource>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();

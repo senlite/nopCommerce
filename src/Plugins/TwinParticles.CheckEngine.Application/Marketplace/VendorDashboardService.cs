@@ -25,6 +25,7 @@ public sealed class VendorDashboardService
     private readonly IFitmentClaimReadRepository _fitmentClaims;
     private readonly IFitmentClaimWriteRepository _fitmentWrites;
     private readonly IFitmentReviewQueueRepository _fitmentQueue;
+    private readonly PayoutStatementService _payoutService;
     private readonly MarketplaceLicenceGate _licenceGate;
     private readonly ICheckEngineAuditService _auditService;
 
@@ -36,6 +37,7 @@ public sealed class VendorDashboardService
         IFitmentClaimReadRepository fitmentClaims,
         IFitmentClaimWriteRepository fitmentWrites,
         IFitmentReviewQueueRepository fitmentQueue,
+        PayoutStatementService payoutService,
         MarketplaceLicenceGate licenceGate,
         ICheckEngineAuditService auditService)
     {
@@ -46,6 +48,7 @@ public sealed class VendorDashboardService
         _fitmentClaims = fitmentClaims;
         _fitmentWrites = fitmentWrites;
         _fitmentQueue = fitmentQueue;
+        _payoutService = payoutService;
         _licenceGate = licenceGate;
         _auditService = auditService;
     }
@@ -81,6 +84,8 @@ public sealed class VendorDashboardService
             fitmentSummary = new VendorFitmentProposalSummary();
         }
 
+        var statementSummary = await BuildStatementSummaryAsync(vendorId, cancellationToken);
+
         return new VendorDashboardSnapshot
         {
             VendorId = vendorId,
@@ -91,11 +96,37 @@ public sealed class VendorDashboardService
             CustomerCount = customers.Count,
             FitmentProposals = fitmentSummary,
             Scorecard = scorecard,
-            Statements = new VendorStatementPlaceholder
-            {
-                Available = false,
-                MessageKey = "Plugins.TwinParticles.CheckEngine.Marketplace.Statements.Pending"
-            }
+            Statements = statementSummary
+        };
+    }
+
+    public async Task<IReadOnlyList<PayoutStatement>> ListStatementsAsync(
+        VendorActor actor,
+        CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsMarketplaceAsync(cancellationToken) || actor.VendorId is not int vendorId)
+            return [];
+
+        return await _payoutService.ListAsync(vendorId, cancellationToken);
+    }
+
+    private async Task<VendorStatementSummary> BuildStatementSummaryAsync(int? vendorId, CancellationToken cancellationToken)
+    {
+        if (vendorId is not int id)
+            return new VendorStatementSummary { Available = false, MessageKey = "Plugins.TwinParticles.CheckEngine.Marketplace.Statements.Pending" };
+
+        var latest = await _payoutService.GetLatestForVendorAsync(id, cancellationToken);
+        if (latest is null)
+            return new VendorStatementSummary { Available = false, MessageKey = "Plugins.TwinParticles.CheckEngine.Marketplace.Statements.None" };
+
+        return new VendorStatementSummary
+        {
+            Available = true,
+            StatementId = latest.Id,
+            NetPayout = latest.NetPayout,
+            Status = latest.Status,
+            PeriodStartUtc = latest.PeriodStartUtc,
+            PeriodEndUtc = latest.PeriodEndUtc
         };
     }
 

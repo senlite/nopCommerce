@@ -175,6 +175,11 @@ public sealed class RouteProvider : IRouteProvider
             defaults: new { area = AreaNames.ADMIN, controller = "VendorAdmin", action = "Queue" });
 
         endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PayoutAdmin",
+            pattern: "Admin/CheckEngine/PayoutAdmin/{action}",
+            defaults: new { area = AreaNames.ADMIN, controller = "PayoutAdmin", action = "Index" });
+
+        endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.CommissionAdmin",
             pattern: "Admin/CheckEngine/CommissionAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "CommissionAdmin", action = "Configure" });

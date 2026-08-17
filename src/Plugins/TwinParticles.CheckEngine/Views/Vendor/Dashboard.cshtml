@@ -81,6 +81,12 @@
         '<table class="table"><tr><th>Fill</th><th>Cancel</th><th>Claim reject</th><th>On-time ship</th></tr>' +
         '<tr><td>' + pct(s.fillRate) + '</td><td>' + pct(s.cancelRate) + '</td><td>' + pct(s.claimRejectionRate) + '</td><td>' + pct(s.onTimeShipmentRate) + '</td></tr></table>';
       document.getElementById('ce-vendor-statements').textContent = labels.statements;
+      if (d.statements && d.statements.available) {
+        document.getElementById('ce-vendor-statements').textContent =
+          'Statement #' + d.statements.statementId + ': net ' + d.statements.netPayout + ' (' + d.statements.status + ')';
+      } else if (d.statements && d.statements.messageKey) {
+        document.getElementById('ce-vendor-statements').textContent = d.statements.messageKey;
+      }
     });
 
   fetch('/check-engine/vendor/inventory', { headers: headers(false) })

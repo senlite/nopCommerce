@@ -8,5 +8,6 @@ public enum ErpSyncEntityType
     Order = 4,
     Invoice = 5,
     Return = 6,
-    Shipment = 7
+    Shipment = 7,
+    PayoutJournal = 8
 }

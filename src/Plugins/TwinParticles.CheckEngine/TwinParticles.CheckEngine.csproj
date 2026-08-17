@@ -10,9 +10,9 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>TwinParticles.CheckEngine</AssemblyName>
     <RootNamespace>TwinParticles.CheckEngine</RootNamespace>
-    <Version>0.57.0</Version>
-    <AssemblyVersion>0.57.0.0</AssemblyVersion>
-    <FileVersion>0.57.0.0</FileVersion>
+    <Version>0.58.0</Version>
+    <AssemblyVersion>0.58.0.0</AssemblyVersion>
+    <FileVersion>0.58.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -30,6 +30,7 @@
     <None Remove="Views\Admin\VendorReview.cshtml" />
     <None Remove="Views\Admin\VendorScoreboard.cshtml" />
     <None Remove="Views\Admin\CommissionConfigure.cshtml" />
+    <None Remove="Views\Admin\PayoutAdmin.cshtml" />
     <None Remove="Views\Vendor\Apply.cshtml" />
     <None Remove="Views\Vendor\Dashboard.cshtml" />
     <None Remove="Views\Seo\Landing.cshtml" />
@@ -76,6 +77,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Admin\CommissionConfigure.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\PayoutAdmin.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Vendor\Apply.cshtml">

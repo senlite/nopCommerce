@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
+using TwinParticles.CheckEngine.Application.Erp;
+using TwinParticles.CheckEngine.Domain.Erp;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Domain.Fitment;
@@ -53,6 +56,7 @@ public class VendorDashboardServiceTests
         snapshot.OrderCount.Should().Be(2);
         snapshot.CustomerCount.Should().Be(2);
         snapshot.Statements.Available.Should().BeFalse();
+        snapshot.Statements.MessageKey.Should().Be("Plugins.TwinParticles.CheckEngine.Marketplace.Statements.None");
     }
 
     [Test]
@@ -125,6 +129,13 @@ public class VendorDashboardServiceTests
             var licenceGate = new MarketplaceLicenceGate(new StubLicenceService());
             var isolation = new VendorIsolationService(ownership, orders, licenceGate, audit);
             var vendors = new StubVendors();
+            var payout = new PayoutStatementService(
+                new PayoutStatementBuilder(),
+                new InMemoryPayoutRepository(),
+                new EmptyPayoutDataSource(),
+                new ErpSyncService(new EmptyErpQueue(), new StubErpClient(), new NoResolveErp()),
+                licenceGate,
+                audit);
 
             var service = new VendorDashboardService(
                 isolation,
@@ -134,6 +145,7 @@ public class VendorDashboardServiceTests
                 fitmentClaims,
                 fitmentClaims,
                 fitmentQueue,
+                payout,
                 licenceGate,
                 audit);
 
@@ -186,6 +198,46 @@ public class VendorDashboardServiceTests
 
         public Task<int> AssignUnmappedProductsAsync(int operatorVendorId, IReadOnlyList<int> productIds, CancellationToken cancellationToken)
             => Task.FromResult(0);
+    }
+
+    private sealed class InMemoryPayoutRepository : IPayoutStatementRepository
+    {
+        public Task<int> InsertAsync(PayoutStatement statement, CancellationToken cancellationToken) => Task.FromResult(1);
+        public Task UpdateAsync(PayoutStatement statement, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<PayoutStatement?> GetByIdAsync(int statementId, CancellationToken cancellationToken) => Task.FromResult<PayoutStatement?>(null);
+        public Task<IReadOnlyList<PayoutStatement>> ListByVendorAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<PayoutStatement>>([]);
+        public Task<PayoutStatement?> GetLatestByVendorAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<PayoutStatement?>(null);
+        public Task InsertAdjustmentAsync(PayoutAdjustment adjustment, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<IReadOnlyList<PayoutAdjustment>> GetPendingAdjustmentsAsync(int vendorId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<PayoutAdjustment>>([]);
+        public Task AssignAdjustmentsToStatementAsync(int vendorId, int statementId, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class EmptyPayoutDataSource : IPayoutStatementDataSource
+    {
+        public Task<IReadOnlyList<PayoutSourceLine>> GetVendorLinesAsync(int vendorId, DateTime periodStartUtc, DateTime periodEndUtc, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<PayoutSourceLine>>([]);
+    }
+
+    private sealed class EmptyErpQueue : IErpSyncQueueRepository
+    {
+        public Task<Guid> EnqueueAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.FromResult(job.JobId);
+        public Task<IReadOnlyList<ErpSyncJob>> GetPendingAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<ErpSyncJob>>([]);
+        public Task<ErpSyncJob?> GetByIdAsync(Guid jobId, CancellationToken cancellationToken) => Task.FromResult<ErpSyncJob?>(null);
+        public Task UpdateAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task<IReadOnlyList<ErpSyncJob>> GetAllAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<ErpSyncJob>>([]);
+    }
+
+    private sealed class StubErpClient : IErpClientAdapter
+    {
+        public Task<bool> PushAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<bool> PullAsync(ErpSyncJob job, CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<string?> PullInventorySnapshotAsync(CancellationToken cancellationToken) => Task.FromResult<string?>(null);
+    }
+
+    private sealed class NoResolveErp : IErpConflictResolutionService
+    {
+        public bool CanAutoResolve(ErpSyncJob job) => false;
+        public void ApplyAutoResolution(ErpSyncJob job) { }
     }
 
     private sealed class InMemoryOrders : IVendorOrderReadStore

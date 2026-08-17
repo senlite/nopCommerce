@@ -1,3 +1,5 @@
+using System;
+
 namespace TwinParticles.CheckEngine.Domain.Marketplace;
 
 public sealed class VendorDashboardSnapshot
@@ -18,12 +20,22 @@ public sealed class VendorDashboardSnapshot
 
     public VendorScorecard Scorecard { get; init; } = VendorScorecard.Empty();
 
-    public VendorStatementPlaceholder Statements { get; init; } = new();
+    public VendorStatementSummary Statements { get; init; } = new();
 }
 
-public sealed class VendorStatementPlaceholder
+public sealed class VendorStatementSummary
 {
     public bool Available { get; init; }
 
-    public string MessageKey { get; init; } = "Plugins.TwinParticles.CheckEngine.Marketplace.Statements.Pending";
+    public int? StatementId { get; init; }
+
+    public decimal? NetPayout { get; init; }
+
+    public PayoutStatementStatus? Status { get; init; }
+
+    public DateTime? PeriodStartUtc { get; init; }
+
+    public DateTime? PeriodEndUtc { get; init; }
+
+    public string? MessageKey { get; init; }
 }

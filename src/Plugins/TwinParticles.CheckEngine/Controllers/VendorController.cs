@@ -117,6 +117,10 @@ public sealed class VendorController : BasePublicController
     }
 
     [HttpGet]
+    public async Task<IActionResult> Statements(CancellationToken cancellationToken)
+        => Json(await _dashboardService.ListStatementsAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+
+    [HttpGet]
     public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
     {
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
