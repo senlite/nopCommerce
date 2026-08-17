@@ -17,4 +17,7 @@ public sealed class SearchHit
     public decimal Score { get; set; }
 
     public bool FitsActiveContext { get; set; }
+
+    /// <summary>SEO-friendly product slug for storefront links.</summary>
+    public string? SeName { get; set; }
 }

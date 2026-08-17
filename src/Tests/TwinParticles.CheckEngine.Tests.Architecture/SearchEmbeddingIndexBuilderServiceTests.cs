@@ -63,6 +63,20 @@ public class SearchEmbeddingIndexBuilderServiceTests
         (await index.GetCountAsync("en", CancellationToken.None)).Should().Be(before);
     }
 
+    [Test]
+    public async Task CreateStaleOptionsAsync_Should_Return_Model_Hash_From_Embedding_Provider()
+    {
+        var builder = new SearchEmbeddingIndexBuilderService(
+            new InMemorySearchEmbeddingCatalogSource(),
+            new InMemorySearchEmbeddingIndex(),
+            new DeterministicTextEmbeddingPort());
+
+        var options = await builder.CreateStaleOptionsAsync(CancellationToken.None);
+
+        options.Should().NotBeNull();
+        options!.ExpectedModelHash.Should().NotBeNullOrWhiteSpace();
+    }
+
     private sealed class EmptyVectorPort : IAiEmbeddingPort
     {
         public Task<AiEmbeddingResult> EmbedAsync(AiEmbeddingRequest request, CancellationToken cancellationToken)

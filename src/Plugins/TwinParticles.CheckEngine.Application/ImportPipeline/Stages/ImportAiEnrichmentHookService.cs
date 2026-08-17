@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
-using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Domain.Ai;
 
 namespace TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
@@ -14,17 +13,20 @@ public sealed class ImportAiEnrichmentHookService
     private readonly IAiFeatureToggle? _featureToggle;
     private readonly AiContentCandidateService? _contentCandidateService;
     private readonly AiPromptResolver? _promptResolver;
+    private readonly IAllowedSpecificationKeyCatalog? _specificationKeyCatalog;
 
     public ImportAiEnrichmentHookService(
         IAiCompletionPort? aiCompletionPort = null,
         IAiFeatureToggle? featureToggle = null,
         AiContentCandidateService? contentCandidateService = null,
-        AiPromptResolver? promptResolver = null)
+        AiPromptResolver? promptResolver = null,
+        IAllowedSpecificationKeyCatalog? specificationKeyCatalog = null)
     {
         _aiCompletionPort = aiCompletionPort;
         _featureToggle = featureToggle;
         _contentCandidateService = contentCandidateService;
         _promptResolver = promptResolver;
+        _specificationKeyCatalog = specificationKeyCatalog;
     }
 
     public void Apply(IReadOnlyList<ImportPipelineRowState> rows, bool enabled)
@@ -43,38 +45,19 @@ public sealed class ImportAiEnrichmentHookService
             row.Fields.TryGetValue("name", out var name);
             row.Fields.TryGetValue("oem", out var oem);
 
-            var prompt = _promptResolver?.Format(AiFeatureKeys.ImportEnrichment, new Dictionary<string, string?>
+            var descriptionPrompt = _promptResolver?.Format(AiFeatureKeys.ImportEnrichment, new Dictionary<string, string?>
             {
                 ["name"] = name,
                 ["oem"] = oem
             }) ?? $"Enrich product description. Name={name}; Oem={oem}";
 
-            AiCompletionResult result;
-            try
-            {
-                result = _aiCompletionPort.CompleteAsync(new AiCompletionRequest
-                {
-                    FeatureKey = AiFeatureKeys.ImportEnrichment,
-                    PromptKey = AiFeatureKeys.ImportEnrichment,
-                    Prompt = prompt,
-                    MaxTokens = 256
-                }, default).GetAwaiter().GetResult();
-            }
-            catch
-            {
-                result = new AiCompletionResult
-                {
-                    Success = false,
-                    ErrorCode = "ai.provider_degraded"
-                };
-            }
-
-            if (result.Success)
+            var descriptionResult = Complete(descriptionPrompt, AiFeatureKeys.ImportEnrichment, AiFeatureKeys.ImportEnrichment);
+            if (descriptionResult.Success)
             {
                 row.Fields = new Dictionary<string, string?>(row.Fields)
                 {
                     ["aiEnriched"] = "true",
-                    ["aiDescriptionCandidate"] = result.Text
+                    ["aiDescriptionCandidate"] = descriptionResult.Text
                 };
 
                 _contentCandidateService?.SaveCandidateAsync(
@@ -82,9 +65,9 @@ public sealed class ImportAiEnrichmentHookService
                     row.RowNumber,
                     AiFeatureKeys.ImportEnrichment,
                     "en",
-                    result.Text,
+                    descriptionResult.Text,
                     AiFeatureKeys.ImportEnrichment,
-                    result.PromptHash,
+                    descriptionResult.PromptHash,
                     null,
                     default).GetAwaiter().GetResult();
             }
@@ -95,6 +78,64 @@ public sealed class ImportAiEnrichmentHookService
                     ["aiEnrichmentStatus"] = "skipped"
                 };
             }
+
+            var specificationPrompt = _promptResolver?.Format(AiFeatureKeys.ImportSpecification, new Dictionary<string, string?>
+            {
+                ["name"] = name,
+                ["oem"] = oem
+            }) ?? $"Extract specifications. Name={name}; Oem={oem}";
+
+            var specificationResult = Complete(specificationPrompt, AiFeatureKeys.ImportEnrichment, AiFeatureKeys.ImportSpecification);
+            if (specificationResult.Success)
+            {
+                var catalog = _specificationKeyCatalog ?? new AllowedSpecificationKeyCatalog();
+                var validation = AiSpecificationCandidateFormatter.Validate(specificationResult.Text, catalog);
+                if (!string.IsNullOrWhiteSpace(validation.FormattedText))
+                {
+                    var fields = new Dictionary<string, string?>(row.Fields)
+                    {
+                        ["aiSpecificationCandidate"] = validation.FormattedText
+                    };
+
+                    if (validation.UnknownKeys.Count > 0)
+                        fields["aiSpecificationUnknownKeys"] = string.Join(", ", validation.UnknownKeys);
+
+                    row.Fields = fields;
+
+                    _contentCandidateService?.SaveCandidateAsync(
+                        AiGenerationEntityType.Specification,
+                        row.RowNumber,
+                        AiFeatureKeys.ImportSpecification,
+                        "en",
+                        validation.FormattedText,
+                        AiFeatureKeys.ImportSpecification,
+                        specificationResult.PromptHash,
+                        validation.QualityScore,
+                        default).GetAwaiter().GetResult();
+                }
+            }
+        }
+    }
+
+    private AiCompletionResult Complete(string prompt, string featureKey, string promptKey)
+    {
+        try
+        {
+            return _aiCompletionPort!.CompleteAsync(new AiCompletionRequest
+            {
+                FeatureKey = featureKey,
+                PromptKey = promptKey,
+                Prompt = prompt,
+                MaxTokens = 256
+            }, default).GetAwaiter().GetResult();
+        }
+        catch
+        {
+            return new AiCompletionResult
+            {
+                Success = false,
+                ErrorCode = "ai.provider_degraded"
+            };
         }
     }
 }

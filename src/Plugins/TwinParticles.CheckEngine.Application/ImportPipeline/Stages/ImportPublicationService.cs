@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
+using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Domain.ImportPipeline;
 
 namespace TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
@@ -10,10 +11,14 @@ namespace TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 public sealed class ImportPublicationService
 {
     private readonly IImportProductPublisher? _productPublisher;
+    private readonly AiImportCandidateRebindService? _candidateRebindService;
 
-    public ImportPublicationService(IImportProductPublisher? productPublisher = null)
+    public ImportPublicationService(
+        IImportProductPublisher? productPublisher = null,
+        AiImportCandidateRebindService? candidateRebindService = null)
     {
         _productPublisher = productPublisher;
+        _candidateRebindService = candidateRebindService;
     }
 
     public ImportPublicationResult Publish(IReadOnlyList<ImportPipelineRowState> rows, bool dryRun)
@@ -96,6 +101,14 @@ public sealed class ImportPublicationService
                     {
                         ["publishedProductId"] = result.ProductId.Value.ToString()
                     };
+
+                    if (_candidateRebindService is not null)
+                    {
+                        await _candidateRebindService.RebindImportRowAsync(
+                            row.RowNumber,
+                            result.ProductId.Value,
+                            cancellationToken);
+                    }
                 }
             }
 

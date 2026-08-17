@@ -42,6 +42,9 @@ public static class CheckEngineSql
         return $"SELECT TOP ({count}) {columns} {fromWhereOrderBy}";
     }
 
+    public static string QuoteIdentifier(string identifier)
+        => IsMySql() ? $"`{identifier}`" : $"[{identifier}]";
+
     public static string UtcNow()
         => IsMySql() ? "UTC_TIMESTAMP()" : "SYSUTCDATETIME()";
 

@@ -87,7 +87,10 @@ public sealed class InMemorySearchEmbeddingCatalogSource : ISearchEmbeddingCatal
         return Task.FromResult<IReadOnlyList<SearchEmbeddingDocument>>(filtered);
     }
 
-    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(string locale, CancellationToken cancellationToken) =>
+    public Task<IReadOnlyList<SearchEmbeddingDocument>> GetStaleDocumentsAsync(
+        string locale,
+        SearchEmbeddingStaleOptions? options,
+        CancellationToken cancellationToken) =>
         GetDocumentsAsync(locale, cancellationToken);
 
     public async Task<int> GetCatalogCountAsync(string locale, CancellationToken cancellationToken)
@@ -96,9 +99,9 @@ public sealed class InMemorySearchEmbeddingCatalogSource : ISearchEmbeddingCatal
         return documents.Count;
     }
 
-    public async Task<int> GetStaleCountAsync(string locale, CancellationToken cancellationToken)
+    public async Task<int> GetStaleCountAsync(string locale, SearchEmbeddingStaleOptions? options, CancellationToken cancellationToken)
     {
-        var documents = await GetStaleDocumentsAsync(locale, cancellationToken);
+        var documents = await GetStaleDocumentsAsync(locale, options, cancellationToken);
         return documents.Count;
     }
 }

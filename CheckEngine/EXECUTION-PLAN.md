@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-15
+**Last updated:** 2026-08-16
 
 ## Status legend
 - `pending` = not started
@@ -237,16 +237,16 @@ Partial Horizon 2 scaffolding landed early. It must not be described as a comple
 
 | ID | Task | Status | Gap |
 |---|---|---|---|
-| H2.1 | Complete multi-provider AI abstraction | partial | Completion + Azure embedding adapters; Anthropic uses deterministic embeddings; layered response cache |
+| H2.1 | Complete multi-provider AI abstraction | done | Completion + Azure embedding adapters; Anthropic deterministic embeddings; layered completion + embedding cache (L1 memory + L2 nop static) |
 | H2.2 | Enforce per-feature disclosure, token accounting and hard spend ceilings | done | `AiSpendGuardService` enforces per-feature + global daily token ceilings with `ai.budget_exceeded` / `ai.global_budget_exceeded`; estimated USD cost in SQL ledger; deduped budget alerts via audit; FR-590 dashboard with cost columns and recent alerts; configure disclosure gate blocks AI features until acknowledged. Ledger day boundaries remain UTC |
-| H2.3 | Parse natural language into structured vehicle/part intent | partial | `NaturalLanguageIntentParser` uses versioned prompt store; outbound prompts redact full VINs |
-| H2.4 | Implement vector/semantic bilingual search | partial | Semantic index + SQL/reference-scale catalog sources; batched embedding rebuild |
-| H2.5 | Pass the published natural-language/semantic accuracy benchmark | partial | In-memory + 20-product reference-scale corpus with recall@5 gate |
-| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | partial | Review board applies approved candidates to nopCommerce product fields via `NopAiContentApplicator` |
-| H2.7 | Enforce the controlled automotive translation glossary | partial | `AutomotiveGlossaryService` injects glossary into versioned translation prompts and validates output terms |
-| H2.8 | Complete reviewable AI fitment candidate workflow | partial | Fitment AI review board with infer form and inline approve/reject |
-| H2.9 | Productionize fitment-constrained recommendations | partial | Fitment-only results, category affinity vs seed product, no customer-id inputs; PDP rail |
-| H2.10 | Build the grounded customer assistant | partial | Storefront assistant widget + VIN-redacted grounded answers from catalog context |
+| H2.3 | Parse natural language into structured vehicle/part intent | done | Heuristic + LLM parse (make/model/year/chassis/OEM, EN/AR part phrases); alias resolver enriches configuration id; NL merges keyword + semantic with fitment filter; `SearchParsedIntent` on search API and storefront |
+| H2.4 | Implement vector/semantic bilingual search | done | SQL catalog + embedding index with SQLite integration tests; scheduled refresh with empty-index bootstrap; admin bilingual synonym overrides; index-time + query-time expansion; model-hash staleness |
+| H2.5 | Pass the published natural-language/semantic accuracy benchmark | done | In-memory (14 queries) + reference-scale (20 queries) corpora with EN/AR code-switch; recall@5 gates enforced in CI (0.83 / 0.85) |
+| H2.6 | Persist AI descriptions, specifications, translations and SEO as review candidates | done | Import hooks persist all four entity types as pending candidates (`IsPublished=false`); publication rebind maps import row → product id; admin Review board with blocked-approve UX and `AiReviewResult` reason codes (`ai.review.glossary_invalid`, `ai.review.spec_unknown_keys`); lifecycle tests prove never auto-publish |
+| H2.7 | Enforce the controlled automotive translation glossary | done | Embedded JSON + admin overrides (`AutomotiveGlossaryOverridesJson`, audited save); `ScoreTranslation` gates import hook quality; FR-522 hit-rate corpus tests; approval blocked when `qualityScore < 1` |
+| H2.8 | Complete reviewable AI fitment candidate workflow | done | JSON verdict + rationale in `FitmentAiReference`; confidence capped at 0.5 (FR-530); infer→queue→approve/reject workflow tests; reject deactivates claim; AI queue excludes rejected/published; approve preserves DoesNotFit, promotes source, records dequeue events |
+| H2.9 | Productionize fitment-constrained recommendations | done | Vehicle-scoped rail filters to Fits-only (FR-550/551); category affinity via seed product; SeName PDP links; `EnableRecommendations` feature flag; rate limiting on `/recommend`; convention + service tests |
+| H2.10 | Build the grounded customer assistant | done | RAG from catalog via semantic/keyword retrieval; fitment-filtered when vehicle active; VIN-redacted prompts; structured citations with SeName; feature-gated widget + API; rate-limit and loading UX |
 
 ### Horizon 3 — Marketplace / v1.2 (`EP-22`–`EP-24`)
 
@@ -254,7 +254,7 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status |
 |---|---|---|
-| H3.1 | Supplier onboarding, verification and agreement acceptance | pending |
+| H3.1 | Supplier onboarding, verification and agreement acceptance | done | Vendor lifecycle Applied→UnderReview→Active/Rejected, Suspend/Reinstate/Close; versioned `TP_CE_VendorAgreementAcceptance`; activate blocked without current agreement; banking encrypted and omitted from APIs/audit; marketplace admin/apply gated by `MarketplaceModuleEntitlement` (Business+) plus operator applications flag |
 | H3.2 | Vendor catalog/order/customer isolation and upgrade path | pending |
 | H3.3 | Vendor dashboards, inventory and performance analytics | pending |
 | H3.4 | Flat, percentage, tiered and category-specific commissions | pending |

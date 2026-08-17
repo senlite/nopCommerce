@@ -74,7 +74,8 @@ public sealed class ImportTranslationHookService
             if (!result.Success)
                 continue;
 
-            var glossaryValid = _glossaryService.ValidateTranslation(name ?? string.Empty, result.Text);
+            var glossaryScore = _glossaryService.ScoreTranslation(name ?? string.Empty, result.Text);
+            var glossaryValid = glossaryScore >= 1m;
             row.Fields = new Dictionary<string, string?>(row.Fields)
             {
                 ["translated"] = glossaryValid ? "true" : "pending_review",
@@ -90,7 +91,7 @@ public sealed class ImportTranslationHookService
                 result.Text,
                 AiFeatureKeys.ImportTranslation,
                 result.PromptHash,
-                glossaryValid ? 1m : 0.5m,
+                glossaryScore,
                 default).GetAwaiter().GetResult();
         }
     }

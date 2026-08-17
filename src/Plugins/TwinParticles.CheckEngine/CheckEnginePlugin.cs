@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.ScheduleTasks;
 using Nop.Data.Migrations;
 using Nop.Services.Cms;
@@ -89,6 +90,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await EnsureScheduleTasksAsync();
 
         await AddOrUpdateLocaleResourcesAsync();
+        await EnsureWidgetActiveAsync();
 
         await base.InstallAsync();
     }
@@ -140,6 +142,25 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableSearchSemantic"] = "Semantic search",
             ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableFitmentInference"] = "Fitment inference",
             ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableCustomerAssistant"] = "Customer assistant",
+            ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableRecommendations"] = "Fitment recommendations",
+            ["Plugins.TwinParticles.CheckEngine.Configuration.Marketplace"] = "Marketplace",
+            ["Plugins.TwinParticles.CheckEngine.Configuration.Marketplace.Hint"] = "Supplier applications stay closed until this flag is on and the licence includes marketplace entitlement (Business and above).",
+            ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableMarketplace"] = "Accept supplier applications",
+            ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.MarketplaceAgreementVersion"] = "Supplier agreement version",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Review"] = "Vendor onboarding",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Review.Queue"] = "Applications under review",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Review.Hint"] = "Approve only after verification and acceptance of the current operator agreement. Banking details stay encrypted and are never shown here.",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Apply"] = "Become a supplier",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Hint"] = "Submit your business profile, tax identifiers, and payout details. Listing starts only after review and agreement acceptance.",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Submit"] = "Submit application",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.LegalName"] = "Legal business name",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.TradingName"] = "Trading name",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Email"] = "Contact email",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.TaxIds"] = "Tax identifiers (JSON)",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Categories"] = "Categories",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Banking"] = "Banking / payout details",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Text"] = "By applying you accept the current operator supplier agreement. A versioned acceptance record is stored.",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Accept"] = "I accept the supplier agreement",
             ["Plugins.TwinParticles.CheckEngine.Dashboard"] = "Check Engine Dashboard",
             ["Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks"] = "Admin JSON endpoints",
             ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload"] = "Import upload",
@@ -162,6 +183,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Search.Hint"] = "Enter a keyword, an OEM part number, or a 17-character VIN. Results are filtered to your active vehicle unless you include unverified fit.",
             ["Plugins.TwinParticles.CheckEngine.Search.ResultsLabel"] = "Check Engine search results",
             ["Plugins.TwinParticles.CheckEngine.Search.ResultsCount"] = "results",
+            ["Plugins.TwinParticles.CheckEngine.Search.ParsedIntent"] = "Understood as",
             ["Plugins.TwinParticles.CheckEngine.Search.Mode"] = "Mode",
             ["Plugins.TwinParticles.CheckEngine.Search.Mode.Auto"] = "Auto",
             ["Plugins.TwinParticles.CheckEngine.Search.Mode.NaturalLanguage"] = "Natural language",
@@ -173,6 +195,13 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings"] = "Semantic embeddings",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildEmbeddingsAll"] = "Rebuild all embedding locales",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshEmbeddings"] = "Refresh stale embeddings",
+            ["Plugins.TwinParticles.CheckEngine.Search.Synonyms"] = "Bilingual search synonyms",
+            ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Hint"] = "Controlled AR→EN automotive synonym pairs used to expand semantic search queries and embedding index text. Overrides are audited.",
+            ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Arabic"] = "Arabic term",
+            ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.English"] = "English term",
+            ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Source"] = "Source",
+            ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.OverridesJson"] = "Override terms (JSON object, Arabic keys)",
+            ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Save"] = "Save synonym overrides",
             ["Plugins.TwinParticles.CheckEngine.Search.Empty.Title"] = "No matching parts found",
             ["Plugins.TwinParticles.CheckEngine.Search.Empty.Hint"] = "Check the OEM number or VIN, or widen fitment to include unverified parts.",
             ["Plugins.TwinParticles.CheckEngine.Search.Unavailable"] = "Search is unavailable right now.",
@@ -231,6 +260,17 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Ai.Review.Candidates"] = "Content candidates",
             ["Plugins.TwinParticles.CheckEngine.Ai.Review.Hint"] = "Approve or reject AI-generated descriptions, translations, and SEO. Nothing publishes until a reviewer accepts it.",
             ["Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment"] = "AI fitment candidates",
+            ["Plugins.TwinParticles.CheckEngine.Glossary.Admin"] = "Automotive glossary",
+            ["Plugins.TwinParticles.CheckEngine.Glossary.Hint"] = "Controlled EN→AR part-type vocabulary used by AI translation. Overrides are audited and merged onto the embedded catalog.",
+            ["Plugins.TwinParticles.CheckEngine.Glossary.English"] = "English term",
+            ["Plugins.TwinParticles.CheckEngine.Glossary.Arabic"] = "Arabic term",
+            ["Plugins.TwinParticles.CheckEngine.Glossary.Source"] = "Source",
+            ["Plugins.TwinParticles.CheckEngine.Glossary.OverridesJson"] = "Override terms (JSON object)",
+            ["Plugins.TwinParticles.CheckEngine.SpecKeys.Admin"] = "Specification keys",
+            ["Plugins.TwinParticles.CheckEngine.SpecKeys.Hint"] = "Allowed nopCommerce attribute keys for AI specification extraction. Add custom keys or remove embedded keys; changes are audited and affect candidate validation.",
+            ["Plugins.TwinParticles.CheckEngine.SpecKeys.Key"] = "Attribute key",
+            ["Plugins.TwinParticles.CheckEngine.SpecKeys.Source"] = "Source",
+            ["Plugins.TwinParticles.CheckEngine.SpecKeys.OverridesJson"] = "Overrides (JSON with add/remove arrays)",
             ["Plugins.TwinParticles.CheckEngine.Ai.Dashboard"] = "AI usage dashboard",
             ["Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Usage"] = "Usage by feature",
             ["Plugins.TwinParticles.CheckEngine.Ai.AcknowledgeDisclosure"] = "Acknowledge data disclosure",
@@ -242,6 +282,11 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Assistant.Send"] = "Ask",
             ["Plugins.TwinParticles.CheckEngine.Assistant.Unavailable"] = "The assistant is unavailable right now.",
             ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "Open parts assistant",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.Sources"] = "Catalog sources",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.Thinking"] = "Searching the catalog…",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.RateLimited"] = "Too many questions — please wait a moment and try again.",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.VehicleScoped"] = "Answers are limited to parts verified for your active vehicle.",
+            ["Plugins.TwinParticles.CheckEngine.Assistant.VehicleUnscoped"] = "Select a vehicle to filter answers to verified-fit parts.",
             ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "Also fits your vehicle",
             ["Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle"] = "You may also like",
             ["Plugins.TwinParticles.CheckEngine.Recommend.FitmentBadge"] = "Fits your vehicle"
@@ -299,6 +344,25 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableSearchSemantic"] = "بحث دلالي",
         ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableFitmentInference"] = "استنتاج التوافق",
         ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableCustomerAssistant"] = "مساعد العملاء",
+        ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableRecommendations"] = "توصيات التوافق",
+        ["Plugins.TwinParticles.CheckEngine.Configuration.Marketplace"] = "السوق",
+        ["Plugins.TwinParticles.CheckEngine.Configuration.Marketplace.Hint"] = "تبقى طلبات الموردين مغلقة حتى تفعيل هذا الخيار ومع ترخيص يشمل صلاحية السوق.",
+        ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.EnableMarketplace"] = "قبول طلبات الموردين",
+        ["Plugins.TwinParticles.CheckEngine.Configuration.Fields.MarketplaceAgreementVersion"] = "إصدار اتفاقية المورد",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Review"] = "تسجيل الموردين",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Review.Queue"] = "الطلبات قيد المراجعة",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Review.Hint"] = "لا تعتمد المورد إلا بعد التحقق وقبول الاتفاقية الحالية. بيانات البنك مشفّرة ولا تُعرض هنا.",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Apply"] = "كن مورداً",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Hint"] = "قدّم ملف المنشأة والمعرفات الضريبية وبيانات الدفع. يبدأ العرض بعد المراجعة وقبول الاتفاقية.",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Submit"] = "إرسال الطلب",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.LegalName"] = "الاسم القانوني",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.TradingName"] = "الاسم التجاري",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Email"] = "البريد الإلكتروني",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.TaxIds"] = "المعرفات الضريبية (JSON)",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Categories"] = "الفئات",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Banking"] = "بيانات البنك / الدفع",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Text"] = "بتقديم الطلب تقبل اتفاقية المورد الحالية. يُحفظ سجل قبول مُصدَّر.",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Accept"] = "أوافق على اتفاقية المورد",
         ["Plugins.TwinParticles.CheckEngine.Dashboard"] = "لوحة تحكم توافق قطع السيارات",
         ["Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks"] = "واجهات إدارة JSON",
         ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload"] = "رفع ملف الاستيراد",
@@ -321,6 +385,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Search.Hint"] = "أدخل كلمة بحث أو رقم قطعة OEM أو رقم هيكل من 17 خانة.",
         ["Plugins.TwinParticles.CheckEngine.Search.ResultsLabel"] = "نتائج بحث توافق القطع",
         ["Plugins.TwinParticles.CheckEngine.Search.ResultsCount"] = "نتيجة",
+        ["Plugins.TwinParticles.CheckEngine.Search.ParsedIntent"] = "فُسِّر كـ",
         ["Plugins.TwinParticles.CheckEngine.Search.Mode"] = "الوضع",
         ["Plugins.TwinParticles.CheckEngine.Search.Mode.Auto"] = "تلقائي",
         ["Plugins.TwinParticles.CheckEngine.Search.Mode.NaturalLanguage"] = "لغة طبيعية",
@@ -332,6 +397,13 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings"] = "التضمينات الدلالية",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildEmbeddingsAll"] = "إعادة بناء كل اللغات",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshEmbeddings"] = "تحديث التضمينات المتغيرة",
+        ["Plugins.TwinParticles.CheckEngine.Search.Synonyms"] = "مرادفات البحث ثنائية اللغة",
+        ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Hint"] = "أزواج AR→EN للبحث الدلالي وتضمين الفهرس. التعديلات تُسجّل في التدقيق.",
+        ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Arabic"] = "المصطلح العربي",
+        ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.English"] = "المصطلح الإنجليزي",
+        ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Source"] = "المصدر",
+        ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.OverridesJson"] = "مصطلحات مخصصة (JSON، مفاتيح عربية)",
+        ["Plugins.TwinParticles.CheckEngine.Search.Synonyms.Save"] = "حفظ مرادفات البحث",
         ["Plugins.TwinParticles.CheckEngine.Search.Empty.Title"] = "لم يتم العثور على قطع مطابقة",
         ["Plugins.TwinParticles.CheckEngine.Search.Empty.Hint"] = "تحقق من رقم OEM أو VIN أو وسّع نطاق التوافق.",
         ["Plugins.TwinParticles.CheckEngine.Search.Unavailable"] = "البحث غير متاح حالياً.",
@@ -390,6 +462,17 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Ai.Review.Candidates"] = "مرشحات المحتوى",
         ["Plugins.TwinParticles.CheckEngine.Ai.Review.Hint"] = "وافق أو ارفض أوصاف وترجمات وSEO المولّدة. لا يُنشر شيء قبل المراجعة.",
         ["Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment"] = "مرشحات توافق الذكاء الاصطناعي",
+        ["Plugins.TwinParticles.CheckEngine.Glossary.Admin"] = "معجم قطع الغيار",
+        ["Plugins.TwinParticles.CheckEngine.Glossary.Hint"] = "مفردات EN→AR للترجمة الآلية. التعديلات تُدمج مع المعجم المضمّن وتُسجّل في التدقيق.",
+        ["Plugins.TwinParticles.CheckEngine.Glossary.English"] = "المصطلح الإنجليزي",
+        ["Plugins.TwinParticles.CheckEngine.Glossary.Arabic"] = "المصطلح العربي",
+        ["Plugins.TwinParticles.CheckEngine.Glossary.Source"] = "المصدر",
+        ["Plugins.TwinParticles.CheckEngine.Glossary.OverridesJson"] = "مصطلحات مخصصة (JSON)",
+        ["Plugins.TwinParticles.CheckEngine.SpecKeys.Admin"] = "مفاتيح المواصفات",
+        ["Plugins.TwinParticles.CheckEngine.SpecKeys.Hint"] = "مفاتيح السمات المسموح بها لاستخراج المواصفات بالذكاء الاصطناعي. أضف مفاتيح مخصصة أو احذف المضمّنة؛ التغييرات تُسجّل وتؤثر على التحقق من المرشحات.",
+        ["Plugins.TwinParticles.CheckEngine.SpecKeys.Key"] = "مفتاح السمة",
+        ["Plugins.TwinParticles.CheckEngine.SpecKeys.Source"] = "المصدر",
+        ["Plugins.TwinParticles.CheckEngine.SpecKeys.OverridesJson"] = "تعديلات (JSON بمصفوفات add/remove)",
         ["Plugins.TwinParticles.CheckEngine.Ai.Dashboard"] = "لوحة استخدام الذكاء الاصطناعي",
         ["Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Usage"] = "الاستخدام حسب الميزة",
         ["Plugins.TwinParticles.CheckEngine.Ai.AcknowledgeDisclosure"] = "الإقرار بالإفصاح",
@@ -401,6 +484,11 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Assistant.Send"] = "اسأل",
         ["Plugins.TwinParticles.CheckEngine.Assistant.Unavailable"] = "المساعد غير متاح حالياً.",
         ["Plugins.TwinParticles.CheckEngine.Assistant.Open"] = "افتح مساعد القطع",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.Sources"] = "مصادر الكتالوج",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.Thinking"] = "جاري البحث في الكتالوج…",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.RateLimited"] = "أسئلة كثيرة — انتظر قليلاً ثم حاول مرة أخرى.",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.VehicleScoped"] = "الإجابات مقتصرة على القطع المُتحقق توافقها مع سيارتك النشطة.",
+        ["Plugins.TwinParticles.CheckEngine.Assistant.VehicleUnscoped"] = "اختر سيارة لتصفية الإجابات إلى القطع المُتحقق توافقها فقط.",
         ["Plugins.TwinParticles.CheckEngine.Recommend.Title"] = "يناسب سيارتك أيضاً",
         ["Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle"] = "قد يعجبك أيضاً",
         ["Plugins.TwinParticles.CheckEngine.Recommend.FitmentBadge"] = "يناسب سيارتك",
@@ -415,6 +503,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _migrationManager.ApplyUpMigrations(MigrationAssembly, MigrationProcessType.NoMatter);
         await EnsureScheduleTasksAsync();
         await AddOrUpdateLocaleResourcesAsync();
+        await EnsureWidgetActiveAsync();
         await base.UpdateAsync(currentVersion, targetVersion);
     }
 
@@ -444,7 +533,11 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         var searchIndexTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.SearchIndexRefreshTask).FullName!);
         if (searchIndexTask is not null)
             await _scheduleTaskService.DeleteTaskAsync(searchIndexTask);
+        var searchEmbeddingTask = await _scheduleTaskService.GetTaskByTypeAsync(typeof(Tasks.SearchEmbeddingRefreshTask).FullName!);
+        if (searchEmbeddingTask is not null)
+            await _scheduleTaskService.DeleteTaskAsync(searchEmbeddingTask);
 
+        await DeactivateWidgetAsync();
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.TwinParticles.CheckEngine");
@@ -476,6 +569,30 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             typeof(Tasks.SearchIndexRefreshTask).FullName!,
             "Check Engine search index refresh",
             60);
+        await EnsureScheduleTaskAsync(
+            typeof(Tasks.SearchEmbeddingRefreshTask).FullName!,
+            "Check Engine search embedding refresh",
+            15 * 60);
+    }
+
+    private async Task EnsureWidgetActiveAsync()
+    {
+        var widgetSettings = await _settingService.LoadSettingAsync<WidgetSettings>();
+        var systemName = PluginDescriptor.SystemName;
+        if (widgetSettings.ActiveWidgetSystemNames.Contains(systemName, StringComparer.OrdinalIgnoreCase))
+            return;
+
+        widgetSettings.ActiveWidgetSystemNames.Add(systemName);
+        await _settingService.SaveSettingAsync(widgetSettings);
+    }
+
+    private async Task DeactivateWidgetAsync()
+    {
+        var widgetSettings = await _settingService.LoadSettingAsync<WidgetSettings>();
+        var removed = widgetSettings.ActiveWidgetSystemNames.RemoveAll(name =>
+            string.Equals(name, PluginDescriptor.SystemName, StringComparison.OrdinalIgnoreCase));
+        if (removed > 0)
+            await _settingService.SaveSettingAsync(widgetSettings);
     }
 
     private async Task EnsureScheduleTaskAsync(string type, string name, int seconds)

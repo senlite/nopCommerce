@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.Ai;
@@ -61,20 +63,23 @@ public sealed class FitmentInferenceService
         if (!result.Success)
             return null;
 
-        var status = ParseStatus(result.Text);
+        var status = ParseStatus(result.Text, out var rationale, out var confidence);
+        var cappedConfidence = confidence.HasValue
+            ? Math.Min(confidence.Value, AiInferenceConfidenceCap)
+            : AiInferenceConfidenceCap;
         var claim = new FitmentClaim
         {
             ProductId = productId,
             VehicleConfigurationId = vehicleConfigurationId,
             Status = status,
-            Confidence = AiInferenceConfidenceCap,
+            Confidence = cappedConfidence,
             SafetyClass = SafetyClass.Standard,
             IsPublished = false,
             IsActive = true,
             Provenance = new FitmentClaimProvenance
             {
                 SourceKind = FitmentSourceKind.AiInference,
-                SourceReference = result.PromptHash,
+                SourceReference = FitmentAiReference.Format(result.PromptHash, rationale),
                 CreatedBy = actor,
                 CreatedUtc = DateTimeOffset.UtcNow
             }
@@ -87,8 +92,15 @@ public sealed class FitmentInferenceService
         return claim;
     }
 
-    private static FitmentStatus ParseStatus(string text)
+    private static FitmentStatus ParseStatus(string text, out string? rationale, out decimal? confidence)
     {
+        rationale = null;
+        confidence = null;
+
+        var structured = TryParseStructuredVerdict(text, out rationale, out confidence);
+        if (structured.HasValue)
+            return structured.Value;
+
         if (text.Contains("DoesNotFit", StringComparison.OrdinalIgnoreCase)
             || text.Contains("does not fit", StringComparison.OrdinalIgnoreCase))
         {
@@ -99,5 +111,91 @@ public sealed class FitmentInferenceService
             return FitmentStatus.Fits;
 
         return FitmentStatus.Unknown;
+    }
+
+    private static FitmentStatus? TryParseStructuredVerdict(string text, out string? rationale, out decimal? confidence)
+    {
+        rationale = null;
+        confidence = null;
+
+        try
+        {
+            var json = ExtractJson(text);
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in root.EnumerateArray())
+                {
+                    var verdict = ReadStructuredFields(element, out rationale, out confidence);
+                    if (verdict.HasValue)
+                        return verdict;
+                }
+
+                return null;
+            }
+
+            return ReadStructuredFields(root, out rationale, out confidence);
+        }
+        catch
+        {
+            /* fall back to token parsing */
+        }
+
+        return null;
+    }
+
+    private static FitmentStatus? ReadStructuredFields(JsonElement element, out string? rationale, out decimal? confidence)
+    {
+        rationale = null;
+        confidence = null;
+
+        if (element.TryGetProperty("rationale", out var rationaleElement) && rationaleElement.ValueKind == JsonValueKind.String)
+            rationale = rationaleElement.GetString();
+
+        if (element.TryGetProperty("confidence", out var confidenceElement) && confidenceElement.ValueKind == JsonValueKind.Number)
+            confidence = confidenceElement.GetDecimal();
+
+        if (element.TryGetProperty("verdict", out var verdictElement))
+            return MapVerdict(verdictElement.GetString());
+
+        return null;
+    }
+
+    private static FitmentStatus? MapVerdict(string? verdict)
+    {
+        if (string.IsNullOrWhiteSpace(verdict))
+            return null;
+
+        if (verdict.Contains("DoesNotFit", StringComparison.OrdinalIgnoreCase)
+            || verdict.Contains("does not fit", StringComparison.OrdinalIgnoreCase))
+        {
+            return FitmentStatus.DoesNotFit;
+        }
+
+        if (verdict.Contains("Fits", StringComparison.OrdinalIgnoreCase))
+            return FitmentStatus.Fits;
+
+        if (verdict.Contains("Unknown", StringComparison.OrdinalIgnoreCase))
+            return FitmentStatus.Unknown;
+
+        return null;
+    }
+
+    private static string ExtractJson(string text)
+    {
+        var start = text.IndexOf('{');
+        if (start < 0)
+            start = text.IndexOf('[');
+
+        var end = text.LastIndexOf('}');
+        if (end < start)
+            end = text.LastIndexOf(']');
+
+        if (start >= 0 && end > start)
+            return text[start..(end + 1)];
+
+        return text;
     }
 }

@@ -1,0 +1,32 @@
+{
+  "description": "Allowed nopCommerce specification attribute keys for AI extraction (FR-521). Unknown keys are flagged for curator review.",
+  "keys": [
+    "Material",
+    "Thread",
+    "Thread Size",
+    "Diameter",
+    "Length",
+    "Width",
+    "Height",
+    "Weight",
+    "Color",
+    "Finish",
+    "Voltage",
+    "Amperage",
+    "Capacity",
+    "Volume",
+    "Viscosity",
+    "Position",
+    "Side",
+    "Drive Type",
+    "Transmission",
+    "Engine Code",
+    "OEM Number",
+    "Manufacturer",
+    "Warranty",
+    "Quantity",
+    "Package Contents",
+    "Includes",
+    "Notes"
+  ]
+}

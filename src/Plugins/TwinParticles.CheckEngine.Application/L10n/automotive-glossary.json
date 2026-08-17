@@ -1,0 +1,27 @@
+{
+  "description": "Controlled automotive EN→AR translation glossary (FR-940). Terms are injected into AI translation prompts and validated on candidate review.",
+  "terms": {
+    "water pump": "مضخة مياه",
+    "brake pad": "فحمات فرامل",
+    "oil filter": "فلتر زيت",
+    "air filter": "فلتر هواء",
+    "spark plug": "شمعة إشعال",
+    "timing belt": "سير التوقيت",
+    "alternator": "دينامو",
+    "radiator": "رديتر",
+    "shock absorber": "مساعد",
+    "control arm": "مقص",
+    "wheel bearing": "رولمان بلي",
+    "fuel pump": "طرمبة بنزين",
+    "thermostat": "ثرموستات",
+    "clutch": "كلتش",
+    "transmission": "ناقل حركة",
+    "suspension": "تعليق",
+    "exhaust": "عادم",
+    "catalytic converter": "محول حفاز",
+    "oxygen sensor": "حساس أكسجين",
+    "head gasket": "جوان رأس",
+    "radiator hose": "خرطوم رديتر",
+    "cabin filter": "فلتر مقصورة"
+  }
+}

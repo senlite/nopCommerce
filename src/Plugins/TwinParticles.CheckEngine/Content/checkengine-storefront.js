@@ -30,6 +30,7 @@
     searchUnavailable: 'Search is unavailable right now.',
     searchResultsCount: 'results',
     searchMode: 'Mode',
+    searchParsedIntent: 'Understood as',
     fitsLabel: 'Fits your vehicle',
     fitsHint: 'Verified against your active vehicle.',
     unfitLabel: 'Does not fit',
@@ -59,6 +60,11 @@
     assistantSend: 'Ask',
     assistantUnavailable: 'The assistant is unavailable right now.',
     assistantOpen: 'Open parts assistant',
+    assistantSources: 'Catalog sources',
+    assistantThinking: 'Searching the catalog…',
+    assistantRateLimited: 'Too many questions — please wait a moment and try again.',
+    assistantVehicleScoped: 'Answers are limited to parts verified for your active vehicle.',
+    assistantVehicleUnscoped: 'Select a vehicle to filter answers to verified-fit parts.',
     recommendTitle: 'Also fits your vehicle',
     recommendUnscopedTitle: 'You may also like',
     recommendFitmentBadge: 'Fits your vehicle'
@@ -336,6 +342,42 @@
     }
   }
 
+  function formatParsedIntent(intent) {
+    if (!intent) {
+      return '';
+    }
+
+    var parts = [];
+    var partTerms = intent.partTerms || intent.PartTerms || [];
+    if (partTerms.length) {
+      parts.push(partTerms.join(', '));
+    }
+
+    var vehicleBits = [];
+    var make = intent.make || intent.Make;
+    var model = intent.model || intent.Model;
+    var year = intent.modelYear != null ? intent.modelYear : intent.ModelYear;
+    if (make) {
+      vehicleBits.push(make);
+    }
+    if (model) {
+      vehicleBits.push(model);
+    }
+    if (year != null) {
+      vehicleBits.push(String(year));
+    }
+    if (vehicleBits.length) {
+      parts.push(vehicleBits.join(' '));
+    }
+
+    var oem = intent.oemNumber || intent.OemNumber;
+    if (oem) {
+      parts.push('OEM ' + oem);
+    }
+
+    return parts.join(' · ');
+  }
+
   function renderSearchResults(payload) {
     var hits = (payload && (payload.hits || payload.Hits)) || [];
     var modeUsed = payload && (payload.modeUsed || payload.ModeUsed);
@@ -382,12 +424,22 @@
       total = hits.length;
     }
 
+    var parsedIntent = payload && (payload.parsedIntent || payload.ParsedIntent);
+    var parsedIntentText = formatParsedIntent(parsedIntent);
+
     var header = '<div class="ce-results__header">' +
       '<span>' + escapeHtml(String(total)) + ' ' + escapeHtml(TEXT.searchResultsCount) + '</span>' +
       '<span class="ce-results__mode">' + escapeHtml(TEXT.searchMode) + ': ' +
       escapeHtml(MODE_NAMES[modeUsed] || String(modeUsed || '')) +
       (degraded ? ' · degraded' : '') +
       '</span></div>';
+
+    if (parsedIntentText) {
+      header += '<p class="ce-results__intent">' +
+        escapeHtml(TEXT.searchParsedIntent) + ': ' +
+        escapeHtml(parsedIntentText) +
+        '</p>';
+    }
 
     var facets = renderFacets((payload && (payload.facets || payload.Facets)) || []);
 
@@ -1235,16 +1287,75 @@
     });
   }
 
-  function appendAssistantLine(role, text) {
+  function appendAssistantLine(role, text, citations, options) {
     var log = document.getElementById('ce-assistant-log');
     if (!log) {
-      return;
+      return null;
     }
     var line = document.createElement('p');
     line.className = 'ce-assistant__line ce-assistant__line--' + role;
+    if (options && options.thinking) {
+      line.className += ' ce-assistant__line--thinking';
+    }
     line.textContent = text;
     log.appendChild(line);
+
+    if (role === 'assistant' && citations && citations.length) {
+      var heading = document.createElement('p');
+      heading.className = 'ce-assistant__sources-title';
+      heading.textContent = TEXT.assistantSources;
+      log.appendChild(heading);
+
+      var sources = document.createElement('ul');
+      sources.className = 'ce-assistant__citations';
+      citations.forEach(function (citation) {
+        var item = document.createElement('li');
+        var label;
+        var href;
+        if (citation && typeof citation === 'object') {
+          label = citation.name || citation.Name || ('#' + (citation.productId || citation.ProductId));
+          var seName = citation.seName || citation.SeName;
+          href = seName ? ('/' + seName) : null;
+          if (!href) {
+            var productId = citation.productId || citation.ProductId;
+            if (productId) {
+              href = '/search?q=' + encodeURIComponent('ProductId ' + productId);
+            }
+          }
+        } else {
+          label = String(citation);
+          var productMatch = label.match(/ProductId=(\d+)/i);
+          href = productMatch ? ('/search?q=' + encodeURIComponent('ProductId ' + productMatch[1])) : null;
+        }
+        if (href) {
+          var link = document.createElement('a');
+          link.href = href;
+          link.textContent = label;
+          item.appendChild(link);
+        } else {
+          item.textContent = label;
+        }
+        sources.appendChild(item);
+      });
+      log.appendChild(sources);
+    }
+
     log.scrollTop = log.scrollHeight;
+    return line;
+  }
+
+  function updateAssistantContext(vehicleId) {
+    var context = document.getElementById('ce-assistant-context');
+    if (!context) {
+      return;
+    }
+    if (vehicleId) {
+      context.textContent = TEXT.assistantVehicleScoped;
+      context.removeAttribute('hidden');
+    } else {
+      context.textContent = TEXT.assistantVehicleUnscoped;
+      context.removeAttribute('hidden');
+    }
   }
 
   function bindAssistant() {
@@ -1260,6 +1371,11 @@
       var open = panel.hasAttribute('hidden');
       if (open) {
         panel.removeAttribute('hidden');
+        loadGarageContext().then(function (ctx) {
+          var active = activeVehicleOf(ctx.garage);
+          var vehicleId = active && (active.vehicleConfigurationId || active.VehicleConfigurationId);
+          updateAssistantContext(vehicleId);
+        });
       } else {
         panel.setAttribute('hidden', 'hidden');
       }
@@ -1274,10 +1390,12 @@
       }
       appendAssistantLine('user', question);
       input.value = '';
+      var thinkingLine = appendAssistantLine('assistant', TEXT.assistantThinking, null, { thinking: true });
 
       loadGarageContext().then(function (ctx) {
         var active = activeVehicleOf(ctx.garage);
         var vehicleId = active && (active.vehicleConfigurationId || active.VehicleConfigurationId);
+        updateAssistantContext(vehicleId);
         return jsonFetch('/check-engine/assistant/ask', {
           method: 'POST',
           body: JSON.stringify({
@@ -1285,16 +1403,33 @@
             vehicleConfigurationId: vehicleId || null,
             locale: (document.documentElement.lang || 'en').split('-')[0]
           })
+        }).then(function (response) {
+          return { response: response, vehicleId: vehicleId };
         });
-      }).then(function (response) {
+      }).then(function (result) {
+        if (thinkingLine && thinkingLine.parentNode) {
+          thinkingLine.parentNode.removeChild(thinkingLine);
+        }
+        var response = result.response;
+        if (response.status === 429) {
+          appendAssistantLine('assistant', TEXT.assistantRateLimited);
+          return;
+        }
         return response.json().then(function (payload) {
           if (!response.ok || payload.errorCode) {
             appendAssistantLine('assistant', TEXT.assistantUnavailable);
             return;
           }
-          appendAssistantLine('assistant', payload.answer || payload.Answer || TEXT.assistantUnavailable);
+          var citations = payload.citations || payload.Citations || [];
+          appendAssistantLine(
+            'assistant',
+            payload.answer || payload.Answer || TEXT.assistantUnavailable,
+            citations);
         });
       }).catch(function () {
+        if (thinkingLine && thinkingLine.parentNode) {
+          thinkingLine.parentNode.removeChild(thinkingLine);
+        }
         appendAssistantLine('assistant', TEXT.assistantUnavailable);
       });
     });
@@ -1304,6 +1439,9 @@
     var rail = document.querySelector('[data-ce-theme="recommendations"]');
     var list = document.getElementById('ce-recommend-list');
     if (!rail || !list) {
+      return;
+    }
+    if (rail.getAttribute('data-ce-enable-recommendations') === 'false') {
       return;
     }
 
@@ -1335,10 +1473,12 @@
       hits.forEach(function (hit) {
         var item = document.createElement('li');
         var name = hit.name || hit.Name || ('#' + (hit.productId || hit.ProductId));
+        var seName = hit.seName || hit.SeName;
+        var href = seName ? ('/' + seName) : ('/search?q=' + encodeURIComponent(name));
         var badge = vehicleScoped === true
           ? '<span class="ce-recommend__badge">' + escapeHtml(TEXT.recommendFitmentBadge) + '</span> '
           : '';
-        item.innerHTML = badge + '<a href="/search?q=' + encodeURIComponent(name) + '">' + escapeHtml(name) + '</a>';
+        item.innerHTML = badge + '<a href="' + href + '">' + escapeHtml(name) + '</a>';
         list.appendChild(item);
       });
       if (list.children.length) {

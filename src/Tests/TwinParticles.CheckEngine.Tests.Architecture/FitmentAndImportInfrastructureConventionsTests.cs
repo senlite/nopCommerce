@@ -85,10 +85,11 @@ public class FitmentAndImportInfrastructureConventionsTests
         System.IO.File.Exists(path).Should().BeTrue();
 
         var source = System.IO.File.ReadAllText(path);
-        source.Should().Contain("[RowCount], ErrorSummary");
-        source.Should().Contain("[RowCount] = @rowCount");
+        source.Should().Contain("CheckEngineSql.QuoteIdentifier(\"RowCount\")");
         source.Should().NotContain(", RowCount, ErrorSummary");
         source.Should().NotContain("    RowCount = @rowCount");
+        source.Should().NotContain("`RowCount`");
+        source.Should().NotContain("[RowCount]");
     }
 
     [Test]

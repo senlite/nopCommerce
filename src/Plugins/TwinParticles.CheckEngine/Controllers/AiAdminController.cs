@@ -10,7 +10,11 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Ai;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Domain.Security;
+using TwinParticles.CheckEngine.Ai;
+using TwinParticles.CheckEngine.L10n;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -31,6 +35,9 @@ public sealed class AiAdminController : BasePluginController
     private readonly ISettingService _settingService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
     private readonly AiSpendAlertService _spendAlertService;
+    private readonly AutomotiveGlossaryService _glossaryService;
+    private readonly IAllowedSpecificationKeyCatalog _specificationKeyCatalog;
+    private readonly ICheckEngineAuditService _auditService;
 
     public AiAdminController(
         IAiUsageLedger usageLedger,
@@ -42,7 +49,10 @@ public sealed class AiAdminController : BasePluginController
         FitmentReviewService fitmentReviewService,
         ISettingService settingService,
         Nop.Services.Security.IPermissionService permissionService,
-        AiSpendAlertService spendAlertService)
+        AiSpendAlertService spendAlertService,
+        AutomotiveGlossaryService glossaryService,
+        IAllowedSpecificationKeyCatalog specificationKeyCatalog,
+        ICheckEngineAuditService auditService)
     {
         _usageLedger = usageLedger;
         _disclosureCatalog = disclosureCatalog;
@@ -54,6 +64,9 @@ public sealed class AiAdminController : BasePluginController
         _settingService = settingService;
         _permissionService = permissionService;
         _spendAlertService = spendAlertService;
+        _glossaryService = glossaryService;
+        _specificationKeyCatalog = specificationKeyCatalog;
+        _auditService = auditService;
     }
 
     private async Task<bool> AuthorizedAsync() =>
@@ -122,8 +135,14 @@ public sealed class AiAdminController : BasePluginController
         if (model is null || model.Id <= 0)
             return BadRequest();
 
-        var ok = await _contentCandidateService.ReviewAsync(model.Id, model.Approved, "admin", cancellationToken);
-        return ok ? Ok() : NotFound();
+        var result = await _contentCandidateService.ReviewAsync(model.Id, model.Approved, "admin", cancellationToken);
+        if (result.ReasonCode == "ai.review.not_found")
+            return NotFound();
+
+        if (!result.Success)
+            return BadRequest(new { reasonCode = result.ReasonCode });
+
+        return Ok();
     }
 
     [HttpGet]
@@ -190,6 +209,144 @@ public sealed class AiAdminController : BasePluginController
             usage,
             pendingContentCount = pendingContent.Count,
             pendingFitmentAiCount = pendingFitmentAi.Count
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GlossaryBoard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/GlossaryAdmin.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GlossaryData(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var overrides = AutomotiveGlossaryOverridesJson.Parse(settings.AutomotiveGlossaryOverridesJson);
+        var embedded = new AutomotiveGlossaryService().GetTerms();
+        var merged = _glossaryService.GetTerms();
+
+        var rows = merged
+            .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(pair => new
+            {
+                english = pair.Key,
+                arabic = pair.Value,
+                source = overrides.ContainsKey(pair.Key) ? "override" : "embedded"
+            });
+
+        return Json(new
+        {
+            embeddedCount = embedded.Count,
+            overrideCount = overrides.Count,
+            terms = rows
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveGlossary([FromBody] GlossarySaveModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (model?.Overrides is null)
+            return BadRequest();
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var before = settings.AutomotiveGlossaryOverridesJson;
+        settings.AutomotiveGlossaryOverridesJson = AutomotiveGlossaryOverridesJson.Serialize(model.Overrides);
+        await _settingService.SaveSettingAsync(settings);
+
+        await _auditService.AppendAsync(
+            "admin",
+            "glossary.overrides_saved",
+            "AutomotiveGlossary",
+            "global",
+            before,
+            settings.AutomotiveGlossaryOverridesJson,
+            cancellationToken);
+
+        return Json(new { saved = true, overrideCount = model.Overrides.Count });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SpecKeysBoard(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/SpecKeysAdmin.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SpecKeysData(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var overrides = SpecificationKeyOverridesJson.Parse(settings.SpecificationKeyOverridesJson);
+        var embedded = AllowedSpecificationKeyCatalog.GetEmbeddedKeys();
+        var merged = _specificationKeyCatalog.GetAllowedKeys();
+        var added = overrides.Add.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var activeRows = merged
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .Select(key => new
+            {
+                key,
+                source = added.Contains(key) ? "added" : "embedded"
+            });
+
+        var removedRows = overrides.Remove
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .Select(key => new { key, source = "removed" });
+
+        return Json(new
+        {
+            embeddedCount = embedded.Count,
+            addCount = overrides.Add.Count,
+            removeCount = overrides.Remove.Count,
+            mergedCount = merged.Count,
+            keys = activeRows.Concat(removedRows),
+            overrides = new
+            {
+                add = overrides.Add,
+                remove = overrides.Remove
+            }
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveSpecKeys([FromBody] SpecificationKeysSaveModel model, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (model is null)
+            return BadRequest();
+
+        var overrides = new SpecificationKeyOverrides
+        {
+            Add = model.Add ?? [],
+            Remove = model.Remove ?? []
+        };
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var before = settings.SpecificationKeyOverridesJson;
+        settings.SpecificationKeyOverridesJson = SpecificationKeyOverridesJson.Serialize(overrides);
+        await _settingService.SaveSettingAsync(settings);
+
+        await _auditService.AppendAsync(
+            "admin",
+            "specification_keys.overrides_saved",
+            "AllowedSpecificationKeys",
+            "global",
+            before,
+            settings.SpecificationKeyOverridesJson,
+            cancellationToken);
+
+        return Json(new
+        {
+            saved = true,
+            addCount = overrides.Add.Count,
+            removeCount = overrides.Remove.Count
         });
     }
 }

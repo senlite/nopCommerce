@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Libraries\Nop.Data\Nop.Data.csproj" />
     <ProjectReference Include="..\..\Plugins\TwinParticles.CheckEngine.Domain\TwinParticles.CheckEngine.Domain.csproj" />
     <ProjectReference Include="..\..\Plugins\TwinParticles.CheckEngine.Application\TwinParticles.CheckEngine.Application.csproj" />
     <ProjectReference Include="..\..\Plugins\TwinParticles.CheckEngine.Infrastructure\TwinParticles.CheckEngine.Infrastructure.csproj" />

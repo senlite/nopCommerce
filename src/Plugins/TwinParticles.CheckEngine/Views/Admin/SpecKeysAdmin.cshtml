@@ -1,0 +1,104 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.SpecKeys.Admin").Text;
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.SpecKeys.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("GlossaryBoard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Glossary.Admin")</a>
+        <a class="btn btn-secondary" href="@Url.Action("ReviewBoard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a>
+        <a class="btn btn-info" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.SpecKeys.Admin")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.SpecKeys.Hint")</p>
+                <p id="ce-speckeys-summary" class="small text-muted"></p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-speckeys-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.SpecKeys.Key")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.SpecKeys.Source")</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="ce-speckeys-overrides">@T("Plugins.TwinParticles.CheckEngine.SpecKeys.OverridesJson")</label>
+                    <textarea id="ce-speckeys-overrides" class="form-control" rows="8" spellcheck="false"></textarea>
+                </div>
+                <button id="ce-speckeys-save" type="button" class="btn btn-primary">@T("Admin.Common.Save")</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function headers(json) {
+    var h = { 'Accept': 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (token && token.value) h['RequestVerificationToken'] = token.value;
+    return h;
+  }
+  function render(data) {
+    document.getElementById('ce-speckeys-summary').textContent =
+      'Embedded: ' + data.embeddedCount +
+      ', added: ' + data.addCount +
+      ', removed: ' + data.removeCount +
+      ', active: ' + data.mergedCount;
+    var tbody = document.querySelector('#ce-speckeys-table tbody');
+    tbody.innerHTML = '';
+    (data.keys || []).forEach(function (row) {
+      var tr = document.createElement('tr');
+      if (row.source === 'removed') {
+        tr.className = 'text-muted';
+      }
+      tr.innerHTML =
+        '<td' + (row.source === 'removed' ? ' style="text-decoration:line-through;"' : '') + '>' + row.key + '</td>' +
+        '<td>' + row.source + '</td>';
+      tbody.appendChild(tr);
+    });
+    document.getElementById('ce-speckeys-overrides').value = JSON.stringify(
+      data.overrides || { add: [], remove: [] },
+      null,
+      2);
+  }
+  function load() {
+    fetch('/Admin/CheckEngine/AiAdmin/SpecKeysData', { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(render);
+  }
+  document.getElementById('ce-speckeys-save').addEventListener('click', function () {
+    var overrides;
+    try {
+      overrides = JSON.parse(document.getElementById('ce-speckeys-overrides').value || '{}');
+    } catch (e) {
+      alert('Invalid JSON');
+      return;
+    }
+    fetch('/Admin/CheckEngine/AiAdmin/SaveSpecKeys', {
+      method: 'POST',
+      headers: headers(true),
+      body: JSON.stringify({
+        add: overrides.add || [],
+        remove: overrides.remove || []
+      })
+    }).then(function () { load(); });
+  });
+  load();
+})();
+</script>

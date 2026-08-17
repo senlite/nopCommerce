@@ -19,15 +19,21 @@ public sealed class NopAiContentApplicator : IAiContentApplicator
     private readonly IProductService _productService;
     private readonly ILocalizedEntityService _localizedEntityService;
     private readonly ILanguageService _languageService;
+    private readonly ISpecificationAttributeService _specificationAttributeService;
+    private readonly IAllowedSpecificationKeyCatalog _specificationKeyCatalog;
 
     public NopAiContentApplicator(
         IProductService productService,
         ILocalizedEntityService localizedEntityService,
-        ILanguageService languageService)
+        ILanguageService languageService,
+        ISpecificationAttributeService specificationAttributeService,
+        IAllowedSpecificationKeyCatalog specificationKeyCatalog)
     {
         _productService = productService;
         _localizedEntityService = localizedEntityService;
         _languageService = languageService;
+        _specificationAttributeService = specificationAttributeService;
+        _specificationKeyCatalog = specificationKeyCatalog;
     }
 
     public async Task<AiContentApplyResult> ApplyAsync(AiGenerationCandidate candidate, CancellationToken cancellationToken)
@@ -69,12 +75,57 @@ public sealed class NopAiContentApplicator : IAiContentApplicator
         AiGenerationCandidate candidate,
         CancellationToken cancellationToken)
     {
-        if (await TryApplyLocalizedAsync(product, candidate, p => p.ShortDescription, cancellationToken))
+        var lines = ParseSpecificationLines(candidate.OutputText);
+        if (lines.Count == 0)
+        {
+            product.ShortDescription = candidate.OutputText.Trim();
+            await _productService.UpdateProductAsync(product);
             return AiContentApplyResult.Ok();
+        }
 
-        product.ShortDescription = candidate.OutputText.Trim();
-        await _productService.UpdateProductAsync(product);
-        return AiContentApplyResult.Ok();
+        var attributePage = await _specificationAttributeService.GetAllSpecificationAttributesAsync();
+        var attributes = attributePage.ToList();
+        var existingProductSpecs = await _specificationAttributeService.GetProductSpecificationAttributesAsync(product.Id);
+        var displayOrder = existingProductSpecs.Count;
+        var applied = 0;
+
+        foreach (var (key, value) in lines)
+        {
+            if (!_specificationKeyCatalog.IsAllowed(key))
+                continue;
+
+            var attribute = attributes.FirstOrDefault(x =>
+                x.Name.Equals(key, StringComparison.OrdinalIgnoreCase));
+
+            if (attribute is null)
+            {
+                attribute = new SpecificationAttribute
+                {
+                    Name = key,
+                    DisplayOrder = attributes.Count + applied + 1
+                };
+                await _specificationAttributeService.InsertSpecificationAttributeAsync(attribute);
+                attributes.Add(attribute);
+            }
+
+            var productSpecification = new ProductSpecificationAttribute
+            {
+                ProductId = product.Id,
+                AttributeType = SpecificationAttributeType.CustomText,
+                SpecificationAttributeOptionId = 0,
+                CustomValue = value,
+                AllowFiltering = false,
+                ShowOnProductPage = true,
+                DisplayOrder = displayOrder++
+            };
+
+            await _specificationAttributeService.InsertProductSpecificationAttributeAsync(productSpecification);
+            applied++;
+        }
+
+        return applied > 0
+            ? AiContentApplyResult.Ok()
+            : AiContentApplyResult.Fail("ai.apply.specification_empty");
     }
 
     private async Task<AiContentApplyResult> ApplyTranslationAsync(
@@ -193,5 +244,18 @@ public sealed class NopAiContentApplicator : IAiContentApplicator
 
         var value = element.GetString();
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static IReadOnlyList<(string Key, string Value)> ParseSpecificationLines(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return [];
+
+        return text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(line => line.Split(':', 2))
+            .Where(parts => parts.Length == 2)
+            .Select(parts => (parts[0].Trim(), parts[1].Trim()))
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Item1) && !string.IsNullOrWhiteSpace(pair.Item2))
+            .ToList();
     }
 }

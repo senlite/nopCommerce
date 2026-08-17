@@ -41,4 +41,19 @@ public sealed class CheckEnginePluginSettings : ISettings
 
     /// <summary>Semicolon-separated feature=ceiling pairs.</summary>
     public string? AiPerFeatureDailyTokenCeilings { get; set; }
+
+    /// <summary>JSON object of EN→AR glossary overrides merged onto the embedded catalog (FR-941).</summary>
+    public string? AutomotiveGlossaryOverridesJson { get; set; }
+
+    /// <summary>JSON object of EN→AR search synonym overrides merged onto the embedded catalog (FR-443).</summary>
+    public string? SearchSynonymOverridesJson { get; set; }
+
+    /// <summary>JSON object with add/remove arrays for allowed AI specification keys (FR-521).</summary>
+    public string? SpecificationKeyOverridesJson { get; set; }
+
+    /// <summary>Operator flag for accepting new supplier applications. Licence entitlement still gates APIs (FR-870).</summary>
+    public bool EnableMarketplace { get; set; }
+
+    /// <summary>Current operator terms version recorded on agreement acceptance (FR-851).</summary>
+    public string MarketplaceAgreementVersion { get; set; } = Domain.Marketplace.VendorAgreementVersions.Default;
 }

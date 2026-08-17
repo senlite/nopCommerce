@@ -195,6 +195,7 @@ else if (zone == "header_after")
                 "searchUnavailable": "@T("Plugins.TwinParticles.CheckEngine.Search.Unavailable")",
                 "searchResultsCount": "@T("Plugins.TwinParticles.CheckEngine.Search.ResultsCount")",
                 "searchMode": "@T("Plugins.TwinParticles.CheckEngine.Search.Mode")",
+                "searchParsedIntent": "@T("Plugins.TwinParticles.CheckEngine.Search.ParsedIntent")",
                 "fitsLabel": "@T("Plugins.TwinParticles.CheckEngine.Fitment.Fits")",
                 "fitsHint": "@T("Plugins.TwinParticles.CheckEngine.Fitment.Fits.Hint")",
                 "unfitLabel": "@T("Plugins.TwinParticles.CheckEngine.Fitment.DoesNotFit")",
@@ -222,6 +223,11 @@ else if (zone == "header_after")
                 "assistantSend": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Send")",
                 "assistantUnavailable": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Unavailable")",
                 "assistantOpen": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Open")",
+                "assistantSources": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Sources")",
+                "assistantThinking": "@T("Plugins.TwinParticles.CheckEngine.Assistant.Thinking")",
+                "assistantRateLimited": "@T("Plugins.TwinParticles.CheckEngine.Assistant.RateLimited")",
+                "assistantVehicleScoped": "@T("Plugins.TwinParticles.CheckEngine.Assistant.VehicleScoped")",
+                "assistantVehicleUnscoped": "@T("Plugins.TwinParticles.CheckEngine.Assistant.VehicleUnscoped")",
                 "recommendTitle": "@T("Plugins.TwinParticles.CheckEngine.Recommend.Title")",
                 "recommendUnscopedTitle": "@T("Plugins.TwinParticles.CheckEngine.Recommend.UnscopedTitle")",
                 "recommendFitmentBadge": "@T("Plugins.TwinParticles.CheckEngine.Recommend.FitmentBadge")"
@@ -236,6 +242,7 @@ else if (zone == "header_after")
             </button>
             <div id="ce-assistant-panel" class="ce-assistant__panel" hidden>
                 <h2 class="ce-assistant__title">@T("Plugins.TwinParticles.CheckEngine.Assistant.Title")</h2>
+                <p id="ce-assistant-context" class="ce-assistant__context text-muted" hidden></p>
                 <div id="ce-assistant-log" class="ce-assistant__log" role="log" aria-live="polite"></div>
                 <form id="ce-assistant-form" class="ce-assistant__form">
                     <label class="ce-visually-hidden" for="ce-assistant-input">@T("Plugins.TwinParticles.CheckEngine.Assistant.Placeholder")</label>
@@ -265,10 +272,13 @@ else if (zone == "productdetails_top")
             <span class="ce-fitment__detail">@T("Plugins.TwinParticles.CheckEngine.Fitment.SelectVehicle.Hint")</span>
         </span>
     </section>
-    <aside class="ce-root ce-recommend" data-ce-theme="recommendations" data-ce-product-id="@(Model.ProductId > 0 ? Model.ProductId.ToString() : string.Empty)" hidden>
-        <h2 class="ce-recommend__title">@T("Plugins.TwinParticles.CheckEngine.Recommend.Title")</h2>
-        <ul id="ce-recommend-list" class="ce-recommend__list"></ul>
-    </aside>
+    @if (Model.EnableRecommendations)
+    {
+        <aside class="ce-root ce-recommend" data-ce-theme="recommendations" data-ce-product-id="@(Model.ProductId > 0 ? Model.ProductId.ToString() : string.Empty)" data-ce-enable-recommendations="true" hidden>
+            <h2 class="ce-recommend__title">@T("Plugins.TwinParticles.CheckEngine.Recommend.Title")</h2>
+            <ul id="ce-recommend-list" class="ce-recommend__list"></ul>
+        </aside>
+    }
 }
 else if (zone == "home_page_top")
 {

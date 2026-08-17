@@ -32,19 +32,24 @@ public sealed class RecommendationService
 
         if (!vehicleConfigurationId.HasValue)
         {
-            var hits = await _productSearchReadRepository.SearchKeywordAsync(new SearchQuery
+            var hits = await _productSearchReadRepository.BrowseUnscopedAsync(new SearchQuery
             {
-                RawText = string.Empty,
                 Mode = SearchMode.Keyword,
                 WidenFitment = true,
                 Page = 1,
                 PageSize = Math.Max(pageSize * 4, 24)
             }, cancellationToken);
 
+            var unscopedSeedCategoryId = seedProductId.HasValue
+                ? hits.FirstOrDefault(hit => hit.ProductId == seedProductId.Value)?.CategoryId
+                : null;
+
             return new RecommendationResult
             {
                 VehicleScoped = false,
-                Hits = Rank(hits, seedCategoryId: null).Take(pageSize).ToList()
+                Hits = Rank(hits.Where(hit => !seedProductId.HasValue || hit.ProductId != seedProductId.Value), unscopedSeedCategoryId)
+                    .Take(pageSize)
+                    .ToList()
             };
         }
 

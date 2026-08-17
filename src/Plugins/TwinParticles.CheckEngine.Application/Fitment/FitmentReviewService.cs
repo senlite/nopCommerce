@@ -42,7 +42,10 @@ public sealed class FitmentReviewService
     public async Task<IReadOnlyList<FitmentClaim>> GetAiQueueAsync(CancellationToken cancellationToken)
     {
         var queue = await _readRepository.GetReviewQueueAsync(cancellationToken);
-        return queue.Where(claim => claim.SourceKindIsAi()).ToList();
+        return queue.Where(claim => claim.SourceKindIsAi()
+            && claim.IsActive
+            && !claim.IsPublished
+            && claim.Status != FitmentStatus.Rejected).ToList();
     }
 
     public async Task ApproveAsync(int claimId, CancellationToken cancellationToken, string actor = "system")
@@ -51,16 +54,20 @@ public sealed class FitmentReviewService
             throw new ArgumentException("Claim id must be positive.", nameof(claimId));
 
         var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
+        var publishStatus = ResolveApprovedStatus(claim);
+
         if (claim is not null && claim.SourceKindIsAi())
         {
             claim.Provenance.SourceKind = FitmentSourceKind.CuratorManual;
             claim.Provenance.SourceReference = "ai.review.promoted";
             claim.Provenance.CreatedBy = actor;
+            claim.Status = publishStatus;
             await _writeRepository.UpsertAsync(claim, cancellationToken);
         }
 
-        await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Fits, cancellationToken);
+        await _writeRepository.SetStatusAsync(claimId, publishStatus, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, true, cancellationToken);
+        await _reviewQueueRepository.DequeueAsync(claimId, "fitment.review.approved", cancellationToken);
 
         await _auditService.AppendAsync(
             actor,
@@ -68,7 +75,7 @@ public sealed class FitmentReviewService
             "FitmentClaim",
             claimId.ToString(),
             beforeJson: null,
-            afterJson: "{\"status\":\"Fits\",\"isPublished\":true}",
+            afterJson: $"{{\"status\":\"{publishStatus}\",\"isPublished\":true}}",
             cancellationToken);
 
         await AfterPublicationChangedAsync(claimId, cancellationToken);
@@ -81,7 +88,16 @@ public sealed class FitmentReviewService
 
         await _writeRepository.SetStatusAsync(claimId, FitmentStatus.Rejected, cancellationToken);
         await _writeRepository.SetPublishedAsync(claimId, false, cancellationToken);
-        await _reviewQueueRepository.EnqueueAsync(claimId, "fitment.rejected_by_reviewer", cancellationToken);
+        await _reviewQueueRepository.DequeueAsync(claimId, "fitment.review.rejected", cancellationToken);
+
+        var claim = await _readRepository.GetByIdAsync(claimId, cancellationToken);
+        if (claim is not null)
+        {
+            claim.IsActive = false;
+            claim.Status = FitmentStatus.Rejected;
+            claim.IsPublished = false;
+            await _writeRepository.UpsertAsync(claim, cancellationToken);
+        }
 
         await _auditService.AppendAsync(
             actor,
@@ -109,4 +125,12 @@ public sealed class FitmentReviewService
         if (_seoLandingRegenerationTrigger is not null)
             await _seoLandingRegenerationTrigger.OnFitmentPublicationChangedAsync(claim.ProductId, claim.VehicleConfigurationId, cancellationToken);
     }
+
+    private static FitmentStatus ResolveApprovedStatus(FitmentClaim? claim) =>
+        claim?.Status switch
+        {
+            FitmentStatus.DoesNotFit => FitmentStatus.DoesNotFit,
+            FitmentStatus.Fits => FitmentStatus.Fits,
+            _ => FitmentStatus.Fits
+        };
 }

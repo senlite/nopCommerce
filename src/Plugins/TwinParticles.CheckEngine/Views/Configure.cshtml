@@ -36,6 +36,29 @@
 
         <div class="card card-default">
             <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Configuration.Marketplace")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Marketplace.Hint")</p>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="EnableMarketplace" /></div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="EnableMarketplace" />
+                        <span asp-validation-for="EnableMarketplace"></span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3"><nop-label asp-for="MarketplaceAgreementVersion" /></div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="MarketplaceAgreementVersion" />
+                        <span asp-validation-for="MarketplaceAgreementVersion"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Configuration.Ai")</h3>
             </div>
             <div class="card-body">
@@ -137,6 +160,7 @@
                         <div class="form-check"><input asp-for="EnableSearchSemantic" class="form-check-input" /><label asp-for="EnableSearchSemantic" class="form-check-label"></label></div>
                         <div class="form-check"><input asp-for="EnableFitmentInference" class="form-check-input" /><label asp-for="EnableFitmentInference" class="form-check-label"></label></div>
                         <div class="form-check"><input asp-for="EnableCustomerAssistant" class="form-check-input" /><label asp-for="EnableCustomerAssistant" class="form-check-label"></label></div>
+                        <div class="form-check"><input asp-for="EnableRecommendations" class="form-check-input" /><label asp-for="EnableRecommendations" class="form-check-label"></label></div>
                     </div>
                 </div>
                 <div class="form-group row">
@@ -158,7 +182,8 @@
     'search.natural_language',
     'search.semantic',
     'fitment.inference',
-    'assistant.customer'
+    'assistant.customer',
+    'recommendations.fitment'
   ];
   var panel = document.getElementById('ce-ai-disclosure-panel');
   var ack = document.getElementById('AiDisclosureAcknowledged');

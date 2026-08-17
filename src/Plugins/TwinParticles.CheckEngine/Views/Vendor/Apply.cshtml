@@ -1,0 +1,73 @@
+@{
+    Layout = "_ColumnsOne";
+    ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply").Text;
+}
+
+<div class="page vendor-apply-page">
+    <div class="page-title">
+        <h1>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply")</h1>
+    </div>
+    <div class="page-body">
+        @Html.AntiForgeryToken()
+        <p>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Hint")</p>
+        <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Text")</p>
+        <div class="form-group">
+            <label for="ce-vendor-legal">@T("Plugins.TwinParticles.CheckEngine.Marketplace.LegalName")</label>
+            <input id="ce-vendor-legal" class="form-control" type="text" />
+        </div>
+        <div class="form-group">
+            <label for="ce-vendor-trading">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TradingName")</label>
+            <input id="ce-vendor-trading" class="form-control" type="text" />
+        </div>
+        <div class="form-group">
+            <label for="ce-vendor-email">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Email")</label>
+            <input id="ce-vendor-email" class="form-control" type="email" />
+        </div>
+        <div class="form-group">
+            <label for="ce-vendor-tax">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TaxIds")</label>
+            <input id="ce-vendor-tax" class="form-control" type="text" placeholder='["VAT-123"]' />
+        </div>
+        <div class="form-group">
+            <label for="ce-vendor-categories">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Categories")</label>
+            <input id="ce-vendor-categories" class="form-control" type="text" placeholder="cooling,filters" />
+        </div>
+        <div class="form-group">
+            <label for="ce-vendor-banking">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Banking")</label>
+            <input id="ce-vendor-banking" class="form-control" type="password" autocomplete="off" />
+        </div>
+        <label>
+            <input id="ce-vendor-agree" type="checkbox" checked="checked" />
+            @T("Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Accept")
+        </label>
+        <div class="buttons">
+            <button id="ce-vendor-submit" type="button" class="button-1">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Submit")</button>
+        </div>
+        <pre id="ce-vendor-apply-result" style="white-space: pre-wrap;"></pre>
+    </div>
+</div>
+
+<script>
+(function () {
+  var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  document.getElementById('ce-vendor-submit').addEventListener('click', function () {
+    var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+    if (token && token.value) headers['RequestVerificationToken'] = token.value;
+    fetch('/check-engine/vendor/apply', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        legalName: document.getElementById('ce-vendor-legal').value,
+        tradingName: document.getElementById('ce-vendor-trading').value,
+        contactEmail: document.getElementById('ce-vendor-email').value,
+        taxIdsJson: document.getElementById('ce-vendor-tax').value || '[]',
+        categoriesCsv: document.getElementById('ce-vendor-categories').value,
+        bankingDetails: document.getElementById('ce-vendor-banking').value,
+        submitForReview: true,
+        acceptAgreement: document.getElementById('ce-vendor-agree').checked
+      })
+    }).then(function (r) { return r.text(); }).then(function (text) {
+      document.getElementById('ce-vendor-apply-result').textContent = text;
+    });
+  });
+})();
+</script>

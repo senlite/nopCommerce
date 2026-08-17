@@ -14,4 +14,10 @@ public sealed class InMemoryFitmentReviewQueueRepository : IFitmentReviewQueueRe
         _events.Enqueue((claimId, reasonCode));
         return Task.CompletedTask;
     }
+
+    public Task DequeueAsync(int claimId, string reasonCode, CancellationToken cancellationToken)
+    {
+        _events.Enqueue((claimId, reasonCode));
+        return Task.CompletedTask;
+    }
 }

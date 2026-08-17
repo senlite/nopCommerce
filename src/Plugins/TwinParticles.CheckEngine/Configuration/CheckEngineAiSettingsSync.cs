@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Domain.Ai;
+using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Infrastructure.Ai;
 
 namespace TwinParticles.CheckEngine.Configuration;
@@ -28,6 +30,10 @@ public static class CheckEngineAiSettingsSync
         options.DisclosureAcknowledged = settings.AiDisclosureAcknowledged;
         options.EnabledFeatures = ParseEnabledFeatures(settings.AiEnabledFeatures);
         options.PerFeatureDailyTokenCeilings = ParsePerFeatureCeilings(settings.AiPerFeatureDailyTokenCeilings);
+        MarketplaceOnboardingOptions.Current.ApplicationsOpen = settings.EnableMarketplace;
+        MarketplaceOnboardingOptions.Current.CurrentAgreementVersion = string.IsNullOrWhiteSpace(settings.MarketplaceAgreementVersion)
+            ? VendorAgreementVersions.Default
+            : settings.MarketplaceAgreementVersion;
     }
 
     public static void CopyToSettings(CheckEnginePluginSettings settings)
