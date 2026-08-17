@@ -48,6 +48,11 @@ public static class CheckEngineSql
     public static string UtcNow()
         => IsMySql() ? "UTC_TIMESTAMP()" : "SYSUTCDATETIME()";
 
+    public static string DateAddDays(string dateExpression, int days)
+        => IsMySql()
+            ? $"DATE_ADD({dateExpression}, INTERVAL {days} DAY)"
+            : $"DATEADD(day, {days}, {dateExpression})";
+
     public static string ScalarSubqueryLimitOne(string selectExpression, string fromWhereOrderBy)
         => IsMySql()
             ? $"(SELECT {selectExpression} {fromWhereOrderBy} LIMIT 1)"

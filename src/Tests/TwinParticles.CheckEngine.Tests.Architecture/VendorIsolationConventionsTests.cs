@@ -62,6 +62,14 @@ public class VendorIsolationConventionsTests
     }
 
     [Test]
+    public void Vendor_Analytics_Sql_Should_Use_Portable_Date_Add()
+    {
+        var store = ReadInfrastructureFile("Marketplace", "SqlVendorAnalyticsStore.cs");
+        store.Should().Contain("CheckEngineSql.DateAddDays");
+        store.Should().NotContain("DATEADD(");
+    }
+
+    [Test]
     public void Configure_Should_Run_Upgrade_When_Marketplace_Is_Enabled()
     {
         var configure = ReadPluginFile("Controllers", "CheckEngineController.cs");

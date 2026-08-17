@@ -143,7 +143,7 @@ SELECT
     COUNT(DISTINCT s.Id) AS TotalShipments,
     COUNT(DISTINCT CASE
         WHEN s.ShippedDateUtc IS NOT NULL
-         AND s.ShippedDateUtc <= DATEADD(day, {slaDays}, o.CreatedOnUtc)
+         AND s.ShippedDateUtc <= {CheckEngineSql.DateAddDays("o.CreatedOnUtc", slaDays)}
         THEN s.Id END) AS OnTimeShipments
 FROM Shipment s
 INNER JOIN {orderTable} o ON o.Id = s.OrderId
