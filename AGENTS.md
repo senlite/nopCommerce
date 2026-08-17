@@ -109,3 +109,9 @@ only cloud-specific caveats.
 ### Frontend assets (optional)
 - Prebuilt assets ship in `wwwroot`; Node is not required to run. To rebuild them:
   `cd src/Presentation/Nop.Web && npm install && npx gulp`.
+
+### OneDrive artifact uploads (optional)
+- After saving walkthrough recordings or screenshots with `RecordScreen` (mode `SAVE_RECORDING`), upload them to OneDrive when the environment secret `RCLONE_CONFIG_B64` is configured:
+  `bash scripts/upload-artifacts-to-onedrive.sh`
+- One-time setup (OAuth on your PC, base64-encode `rclone.conf`, add secrets in Cursor → Cloud Agents → Environments) is documented in `docs/cloud-agent-onedrive-setup.md`.
+- Uploads go to `CheckEngine/AgentArtifacts/YYYY-MM-DD/{conversation-id}/` and the script prints share links via `rclone link`.
