@@ -30,22 +30,34 @@ assemble_rclone_config_b64() {
 
 write_rclone_config_from_secrets() {
   local target="${1:-${HOME}/.config/rclone/rclone.conf}"
-  local b64 dir
+  local b64 dir decoded
 
   if ! b64="$(assemble_rclone_config_b64)"; then
     return 1
   fi
 
+  # Strip accidental whitespace/newlines from dashboard paste.
+  b64="${b64//$'\n'/}"
+  b64="${b64//$'\r'/}"
+  b64="${b64// /}"
+
   dir="$(dirname "$target")"
   mkdir -p "$dir"
 
-  if printf '%s' "$b64" | base64 -d > "$target" 2>/dev/null; then
-    chmod 600 "$target"
-    return 0
+  if ! decoded="$(printf '%s' "$b64" | base64 -d 2>/dev/null)"; then
+    rm -f "$target"
+    return 2
   fi
 
-  rm -f "$target"
-  return 2
+  # Valid rclone.conf is INI text starting with [remote_name].
+  if [[ ! "$decoded" =~ ^\[.+\] ]] || [[ ! "$decoded" =~ type[[:space:]]*=[[:space:]]*onedrive ]]; then
+    rm -f "$target"
+    return 3
+  fi
+
+  printf '%s' "$decoded" > "$target"
+  chmod 600 "$target"
+  return 0
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

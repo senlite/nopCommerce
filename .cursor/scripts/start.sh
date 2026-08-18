@@ -16,7 +16,18 @@ if write_rclone_config_from_secrets "${RCLONE_DIR}/rclone.conf"; then
     echo "[cloud-agent start] Wrote rclone config from RCLONE_CONFIG_B64."
   fi
 elif [[ -n "${RCLONE_CONFIG_B64:-}" || -n "${RCLONE_CONFIG_B64_2:-}" ]]; then
-  echo "[cloud-agent start] RCLONE_CONFIG_B64 secret(s) are not valid base64; OneDrive upload disabled." >&2
+  rm -f "${RCLONE_DIR}/rclone.conf"
+  cat >&2 <<'EOF'
+[cloud-agent start] RCLONE_CONFIG_B64 secret(s) are invalid.
+
+Decoded config must be your real rclone.conf (INI starting with [onedrive]).
+Re-run on your PC:
+
+  bash scripts/split-rclone-config-for-cursor.sh
+
+Paste the printed chunks into RCLONE_CONFIG_B64 and RCLONE_CONFIG_B64_2.
+Do not use example/test output from docs or agent logs.
+EOF
 elif [[ ! -f "${RCLONE_DIR}/rclone.conf" ]]; then
   echo "[cloud-agent start] OneDrive upload not configured (missing RCLONE_CONFIG_B64 secret)." >&2
 fi
