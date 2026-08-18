@@ -648,10 +648,330 @@
     }
   }
 
+  function statusBadge(status) {
+    var s = (status || '').toString();
+    var cls = 'ce-mp-badge--muted';
+    if (/active|reconciled|finalized|pushed/i.test(s)) cls = 'ce-mp-badge--good';
+    else if (/review|underreview|draft|applied/i.test(s)) cls = 'ce-mp-badge--info';
+    else if (/reject|suspend|closed/i.test(s)) cls = 'ce-mp-badge--warn';
+    return '<span class="ce-mp-badge ' + cls + '">' + s + '</span>';
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString();
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function formatMoney(v) {
+    return v == null ? '—' : Number(v).toFixed(2);
+  }
+
+  function initVendorReview(root) {
+    var i18n = readI18n(root);
+    var token = root.querySelector('input[name="__RequestVerificationToken"]');
+    var alert = root.querySelector('[data-ce-review-alert]');
+    var tbody = root.querySelector('[data-ce-review-body]');
+
+    function loadQueue() {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="ce-mp-empty ce-mp-loading">' + (i18n.loading || 'Loading…') + '</td></tr>';
+      fetch(root.getAttribute('data-ce-queue-url') || '/Admin/CheckEngine/VendorAdmin/Queue', { headers: headers(token, false) })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          if (!tbody) return;
+          tbody.innerHTML = '';
+          if (!res.ok) {
+            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.errorLoad || 'Could not load queue');
+            return;
+          }
+          var rows = res.body || [];
+          if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="ce-mp-empty">' + (i18n.empty || 'No applications in queue') + '</td></tr>';
+            return;
+          }
+          rows.forEach(function (row) {
+            var vendor = pick(row, 'vendor', 'Vendor') || {};
+            var id = pick(vendor, 'id', 'Id');
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+              '<td class="ce-code">' + id + '</td>' +
+              '<td><strong>' + (pick(vendor, 'legalName', 'LegalName') || '') + '</strong></td>' +
+              '<td>' + (pick(vendor, 'contactEmail', 'ContactEmail') || '') + '</td>' +
+              '<td>' + (pick(vendor, 'categoriesCsv', 'CategoriesCsv') || '') + '</td>' +
+              '<td>' + statusBadge(pick(vendor, 'status', 'Status')) + '</td>' +
+              '<td>' + (pick(row, 'acceptedAgreementVersion', 'AcceptedAgreementVersion') || '—') + '</td>' +
+              '<td>' + ((pick(vendor, 'hasBankingDetails', 'HasBankingDetails')) ? (i18n.yes || 'Yes') : (i18n.no || 'No')) + '</td>' +
+              '<td class="ce-mp-actions">' +
+              '<button type="button" class="btn btn-sm btn-secondary" data-act="Submit">' + (i18n.review || 'Review') + '</button> ' +
+              '<button type="button" class="btn btn-sm btn-success" data-act="Approve">' + (i18n.approve || 'Approve') + '</button> ' +
+              '<button type="button" class="btn btn-sm btn-danger" data-act="Reject">' + (i18n.reject || 'Reject') + '</button>' +
+              '</td>';
+            tr.querySelectorAll('button').forEach(function (btn) {
+              btn.addEventListener('click', function () {
+                act(btn.getAttribute('data-act'), id);
+              });
+            });
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function act(action, vendorId) {
+      var notes = null;
+      if (action === 'Reject') {
+        notes = window.prompt(i18n.rejectNotes || 'Rejection notes (optional):', '');
+        if (notes === null) return;
+      }
+      fetch('/Admin/CheckEngine/VendorAdmin/' + action, {
+        method: 'POST',
+        headers: headers(token, true),
+        body: JSON.stringify({ vendorId: vendorId, notes: notes })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          if (res.ok) {
+            showAlert(alert, 'success', (i18n.actionOk || 'Updated') + ' #' + vendorId);
+            loadQueue();
+          } else {
+            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.actionFail || 'Action failed');
+          }
+        });
+    }
+
+    var refresh = root.querySelector('[data-ce-review-refresh]');
+    if (refresh) refresh.addEventListener('click', loadQueue);
+    loadQueue();
+  }
+
+  function initScoreboard(root) {
+    var i18n = readI18n(root);
+    var token = root.querySelector('input[name="__RequestVerificationToken"]');
+    var tbody = root.querySelector('[data-ce-scoreboard-body]');
+    var summary = root.querySelector('[data-ce-scoreboard-summary]');
+
+    fetch('/Admin/CheckEngine/VendorAdmin/Scorecards', { headers: headers(token, false) })
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        if (summary) {
+          summary.innerHTML =
+            statCard(i18n.vendors || 'Active vendors', (rows || []).length) +
+            statCard(i18n.ordersSample || 'Orders sampled', sumField(rows, 'orderSampleSize', 'OrderSampleSize'));
+        }
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (!rows || !rows.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="ce-mp-empty">' + (i18n.empty || 'No scorecard data yet') + '</td></tr>';
+          return;
+        }
+        rows.forEach(function (row) {
+          var tr = document.createElement('tr');
+          var name = pick(row, 'vendorName', 'VendorName') || pick(row, 'vendorId', 'VendorId');
+          tr.innerHTML =
+            '<td><strong>' + name + '</strong><div class="ce-code">#' + (pick(row, 'vendorId', 'VendorId') || '') + '</div></td>' +
+            '<td>' + metricCell(pick(row, 'fillRate', 'FillRate'), true) + '</td>' +
+            '<td>' + metricCell(pick(row, 'cancelRate', 'CancelRate'), false, true) + '</td>' +
+            '<td>' + metricCell(pick(row, 'claimRejectionRate', 'ClaimRejectionRate'), false, true) + '</td>' +
+            '<td>' + metricCell(pick(row, 'onTimeShipmentRate', 'OnTimeShipmentRate'), true) + '</td>' +
+            '<td>' + (pick(row, 'orderSampleSize', 'OrderSampleSize') || 0) + '</td>';
+          tbody.appendChild(tr);
+        });
+      });
+
+    function sumField(rows, camel, pascal) {
+      return (rows || []).reduce(function (acc, row) {
+        return acc + (pick(row, camel, pascal) || 0);
+      }, 0);
+    }
+
+    function metricCell(value, goodHigh, warn) {
+      var pctVal = value == null ? 0 : Math.round(value * 100);
+      var fillClass = warn ? 'ce-mp-metric__fill--warn' : goodHigh ? 'ce-mp-metric__fill--good' : 'ce-mp-metric__fill';
+      return (
+        '<div class="ce-mp-metric">' +
+        '<div class="ce-mp-metric__head"><span>' + pct(value) + '</span></div>' +
+        '<div class="ce-mp-metric__bar"><div class="ce-mp-metric__fill ' + fillClass + '" style="inline-size:' + pctVal + '%"></div></div>' +
+        '</div>'
+      );
+    }
+  }
+
+  function initPayout(root) {
+    var i18n = readI18n(root);
+    var token = root.querySelector('input[name="__RequestVerificationToken"]');
+    var alert = root.querySelector('[data-ce-payout-alert]');
+    var vendorSelect = root.querySelector('[data-ce-payout-vendor]');
+    var tbody = root.querySelector('[data-ce-payout-body]');
+    var detail = root.querySelector('[data-ce-payout-detail]');
+    var selectedId = 0;
+
+    function loadVendors() {
+      if (!vendorSelect) return;
+      fetch('/Admin/CheckEngine/VendorAdmin/Scorecards', { headers: headers(token, false) })
+        .then(function (r) { return r.json(); })
+        .then(function (list) {
+          vendorSelect.innerHTML = '';
+          (list || []).forEach(function (row) {
+            var id = pick(row, 'vendorId', 'VendorId');
+            if (!id) return;
+            var opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = id + ' — ' + (pick(row, 'vendorName', 'VendorName') || ('Vendor ' + id));
+            vendorSelect.appendChild(opt);
+          });
+          loadStatements();
+        });
+    }
+
+    function currentVendorId() {
+      return parseInt(vendorSelect ? vendorSelect.value : '0', 10) || 0;
+    }
+
+    function loadStatements() {
+      var vendorId = currentVendorId();
+      if (!vendorId || !tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="ce-mp-empty ce-mp-loading">' + (i18n.loading || 'Loading…') + '</td></tr>';
+      fetch('/Admin/CheckEngine/PayoutAdmin/List?vendorId=' + vendorId, { headers: headers(token, false) })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) {
+          tbody.innerHTML = '';
+          if (!rows || !rows.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="ce-mp-empty">' + (i18n.empty || 'No statements') + '</td></tr>';
+            if (detail) detail.hidden = true;
+            return;
+          }
+          rows.forEach(function (stmt) {
+            var id = pick(stmt, 'id', 'Id');
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+              '<td class="ce-code">' + id + '</td>' +
+              '<td>' + formatDate(pick(stmt, 'periodStartUtc', 'PeriodStartUtc')) + ' – ' + formatDate(pick(stmt, 'periodEndUtc', 'PeriodEndUtc')) + '</td>' +
+              '<td>' + formatMoney(pick(stmt, 'grossSales', 'GrossSales')) + '</td>' +
+              '<td>' + formatMoney(pick(stmt, 'totalCommission', 'TotalCommission')) + '</td>' +
+              '<td>' + formatMoney(pick(stmt, 'netPayout', 'NetPayout')) + '</td>' +
+              '<td>' + statusBadge(pick(stmt, 'status', 'Status')) + '</td>' +
+              '<td><button type="button" class="btn btn-sm btn-secondary" data-statement-id="' + id + '">' + (i18n.view || 'View') + '</button></td>';
+            tr.querySelector('button').addEventListener('click', function () {
+              selectedId = id;
+              showDetail(stmt);
+              tbody.querySelectorAll('tr').forEach(function (r) { r.classList.remove('ce-mp-row--selected'); });
+              tr.classList.add('ce-mp-row--selected');
+            });
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function showDetail(stmt) {
+      if (!detail) return;
+      detail.hidden = false;
+      detail.querySelector('[data-ce-payout-statement-id]').textContent = '#' + pick(stmt, 'id', 'Id');
+      detail.querySelector('[data-ce-payout-gross]').textContent = formatMoney(pick(stmt, 'grossSales', 'GrossSales'));
+      detail.querySelector('[data-ce-payout-commission]').textContent = formatMoney(pick(stmt, 'totalCommission', 'TotalCommission'));
+      detail.querySelector('[data-ce-payout-refunds]').textContent = formatMoney(pick(stmt, 'totalRefunds', 'TotalRefunds'));
+      detail.querySelector('[data-ce-payout-adjustments]').textContent = formatMoney(pick(stmt, 'totalAdjustments', 'TotalAdjustments'));
+      detail.querySelector('[data-ce-payout-net]').textContent = formatMoney(pick(stmt, 'netPayout', 'NetPayout'));
+      detail.querySelector('[data-ce-payout-erp]').textContent = pick(stmt, 'erpReferenceId', 'ErpReferenceId') || '—';
+      detail.querySelector('[data-ce-payout-status]').innerHTML = statusBadge(pick(stmt, 'status', 'Status'));
+    }
+
+    function postAction(path, onSuccess) {
+      if (!selectedId) {
+        showAlert(alert, 'error', i18n.selectStatement || 'Select a statement first');
+        return;
+      }
+      fetch('/Admin/CheckEngine/PayoutAdmin/' + path, {
+        method: 'POST',
+        headers: headers(token, true),
+        body: JSON.stringify({ statementId: selectedId })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          if (res.ok) {
+            showAlert(alert, 'success', i18n.actionOk || 'Updated');
+            if (onSuccess) onSuccess(res.body);
+            loadStatements();
+          } else {
+            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.actionFail || 'Action failed');
+          }
+        });
+    }
+
+    var generateBtn = root.querySelector('[data-ce-payout-generate]');
+    if (generateBtn) {
+      generateBtn.addEventListener('click', function () {
+        var vendorId = currentVendorId();
+        var startInput = root.querySelector('[data-ce-payout-start]');
+        var endInput = root.querySelector('[data-ce-payout-end]');
+        var end = endInput && endInput.value ? new Date(endInput.value) : new Date();
+        var start = startInput && startInput.value ? new Date(startInput.value) : new Date(end.getTime() - 30 * 86400000);
+        setLoading(generateBtn, true, i18n.generating || 'Generating…');
+        fetch('/Admin/CheckEngine/PayoutAdmin/Generate', {
+          method: 'POST',
+          headers: headers(token, true),
+          body: JSON.stringify({ vendorId: vendorId, periodStartUtc: start.toISOString(), periodEndUtc: end.toISOString() })
+        })
+          .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+          .then(function (res) {
+            setLoading(generateBtn, false);
+            if (res.ok) {
+              showAlert(alert, 'success', (i18n.generated || 'Statement created') + ' #' + pick(res.body, 'id', 'Id'));
+              loadStatements();
+            } else {
+              showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.actionFail || 'Generate failed');
+            }
+          });
+      });
+    }
+
+    var finalizeBtn = root.querySelector('[data-ce-payout-finalize]');
+    if (finalizeBtn) finalizeBtn.addEventListener('click', function () {
+      postAction('Finalize', showDetail);
+    });
+    var pushBtn = root.querySelector('[data-ce-payout-push]');
+    if (pushBtn) pushBtn.addEventListener('click', function () {
+      postAction('PushErp', showDetail);
+    });
+    var reconcileBtn = root.querySelector('[data-ce-payout-reconcile]');
+    if (reconcileBtn) reconcileBtn.addEventListener('click', function () {
+      postAction('Reconcile', function (body) {
+        if (detail) {
+          var recon = root.querySelector('[data-ce-payout-recon]');
+          if (recon) {
+            recon.hidden = false;
+            recon.textContent = JSON.stringify(body, null, 2);
+          }
+        }
+      });
+    });
+
+    if (vendorSelect) vendorSelect.addEventListener('change', loadStatements);
+    var refresh = root.querySelector('[data-ce-payout-refresh]');
+    if (refresh) refresh.addEventListener('click', loadStatements);
+
+    var endDefault = root.querySelector('[data-ce-payout-end]');
+    var startDefault = root.querySelector('[data-ce-payout-start]');
+    if (endDefault && !endDefault.value) {
+      var now = new Date();
+      endDefault.value = now.toISOString().slice(0, 10);
+      if (startDefault) {
+        var start = new Date(now.getTime() - 30 * 86400000);
+        startDefault.value = start.toISOString().slice(0, 10);
+      }
+    }
+
+    loadVendors();
+  }
+
   function init() {
     document.querySelectorAll('[data-ce-page="apply"]').forEach(initApply);
     document.querySelectorAll('[data-ce-page="dashboard"]').forEach(initDashboard);
     document.querySelectorAll('[data-ce-page="commission"]').forEach(initCommission);
+    document.querySelectorAll('[data-ce-page="vendor-review"]').forEach(initVendorReview);
+    document.querySelectorAll('[data-ce-page="scoreboard"]').forEach(initScoreboard);
+    document.querySelectorAll('[data-ce-page="payout"]').forEach(initPayout);
   }
 
   if (document.readyState === 'loading') {

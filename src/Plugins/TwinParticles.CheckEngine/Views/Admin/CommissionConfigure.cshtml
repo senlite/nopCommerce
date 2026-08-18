@@ -3,8 +3,8 @@
     NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Commission.Configure").Text;
     var vendorId = (int)(ViewBag.VendorId ?? 0);
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.js", excludeFromBundle: true);
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_MarketplaceAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure")</h1>
@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<section class="content" data-ce-page="commission">
+<section class="content ce-marketplace-admin" data-ce-page="commission">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
         <input type="hidden" data-ce-vendor-id value="@vendorId" />

@@ -446,6 +446,61 @@
   min-inline-size: 8rem;
 }
 
+/* ---------- Status badges ---------- */
+
+.ce-mp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  font-size: var(--ce-font-size-xs);
+  font-weight: var(--ce-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: var(--ce-radius-pill, 999px);
+  border: 1px solid var(--ce-border-hairline);
+  background: var(--ce-surface-sunken);
+  color: var(--ce-text-muted);
+}
+
+.ce-mp-badge--good {
+  color: var(--ce-fit-fits);
+  border-color: color-mix(in srgb, var(--ce-fit-fits) 45%, var(--ce-border-hairline));
+  background: color-mix(in srgb, var(--ce-fit-fits) 12%, var(--ce-surface-raised));
+}
+
+.ce-mp-badge--warn {
+  color: var(--ce-status-warning);
+  border-color: color-mix(in srgb, var(--ce-status-warning) 45%, var(--ce-border-hairline));
+  background: color-mix(in srgb, var(--ce-status-warning) 12%, var(--ce-surface-raised));
+}
+
+.ce-mp-badge--muted {
+  color: var(--ce-text-muted);
+}
+
+.ce-mp-badge--info {
+  color: var(--ce-action-primary);
+  border-color: color-mix(in srgb, var(--ce-action-primary) 35%, var(--ce-border-hairline));
+  background: color-mix(in srgb, var(--ce-action-primary) 10%, var(--ce-surface-raised));
+}
+
+.ce-marketplace-admin .ce-mp-panel,
+.ce-marketplace-admin .ce-mp-table-wrap {
+  margin-block-end: var(--ce-space-4);
+}
+
+.ce-marketplace-admin .card-body > .ce-mp-callout {
+  margin-block-start: 0;
+}
+
+.ce-mp-row--selected td {
+  background: color-mix(in srgb, var(--ce-action-primary) 10%, var(--ce-surface-raised));
+}
+
+.ce-mp-actions {
+  white-space: nowrap;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 991px) {
