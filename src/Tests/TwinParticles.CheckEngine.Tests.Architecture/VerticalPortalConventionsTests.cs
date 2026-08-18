@@ -29,6 +29,19 @@ public class VerticalPortalConventionsTests
     }
 
     [Test]
+    public void Portal_Controllers_Should_Use_Account_Based_Access()
+    {
+        var workshop = ReadPluginFile("Controllers", "WorkshopController.cs");
+        var fleet = ReadPluginFile("Controllers", "FleetController.cs");
+        var dealer = ReadPluginFile("Controllers", "DealerController.cs");
+
+        workshop.Should().Contain("VerticalPortalAccessService");
+        fleet.Should().Contain("VerticalPortalAccessService");
+        dealer.Should().Contain("VerticalPortalAccessService");
+        workshop.Should().Contain("PortalErrorCodes.AccessUnauthenticated");
+    }
+
+    [Test]
     public void Portal_Services_Should_Call_Fitment_Evaluation_Not_Storage()
     {
         var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");

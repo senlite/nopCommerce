@@ -7,7 +7,10 @@
     await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalAssets.cshtml");
 }
 
-<div class="page workshop-portal-page ce-root ce-marketplace" dir="@(isRtl ? "rtl" : "ltr")" data-ce-page="workshop">
+<div class="page workshop-portal-page ce-root ce-marketplace" dir="@(isRtl ? "rtl" : "ltr")" data-ce-page="workshop"
+     data-ce-error-login="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.Unauthenticated")"
+     data-ce-error-provision="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.NotProvisioned")"
+     data-ce-error-generic="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.Generic")">
     <div class="page-title">
         <h1>@T("Plugins.TwinParticles.CheckEngine.Workshop.Title")</h1>
     </div>

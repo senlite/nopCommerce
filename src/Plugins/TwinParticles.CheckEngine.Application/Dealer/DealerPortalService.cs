@@ -171,6 +171,12 @@ public sealed class DealerPortalService
         };
     }
 
+    public async Task<int?> ResolveDealerAccountIdForClaimAsync(int claimId, CancellationToken cancellationToken)
+    {
+        var claim = await _repository.GetWarrantyClaimAsync(claimId, cancellationToken);
+        return claim?.DealerAccountId;
+    }
+
     private Task AuditAsync(string action, int entityId, CancellationToken cancellationToken)
         => _auditService.AppendAsync(
             "check-engine",

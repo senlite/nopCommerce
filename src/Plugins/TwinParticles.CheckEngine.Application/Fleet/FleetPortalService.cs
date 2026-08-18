@@ -207,6 +207,12 @@ public sealed class FleetPortalService
         };
     }
 
+    public async Task<int?> ResolveFleetAccountIdForRequestAsync(int requestId, CancellationToken cancellationToken)
+    {
+        var request = await _repository.GetApprovalRequestAsync(requestId, cancellationToken);
+        return request?.FleetAccountId;
+    }
+
     private Task AuditAsync(string action, int entityId, CancellationToken cancellationToken)
         => _auditService.AppendAsync(
             "check-engine",

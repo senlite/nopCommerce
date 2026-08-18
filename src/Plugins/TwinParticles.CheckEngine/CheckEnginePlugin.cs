@@ -470,7 +470,17 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Portal.Admin.DisplayName"] = "Display name",
             ["Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionWorkshop"] = "Provision workshop account",
             ["Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionFleet"] = "Provision fleet account",
-            ["Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionDealer"] = "Provision dealer account"
+            ["Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionDealer"] = "Provision dealer account",
+            ["Plugins.TwinParticles.CheckEngine.Portal.Error.Unauthenticated"] = "Log in to access this portal.",
+            ["Plugins.TwinParticles.CheckEngine.Portal.Error.NotProvisioned"] = "No trade account is linked to your customer profile. Ask your operator to provision one.",
+            ["Plugins.TwinParticles.CheckEngine.Portal.Error.Generic"] = "Unable to load the portal dashboard.",
+            ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Title"] = "Licence & entitlements",
+            ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint"] = "Activate a signed ce-lic-v1 bundle. Enterprise unlocks fleet and dealer portals.",
+            ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Key"] = "Licence key",
+            ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Activate"] = "Activate",
+            ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Heartbeat"] = "Record heartbeat",
+            ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Status"] = "Status",
+            ["Plugins.TwinParticles.CheckEngine.Dashboard.PortalLinks"] = "Vertical portals"
         };
 
         // English is the safe default for every installed language. Arabic-specific values then
@@ -849,6 +859,16 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionWorkshop"] = "إنشاء حساب ورشة",
         ["Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionFleet"] = "إنشاء حساب أسطول",
         ["Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionDealer"] = "إنشاء حساب وكيل",
+        ["Plugins.TwinParticles.CheckEngine.Portal.Error.Unauthenticated"] = "سجّل الدخول للوصول إلى هذه البوابة.",
+        ["Plugins.TwinParticles.CheckEngine.Portal.Error.NotProvisioned"] = "لا يوجد حساب تجاري مرتبط بملفك. اطلب من المشغّل إنشاء حساب.",
+        ["Plugins.TwinParticles.CheckEngine.Portal.Error.Generic"] = "تعذّر تحميل لوحة البوابة.",
+        ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Title"] = "الترخيص والصلاحيات",
+        ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint"] = "فعّل حزمة ce-lic-v1 الموقّعة. إصدار Enterprise يفتح بوابات الأسطول والوكيل.",
+        ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Key"] = "مفتاح الترخيص",
+        ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Activate"] = "تفعيل",
+        ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Heartbeat"] = "تسجيل نبضة",
+        ["Plugins.TwinParticles.CheckEngine.Licence.Panel.Status"] = "الحالة",
+        ["Plugins.TwinParticles.CheckEngine.Dashboard.PortalLinks"] = "البوابات العمودية",
     };
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)

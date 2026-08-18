@@ -76,7 +76,10 @@ public sealed class DiagnosticsAdminController : BasePluginController
                 licence.LastHeartbeatUtc,
                 licence.ReasonCode,
                 licence.Tier,
-                licence.MarketplaceModuleEntitlement
+                licence.MarketplaceModuleEntitlement,
+                licence.WorkshopPortalEntitlement,
+                licence.FleetPortalEntitlement,
+                licence.DealerPortalEntitlement
             },
             searchIndexHealthy = searchHealthy,
             redacted = true

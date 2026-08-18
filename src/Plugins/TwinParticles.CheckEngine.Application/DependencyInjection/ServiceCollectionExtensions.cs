@@ -120,6 +120,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<FleetPortalService>();
         services.AddScoped<DealerPortalService>();
         services.AddScoped<PortalAdminService>();
+        services.AddScoped<VerticalPortalAccessService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<ErpInboundWebhookService>();
         services.AddScoped<CheckEngineHealthService>();

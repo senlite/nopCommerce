@@ -23,6 +23,18 @@
     el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
   }
 
+  function portalErrorMessage(root, err) {
+    var code = err && err.errorCode;
+    var map = {
+      'portal.access_unauthenticated': root.getAttribute('data-ce-error-login'),
+      'portal.account_not_provisioned': root.getAttribute('data-ce-error-provision'),
+      'workshop.not_found': root.getAttribute('data-ce-error-provision'),
+      'fleet.not_found': root.getAttribute('data-ce-error-provision'),
+      'dealer.not_found': root.getAttribute('data-ce-error-provision')
+    };
+    return (code && map[code]) || (err && err.errorCode) || root.getAttribute('data-ce-error-generic') || 'Request failed.';
+  }
+
   function apiGet(url, token) {
     return fetch(url, { headers: headers(token), credentials: 'same-origin' }).then(function (r) {
       return r.json().then(function (body) {
@@ -126,7 +138,7 @@
           renderJobs();
         })
         .catch(function (err) {
-          showAlert(alert, 'error', (err && err.errorCode) || 'Failed to load workshop dashboard.');
+          showAlert(alert, 'error', portalErrorMessage(root, err));
         });
     }
 
@@ -253,7 +265,7 @@
           renderApprovals(pick(data, 'approvalRequests', 'ApprovalRequests'));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', (err && err.errorCode) || 'Failed to load fleet dashboard.');
+          showAlert(alert, 'error', portalErrorMessage(root, err));
         });
     }
 
@@ -370,7 +382,7 @@
           renderClaims(pick(data, 'warrantyClaims', 'WarrantyClaims'));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', (err && err.errorCode) || 'Failed to load dealer dashboard.');
+          showAlert(alert, 'error', portalErrorMessage(root, err));
         });
     }
 
