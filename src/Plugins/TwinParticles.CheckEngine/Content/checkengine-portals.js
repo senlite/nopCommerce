@@ -442,7 +442,9 @@
       var displayName = root.querySelector('[data-ce-admin-name]')?.value || '';
       apiPost(path, token, { customerId: customerId, displayName: displayName })
         .then(function (res) {
-          showAlert(alert, 'success', 'Provisioned ' + (res.portalKind || 'account') + ' #' + res.accountId);
+          var kind = pick(res, 'portalKind', 'PortalKind') || 'account';
+          var accountId = pick(res, 'accountId', 'AccountId');
+          showAlert(alert, 'success', 'Provisioned ' + kind + ' #' + accountId);
         })
         .catch(function (err) {
           showAlert(alert, 'error', (err && err.errorCode) || 'Provision failed.');

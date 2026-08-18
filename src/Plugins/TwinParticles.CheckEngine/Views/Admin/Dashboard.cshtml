@@ -166,17 +166,17 @@
 
   function renderLicence(data) {
     if (!licenceStatus) return;
-    var licence = data && data.licence ? data.licence : {};
+    var licence = data && data.licence ? data.licence : data || {};
     licenceStatus.textContent = JSON.stringify({
-      status: licence.state,
-      active: licence.isActive,
-      tier: licence.tier,
-      marketplace: licence.marketplaceModuleEntitlement,
-      workshop: licence.workshopPortalEntitlement,
-      fleet: licence.fleetPortalEntitlement,
-      dealer: licence.dealerPortalEntitlement,
-      lastHeartbeatUtc: licence.lastHeartbeatUtc,
-      reasonCode: licence.reasonCode
+      status: pick(licence, 'state', 'State'),
+      active: pick(licence, 'isActive', 'IsActive'),
+      tier: pick(licence, 'tier', 'Tier'),
+      marketplace: pick(licence, 'marketplaceModuleEntitlement', 'MarketplaceModuleEntitlement'),
+      workshop: pick(licence, 'workshopPortalEntitlement', 'WorkshopPortalEntitlement'),
+      fleet: pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement'),
+      dealer: pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement'),
+      lastHeartbeatUtc: pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'),
+      reasonCode: pick(licence, 'reasonCode', 'ReasonCode')
     }, null, 2);
   }
 
