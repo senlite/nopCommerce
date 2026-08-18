@@ -60,7 +60,16 @@ It prints two or more chunks. Add **each** as a separate secret:
 | `RCLONE_CONFIG_B64_2` | When part 1 alone exceeds 4096 chars |
 | `RCLONE_CONFIG_B64_3` | Third chunk if needed |
 
-Agents concatenate the parts in order at boot. Your **5764**-character value needs **two** secrets (~2882 chars each).
+Agents concatenate the parts in order at boot. A **5764**-character value needs **two** secrets (4000 + 1760 chars when using the splitter).
+
+**Verify on your PC before saving secrets** — the first chunk must decode to `[onedrive]`:
+
+```bash
+B64=$(base64 -w0 ~/.config/rclone/rclone.conf)   # Linux
+printf '%s' "${B64:0:4000}" | base64 -d | head -1
+```
+
+Do **not** paste example output from agent logs or documentation.
 
 ### 4. Add Cursor environment secrets
 
@@ -115,6 +124,7 @@ The script prints **rclone link** URLs you can paste into PRs, Teams, or email.
 |---------|-----|
 | `OneDrive is not configured` | Add `RCLONE_CONFIG_B64` (+ `_2`, `_3` if split) and start a new agent |
 | `Secret value exceeds max length of 4096` | Run `scripts/split-rclone-config-for-cursor.sh` on your PC; add each printed chunk as its own secret |
+| `RCLONE_CONFIG_B64 secret(s) are invalid` | Secrets are not your real `rclone.conf` — re-run the splitter on your PC; first chunk must decode to `[onedrive]` |
 | `token expired` | Re-run `rclone config reconnect onedrive:` on your PC, re-encode config, update secret |
 | `rclone: command not found` | Environment install script did not run — Save install=`bash .cursor/scripts/install.sh` and start a new agent |
 | Upload works but no link | Some tenant policies block anonymous links; share the folder manually in OneDrive |
