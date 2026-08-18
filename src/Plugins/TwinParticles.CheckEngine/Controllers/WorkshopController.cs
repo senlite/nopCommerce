@@ -152,7 +152,37 @@ public sealed class WorkshopController : BasePublicController
         if (!await _portalAccess.OwnsWorkshopAccountAsync(customer.Id, detail.Job.WorkshopAccountId, isOperator, cancellationToken))
             return Denied(PortalErrorCodes.AccessDenied);
 
-        var result = await _jobService.RaiseJobInvoiceAsync(request.JobId, cancellationToken);
+        if (!await _portalAccess.CanRaiseWorkshopInvoiceAsync(customer.Id, detail.Job.WorkshopAccountId, isOperator, cancellationToken))
+            return Denied(WorkshopErrorCodes.InvoiceDenied);
+
+        var result = await _jobService.RaiseJobInvoiceAsync(request.JobId, request.JobVehicleId, cancellationToken);
+        return result.Success ? Json(result) : Denied(result.ErrorCode ?? WorkshopErrorCodes.NotFound, 400);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateWorkshopCustomer([FromBody] CreateWorkshopCustomerRequest request, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isOperator = await IsOperatorAsync();
+        if (!await _portalAccess.OwnsWorkshopAccountAsync(customer.Id, request.WorkshopAccountId, isOperator, cancellationToken))
+            return Denied(PortalErrorCodes.AccessDenied);
+
+        var result = await _jobService.CreateWorkshopCustomerAsync(request, cancellationToken);
+        return result.Success ? Json(result) : Denied(result.ErrorCode ?? WorkshopErrorCodes.NotFound, 400);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AddWorkshopCustomerVehicle([FromBody] AddWorkshopCustomerVehicleRequest request, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var result = await _jobService.AddWorkshopCustomerVehicleAsync(request, cancellationToken);
         return result.Success ? Json(result) : Denied(result.ErrorCode ?? WorkshopErrorCodes.NotFound, 400);
     }
 
@@ -189,4 +219,6 @@ public sealed class TransitionJobStatusRequest
 public sealed class RaiseJobInvoiceRequest
 {
     public int JobId { get; init; }
+
+    public int? JobVehicleId { get; init; }
 }

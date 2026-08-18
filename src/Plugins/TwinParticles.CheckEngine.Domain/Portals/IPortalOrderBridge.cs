@@ -9,5 +9,9 @@ namespace TwinParticles.CheckEngine.Domain.Portals;
 /// </summary>
 public interface IPortalOrderBridge
 {
-    Task<int> CreateTradeOrderAsync(int customerId, IReadOnlyList<PortalOrderLine> lines, CancellationToken cancellationToken);
+    Task<int> CreateTradeOrderAsync(
+        int customerId,
+        IReadOnlyList<PortalOrderLine> lines,
+        decimal supplementaryLabourFee,
+        CancellationToken cancellationToken);
 }

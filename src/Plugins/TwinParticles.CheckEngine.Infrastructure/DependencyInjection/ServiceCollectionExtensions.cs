@@ -164,6 +164,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFleetPortalRepository, SqlFleetPortalRepository>();
         services.AddScoped<IDealerPortalRepository, SqlDealerPortalRepository>();
         services.AddScoped<IPortalOrderBridge, NopPortalOrderBridge>();
+        services.AddScoped<IPortalCatalogPriceProvider, NopPortalCatalogPriceProvider>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();

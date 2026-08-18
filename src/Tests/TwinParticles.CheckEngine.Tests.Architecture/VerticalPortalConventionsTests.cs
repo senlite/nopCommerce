@@ -207,4 +207,52 @@ public class VerticalPortalConventionsTests
         admin.Should().Contain("data-ce-admin-seed-allocation");
         admin.Should().Contain("data-ce-admin-seed-quota");
     }
+
+    [Test]
+    public void Horizon4_v068_Should_Close_Remaining_Portal_Gaps()
+    {
+        var bridge = ReadInfrastructureFile("Portals", "NopPortalOrderBridge.cs");
+        bridge.Should().Contain("OrderPlacedEvent");
+
+        var fleet = ReadApplicationFile("Fleet", "FleetPortalService.cs");
+        fleet.Should().Contain("InsertVehicleSpendAsync");
+        fleet.Should().Contain("PortalTradePricingService");
+
+        var dealer = ReadApplicationFile("Dealer", "DealerPortalService.cs");
+        dealer.Should().Contain("OemResolveService");
+        dealer.Should().Contain("GetCatalogViewAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("UpdateAccountAsync");
+        workshop.Should().Contain("supplementaryLabourFee");
+
+        var migration = ReadInfrastructureFile("Migrations", "202608182200_Horizon4Completion.cs");
+        migration.Should().Contain("TP_CE_FleetVehicleSpend");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("SubmitApprovalRequest");
+        portalsJs.Should().Contain("vehicleCostSummaries");
+        portalsJs.Should().Contain("SeedDealerFranchise");
+    }
+
+    [Test]
+    public void Horizon4_Final_Should_Add_Customers_Roles_Territory_And_Split_Invoice()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608182300_Horizon4Final.cs");
+        migration.Should().Contain("TP_CE_WorkshopCustomer");
+        migration.Should().Contain("TP_CE_FleetMember");
+        migration.Should().Contain("TP_CE_DealerTerritory");
+
+        var dealer = ReadApplicationFile("Dealer", "DealerPortalService.cs");
+        dealer.Should().Contain("FitmentBlocked");
+        dealer.Should().Contain("TerritoryDenied");
+
+        var access = ReadApplicationFile("Portals", "VerticalPortalAccessService.cs");
+        access.Should().Contain("CanApproveFleetAsync");
+        access.Should().Contain("CanRaiseWorkshopInvoiceAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("CreateWorkshopCustomerAsync");
+        workshop.Should().Contain("InvoicedOrderId");
+    }
 }

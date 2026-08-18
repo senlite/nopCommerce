@@ -37,6 +37,29 @@
         </section>
 
         <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.SubmitApproval")</h2>
+            <div class="ce-mp-toolbar">
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Fleet.VehicleId")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-fleet-approval-vehicle />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-fleet-approval-product />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</label>
+                    <input class="ce-mp-input" type="number" min="1" value="1" data-ce-fleet-approval-qty />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Fleet.BudgetCentre")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="0" data-ce-fleet-approval-centre placeholder="Default" />
+                </div>
+                <button type="button" class="ce-btn ce-btn--primary" data-ce-fleet-submit-approval>@T("Plugins.TwinParticles.CheckEngine.Fleet.SubmitApproval")</button>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel">
             <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.Vehicles")</h2>
             <div class="ce-mp-table-wrap">
                 <table class="ce-mp-table">
@@ -87,6 +110,43 @@
                         </tr>
                     </thead>
                     <tbody data-ce-fleet-forecasts>
+                        <tr><td colspan="3" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.CostPerVehicle")</h2>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.VehicleId")</th>
+                            <th>VIN</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.TotalSpend")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.OrderCount")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-fleet-costs>
+                        <tr><td colspan="4" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.ImportBatches")</h2>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.ImportResult")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.DueDate")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-fleet-imports>
                         <tr><td colspan="3" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
                     </tbody>
                 </table>

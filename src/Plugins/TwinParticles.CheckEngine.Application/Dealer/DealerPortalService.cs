@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Licensing;
+using TwinParticles.CheckEngine.Application.Oem;
 using TwinParticles.CheckEngine.Application.Portals;
 using TwinParticles.CheckEngine.Domain.Dealer;
+using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Performance;
 using TwinParticles.CheckEngine.Domain.Portals;
 using TwinParticles.CheckEngine.Domain.Security;
@@ -27,6 +30,9 @@ public sealed class DealerPortalService
     private readonly IDealerPortalRepository _repository;
     private readonly IPortalOrderBridge _orderBridge;
     private readonly DealerPortalLicenceGate _licenceGate;
+    private readonly OemResolveService _oemResolve;
+    private readonly PortalTradePricingService _pricing;
+    private readonly FitmentEvaluationService _fitment;
     private readonly ICheckEngineAuditService _auditService;
     private readonly ICheckEngineClock _clock;
 
@@ -34,12 +40,18 @@ public sealed class DealerPortalService
         IDealerPortalRepository repository,
         IPortalOrderBridge orderBridge,
         DealerPortalLicenceGate licenceGate,
+        OemResolveService oemResolve,
+        PortalTradePricingService pricing,
+        FitmentEvaluationService fitment,
         ICheckEngineAuditService auditService,
         ICheckEngineClock clock)
     {
         _repository = repository;
         _orderBridge = orderBridge;
         _licenceGate = licenceGate;
+        _oemResolve = oemResolve;
+        _pricing = pricing;
+        _fitment = fitment;
         _auditService = auditService;
         _clock = clock;
     }
@@ -69,10 +81,49 @@ public sealed class DealerPortalService
         if (account is null || !account.IsActive)
             return DealerOrderResult.Fail(DealerErrorCodes.NotFound);
 
-        var quota = await _repository.GetQuotaAsync(request.DealerAccountId, cancellationToken);
-        var orderTotal = request.Lines.Sum(line => line.UnitPrice * line.Quantity);
+        var territories = await _repository.GetTerritoriesAsync(request.DealerAccountId, cancellationToken);
+        if (territories.Count > 0)
+        {
+            if (!request.VehicleConfigurationId.HasValue)
+                return DealerOrderResult.Fail(DealerErrorCodes.TerritoryDenied);
 
+            if (!await _repository.IsVehicleMarketAllowedAsync(request.VehicleConfigurationId.Value, territories, cancellationToken))
+                return DealerOrderResult.Fail(DealerErrorCodes.TerritoryDenied);
+        }
+
+        if (request.VehicleConfigurationId is int vehicleConfigurationId)
+        {
+            foreach (var line in request.Lines)
+            {
+                var evaluation = await _fitment.EvaluateAsync(new FitmentEvaluationContext
+                {
+                    ProductId = line.ProductId,
+                    VehicleConfigurationId = vehicleConfigurationId
+                }, cancellationToken);
+
+                if (evaluation.Outcome == FitmentStatus.DoesNotFit)
+                    return DealerOrderResult.Fail(DealerErrorCodes.FitmentBlocked);
+            }
+        }
+
+        var quota = await _repository.GetQuotaAsync(request.DealerAccountId, cancellationToken);
+        var pricedLines = new List<PortalOrderLine>();
         foreach (var line in request.Lines)
+        {
+            var unitPrice = line.UnitPrice > 0
+                ? line.UnitPrice
+                : await _pricing.ResolveUnitPriceAsync(account.DefaultPriceListId, line.ProductId, cancellationToken);
+            pricedLines.Add(new PortalOrderLine
+            {
+                ProductId = line.ProductId,
+                Quantity = line.Quantity,
+                UnitPrice = unitPrice
+            });
+        }
+
+        var orderTotal = pricedLines.Sum(line => line.UnitPrice * line.Quantity);
+
+        foreach (var line in pricedLines)
         {
             var allocation = await _repository.GetAllocationForProductAsync(request.DealerAccountId, line.ProductId, cancellationToken);
             if (allocation is not null && allocation.PeriodUsedUnits + line.Quantity > allocation.PeriodCeilingUnits)
@@ -82,9 +133,9 @@ public sealed class DealerPortalService
         if (quota is not null && quota.SpendUsed + orderTotal > quota.SpendCeiling)
             return DealerOrderResult.Fail(DealerErrorCodes.QuotaExceeded);
 
-        var orderId = await _orderBridge.CreateTradeOrderAsync(account.CustomerId, request.Lines, cancellationToken);
+        var orderId = await _orderBridge.CreateTradeOrderAsync(account.CustomerId, pricedLines, supplementaryLabourFee: 0m, cancellationToken);
 
-        foreach (var line in request.Lines)
+        foreach (var line in pricedLines)
         {
             var allocation = await _repository.GetAllocationForProductAsync(request.DealerAccountId, line.ProductId, cancellationToken);
             if (allocation is null)
@@ -113,12 +164,20 @@ public sealed class DealerPortalService
         if (account is null)
             return WarrantyClaimResult.Fail(DealerErrorCodes.NotFound);
 
+        var oemResolve = await _oemResolve.ResolveAsync(new OemResolveQuery
+        {
+            Number = request.OemNumber.Trim()
+        }, cancellationToken);
+
         var now = _clock.UtcNow;
         var claim = new WarrantyClaim
         {
             DealerAccountId = request.DealerAccountId,
             OrderId = request.OrderId,
-            OemNumber = request.OemNumber.Trim(),
+            OemNumber = oemResolve.Success && !string.IsNullOrWhiteSpace(oemResolve.DisplayNumber)
+                ? oemResolve.DisplayNumber!
+                : request.OemNumber.Trim(),
+            ResolvedOemNumberId = oemResolve.Success ? oemResolve.CurrentOemNumberId ?? oemResolve.OemNumberId : null,
             VehicleConfigurationId = request.VehicleConfigurationId,
             Status = WarrantyClaimStatus.Submitted,
             EvidenceJson = request.EvidenceJson ?? "[]",
@@ -191,6 +250,8 @@ public sealed class DealerPortalService
 public sealed class PlaceDealerOrderRequest
 {
     public int DealerAccountId { get; init; }
+
+    public int? VehicleConfigurationId { get; init; }
 
     public IReadOnlyList<PortalOrderLine> Lines { get; init; } = Array.Empty<PortalOrderLine>();
 }

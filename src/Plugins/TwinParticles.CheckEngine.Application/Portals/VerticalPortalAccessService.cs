@@ -78,6 +78,38 @@ public sealed class VerticalPortalAccessService
         var account = await _dealer.GetAccountByIdAsync(dealerAccountId, cancellationToken);
         return account is { IsActive: true, CustomerId: var owner } && owner == customerId;
     }
+
+    public async Task<bool> CanApproveFleetAsync(int customerId, int fleetAccountId, bool isOperator, CancellationToken cancellationToken)
+    {
+        if (isOperator)
+            return true;
+
+        var account = await _fleet.GetAccountByIdAsync(fleetAccountId, cancellationToken);
+        if (account is not { IsActive: true })
+            return false;
+
+        if (account.CustomerId == customerId)
+            return true;
+
+        var member = await _fleet.GetMemberAsync(fleetAccountId, customerId, cancellationToken);
+        return member is { CanApprove: true };
+    }
+
+    public async Task<bool> CanRaiseWorkshopInvoiceAsync(int customerId, int workshopAccountId, bool isOperator, CancellationToken cancellationToken)
+    {
+        if (isOperator)
+            return true;
+
+        var account = await _workshop.GetAccountByIdAsync(workshopAccountId, cancellationToken);
+        if (account is not { IsActive: true })
+            return false;
+
+        if (account.CustomerId == customerId)
+            return true;
+
+        var technician = await _workshop.GetTechnicianAsync(workshopAccountId, customerId, cancellationToken);
+        return technician is { CanRaiseInvoice: true };
+    }
 }
 
 public sealed class PortalAccessResult

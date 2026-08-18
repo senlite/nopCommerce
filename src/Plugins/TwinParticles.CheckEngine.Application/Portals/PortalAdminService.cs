@@ -160,6 +160,139 @@ public sealed class PortalAdminService
         return PortalSeedResult.Ok(quota.Id, "quota");
     }
 
+    public async Task<PortalSeedResult> SeedDealerFranchiseAsync(SeedDealerFranchiseRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _dealerGate.AllowsDealerAsync(cancellationToken))
+            return PortalSeedResult.Fail("portal.licence_denied");
+
+        var account = await _dealer.GetAccountByIdAsync(request.DealerAccountId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return PortalSeedResult.Fail("portal.account_not_found");
+
+        var franchise = new DealerFranchise
+        {
+            DealerAccountId = request.DealerAccountId,
+            MakeId = request.MakeId,
+            FranchiseLabel = string.IsNullOrWhiteSpace(request.FranchiseLabel)
+                ? $"Make #{request.MakeId}"
+                : request.FranchiseLabel.Trim()
+        };
+
+        franchise.Id = await _dealer.InsertFranchiseAsync(franchise, cancellationToken);
+        return PortalSeedResult.Ok(franchise.Id, "franchise");
+    }
+
+    public async Task<PortalSeedResult> SeedTradePriceListItemAsync(SeedTradePriceListRequest request, CancellationToken cancellationToken)
+    {
+        if (request.ProductId <= 0 || request.UnitPrice <= 0m)
+            return PortalSeedResult.Fail("portal.price_list_invalid");
+
+        if (string.Equals(request.PortalKind, "workshop", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!await _workshopGate.AllowsWorkshopAsync(cancellationToken))
+                return PortalSeedResult.Fail("portal.licence_denied");
+
+            var account = await _workshop.GetAccountByIdAsync(request.AccountId, cancellationToken);
+            if (account is null || !account.IsActive)
+                return PortalSeedResult.Fail("portal.account_not_found");
+
+            if (!account.DefaultPriceListId.HasValue)
+            {
+                var listId = await _workshop.InsertPriceListAsync(request.PriceListName ?? $"Workshop-{account.Id}", cancellationToken);
+                account.DefaultPriceListId = listId;
+                await _workshop.UpdateAccountAsync(account, cancellationToken);
+            }
+
+            await _workshop.InsertPriceListItemAsync(account.DefaultPriceListId!.Value, request.ProductId, request.UnitPrice, cancellationToken);
+            return PortalSeedResult.Ok(account.DefaultPriceListId.Value, "price_list");
+        }
+
+        if (string.Equals(request.PortalKind, "dealer", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!await _dealerGate.AllowsDealerAsync(cancellationToken))
+                return PortalSeedResult.Fail("portal.licence_denied");
+
+            var account = await _dealer.GetAccountByIdAsync(request.AccountId, cancellationToken);
+            if (account is null || !account.IsActive)
+                return PortalSeedResult.Fail("portal.account_not_found");
+
+            if (!account.DefaultPriceListId.HasValue)
+            {
+                var listId = await _dealer.InsertPriceListAsync(request.PriceListName ?? $"Dealer-{account.Id}", cancellationToken);
+                account.DefaultPriceListId = listId;
+                await _dealer.UpdateAccountAsync(account, cancellationToken);
+            }
+
+            await _dealer.InsertPriceListItemAsync(account.DefaultPriceListId!.Value, request.ProductId, request.UnitPrice, cancellationToken);
+            return PortalSeedResult.Ok(account.DefaultPriceListId.Value, "price_list");
+        }
+
+        return PortalSeedResult.Fail("portal.price_list_invalid");
+    }
+
+    public async Task<PortalSeedResult> SeedWorkshopTechnicianAsync(SeedWorkshopTechnicianRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _workshopGate.AllowsWorkshopAsync(cancellationToken))
+            return PortalSeedResult.Fail("portal.licence_denied");
+
+        var account = await _workshop.GetAccountByIdAsync(request.WorkshopAccountId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return PortalSeedResult.Fail("portal.account_not_found");
+
+        var technician = new WorkshopTechnician
+        {
+            WorkshopAccountId = request.WorkshopAccountId,
+            CustomerId = request.CustomerId,
+            CanRaiseInvoice = request.CanRaiseInvoice
+        };
+
+        technician.Id = await _workshop.InsertTechnicianAsync(technician, cancellationToken);
+        return PortalSeedResult.Ok(technician.Id, "technician");
+    }
+
+    public async Task<PortalSeedResult> SeedFleetApproverAsync(SeedFleetApproverRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _fleetGate.AllowsFleetAsync(cancellationToken))
+            return PortalSeedResult.Fail("portal.licence_denied");
+
+        var account = await _fleet.GetAccountByIdAsync(request.FleetAccountId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return PortalSeedResult.Fail("portal.account_not_found");
+
+        var member = new FleetMember
+        {
+            FleetAccountId = request.FleetAccountId,
+            CustomerId = request.CustomerId,
+            CanApprove = true
+        };
+
+        member.Id = await _fleet.InsertMemberAsync(member, cancellationToken);
+        return PortalSeedResult.Ok(member.Id, "fleet_approver");
+    }
+
+    public async Task<PortalSeedResult> SeedDealerTerritoryAsync(SeedDealerTerritoryRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _dealerGate.AllowsDealerAsync(cancellationToken))
+            return PortalSeedResult.Fail("portal.licence_denied");
+
+        var account = await _dealer.GetAccountByIdAsync(request.DealerAccountId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return PortalSeedResult.Fail("portal.account_not_found");
+
+        if (!request.MarketId.HasValue && string.IsNullOrWhiteSpace(request.RegionCode))
+            return PortalSeedResult.Fail("portal.territory_target_required");
+
+        var territory = new DealerTerritory
+        {
+            DealerAccountId = request.DealerAccountId,
+            MarketId = request.MarketId,
+            RegionCode = request.RegionCode?.Trim()
+        };
+
+        territory.Id = await _dealer.InsertTerritoryAsync(territory, cancellationToken);
+        return PortalSeedResult.Ok(territory.Id, "territory");
+    }
+
     private async Task SeedDefaultFleetMaintenanceSchedulesAsync(int fleetAccountId, CancellationToken cancellationToken)
     {
         var existing = await _fleet.ListMaintenanceSchedulesAsync(fleetAccountId, cancellationToken);
@@ -202,6 +335,53 @@ public sealed class SeedDealerQuotaRequest
     public int DealerAccountId { get; init; }
 
     public decimal SpendCeiling { get; init; }
+}
+
+public sealed class SeedDealerFranchiseRequest
+{
+    public int DealerAccountId { get; init; }
+
+    public int MakeId { get; init; }
+
+    public string FranchiseLabel { get; init; } = string.Empty;
+}
+
+public sealed class SeedTradePriceListRequest
+{
+    public string PortalKind { get; init; } = string.Empty;
+
+    public int AccountId { get; init; }
+
+    public int ProductId { get; init; }
+
+    public decimal UnitPrice { get; init; }
+
+    public string? PriceListName { get; init; }
+}
+
+public sealed class SeedWorkshopTechnicianRequest
+{
+    public int WorkshopAccountId { get; init; }
+
+    public int CustomerId { get; init; }
+
+    public bool CanRaiseInvoice { get; init; }
+}
+
+public sealed class SeedFleetApproverRequest
+{
+    public int FleetAccountId { get; init; }
+
+    public int CustomerId { get; init; }
+}
+
+public sealed class SeedDealerTerritoryRequest
+{
+    public int DealerAccountId { get; init; }
+
+    public int? MarketId { get; init; }
+
+    public string? RegionCode { get; init; }
 }
 
 public sealed class PortalProvisionResult

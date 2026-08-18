@@ -337,6 +337,134 @@ VALUES
         forecast.Id = id.FirstOrDefault();
     }
 
+    public async Task<int> InsertVehicleSpendAsync(FleetVehicleSpend spend, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_FleetVehicleSpend
+(FleetAccountId, FleetVehicleId, ProductId, OrderId, Amount, RecordedUtc)
+VALUES
+(@fleetAccountId, @fleetVehicleId, @productId, @orderId, @amount, @recordedUtc);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("fleetAccountId", spend.FleetAccountId),
+            new DataParameter("fleetVehicleId", spend.FleetVehicleId),
+            new DataParameter("productId", spend.ProductId),
+            new DataParameter("orderId", spend.OrderId ?? (object)DBNull.Value),
+            new DataParameter("amount", spend.Amount),
+            new DataParameter("recordedUtc", spend.RecordedUtc.UtcDateTime));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<IReadOnlyList<FleetVehicleCostSummary>> ListVehicleCostSummariesAsync(int fleetAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<CostSummaryRow>(@"
+SELECT s.FleetVehicleId,
+       v.Vin,
+       SUM(s.Amount) AS TotalSpend,
+       COUNT(DISTINCT s.OrderId) AS OrderCount
+FROM TP_CE_FleetVehicleSpend s
+INNER JOIN TP_CE_FleetVehicle v ON v.Id = s.FleetVehicleId
+WHERE s.FleetAccountId = @fleetAccountId
+GROUP BY s.FleetVehicleId, v.Vin
+ORDER BY TotalSpend DESC",
+            new DataParameter("fleetAccountId", fleetAccountId));
+
+        return rows.Select(row => new FleetVehicleCostSummary
+        {
+            FleetVehicleId = row.FleetVehicleId,
+            Vin = row.Vin,
+            TotalSpend = row.TotalSpend,
+            OrderCount = row.OrderCount
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<FleetVinImportBatch>> ListImportBatchesAsync(int fleetAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<ImportBatchRow>(@"
+SELECT Id, FleetAccountId, TotalRows, SucceededRows, CreatedUtc
+FROM TP_CE_FleetVinImportBatch
+WHERE FleetAccountId = @fleetAccountId
+ORDER BY CreatedUtc DESC",
+            new DataParameter("fleetAccountId", fleetAccountId));
+
+        return rows.Select(MapImportBatch).ToList();
+    }
+
+    public async Task<FleetVinImportBatchDetail?> GetImportBatchDetailAsync(int batchId, CancellationToken cancellationToken)
+    {
+        var batchRows = await _dataProvider.QueryAsync<ImportBatchRow>(@"
+SELECT Id, FleetAccountId, TotalRows, SucceededRows, CreatedUtc
+FROM TP_CE_FleetVinImportBatch
+WHERE Id = @id",
+            new DataParameter("id", batchId));
+
+        var batch = batchRows.Select(MapImportBatch).FirstOrDefault();
+        if (batch is null)
+            return null;
+
+        var rowRows = await _dataProvider.QueryAsync<ImportRowRow>(@"
+SELECT BatchId, Vin, Outcome, VehicleConfigurationId, ReasonCode
+FROM TP_CE_FleetVinImportRow
+WHERE BatchId = @batchId
+ORDER BY Vin",
+            new DataParameter("batchId", batchId));
+
+        return new FleetVinImportBatchDetail
+        {
+            Batch = batch,
+            Rows = rowRows.Select(row => new FleetVinImportRow
+            {
+                Vin = row.Vin,
+                Outcome = row.Outcome,
+                VehicleConfigurationId = row.VehicleConfigurationId,
+                ReasonCode = row.ReasonCode
+            }).ToList()
+        };
+    }
+
+    public async Task<int> InsertMemberAsync(FleetMember member, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_FleetMember (FleetAccountId, CustomerId, CanApprove)
+VALUES (@fleetAccountId, @customerId, @canApprove);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("fleetAccountId", member.FleetAccountId),
+            new DataParameter("customerId", member.CustomerId),
+            new DataParameter("canApprove", member.CanApprove));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<FleetMember?> GetMemberAsync(int fleetAccountId, int customerId, CancellationToken cancellationToken)
+    {
+        var sql = CheckEngineSql.SelectTop(1,
+            "Id, FleetAccountId, CustomerId, CanApprove",
+            "FROM TP_CE_FleetMember WHERE FleetAccountId = @fleetAccountId AND CustomerId = @customerId ORDER BY Id");
+        var rows = await _dataProvider.QueryAsync<MemberRow>(sql,
+            new DataParameter("fleetAccountId", fleetAccountId),
+            new DataParameter("customerId", customerId));
+
+        return rows.Select(row => new FleetMember
+        {
+            Id = row.Id,
+            FleetAccountId = row.FleetAccountId,
+            CustomerId = row.CustomerId,
+            CanApprove = row.CanApprove
+        }).FirstOrDefault();
+    }
+
+    private static FleetVinImportBatch MapImportBatch(ImportBatchRow row)
+    {
+        return new FleetVinImportBatch
+        {
+            Id = row.Id,
+            FleetAccountId = row.FleetAccountId,
+            TotalRows = row.TotalRows,
+            SucceededRows = row.SucceededRows,
+            CreatedUtc = ToUtc(row.CreatedUtc)
+        };
+    }
+
     private static FleetAccount MapAccount(AccountRow row)
     {
         return new FleetAccount
@@ -457,6 +585,32 @@ VALUES
         public DateTime ComputedUtc { get; set; }
     }
 
+    private sealed class CostSummaryRow
+    {
+        public int FleetVehicleId { get; set; }
+        public string? Vin { get; set; }
+        public decimal TotalSpend { get; set; }
+        public int OrderCount { get; set; }
+    }
+
+    private sealed class ImportBatchRow
+    {
+        public int Id { get; set; }
+        public int FleetAccountId { get; set; }
+        public int TotalRows { get; set; }
+        public int SucceededRows { get; set; }
+        public DateTime CreatedUtc { get; set; }
+    }
+
+    private sealed class ImportRowRow
+    {
+        public int BatchId { get; set; }
+        public string Vin { get; set; } = string.Empty;
+        public string Outcome { get; set; } = string.Empty;
+        public int? VehicleConfigurationId { get; set; }
+        public string? ReasonCode { get; set; }
+    }
+
     private sealed class BudgetCentreRow
     {
         public int Id { get; set; }
@@ -480,5 +634,13 @@ VALUES
         public int? OrderId { get; set; }
         public DateTime CreatedUtc { get; set; }
         public DateTime UpdatedUtc { get; set; }
+    }
+
+    private sealed class MemberRow
+    {
+        public int Id { get; set; }
+        public int FleetAccountId { get; set; }
+        public int CustomerId { get; set; }
+        public bool CanApprove { get; set; }
     }
 }

@@ -35,4 +35,18 @@ public interface IDealerPortalRepository
     Task<int> InsertAllocationAsync(DealerAllocation allocation, CancellationToken cancellationToken);
 
     Task<int> InsertQuotaAsync(DealerQuota quota, CancellationToken cancellationToken);
+
+    Task<int> InsertFranchiseAsync(DealerFranchise franchise, CancellationToken cancellationToken);
+
+    Task UpdateAccountAsync(DealerAccount account, CancellationToken cancellationToken);
+
+    Task<int> InsertPriceListAsync(string name, CancellationToken cancellationToken);
+
+    Task InsertPriceListItemAsync(int priceListId, int productId, decimal unitPrice, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<DealerTerritory>> GetTerritoriesAsync(int dealerAccountId, CancellationToken cancellationToken);
+
+    Task<int> InsertTerritoryAsync(DealerTerritory territory, CancellationToken cancellationToken);
+
+    Task<bool> IsVehicleMarketAllowedAsync(int vehicleConfigurationId, IReadOnlyList<DealerTerritory> territories, CancellationToken cancellationToken);
 }

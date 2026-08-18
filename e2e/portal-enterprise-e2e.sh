@@ -17,8 +17,22 @@ for portal in workshop fleet dealer; do
 done
 
 echo ""
+echo "Portal JSON smoke (expect 401 when unauthenticated):"
+for path in \
+  "/check-engine/workshop/DashboardData" \
+  "/check-engine/fleet/DashboardData" \
+  "/check-engine/fleet/VehicleCostReport" \
+  "/check-engine/dealer/DashboardData"
+do
+  code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL$path")"
+  echo "  GET $path -> HTTP $code"
+done
+
+echo ""
 echo "After activating in admin UI, provision accounts at:"
 echo "  $BASE_URL/Admin/CheckEngine/PortalAdmin/Accounts"
+echo ""
+echo "Seed dealer franchise/allocation/quota/territory, fleet approver, workshop technician from Portal Admin."
 echo ""
 echo "Configure page with licence panel:"
 echo "  $BASE_URL/Admin/CheckEngine/Configure"

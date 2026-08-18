@@ -266,9 +266,9 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status |
 |---|---|---|
-| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | `WorkshopJobService` + design-system UI at `check-engine/workshop`; `PortalAdminService` provisions accounts; plugin 0.64.0 |
-| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | `FleetPortalService` (`ImportFleetVins` via `VinDecodeApplicationService`, `SubmitApprovalRequest`/`DecideApprovalRequest` with budget enforcement); `TP_CE_Fleet*` schema; `check-engine/fleet/{action}`; `FleetPortalLicenceGate` + `ManageCheckEngineFleet` |
-| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | done | `DealerPortalService` (`GetDealerCatalogView`, `PlaceDealerOrder` with allocation/quota checks, warranty claim workflow); `TP_CE_Dealer*` + `TP_CE_WarrantyClaim`; `check-engine/dealer/{action}`; `DealerPortalLicenceGate` + `ManageCheckEngineDealer`; dealer ≠ marketplace vendor (FR-1201) |
+| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | `WorkshopJobService` + design-system UI at `check-engine/workshop`; workshop customer records; technician invoice roles; split invoicing per vehicle; plugin 0.68.0 |
+| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | `FleetPortalService` with requester/approver separation (`TP_CE_FleetMember`), cost-per-vehicle spend, import batch detail UI; plugin 0.68.0 |
+| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | done | Franchise-scoped catalog, territory enforcement, fitment gate on `PlaceDealerOrder`, OEM-resolved warranty claims; plugin 0.68.0 |
 
 ### Horizon 5 — Platform / v2.0 (`EP-28`)
 

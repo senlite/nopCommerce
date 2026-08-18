@@ -43,4 +43,16 @@ public interface IFleetPortalRepository
     Task<IReadOnlyList<FleetMaintenanceForecast>> ListMaintenanceForecastsAsync(int fleetAccountId, CancellationToken cancellationToken);
 
     Task UpsertMaintenanceForecastAsync(FleetMaintenanceForecast forecast, CancellationToken cancellationToken);
+
+    Task<int> InsertVehicleSpendAsync(FleetVehicleSpend spend, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FleetVehicleCostSummary>> ListVehicleCostSummariesAsync(int fleetAccountId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FleetVinImportBatch>> ListImportBatchesAsync(int fleetAccountId, CancellationToken cancellationToken);
+
+    Task<FleetVinImportBatchDetail?> GetImportBatchDetailAsync(int batchId, CancellationToken cancellationToken);
+
+    Task<int> InsertMemberAsync(FleetMember member, CancellationToken cancellationToken);
+
+    Task<FleetMember?> GetMemberAsync(int fleetAccountId, int customerId, CancellationToken cancellationToken);
 }

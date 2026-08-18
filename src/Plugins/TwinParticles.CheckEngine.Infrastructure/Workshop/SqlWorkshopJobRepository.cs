@@ -150,7 +150,7 @@ VALUES
     public async Task<IReadOnlyList<WorkshopJobLine>> GetJobLinesAsync(int jobId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<JobLineRow>(@"
-SELECT Id, JobId, JobVehicleId, ProductId, Quantity, FitmentOutcome, UnitPrice
+SELECT Id, JobId, JobVehicleId, ProductId, Quantity, FitmentOutcome, UnitPrice, InvoicedOrderId
 FROM TP_CE_WorkshopJobLine
 WHERE JobId = @jobId
 ORDER BY Id",
@@ -189,6 +189,42 @@ VALUES
         return id.FirstOrDefault();
     }
 
+    public Task UpdateAccountAsync(WorkshopAccount account, CancellationToken cancellationToken)
+        => _dataProvider.ExecuteNonQueryAsync(@"
+UPDATE TP_CE_WorkshopAccount
+SET CustomerId = @customerId,
+    DisplayName = @displayName,
+    CreditLimit = @creditLimit,
+    CreditUsed = @creditUsed,
+    DefaultPriceListId = @defaultPriceListId,
+    IsActive = @isActive
+WHERE Id = @id",
+            new DataParameter("id", account.Id),
+            new DataParameter("customerId", account.CustomerId),
+            new DataParameter("displayName", account.DisplayName),
+            new DataParameter("creditLimit", account.CreditLimit),
+            new DataParameter("creditUsed", account.CreditUsed),
+            new DataParameter("defaultPriceListId", account.DefaultPriceListId ?? (object)DBNull.Value),
+            new DataParameter("isActive", account.IsActive));
+
+    public async Task<int> InsertPriceListAsync(string name, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_PriceList (Name, IsActive) VALUES (@name, 1);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("name", name));
+
+        return id.FirstOrDefault();
+    }
+
+    public Task InsertPriceListItemAsync(int priceListId, int productId, decimal unitPrice, CancellationToken cancellationToken)
+        => _dataProvider.ExecuteNonQueryAsync(@"
+INSERT INTO TP_CE_PriceListItem (PriceListId, ProductId, UnitPrice)
+VALUES (@priceListId, @productId, @unitPrice)",
+            new DataParameter("priceListId", priceListId),
+            new DataParameter("productId", productId),
+            new DataParameter("unitPrice", unitPrice));
+
     public async Task<decimal> ResolveTradePriceAsync(int priceListId, int productId, CancellationToken cancellationToken)
     {
         var sql = CheckEngineSql.SelectTop(1,
@@ -200,6 +236,107 @@ VALUES
 
         return rows.FirstOrDefault();
     }
+
+    public async Task<int> InsertCustomerAsync(WorkshopCustomer customer, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_WorkshopCustomer (WorkshopAccountId, DisplayName, ContactEmail)
+VALUES (@workshopAccountId, @displayName, @contactEmail);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("workshopAccountId", customer.WorkshopAccountId),
+            new DataParameter("displayName", customer.DisplayName),
+            new DataParameter("contactEmail", customer.ContactEmail ?? (object)DBNull.Value));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<int> InsertCustomerVehicleAsync(WorkshopCustomerVehicle vehicle, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_WorkshopCustomerVehicle (WorkshopCustomerId, VehicleConfigurationId, Vin)
+VALUES (@workshopCustomerId, @vehicleConfigurationId, @vin);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("workshopCustomerId", vehicle.WorkshopCustomerId),
+            new DataParameter("vehicleConfigurationId", vehicle.VehicleConfigurationId),
+            new DataParameter("vin", vehicle.Vin ?? (object)DBNull.Value));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<IReadOnlyList<WorkshopCustomer>> ListCustomersAsync(int workshopAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<CustomerRow>(@"
+SELECT Id, WorkshopAccountId, DisplayName, ContactEmail
+FROM TP_CE_WorkshopCustomer
+WHERE WorkshopAccountId = @workshopAccountId
+ORDER BY DisplayName",
+            new DataParameter("workshopAccountId", workshopAccountId));
+
+        return rows.Select(row => new WorkshopCustomer
+        {
+            Id = row.Id,
+            WorkshopAccountId = row.WorkshopAccountId,
+            DisplayName = row.DisplayName,
+            ContactEmail = row.ContactEmail
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<WorkshopCustomerVehicle>> ListCustomerVehiclesAsync(int workshopCustomerId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<CustomerVehicleRow>(@"
+SELECT Id, WorkshopCustomerId, VehicleConfigurationId, Vin
+FROM TP_CE_WorkshopCustomerVehicle
+WHERE WorkshopCustomerId = @workshopCustomerId
+ORDER BY Id",
+            new DataParameter("workshopCustomerId", workshopCustomerId));
+
+        return rows.Select(row => new WorkshopCustomerVehicle
+        {
+            Id = row.Id,
+            WorkshopCustomerId = row.WorkshopCustomerId,
+            VehicleConfigurationId = row.VehicleConfigurationId,
+            Vin = row.Vin
+        }).ToList();
+    }
+
+    public async Task<int> InsertTechnicianAsync(WorkshopTechnician technician, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_WorkshopTechnician (WorkshopAccountId, CustomerId, CanRaiseInvoice)
+VALUES (@workshopAccountId, @customerId, @canRaiseInvoice);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("workshopAccountId", technician.WorkshopAccountId),
+            new DataParameter("customerId", technician.CustomerId),
+            new DataParameter("canRaiseInvoice", technician.CanRaiseInvoice));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<WorkshopTechnician?> GetTechnicianAsync(int workshopAccountId, int customerId, CancellationToken cancellationToken)
+    {
+        var sql = CheckEngineSql.SelectTop(1,
+            "Id, WorkshopAccountId, CustomerId, CanRaiseInvoice",
+            "FROM TP_CE_WorkshopTechnician WHERE WorkshopAccountId = @workshopAccountId AND CustomerId = @customerId ORDER BY Id");
+        var rows = await _dataProvider.QueryAsync<TechnicianRow>(sql,
+            new DataParameter("workshopAccountId", workshopAccountId),
+            new DataParameter("customerId", customerId));
+
+        return rows.Select(row => new WorkshopTechnician
+        {
+            Id = row.Id,
+            WorkshopAccountId = row.WorkshopAccountId,
+            CustomerId = row.CustomerId,
+            CanRaiseInvoice = row.CanRaiseInvoice
+        }).FirstOrDefault();
+    }
+
+    public Task UpdateJobLineAsync(WorkshopJobLine line, CancellationToken cancellationToken)
+        => _dataProvider.ExecuteNonQueryAsync(@"
+UPDATE TP_CE_WorkshopJobLine
+SET InvoicedOrderId = @invoicedOrderId
+WHERE Id = @id",
+            new DataParameter("id", line.Id),
+            new DataParameter("invoicedOrderId", line.InvoicedOrderId ?? (object)DBNull.Value));
 
     private static WorkshopAccount MapAccount(AccountRow row)
     {
@@ -253,7 +390,8 @@ VALUES
             ProductId = row.ProductId,
             Quantity = row.Quantity,
             FitmentOutcome = row.FitmentOutcome,
-            UnitPrice = row.UnitPrice
+            UnitPrice = row.UnitPrice,
+            InvoicedOrderId = row.InvoicedOrderId
         };
     }
 
@@ -302,5 +440,30 @@ VALUES
         public int Quantity { get; set; }
         public string FitmentOutcome { get; set; } = string.Empty;
         public decimal UnitPrice { get; set; }
+        public int? InvoicedOrderId { get; set; }
+    }
+
+    private sealed class CustomerRow
+    {
+        public int Id { get; set; }
+        public int WorkshopAccountId { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string? ContactEmail { get; set; }
+    }
+
+    private sealed class CustomerVehicleRow
+    {
+        public int Id { get; set; }
+        public int WorkshopCustomerId { get; set; }
+        public int VehicleConfigurationId { get; set; }
+        public string? Vin { get; set; }
+    }
+
+    private sealed class TechnicianRow
+    {
+        public int Id { get; set; }
+        public int WorkshopAccountId { get; set; }
+        public int CustomerId { get; set; }
+        public bool CanRaiseInvoice { get; set; }
     }
 }

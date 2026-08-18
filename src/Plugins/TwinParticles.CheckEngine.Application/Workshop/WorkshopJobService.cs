@@ -31,6 +31,7 @@ public sealed class WorkshopJobService
     private readonly FitmentEvaluationService _fitment;
     private readonly IPortalOrderBridge _orderBridge;
     private readonly WorkshopPortalLicenceGate _licenceGate;
+    private readonly PortalTradePricingService _pricing;
     private readonly ICheckEngineAuditService _auditService;
     private readonly ICheckEngineClock _clock;
 
@@ -39,6 +40,7 @@ public sealed class WorkshopJobService
         FitmentEvaluationService fitment,
         IPortalOrderBridge orderBridge,
         WorkshopPortalLicenceGate licenceGate,
+        PortalTradePricingService pricing,
         ICheckEngineAuditService auditService,
         ICheckEngineClock clock)
     {
@@ -46,6 +48,7 @@ public sealed class WorkshopJobService
         _fitment = fitment;
         _orderBridge = orderBridge;
         _licenceGate = licenceGate;
+        _pricing = pricing;
         _auditService = auditService;
         _clock = clock;
     }
@@ -115,8 +118,8 @@ public sealed class WorkshopJobService
 
         var account = await _repository.GetAccountByIdAsync(job.WorkshopAccountId, cancellationToken);
         var unitPrice = account?.DefaultPriceListId is int priceListId
-            ? await _repository.ResolveTradePriceAsync(priceListId, request.ProductId, cancellationToken)
-            : 0m;
+            ? await _pricing.ResolveUnitPriceAsync(priceListId, request.ProductId, cancellationToken)
+            : await _pricing.ResolveUnitPriceAsync(null, request.ProductId, cancellationToken);
 
         var line = new WorkshopJobLine
         {
@@ -152,7 +155,10 @@ public sealed class WorkshopJobService
         return WorkshopJobResult.Ok(job);
     }
 
-    public async Task<WorkshopInvoiceResult> RaiseJobInvoiceAsync(int jobId, CancellationToken cancellationToken)
+    public Task<WorkshopInvoiceResult> RaiseJobInvoiceAsync(int jobId, CancellationToken cancellationToken)
+        => RaiseJobInvoiceAsync(jobId, jobVehicleId: null, cancellationToken);
+
+    public async Task<WorkshopInvoiceResult> RaiseJobInvoiceAsync(int jobId, int? jobVehicleId, CancellationToken cancellationToken)
     {
         if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
             return WorkshopInvoiceResult.Fail(WorkshopErrorCodes.LicenceDenied);
@@ -167,7 +173,12 @@ public sealed class WorkshopJobService
         if (job.Status != WorkshopJobStatus.ReadyToInvoice)
             return WorkshopInvoiceResult.Fail(WorkshopErrorCodes.InvalidTransition);
 
-        var lines = await _repository.GetJobLinesAsync(jobId, cancellationToken);
+        var allLines = await _repository.GetJobLinesAsync(jobId, cancellationToken);
+        var lines = allLines
+            .Where(line => !line.InvoicedOrderId.HasValue)
+            .Where(line => !jobVehicleId.HasValue || line.JobVehicleId == jobVehicleId.Value)
+            .ToList();
+
         if (lines.Count == 0)
             return WorkshopInvoiceResult.Fail(WorkshopErrorCodes.EmptyJob);
 
@@ -175,8 +186,13 @@ public sealed class WorkshopJobService
         if (account is null)
             return WorkshopInvoiceResult.Fail(WorkshopErrorCodes.NotFound);
 
+        var vehicles = await _repository.GetJobVehiclesAsync(jobId, cancellationToken);
+        var labourFee = job.LabourEstimate;
+        if (jobVehicleId.HasValue && vehicles.Count > 1)
+            labourFee = Math.Round(job.LabourEstimate / vehicles.Count, 2, MidpointRounding.AwayFromZero);
+
         var partsTotal = lines.Sum(line => line.UnitPrice * line.Quantity);
-        var invoiceTotal = partsTotal + job.LabourEstimate;
+        var invoiceTotal = partsTotal + labourFee;
         if (account.CreditUsed + invoiceTotal > account.CreditLimit)
             return WorkshopInvoiceResult.Fail(WorkshopErrorCodes.CreditExceeded);
 
@@ -189,14 +205,64 @@ public sealed class WorkshopJobService
             })
             .ToList();
 
-        var orderId = await _orderBridge.CreateTradeOrderAsync(account.CustomerId, orderLines, cancellationToken);
+        var orderId = await _orderBridge.CreateTradeOrderAsync(
+            account.CustomerId,
+            orderLines,
+            supplementaryLabourFee: labourFee,
+            cancellationToken);
 
-        job.OrderId = orderId;
-        job.Status = WorkshopJobStatus.Invoiced;
+        account.CreditUsed += invoiceTotal;
+        await _repository.UpdateAccountAsync(account, cancellationToken);
+
+        foreach (var line in lines)
+        {
+            line.InvoicedOrderId = orderId;
+            await _repository.UpdateJobLineAsync(line, cancellationToken);
+        }
+
+        var remaining = allLines.Any(line => !line.InvoicedOrderId.HasValue);
+        job.OrderId = remaining ? job.OrderId : orderId;
+        job.Status = remaining ? WorkshopJobStatus.ReadyToInvoice : WorkshopJobStatus.Invoiced;
         job.UpdatedUtc = _clock.UtcNow;
         await _repository.UpdateJobAsync(job, cancellationToken);
         await AuditAsync("workshop.job.invoice", job.Id, cancellationToken);
         return WorkshopInvoiceResult.Ok(job, orderId);
+    }
+
+    public async Task<WorkshopCustomerResult> CreateWorkshopCustomerAsync(CreateWorkshopCustomerRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return WorkshopCustomerResult.Fail(WorkshopErrorCodes.LicenceDenied);
+
+        var account = await _repository.GetAccountByIdAsync(request.WorkshopAccountId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return WorkshopCustomerResult.Fail(WorkshopErrorCodes.NotFound);
+
+        var customer = new WorkshopCustomer
+        {
+            WorkshopAccountId = request.WorkshopAccountId,
+            DisplayName = request.DisplayName.Trim(),
+            ContactEmail = request.ContactEmail?.Trim()
+        };
+
+        customer.Id = await _repository.InsertCustomerAsync(customer, cancellationToken);
+        return WorkshopCustomerResult.Ok(customer);
+    }
+
+    public async Task<WorkshopCustomerVehicleResult> AddWorkshopCustomerVehicleAsync(AddWorkshopCustomerVehicleRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return WorkshopCustomerVehicleResult.Fail(WorkshopErrorCodes.LicenceDenied);
+
+        var vehicle = new WorkshopCustomerVehicle
+        {
+            WorkshopCustomerId = request.WorkshopCustomerId,
+            VehicleConfigurationId = request.VehicleConfigurationId,
+            Vin = request.Vin?.Trim()
+        };
+
+        vehicle.Id = await _repository.InsertCustomerVehicleAsync(vehicle, cancellationToken);
+        return WorkshopCustomerVehicleResult.Ok(vehicle);
     }
 
     public async Task<WorkshopPortalSnapshot?> GetDashboardAsync(int customerId, CancellationToken cancellationToken)
@@ -209,7 +275,8 @@ public sealed class WorkshopJobService
             return null;
 
         var jobs = await _repository.ListJobsByAccountAsync(account.Id, cancellationToken);
-        return new WorkshopPortalSnapshot { Account = account, Jobs = jobs };
+        var customers = await _repository.ListCustomersAsync(account.Id, cancellationToken);
+        return new WorkshopPortalSnapshot { Account = account, Jobs = jobs, Customers = customers };
     }
 
     public async Task<WorkshopJobDetail?> GetJobDetailAsync(int jobId, CancellationToken cancellationToken)
@@ -315,4 +382,48 @@ public sealed class WorkshopInvoiceResult
 
     public static WorkshopInvoiceResult Fail(string errorCode)
         => new() { Success = false, ErrorCode = errorCode };
+}
+
+public sealed class CreateWorkshopCustomerRequest
+{
+    public int WorkshopAccountId { get; init; }
+
+    public string DisplayName { get; init; } = string.Empty;
+
+    public string? ContactEmail { get; init; }
+}
+
+public sealed class AddWorkshopCustomerVehicleRequest
+{
+    public int WorkshopCustomerId { get; init; }
+
+    public int VehicleConfigurationId { get; init; }
+
+    public string? Vin { get; init; }
+}
+
+public sealed class WorkshopCustomerResult
+{
+    public bool Success { get; init; }
+
+    public string? ErrorCode { get; init; }
+
+    public WorkshopCustomer? Customer { get; init; }
+
+    public static WorkshopCustomerResult Ok(WorkshopCustomer customer) => new() { Success = true, Customer = customer };
+
+    public static WorkshopCustomerResult Fail(string errorCode) => new() { Success = false, ErrorCode = errorCode };
+}
+
+public sealed class WorkshopCustomerVehicleResult
+{
+    public bool Success { get; init; }
+
+    public string? ErrorCode { get; init; }
+
+    public WorkshopCustomerVehicle? Vehicle { get; init; }
+
+    public static WorkshopCustomerVehicleResult Ok(WorkshopCustomerVehicle vehicle) => new() { Success = true, Vehicle = vehicle };
+
+    public static WorkshopCustomerVehicleResult Fail(string errorCode) => new() { Success = false, ErrorCode = errorCode };
 }
