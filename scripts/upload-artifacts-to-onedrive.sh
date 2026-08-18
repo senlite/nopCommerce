@@ -22,7 +22,7 @@ fi
 
 # Ensure rclone.conf exists (start.sh normally runs at boot)
 if [[ ! -f "${HOME}/.config/rclone/rclone.conf" ]]; then
-  if [[ -n "${RCLONE_CONFIG_B64:-}" ]]; then
+  if [[ -n "${RCLONE_CONFIG_B64:-}" || -n "${RCLONE_CONFIG_B64_2:-}" ]]; then
     bash "$(dirname "$0")/../.cursor/scripts/start.sh" 2>/dev/null || true
   fi
 fi
@@ -31,8 +31,9 @@ if [[ ! -f "${HOME}/.config/rclone/rclone.conf" ]]; then
   cat >&2 <<'EOF'
 OneDrive is not configured for this cloud agent environment.
 
-Add secret RCLONE_CONFIG_B64 in Cursor → Cloud Agents → Environments → Secrets.
-See docs/cloud-agent-onedrive-setup.md for how to generate it on your PC.
+Add RCLONE_CONFIG_B64 (and RCLONE_CONFIG_B64_2, … if the value exceeds 4096 chars)
+in Cursor → Cloud Agents → Environments → Secrets.
+See docs/cloud-agent-onedrive-setup.md — run scripts/split-rclone-config-for-cursor.sh on your PC.
 EOF
   exit 1
 fi

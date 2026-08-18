@@ -41,6 +41,27 @@ base64 -i ~/.config/rclone/rclone.conf | tr -d '\n'
 
 Copy the **single line** of output.
 
+#### If Cursor rejects the secret (max 4096 characters)
+
+OneDrive `rclone.conf` tokens often encode to **5000+** characters. Cursor environment secrets are capped at **4096** per value.
+
+Run the splitter on your PC (from a clone of this repo, or copy the script):
+
+```bash
+bash scripts/split-rclone-config-for-cursor.sh
+# or: bash scripts/split-rclone-config-for-cursor.sh /path/to/rclone.conf
+```
+
+It prints two or more chunks. Add **each** as a separate secret:
+
+| Secret | When |
+|--------|------|
+| `RCLONE_CONFIG_B64` | Always — part 1 |
+| `RCLONE_CONFIG_B64_2` | When part 1 alone exceeds 4096 chars |
+| `RCLONE_CONFIG_B64_3` | Third chunk if needed |
+
+Agents concatenate the parts in order at boot. Your **5764**-character value needs **two** secrets (~2882 chars each).
+
 ### 4. Add Cursor environment secrets
 
 Open your environment in the dashboard:
@@ -49,7 +70,9 @@ Open your environment in the dashboard:
 
 | Secret | Required | Example |
 |--------|----------|---------|
-| `RCLONE_CONFIG_B64` | Yes | (paste base64 from step 3) |
+| `RCLONE_CONFIG_B64` | Yes | Part 1 of base64 (≤4096 chars) |
+| `RCLONE_CONFIG_B64_2` | If split | Part 2 when total base64 > 4096 |
+| `RCLONE_CONFIG_B64_3` | If split | Part 3 if still needed |
 | `ONEDRIVE_ARTIFACTS_FOLDER` | No | `CheckEngine/AgentArtifacts` |
 | `ONEDRIVE_RCLONE_REMOTE` | No | `onedrive:` (must match remote name in config) |
 
@@ -90,7 +113,8 @@ The script prints **rclone link** URLs you can paste into PRs, Teams, or email.
 
 | Symptom | Fix |
 |---------|-----|
-| `OneDrive is not configured` | Add `RCLONE_CONFIG_B64` and restart / rebuild the environment |
+| `OneDrive is not configured` | Add `RCLONE_CONFIG_B64` (+ `_2`, `_3` if split) and start a new agent |
+| `Secret value exceeds max length of 4096` | Run `scripts/split-rclone-config-for-cursor.sh` on your PC; add each printed chunk as its own secret |
 | `token expired` | Re-run `rclone config reconnect onedrive:` on your PC, re-encode config, update secret |
 | `rclone: command not found` | Environment install script did not run — Save install=`bash .cursor/scripts/install.sh` and start a new agent |
 | Upload works but no link | Some tenant policies block anonymous links; share the folder manually in OneDrive |

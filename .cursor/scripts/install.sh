@@ -18,5 +18,7 @@ fi
 
 mkdir -p /opt/cursor/artifacts 2>/dev/null || true
 chmod +x "$ROOT/scripts/upload-artifacts-to-onedrive.sh" 2>/dev/null || true
+chmod +x "$ROOT/scripts/split-rclone-config-for-cursor.sh" 2>/dev/null || true
+chmod +x "$ROOT/.cursor/scripts/rclone-config-from-secrets.sh" 2>/dev/null || true
 
 echo "[cloud-agent install] Done."
