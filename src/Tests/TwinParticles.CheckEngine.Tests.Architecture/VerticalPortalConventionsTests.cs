@@ -170,4 +170,41 @@ public class VerticalPortalConventionsTests
         controller.Should().Contain("ProvisionFleet");
         controller.Should().Contain("ProvisionDealer");
     }
+
+    [Test]
+    public void Horizon4_v067_Should_Expose_Job_Detail_Allocation_And_Fleet_Forecast()
+    {
+        var workshop = ReadPluginFile("Controllers", "WorkshopController.cs");
+        workshop.Should().Contain("JobDetail");
+        workshop.Should().Contain("AllocateJobLine");
+
+        var fleet = ReadPluginFile("Controllers", "FleetController.cs");
+        fleet.Should().Contain("MaintenanceForecast");
+
+        var fleetService = ReadApplicationFile("Fleet", "FleetPortalService.cs");
+        fleetService.Should().Contain("RefreshMaintenanceForecastsForVehicleAsync");
+        fleetService.Should().Contain("SeedDefaultMaintenanceSchedulesAsync");
+
+        var migration = ReadInfrastructureFile("Migrations", "202608182100_FleetMaintenanceForecast.cs");
+        migration.Should().Contain("TP_CE_FleetMaintenanceSchedule");
+        migration.Should().Contain("TP_CE_FleetMaintenanceForecast");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("/check-engine/workshop/JobDetail");
+        portalsJs.Should().Contain("AllocateJobLine");
+        portalsJs.Should().Contain("maintenanceForecasts");
+        portalsJs.Should().Contain("SeedDealerAllocation");
+    }
+
+    [Test]
+    public void Portal_Admin_Should_Seed_Dealer_Allocation_And_Quota()
+    {
+        var controller = ReadPluginFile("Controllers", "PortalAdminController.cs");
+        controller.Should().Contain("SeedDealerAllocation");
+        controller.Should().Contain("SeedDealerQuota");
+
+        var admin = ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml");
+        admin.Should().Contain("data-ce-admin-seed-allocation");
+        admin.Should().Contain("data-ce-admin-seed-quota");
+    }
 }

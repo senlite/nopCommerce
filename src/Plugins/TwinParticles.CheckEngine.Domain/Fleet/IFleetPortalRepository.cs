@@ -35,4 +35,12 @@ public interface IFleetPortalRepository
     Task<int> InsertAccountAsync(FleetAccount account, CancellationToken cancellationToken);
 
     Task<int> InsertBudgetCentreAsync(FleetBudgetCentre centre, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FleetMaintenanceSchedule>> ListMaintenanceSchedulesAsync(int fleetAccountId, CancellationToken cancellationToken);
+
+    Task<int> InsertMaintenanceScheduleAsync(FleetMaintenanceSchedule schedule, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FleetMaintenanceForecast>> ListMaintenanceForecastsAsync(int fleetAccountId, CancellationToken cancellationToken);
+
+    Task UpsertMaintenanceForecastAsync(FleetMaintenanceForecast forecast, CancellationToken cancellationToken);
 }

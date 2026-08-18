@@ -61,6 +61,18 @@ public sealed class FleetController : BasePublicController
         return snapshot is null ? Denied(FleetErrorCodes.NotFound, 404) : Json(snapshot);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> MaintenanceForecast(CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var forecasts = await _fleetService.GetMaintenanceForecastAsync(customer.Id, cancellationToken);
+        return Json(forecasts);
+    }
+
     [HttpPost]
     public async Task<IActionResult> ImportFleetVins([FromBody] ImportFleetVinsRequest request, CancellationToken cancellationToken)
     {

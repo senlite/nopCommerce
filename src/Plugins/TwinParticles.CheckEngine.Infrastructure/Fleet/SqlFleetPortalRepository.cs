@@ -43,14 +43,15 @@ WHERE Id = @id",
     {
         var id = await _dataProvider.QueryAsync<int>(@"
 INSERT INTO TP_CE_FleetVehicle
-(FleetAccountId, VehicleConfigurationId, Vin, AssetTag)
+(FleetAccountId, VehicleConfigurationId, Vin, AssetTag, RegisteredUtc)
 VALUES
-(@fleetAccountId, @vehicleConfigurationId, @vin, @assetTag);
+(@fleetAccountId, @vehicleConfigurationId, @vin, @assetTag, @registeredUtc);
 " + CheckEngineSql.SelectInsertedIntId() + ";",
             new DataParameter("fleetAccountId", vehicle.FleetAccountId),
             new DataParameter("vehicleConfigurationId", vehicle.VehicleConfigurationId ?? (object)DBNull.Value),
             new DataParameter("vin", vehicle.Vin ?? (object)DBNull.Value),
-            new DataParameter("assetTag", vehicle.AssetTag ?? (object)DBNull.Value));
+            new DataParameter("assetTag", vehicle.AssetTag ?? (object)DBNull.Value),
+            new DataParameter("registeredUtc", vehicle.RegisteredUtc?.UtcDateTime ?? (object)DBNull.Value));
 
         return id.FirstOrDefault();
     }
@@ -58,7 +59,7 @@ VALUES
     public async Task<FleetVehicle?> GetVehicleAsync(int vehicleId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<VehicleRow>(@"
-SELECT Id, FleetAccountId, VehicleConfigurationId, Vin, AssetTag
+SELECT Id, FleetAccountId, VehicleConfigurationId, Vin, AssetTag, RegisteredUtc
 FROM TP_CE_FleetVehicle
 WHERE Id = @id",
             new DataParameter("id", vehicleId));
@@ -69,7 +70,7 @@ WHERE Id = @id",
     public async Task<IReadOnlyList<FleetVehicle>> GetVehiclesAsync(int fleetAccountId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<VehicleRow>(@"
-SELECT Id, FleetAccountId, VehicleConfigurationId, Vin, AssetTag
+SELECT Id, FleetAccountId, VehicleConfigurationId, Vin, AssetTag, RegisteredUtc
 FROM TP_CE_FleetVehicle
 WHERE FleetAccountId = @fleetAccountId
 ORDER BY Id",
@@ -255,6 +256,87 @@ VALUES
         return id.FirstOrDefault();
     }
 
+    public async Task<IReadOnlyList<FleetMaintenanceSchedule>> ListMaintenanceSchedulesAsync(int fleetAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<MaintenanceScheduleRow>(@"
+SELECT Id, FleetAccountId, ServiceLabel, IntervalDays
+FROM TP_CE_FleetMaintenanceSchedule
+WHERE FleetAccountId = @fleetAccountId
+ORDER BY IntervalDays",
+            new DataParameter("fleetAccountId", fleetAccountId));
+
+        return rows.Select(MapMaintenanceSchedule).ToList();
+    }
+
+    public async Task<int> InsertMaintenanceScheduleAsync(FleetMaintenanceSchedule schedule, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_FleetMaintenanceSchedule
+(FleetAccountId, ServiceLabel, IntervalDays)
+VALUES
+(@fleetAccountId, @serviceLabel, @intervalDays);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("fleetAccountId", schedule.FleetAccountId),
+            new DataParameter("serviceLabel", schedule.ServiceLabel),
+            new DataParameter("intervalDays", schedule.IntervalDays));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<IReadOnlyList<FleetMaintenanceForecast>> ListMaintenanceForecastsAsync(int fleetAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<MaintenanceForecastRow>(@"
+SELECT f.Id, f.FleetVehicleId, f.ScheduleId, f.ServiceLabel, f.DueUtc, f.ComputedUtc
+FROM TP_CE_FleetMaintenanceForecast f
+INNER JOIN TP_CE_FleetVehicle v ON v.Id = f.FleetVehicleId
+WHERE v.FleetAccountId = @fleetAccountId
+ORDER BY f.DueUtc",
+            new DataParameter("fleetAccountId", fleetAccountId));
+
+        return rows.Select(MapMaintenanceForecast).ToList();
+    }
+
+    public async Task UpsertMaintenanceForecastAsync(FleetMaintenanceForecast forecast, CancellationToken cancellationToken)
+    {
+        var existing = await _dataProvider.QueryAsync<int>(@"
+SELECT Id
+FROM TP_CE_FleetMaintenanceForecast
+WHERE FleetVehicleId = @fleetVehicleId AND ScheduleId = @scheduleId",
+            new DataParameter("fleetVehicleId", forecast.FleetVehicleId),
+            new DataParameter("scheduleId", forecast.ScheduleId));
+
+        var existingId = existing.FirstOrDefault();
+        if (existingId > 0)
+        {
+            await _dataProvider.ExecuteNonQueryAsync(@"
+UPDATE TP_CE_FleetMaintenanceForecast
+SET ServiceLabel = @serviceLabel,
+    DueUtc = @dueUtc,
+    ComputedUtc = @computedUtc
+WHERE Id = @id",
+                new DataParameter("id", existingId),
+                new DataParameter("serviceLabel", forecast.ServiceLabel),
+                new DataParameter("dueUtc", forecast.DueUtc.UtcDateTime),
+                new DataParameter("computedUtc", forecast.ComputedUtc.UtcDateTime));
+            forecast.Id = existingId;
+            return;
+        }
+
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_FleetMaintenanceForecast
+(FleetVehicleId, ScheduleId, ServiceLabel, DueUtc, ComputedUtc)
+VALUES
+(@fleetVehicleId, @scheduleId, @serviceLabel, @dueUtc, @computedUtc);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("fleetVehicleId", forecast.FleetVehicleId),
+            new DataParameter("scheduleId", forecast.ScheduleId),
+            new DataParameter("serviceLabel", forecast.ServiceLabel),
+            new DataParameter("dueUtc", forecast.DueUtc.UtcDateTime),
+            new DataParameter("computedUtc", forecast.ComputedUtc.UtcDateTime));
+
+        forecast.Id = id.FirstOrDefault();
+    }
+
     private static FleetAccount MapAccount(AccountRow row)
     {
         return new FleetAccount
@@ -275,7 +357,32 @@ VALUES
             FleetAccountId = row.FleetAccountId,
             VehicleConfigurationId = row.VehicleConfigurationId,
             Vin = row.Vin,
-            AssetTag = row.AssetTag
+            AssetTag = row.AssetTag,
+            RegisteredUtc = row.RegisteredUtc.HasValue ? ToUtc(row.RegisteredUtc.Value) : null
+        };
+    }
+
+    private static FleetMaintenanceSchedule MapMaintenanceSchedule(MaintenanceScheduleRow row)
+    {
+        return new FleetMaintenanceSchedule
+        {
+            Id = row.Id,
+            FleetAccountId = row.FleetAccountId,
+            ServiceLabel = row.ServiceLabel,
+            IntervalDays = row.IntervalDays
+        };
+    }
+
+    private static FleetMaintenanceForecast MapMaintenanceForecast(MaintenanceForecastRow row)
+    {
+        return new FleetMaintenanceForecast
+        {
+            Id = row.Id,
+            FleetVehicleId = row.FleetVehicleId,
+            ScheduleId = row.ScheduleId,
+            ServiceLabel = row.ServiceLabel,
+            DueUtc = ToUtc(row.DueUtc),
+            ComputedUtc = ToUtc(row.ComputedUtc)
         };
     }
 
@@ -329,6 +436,25 @@ VALUES
         public int? VehicleConfigurationId { get; set; }
         public string? Vin { get; set; }
         public string? AssetTag { get; set; }
+        public DateTime? RegisteredUtc { get; set; }
+    }
+
+    private sealed class MaintenanceScheduleRow
+    {
+        public int Id { get; set; }
+        public int FleetAccountId { get; set; }
+        public string ServiceLabel { get; set; } = string.Empty;
+        public int IntervalDays { get; set; }
+    }
+
+    private sealed class MaintenanceForecastRow
+    {
+        public int Id { get; set; }
+        public int FleetVehicleId { get; set; }
+        public int ScheduleId { get; set; }
+        public string ServiceLabel { get; set; } = string.Empty;
+        public DateTime DueUtc { get; set; }
+        public DateTime ComputedUtc { get; set; }
     }
 
     private sealed class BudgetCentreRow

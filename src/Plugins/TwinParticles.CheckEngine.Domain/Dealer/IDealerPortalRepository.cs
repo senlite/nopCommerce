@@ -31,4 +31,8 @@ public interface IDealerPortalRepository
     Task<IReadOnlyList<WarrantyClaim>> ListWarrantyClaimsByAccountAsync(int dealerAccountId, CancellationToken cancellationToken);
 
     Task<int> InsertAccountAsync(DealerAccount account, CancellationToken cancellationToken);
+
+    Task<int> InsertAllocationAsync(DealerAllocation allocation, CancellationToken cancellationToken);
+
+    Task<int> InsertQuotaAsync(DealerQuota quota, CancellationToken cancellationToken);
 }

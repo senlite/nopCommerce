@@ -65,5 +65,47 @@
                 </table>
             </div>
         </section>
+
+        <section class="ce-mp-panel" data-ce-workshop-detail hidden>
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.JobDetail")</h2>
+            <p class="ce-mp-hint" data-ce-workshop-detail-summary></p>
+
+            <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.Vehicles")</h3>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</th>
+                            <th>VIN</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-vehicles>
+                        <tr><td colspan="6">@T("Plugins.TwinParticles.CheckEngine.Workshop.SelectJob")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.Lines")</h3>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Fitment")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.UnitPrice")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-lines>
+                        <tr><td colspan="5">@T("Plugins.TwinParticles.CheckEngine.Workshop.SelectJob")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 </div>

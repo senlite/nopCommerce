@@ -63,6 +63,26 @@ public sealed class PortalAdminController : BasePluginController
         return result.Success ? Json(result) : BadRequestJson(result);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> SeedDealerAllocation([FromBody] SeedDealerAllocationRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedDealerAllocationAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SeedDealerQuota([FromBody] SeedDealerQuotaRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedDealerQuotaAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
     private Task<bool> AuthorizedAsync()
         => _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 

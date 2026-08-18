@@ -123,6 +123,10 @@ public class VerticalPortalAccessTests
         public Task UpdateApprovalRequestAsync(FleetApprovalRequest request, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<FleetApprovalRequest?> GetApprovalRequestAsync(int requestId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<IReadOnlyList<FleetApprovalRequest>> ListApprovalRequestsByAccountAsync(int fleetAccountId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<IReadOnlyList<FleetMaintenanceSchedule>> ListMaintenanceSchedulesAsync(int fleetAccountId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<int> InsertMaintenanceScheduleAsync(FleetMaintenanceSchedule schedule, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<IReadOnlyList<FleetMaintenanceForecast>> ListMaintenanceForecastsAsync(int fleetAccountId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task UpsertMaintenanceForecastAsync(FleetMaintenanceForecast forecast, CancellationToken cancellationToken) => throw new System.NotImplementedException();
     }
 
     private sealed class StubDealerRepo : IDealerPortalRepository
@@ -140,5 +144,7 @@ public class VerticalPortalAccessTests
         public Task UpdateWarrantyClaimAsync(WarrantyClaim claim, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<WarrantyClaim?> GetWarrantyClaimAsync(int claimId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<IReadOnlyList<WarrantyClaim>> ListWarrantyClaimsByAccountAsync(int dealerAccountId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<int> InsertAllocationAsync(DealerAllocation allocation, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<int> InsertQuotaAsync(DealerQuota quota, CancellationToken cancellationToken) => throw new System.NotImplementedException();
     }
 }

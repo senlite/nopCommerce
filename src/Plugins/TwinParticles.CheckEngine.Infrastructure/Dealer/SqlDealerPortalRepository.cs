@@ -209,6 +209,38 @@ VALUES
         return id.FirstOrDefault();
     }
 
+    public async Task<int> InsertAllocationAsync(DealerAllocation allocation, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_DealerAllocation
+(DealerAccountId, ProductId, CategoryId, PeriodCeilingUnits, PeriodUsedUnits)
+VALUES
+(@dealerAccountId, @productId, @categoryId, @periodCeilingUnits, @periodUsedUnits);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("dealerAccountId", allocation.DealerAccountId),
+            new DataParameter("productId", allocation.ProductId ?? (object)DBNull.Value),
+            new DataParameter("categoryId", allocation.CategoryId ?? (object)DBNull.Value),
+            new DataParameter("periodCeilingUnits", allocation.PeriodCeilingUnits),
+            new DataParameter("periodUsedUnits", allocation.PeriodUsedUnits));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<int> InsertQuotaAsync(DealerQuota quota, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_DealerQuota
+(DealerAccountId, SpendCeiling, SpendUsed)
+VALUES
+(@dealerAccountId, @spendCeiling, @spendUsed);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("dealerAccountId", quota.DealerAccountId),
+            new DataParameter("spendCeiling", quota.SpendCeiling),
+            new DataParameter("spendUsed", quota.SpendUsed));
+
+        return id.FirstOrDefault();
+    }
+
     private static DealerAccount MapAccount(AccountRow row)
     {
         return new DealerAccount

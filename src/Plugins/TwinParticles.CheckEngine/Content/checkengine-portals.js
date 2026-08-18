@@ -72,7 +72,11 @@
     var alert = root.querySelector('[data-ce-portal-alert]');
     var stats = root.querySelector('[data-ce-workshop-stats]');
     var jobsBody = root.querySelector('[data-ce-workshop-jobs]');
-    var state = { accountId: null, jobs: [] };
+    var detailPanel = root.querySelector('[data-ce-workshop-detail]');
+    var detailSummary = root.querySelector('[data-ce-workshop-detail-summary]');
+    var vehiclesBody = root.querySelector('[data-ce-workshop-vehicles]');
+    var linesBody = root.querySelector('[data-ce-workshop-lines]');
+    var state = { accountId: null, jobs: [], selectedJobId: null };
 
     function render() {
       if (!stats) return;
@@ -107,7 +111,7 @@
           var id = pick(job, 'id', 'Id');
           var status = pick(job, 'status', 'Status');
           var statusId = typeof status === 'number' ? status : pick(job, 'statusId', 'StatusId');
-          return (
+            return (
             '<tr data-job-id="' +
             id +
             '"><td>#' +
@@ -118,7 +122,9 @@
             (pick(job, 'labourEstimate', 'LabourEstimate') || 0) +
             '</td><td>' +
             (pick(job, 'orderId', 'OrderId') || '—') +
-            '</td><td><button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-ready="' +
+            '</td><td><button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-view="' +
+            id +
+            '">View</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-ready="' +
             id +
             '">Mark ready</button> <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-invoice="' +
             id +
@@ -126,6 +132,79 @@
           );
         })
         .join('');
+    }
+
+    function renderJobDetail(detail) {
+      if (!detailPanel) return;
+      var job = pick(detail, 'job', 'Job') || {};
+      var jobId = pick(job, 'id', 'Id');
+      state.selectedJobId = jobId;
+      detailPanel.hidden = false;
+      if (detailSummary) {
+        detailSummary.textContent =
+          'Job #' + jobId + ' — ' + statusBadge(pick(job, 'status', 'Status'));
+      }
+
+      var vehicles = pick(detail, 'vehicles', 'Vehicles') || [];
+      if (vehiclesBody) {
+        if (!vehicles.length) {
+          vehiclesBody.innerHTML = '<tr><td colspan="6">No vehicles on this job.</td></tr>';
+        } else {
+          vehiclesBody.innerHTML = vehicles
+            .map(function (v) {
+              var vehicleId = pick(v, 'id', 'Id');
+              return (
+                '<tr><td>' +
+                vehicleId +
+                '</td><td>' +
+                (pick(v, 'vehicleConfigurationId', 'VehicleConfigurationId') || '—') +
+                '</td><td class="ce-code">' +
+                (pick(v, 'vin', 'Vin') || '—') +
+                '</td><td><input type="number" min="1" class="ce-mp-input ce-code" data-ce-workshop-product="' +
+                vehicleId +
+                '" style="width:5rem" /></td><td><input type="number" min="1" value="1" class="ce-mp-input" data-ce-workshop-qty="' +
+                vehicleId +
+                '" style="width:4rem" /></td><td><button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-allocate="' +
+                vehicleId +
+                '">Allocate</button></td></tr>'
+              );
+            })
+            .join('');
+        }
+      }
+
+      var lines = pick(detail, 'lines', 'Lines') || [];
+      if (linesBody) {
+        if (!lines.length) {
+          linesBody.innerHTML = '<tr><td colspan="5">No lines allocated yet.</td></tr>';
+        } else {
+          linesBody.innerHTML = lines
+            .map(function (line) {
+              return (
+                '<tr><td>' +
+                (pick(line, 'id', 'Id') || '') +
+                '</td><td>' +
+                (pick(line, 'productId', 'ProductId') || '') +
+                '</td><td>' +
+                (pick(line, 'quantity', 'Quantity') || '') +
+                '</td><td>' +
+                (pick(line, 'fitmentOutcome', 'FitmentOutcome') || '') +
+                '</td><td>' +
+                (pick(line, 'unitPrice', 'UnitPrice') || 0) +
+                '</td></tr>'
+              );
+            })
+            .join('');
+        }
+      }
+    }
+
+    function loadJobDetail(jobId) {
+      return apiGet('/check-engine/workshop/JobDetail?jobId=' + encodeURIComponent(jobId), token)
+        .then(renderJobDetail)
+        .catch(function (err) {
+          showAlert(alert, 'error', portalErrorMessage(root, err));
+        });
     }
 
     function refresh() {
@@ -143,6 +222,30 @@
     }
 
     root.addEventListener('click', function (e) {
+      var view = e.target.closest('[data-ce-workshop-view]');
+      if (view) {
+        loadJobDetail(Number(view.getAttribute('data-ce-workshop-view')));
+        return;
+      }
+      var allocate = e.target.closest('[data-ce-workshop-allocate]');
+      if (allocate && state.selectedJobId) {
+        var vehicleId = Number(allocate.getAttribute('data-ce-workshop-allocate'));
+        var productId = Number(root.querySelector('[data-ce-workshop-product="' + vehicleId + '"]')?.value || 0);
+        var quantity = Number(root.querySelector('[data-ce-workshop-qty="' + vehicleId + '"]')?.value || 1);
+        apiPost('/check-engine/workshop/AllocateJobLine', token, {
+          jobId: state.selectedJobId,
+          jobVehicleId: vehicleId,
+          productId: productId,
+          quantity: quantity
+        })
+          .then(function () {
+            return loadJobDetail(state.selectedJobId);
+          })
+          .catch(function (err) {
+            showAlert(alert, 'error', (err && err.errorCode) || 'Allocate failed.');
+          });
+        return;
+      }
       var ready = e.target.closest('[data-ce-workshop-ready]');
       if (ready) {
         apiPost('/check-engine/workshop/TransitionJobStatus', token, {
@@ -193,6 +296,7 @@
     var alert = root.querySelector('[data-ce-portal-alert]');
     var vehiclesBody = root.querySelector('[data-ce-fleet-vehicles]');
     var approvalsBody = root.querySelector('[data-ce-fleet-approvals]');
+    var forecastsBody = root.querySelector('[data-ce-fleet-forecasts]');
     var state = { accountId: null };
 
     function renderVehicles(vehicles) {
@@ -256,6 +360,29 @@
         .join('');
     }
 
+    function renderForecasts(forecasts) {
+      if (!forecastsBody) return;
+      forecasts = forecasts || [];
+      if (!forecasts.length) {
+        forecastsBody.innerHTML = '<tr><td colspan="3">No maintenance forecasts yet. Import VINs to populate.</td></tr>';
+        return;
+      }
+      forecastsBody.innerHTML = forecasts
+        .map(function (f) {
+          var due = pick(f, 'dueUtc', 'DueUtc') || '';
+          return (
+            '<tr><td>' +
+            (pick(f, 'fleetVehicleId', 'FleetVehicleId') || '') +
+            '</td><td>' +
+            (pick(f, 'serviceLabel', 'ServiceLabel') || '') +
+            '</td><td>' +
+            (due ? String(due).slice(0, 10) : '—') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+    }
+
     function refresh() {
       return apiGet('/check-engine/fleet/DashboardData', token)
         .then(function (data) {
@@ -263,6 +390,7 @@
           state.accountId = pick(account, 'id', 'Id');
           renderVehicles(pick(data, 'vehicles', 'Vehicles'));
           renderApprovals(pick(data, 'approvalRequests', 'ApprovalRequests'));
+          renderForecasts(pick(data, 'maintenanceForecasts', 'MaintenanceForecasts'));
         })
         .catch(function (err) {
           showAlert(alert, 'error', portalErrorMessage(root, err));
@@ -458,6 +586,38 @@
     });
     root.querySelector('[data-ce-admin-dealer]')?.addEventListener('click', function () {
       provision('/Admin/CheckEngine/PortalAdmin/ProvisionDealer');
+    });
+    root.querySelector('[data-ce-admin-seed-allocation]')?.addEventListener('click', function () {
+      var dealerAccountId = Number(root.querySelector('[data-ce-admin-dealer-account]')?.value || 0);
+      var productId = Number(root.querySelector('[data-ce-admin-product]')?.value || 0);
+      var categoryId = Number(root.querySelector('[data-ce-admin-category]')?.value || 0);
+      var periodCeilingUnits = Number(root.querySelector('[data-ce-admin-allocation-units]')?.value || 0);
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedDealerAllocation', token, {
+        dealerAccountId: dealerAccountId,
+        productId: productId > 0 ? productId : null,
+        categoryId: categoryId > 0 ? categoryId : null,
+        periodCeilingUnits: periodCeilingUnits
+      })
+        .then(function (res) {
+          showAlert(alert, 'success', 'Seeded allocation #' + pick(res, 'entityId', 'EntityId'));
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed allocation failed.');
+        });
+    });
+    root.querySelector('[data-ce-admin-seed-quota]')?.addEventListener('click', function () {
+      var dealerAccountId = Number(root.querySelector('[data-ce-admin-dealer-account]')?.value || 0);
+      var spendCeiling = Number(root.querySelector('[data-ce-admin-spend-ceiling]')?.value || 0);
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedDealerQuota', token, {
+        dealerAccountId: dealerAccountId,
+        spendCeiling: spendCeiling
+      })
+        .then(function (res) {
+          showAlert(alert, 'success', 'Seeded quota #' + pick(res, 'entityId', 'EntityId'));
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed quota failed.');
+        });
     });
   }
 

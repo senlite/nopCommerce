@@ -30,6 +30,8 @@ public sealed class FleetPortalSnapshot
     public IReadOnlyList<FleetBudgetCentre> BudgetCentres { get; init; } = [];
 
     public IReadOnlyList<FleetApprovalRequest> ApprovalRequests { get; init; } = [];
+
+    public IReadOnlyList<FleetMaintenanceForecast> MaintenanceForecasts { get; init; } = [];
 }
 
 public sealed class DealerPortalSnapshot

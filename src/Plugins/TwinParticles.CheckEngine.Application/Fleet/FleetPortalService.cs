@@ -62,12 +62,16 @@ public sealed class FleetPortalService
 
             if (configurationId.HasValue)
             {
+                var now = _clock.UtcNow;
                 var vehicleId = await _repository.InsertVehicleAsync(new FleetVehicle
                 {
                     FleetAccountId = fleetAccountId,
                     VehicleConfigurationId = configurationId,
-                    Vin = decode.NormalizedVin
+                    Vin = decode.NormalizedVin,
+                    RegisteredUtc = now
                 }, cancellationToken);
+
+                await RefreshMaintenanceForecastsForVehicleAsync(vehicleId, fleetAccountId, now, cancellationToken);
 
                 rows.Add(new FleetVinImportRow
                 {
@@ -198,12 +202,76 @@ public sealed class FleetPortalService
         var vehicles = await _repository.GetVehiclesAsync(account.Id, cancellationToken);
         var centres = await _repository.ListBudgetCentresByAccountAsync(account.Id, cancellationToken);
         var approvals = await _repository.ListApprovalRequestsByAccountAsync(account.Id, cancellationToken);
+        var forecasts = await _repository.ListMaintenanceForecastsAsync(account.Id, cancellationToken);
         return new FleetPortalSnapshot
         {
             Account = account,
             Vehicles = vehicles,
             BudgetCentres = centres,
-            ApprovalRequests = approvals
+            ApprovalRequests = approvals,
+            MaintenanceForecasts = forecasts
+        };
+    }
+
+    public async Task<IReadOnlyList<FleetMaintenanceForecast>> GetMaintenanceForecastAsync(int customerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
+            return Array.Empty<FleetMaintenanceForecast>();
+
+        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return Array.Empty<FleetMaintenanceForecast>();
+
+        return await _repository.ListMaintenanceForecastsAsync(account.Id, cancellationToken);
+    }
+
+    public async Task SeedDefaultMaintenanceSchedulesAsync(int fleetAccountId, CancellationToken cancellationToken)
+    {
+        var existing = await _repository.ListMaintenanceSchedulesAsync(fleetAccountId, cancellationToken);
+        if (existing.Count > 0)
+            return;
+
+        foreach (var schedule in DefaultMaintenanceSchedules(fleetAccountId))
+            await _repository.InsertMaintenanceScheduleAsync(schedule, cancellationToken);
+    }
+
+    private async Task RefreshMaintenanceForecastsForVehicleAsync(
+        int vehicleId,
+        int fleetAccountId,
+        DateTimeOffset registeredUtc,
+        CancellationToken cancellationToken)
+    {
+        var schedules = await _repository.ListMaintenanceSchedulesAsync(fleetAccountId, cancellationToken);
+        if (schedules.Count == 0)
+            return;
+
+        var computedUtc = _clock.UtcNow;
+        foreach (var schedule in schedules)
+        {
+            await _repository.UpsertMaintenanceForecastAsync(new FleetMaintenanceForecast
+            {
+                FleetVehicleId = vehicleId,
+                ScheduleId = schedule.Id,
+                ServiceLabel = schedule.ServiceLabel,
+                DueUtc = registeredUtc.AddDays(schedule.IntervalDays),
+                ComputedUtc = computedUtc
+            }, cancellationToken);
+        }
+    }
+
+    private static IEnumerable<FleetMaintenanceSchedule> DefaultMaintenanceSchedules(int fleetAccountId)
+    {
+        yield return new FleetMaintenanceSchedule
+        {
+            FleetAccountId = fleetAccountId,
+            ServiceLabel = "Oil service",
+            IntervalDays = 180
+        };
+        yield return new FleetMaintenanceSchedule
+        {
+            FleetAccountId = fleetAccountId,
+            ServiceLabel = "Annual inspection",
+            IntervalDays = 365
         };
     }
 

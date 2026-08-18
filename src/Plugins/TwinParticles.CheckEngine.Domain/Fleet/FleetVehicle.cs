@@ -11,4 +11,6 @@ public sealed class FleetVehicle
     public string? Vin { get; set; }
 
     public string? AssetTag { get; set; }
+
+    public DateTimeOffset? RegisteredUtc { get; set; }
 }
