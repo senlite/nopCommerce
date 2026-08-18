@@ -112,4 +112,34 @@ public class VerticalPortalConventionsTests
         File.Exists(path).Should().BeTrue(path);
         return File.ReadAllText(path);
     }
+
+    [Test]
+    public void Portal_Pages_Should_Use_Design_System_Assets()
+    {
+        var workshop = ReadPluginFile("Views", "Workshop", "Index.cshtml");
+        var fleet = ReadPluginFile("Views", "Fleet", "Index.cshtml");
+        var dealer = ReadPluginFile("Views", "Dealer", "Index.cshtml");
+        var admin = ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml");
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+
+        workshop.Should().Contain("_PortalAssets.cshtml");
+        workshop.Should().Contain("data-ce-page=\"workshop\"");
+        fleet.Should().Contain("data-ce-page=\"fleet\"");
+        dealer.Should().Contain("data-ce-page=\"dealer\"");
+        admin.Should().Contain("data-ce-page=\"portal-admin\"");
+
+        portalsJs.Should().Contain("initWorkshop");
+        portalsJs.Should().Contain("initFleet");
+        portalsJs.Should().Contain("initDealer");
+        portalsJs.Should().Contain("/check-engine/workshop/DashboardData");
+    }
+
+    [Test]
+    public void Portal_Admin_Should_Provision_All_Three_Account_Types()
+    {
+        var controller = ReadPluginFile("Controllers", "PortalAdminController.cs");
+        controller.Should().Contain("ProvisionWorkshop");
+        controller.Should().Contain("ProvisionFleet");
+        controller.Should().Contain("ProvisionDealer");
+    }
 }

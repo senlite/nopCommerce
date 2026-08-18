@@ -7,6 +7,7 @@ using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
 using TwinParticles.CheckEngine.Domain.Fitment;
+using TwinParticles.CheckEngine.Application.Portals;
 using TwinParticles.CheckEngine.Domain.Fleet;
 using TwinParticles.CheckEngine.Domain.Performance;
 using TwinParticles.CheckEngine.Domain.Portals;
@@ -183,6 +184,27 @@ public sealed class FleetPortalService
         await _repository.UpdateApprovalRequestAsync(approval, cancellationToken);
         await AuditAsync("fleet.approval.approve", approval.Id, cancellationToken);
         return FleetApprovalResult.Ok(approval);
+    }
+
+    public async Task<FleetPortalSnapshot?> GetDashboardAsync(int customerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
+            return null;
+
+        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return null;
+
+        var vehicles = await _repository.GetVehiclesAsync(account.Id, cancellationToken);
+        var centres = await _repository.ListBudgetCentresByAccountAsync(account.Id, cancellationToken);
+        var approvals = await _repository.ListApprovalRequestsByAccountAsync(account.Id, cancellationToken);
+        return new FleetPortalSnapshot
+        {
+            Account = account,
+            Vehicles = vehicles,
+            BudgetCentres = centres,
+            ApprovalRequests = approvals
+        };
     }
 
     private Task AuditAsync(string action, int entityId, CancellationToken cancellationToken)

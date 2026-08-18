@@ -181,6 +181,34 @@ WHERE Id = @id",
         return rows.Select(MapWarrantyClaim).FirstOrDefault();
     }
 
+    public async Task<IReadOnlyList<WarrantyClaim>> ListWarrantyClaimsByAccountAsync(int dealerAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<WarrantyClaimRow>(@"
+SELECT Id, DealerAccountId, OrderId, OemNumber, VehicleConfigurationId, StatusId, EvidenceJson, CreatedUtc, UpdatedUtc
+FROM TP_CE_WarrantyClaim
+WHERE DealerAccountId = @accountId
+ORDER BY UpdatedUtc DESC",
+            new DataParameter("accountId", dealerAccountId));
+
+        return rows.Select(MapWarrantyClaim).ToList();
+    }
+
+    public async Task<int> InsertAccountAsync(DealerAccount account, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_DealerAccount
+(CustomerId, DisplayName, DefaultPriceListId, IsActive)
+VALUES
+(@customerId, @displayName, @defaultPriceListId, @isActive);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("customerId", account.CustomerId),
+            new DataParameter("displayName", account.DisplayName),
+            new DataParameter("defaultPriceListId", account.DefaultPriceListId ?? (object)DBNull.Value),
+            new DataParameter("isActive", account.IsActive));
+
+        return id.FirstOrDefault();
+    }
+
     private static DealerAccount MapAccount(AccountRow row)
     {
         return new DealerAccount

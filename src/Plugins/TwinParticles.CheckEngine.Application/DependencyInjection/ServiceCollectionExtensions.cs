@@ -11,6 +11,7 @@ using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Stages;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
+using TwinParticles.CheckEngine.Application.Portals;
 using TwinParticles.CheckEngine.Application.Workshop;
 using TwinParticles.CheckEngine.Application.Fleet;
 using TwinParticles.CheckEngine.Application.Dealer;
@@ -118,6 +119,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<WorkshopJobService>();
         services.AddScoped<FleetPortalService>();
         services.AddScoped<DealerPortalService>();
+        services.AddScoped<PortalAdminService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<ErpInboundWebhookService>();
         services.AddScoped<CheckEngineHealthService>();

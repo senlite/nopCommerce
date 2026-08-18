@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Services.Security;
 using Nop.Web.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
@@ -17,15 +18,18 @@ public sealed class FleetController : BasePublicController
     private readonly FleetPortalService _fleetService;
     private readonly FleetPortalLicenceGate _licenceGate;
     private readonly IPermissionService _permissionService;
+    private readonly IWorkContext _workContext;
 
     public FleetController(
         FleetPortalService fleetService,
         FleetPortalLicenceGate licenceGate,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        IWorkContext workContext)
     {
         _fleetService = fleetService;
         _licenceGate = licenceGate;
         _permissionService = permissionService;
+        _workContext = workContext;
     }
 
     [HttpGet]
@@ -35,6 +39,17 @@ public sealed class FleetController : BasePublicController
             return NotFound();
 
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Fleet/Index.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync(cancellationToken))
+            return Denied(FleetErrorCodes.LicenceDenied);
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var snapshot = await _fleetService.GetDashboardAsync(customer.Id, cancellationToken);
+        return snapshot is null ? Denied(FleetErrorCodes.NotFound, 404) : Json(snapshot);
     }
 
     [HttpPost]

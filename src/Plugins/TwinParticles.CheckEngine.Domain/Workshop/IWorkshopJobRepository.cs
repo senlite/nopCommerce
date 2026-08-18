@@ -26,5 +26,9 @@ public interface IWorkshopJobRepository
 
     Task<IReadOnlyList<WorkshopJobLine>> GetJobLinesAsync(int jobId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<WorkshopJob>> ListJobsByAccountAsync(int workshopAccountId, CancellationToken cancellationToken);
+
+    Task<int> InsertAccountAsync(WorkshopAccount account, CancellationToken cancellationToken);
+
     Task<decimal> ResolveTradePriceAsync(int priceListId, int productId, CancellationToken cancellationToken);
 }

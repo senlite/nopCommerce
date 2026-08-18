@@ -10,9 +10,9 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>TwinParticles.CheckEngine</AssemblyName>
     <RootNamespace>TwinParticles.CheckEngine</RootNamespace>
-    <Version>0.63.0</Version>
-    <AssemblyVersion>0.63.0.0</AssemblyVersion>
-    <FileVersion>0.63.0.0</FileVersion>
+    <Version>0.64.0</Version>
+    <AssemblyVersion>0.64.0.0</AssemblyVersion>
+    <FileVersion>0.64.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -36,6 +36,8 @@
     <None Remove="Views\Workshop\Index.cshtml" />
     <None Remove="Views\Fleet\Index.cshtml" />
     <None Remove="Views\Dealer\Index.cshtml" />
+    <None Remove="Views\Admin\PortalAccounts.cshtml" />
+    <None Remove="Content\checkengine-portals.js" />
     <None Remove="Views\Seo\Landing.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
     <None Remove="Views\Shared\Components\UninstallPreparation\Default.cshtml" />
@@ -101,6 +103,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Dealer\Index.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\PortalAccounts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\checkengine-portals.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Seo\Landing.cshtml">

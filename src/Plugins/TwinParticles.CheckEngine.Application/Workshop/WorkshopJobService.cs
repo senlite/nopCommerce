@@ -9,6 +9,7 @@ using TwinParticles.CheckEngine.Domain.Fitment;
 using TwinParticles.CheckEngine.Domain.Performance;
 using TwinParticles.CheckEngine.Domain.Portals;
 using TwinParticles.CheckEngine.Domain.Security;
+using TwinParticles.CheckEngine.Application.Portals;
 using TwinParticles.CheckEngine.Domain.Workshop;
 
 namespace TwinParticles.CheckEngine.Application.Workshop;
@@ -196,6 +197,33 @@ public sealed class WorkshopJobService
         await _repository.UpdateJobAsync(job, cancellationToken);
         await AuditAsync("workshop.job.invoice", job.Id, cancellationToken);
         return WorkshopInvoiceResult.Ok(job, orderId);
+    }
+
+    public async Task<WorkshopPortalSnapshot?> GetDashboardAsync(int customerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return null;
+
+        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return null;
+
+        var jobs = await _repository.ListJobsByAccountAsync(account.Id, cancellationToken);
+        return new WorkshopPortalSnapshot { Account = account, Jobs = jobs };
+    }
+
+    public async Task<WorkshopJobDetail?> GetJobDetailAsync(int jobId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return null;
+
+        var job = await _repository.GetJobAsync(jobId, cancellationToken);
+        if (job is null)
+            return null;
+
+        var vehicles = await _repository.GetJobVehiclesAsync(jobId, cancellationToken);
+        var lines = await _repository.GetJobLinesAsync(jobId, cancellationToken);
+        return new WorkshopJobDetail { Job = job, Vehicles = vehicles, Lines = lines };
     }
 
     private Task AuditAsync(string action, int entityId, CancellationToken cancellationToken)

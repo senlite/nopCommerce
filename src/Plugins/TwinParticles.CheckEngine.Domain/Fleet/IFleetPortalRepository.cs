@@ -27,4 +27,12 @@ public interface IFleetPortalRepository
     Task UpdateApprovalRequestAsync(FleetApprovalRequest request, CancellationToken cancellationToken);
 
     Task<FleetApprovalRequest?> GetApprovalRequestAsync(int requestId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FleetApprovalRequest>> ListApprovalRequestsByAccountAsync(int fleetAccountId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FleetBudgetCentre>> ListBudgetCentresByAccountAsync(int fleetAccountId, CancellationToken cancellationToken);
+
+    Task<int> InsertAccountAsync(FleetAccount account, CancellationToken cancellationToken);
+
+    Task<int> InsertBudgetCentreAsync(FleetBudgetCentre centre, CancellationToken cancellationToken);
 }

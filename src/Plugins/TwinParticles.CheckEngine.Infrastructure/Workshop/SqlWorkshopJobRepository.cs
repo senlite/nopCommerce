@@ -159,6 +159,36 @@ ORDER BY Id",
         return rows.Select(MapJobLine).ToList();
     }
 
+    public async Task<IReadOnlyList<WorkshopJob>> ListJobsByAccountAsync(int workshopAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<JobRow>(@"
+SELECT Id, WorkshopAccountId, WorkshopCustomerId, AssignedTechnicianCustomerId, StatusId, LabourEstimate, OrderId, CreatedUtc, UpdatedUtc
+FROM TP_CE_WorkshopJob
+WHERE WorkshopAccountId = @accountId
+ORDER BY UpdatedUtc DESC",
+            new DataParameter("accountId", workshopAccountId));
+
+        return rows.Select(MapJob).ToList();
+    }
+
+    public async Task<int> InsertAccountAsync(WorkshopAccount account, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_WorkshopAccount
+(CustomerId, DisplayName, CreditLimit, CreditUsed, DefaultPriceListId, IsActive)
+VALUES
+(@customerId, @displayName, @creditLimit, @creditUsed, @defaultPriceListId, @isActive);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("customerId", account.CustomerId),
+            new DataParameter("displayName", account.DisplayName),
+            new DataParameter("creditLimit", account.CreditLimit),
+            new DataParameter("creditUsed", account.CreditUsed),
+            new DataParameter("defaultPriceListId", account.DefaultPriceListId ?? (object)DBNull.Value),
+            new DataParameter("isActive", account.IsActive));
+
+        return id.FirstOrDefault();
+    }
+
     public async Task<decimal> ResolveTradePriceAsync(int priceListId, int productId, CancellationToken cancellationToken)
     {
         var sql = CheckEngineSql.SelectTop(1,

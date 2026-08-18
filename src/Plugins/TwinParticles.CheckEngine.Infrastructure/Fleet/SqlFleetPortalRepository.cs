@@ -198,6 +198,63 @@ WHERE Id = @id",
         return rows.Select(MapApprovalRequest).FirstOrDefault();
     }
 
+    public async Task<IReadOnlyList<FleetApprovalRequest>> ListApprovalRequestsByAccountAsync(int fleetAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<ApprovalRequestRow>(@"
+SELECT Id, FleetAccountId, FleetVehicleId, ProductId, Quantity, BudgetCentreId, RequesterCustomerId,
+       StatusId, RejectionReason, OrderId, CreatedUtc, UpdatedUtc
+FROM TP_CE_FleetApprovalRequest
+WHERE FleetAccountId = @accountId
+ORDER BY UpdatedUtc DESC",
+            new DataParameter("accountId", fleetAccountId));
+
+        return rows.Select(MapApprovalRequest).ToList();
+    }
+
+    public async Task<IReadOnlyList<FleetBudgetCentre>> ListBudgetCentresByAccountAsync(int fleetAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<BudgetCentreRow>(@"
+SELECT Id, FleetAccountId, Name, SpendLimit, SpendUsed
+FROM TP_CE_FleetBudgetCentre
+WHERE FleetAccountId = @accountId
+ORDER BY Name",
+            new DataParameter("accountId", fleetAccountId));
+
+        return rows.Select(MapBudgetCentre).ToList();
+    }
+
+    public async Task<int> InsertAccountAsync(FleetAccount account, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_FleetAccount
+(CustomerId, DisplayName, DefaultBudgetCentreId, IsActive)
+VALUES
+(@customerId, @displayName, @defaultBudgetCentreId, @isActive);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("customerId", account.CustomerId),
+            new DataParameter("displayName", account.DisplayName),
+            new DataParameter("defaultBudgetCentreId", account.DefaultBudgetCentreId ?? (object)DBNull.Value),
+            new DataParameter("isActive", account.IsActive));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<int> InsertBudgetCentreAsync(FleetBudgetCentre centre, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_FleetBudgetCentre
+(FleetAccountId, Name, SpendLimit, SpendUsed)
+VALUES
+(@fleetAccountId, @name, @spendLimit, @spendUsed);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("fleetAccountId", centre.FleetAccountId),
+            new DataParameter("name", centre.Name),
+            new DataParameter("spendLimit", centre.SpendLimit),
+            new DataParameter("spendUsed", centre.SpendUsed));
+
+        return id.FirstOrDefault();
+    }
+
     private static FleetAccount MapAccount(AccountRow row)
     {
         return new FleetAccount

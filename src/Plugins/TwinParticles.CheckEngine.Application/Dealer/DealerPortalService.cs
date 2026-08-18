@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Application.Licensing;
+using TwinParticles.CheckEngine.Application.Portals;
 using TwinParticles.CheckEngine.Domain.Dealer;
 using TwinParticles.CheckEngine.Domain.Performance;
 using TwinParticles.CheckEngine.Domain.Portals;
@@ -147,6 +148,27 @@ public sealed class DealerPortalService
         await _repository.UpdateWarrantyClaimAsync(claim, cancellationToken);
         await AuditAsync("dealer.warranty.transition", claim.Id, cancellationToken);
         return WarrantyClaimResult.Ok(claim);
+    }
+
+    public async Task<DealerPortalSnapshot?> GetDashboardAsync(int customerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsDealerAsync(cancellationToken))
+            return null;
+
+        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return null;
+
+        var catalog = await _repository.GetCatalogViewAsync(account.Id, cancellationToken);
+        var quota = await _repository.GetQuotaAsync(account.Id, cancellationToken);
+        var claims = await _repository.ListWarrantyClaimsByAccountAsync(account.Id, cancellationToken);
+        return new DealerPortalSnapshot
+        {
+            Account = account,
+            Catalog = catalog,
+            Quota = quota,
+            WarrantyClaims = claims
+        };
     }
 
     private Task AuditAsync(string action, int entityId, CancellationToken cancellationToken)

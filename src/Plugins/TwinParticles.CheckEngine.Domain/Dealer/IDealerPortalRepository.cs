@@ -27,4 +27,8 @@ public interface IDealerPortalRepository
     Task UpdateWarrantyClaimAsync(WarrantyClaim claim, CancellationToken cancellationToken);
 
     Task<WarrantyClaim?> GetWarrantyClaimAsync(int claimId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WarrantyClaim>> ListWarrantyClaimsByAccountAsync(int dealerAccountId, CancellationToken cancellationToken);
+
+    Task<int> InsertAccountAsync(DealerAccount account, CancellationToken cancellationToken);
 }

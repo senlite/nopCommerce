@@ -1,0 +1,38 @@
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title").Text;
+    NopHtml.SetActiveMenuItemSystemName("CheckEngine");
+    await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalAssets.cshtml");
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</h1>
+</div>
+
+<section class="content ce-marketplace" data-ce-page="portal-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-portal-alert hidden role="status"></div>
+
+        <div class="card card-default">
+            <div class="card-body">
+                <p>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.CustomerId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-customer />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DisplayName")</label>
+                        <input class="ce-mp-input" data-ce-admin-name />
+                    </div>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-admin-workshop>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionWorkshop")</button>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-fleet>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionFleet")</button>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-dealer>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionDealer")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

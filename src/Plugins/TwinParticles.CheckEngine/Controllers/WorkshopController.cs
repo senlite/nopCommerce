@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Services.Security;
 using Nop.Web.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
@@ -17,15 +18,18 @@ public sealed class WorkshopController : BasePublicController
     private readonly WorkshopJobService _jobService;
     private readonly WorkshopPortalLicenceGate _licenceGate;
     private readonly IPermissionService _permissionService;
+    private readonly IWorkContext _workContext;
 
     public WorkshopController(
         WorkshopJobService jobService,
         WorkshopPortalLicenceGate licenceGate,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        IWorkContext workContext)
     {
         _jobService = jobService;
         _licenceGate = licenceGate;
         _permissionService = permissionService;
+        _workContext = workContext;
     }
 
     [HttpGet]
@@ -35,6 +39,27 @@ public sealed class WorkshopController : BasePublicController
             return NotFound();
 
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Workshop/Index.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync(cancellationToken))
+            return Denied(WorkshopErrorCodes.LicenceDenied);
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var snapshot = await _jobService.GetDashboardAsync(customer.Id, cancellationToken);
+        return snapshot is null ? Denied(WorkshopErrorCodes.NotFound, 404) : Json(snapshot);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> JobDetail(int jobId, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync(cancellationToken))
+            return Denied(WorkshopErrorCodes.LicenceDenied);
+
+        var detail = await _jobService.GetJobDetailAsync(jobId, cancellationToken);
+        return detail is null ? Denied(WorkshopErrorCodes.NotFound, 404) : Json(detail);
     }
 
     [HttpPost]

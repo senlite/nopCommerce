@@ -1,13 +1,75 @@
+@inject Nop.Core.IWorkContext workContext
 @{
     Layout = "_ColumnsOne";
-    ViewBag.Title = "Fleet portal";
+    ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Fleet.Title").Text;
+    var language = await workContext.GetWorkingLanguageAsync();
+    var isRtl = language.Rtl;
+    await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalAssets.cshtml");
 }
 
-<div class="page fleet-portal-page" data-ce-page="fleet">
+<div class="page fleet-portal-page ce-root ce-marketplace" dir="@(isRtl ? "rtl" : "ltr")" data-ce-page="fleet">
     <div class="page-title">
-        <h1>Fleet portal</h1>
+        <h1>@T("Plugins.TwinParticles.CheckEngine.Fleet.Title")</h1>
     </div>
     <div class="page-body">
-        <p>Bulk vehicle registers and approval workflows for fleet operators (EP-26).</p>
+        @Html.AntiForgeryToken()
+
+        <section class="ce-hero" aria-labelledby="ce-fleet-hero">
+            <div class="ce-hero__inner">
+                <span class="ce-hero__eyebrow">@T("Plugins.TwinParticles.CheckEngine.Fleet.Eyebrow")</span>
+                <h2 id="ce-fleet-hero" class="ce-hero__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.Hero")</h2>
+                <p class="ce-hero__lead">@T("Plugins.TwinParticles.CheckEngine.Fleet.Hint")</p>
+            </div>
+        </section>
+
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-portal-alert hidden role="status"></div>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.ImportVins")</h2>
+            <div class="ce-mp-field">
+                <label>@T("Plugins.TwinParticles.CheckEngine.Fleet.VinList")</label>
+                <textarea class="ce-mp-input" rows="4" data-ce-fleet-vins placeholder="VIN1 VIN2 …"></textarea>
+            </div>
+            <button type="button" class="ce-btn ce-btn--primary" data-ce-fleet-import>@T("Plugins.TwinParticles.CheckEngine.Fleet.ImportVins")</button>
+        </section>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.Vehicles")</h2>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>VIN</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.AssetTag")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-fleet-vehicles>
+                        <tr><td colspan="4" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Fleet.Approvals")</h2>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Status")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-fleet-approvals>
+                        <tr><td colspan="5" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 </div>
