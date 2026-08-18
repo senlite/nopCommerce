@@ -4,54 +4,76 @@
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Commission.Configure").Text;
     var vendorId = (int)(ViewBag.VendorId ?? 0);
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_MarketplaceAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure")</h1>
     <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
         <a class="btn btn-secondary" href="@Url.Action("Scoreboard", "VendorAdmin")">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard")</a>
     </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin" data-ce-page="commission">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <input type="hidden" data-ce-vendor-id value="@vendorId" />
+
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-commission-alert hidden role="status"></div>
+
         <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Commission.Vendor")</h3>
+            </div>
             <div class="card-body">
                 <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure.Hint")</p>
-                <p>Vendor id: <strong id="ce-commission-vendor">@vendorId</strong></p>
-                <textarea id="ce-commission-json" class="form-control" rows="18" spellcheck="false"></textarea>
-                <div class="mt-3">
-                    <button id="ce-commission-save" type="button" class="btn btn-primary">@T("Plugins.TwinParticles.CheckEngine.Commission.Save")</button>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="ce-commission-vendor-select">@T("Plugins.TwinParticles.CheckEngine.Commission.SelectVendor")</label>
+                        <select id="ce-commission-vendor-select" class="form-control" data-ce-commission-vendor></select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="ce-plan-name">@T("Plugins.TwinParticles.CheckEngine.Commission.PlanName")</label>
+                        <input id="ce-plan-name" type="text" class="form-control" data-ce-plan-name value="Default" />
+                    </div>
+                    <div class="form-group col-md-3 d-flex align-items-end">
+                        <label class="mb-0">
+                            <input type="checkbox" data-ce-plan-active checked="checked" />
+                            @T("Plugins.TwinParticles.CheckEngine.Commission.PlanActive")
+                        </label>
+                    </div>
                 </div>
-                <pre id="ce-commission-result" class="mt-2" style="white-space: pre-wrap;"></pre>
+                <input type="hidden" data-ce-plan-id value="0" />
             </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Commission.Rules")</h3>
+                <button type="button" class="btn btn-sm btn-primary float-right" data-ce-add-rule>@T("Plugins.TwinParticles.CheckEngine.Commission.AddRule")</button>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Commission.Rules.Hint")</p>
+                <div data-ce-rules></div>
+            </div>
+        </div>
+
+        <div class="card card-default collapsed-card">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Commission.AdvancedJson")</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Commission.AdvancedJson.Hint")</p>
+                <textarea class="form-control" rows="12" spellcheck="false" data-ce-commission-json></textarea>
+                <button type="button" class="btn btn-secondary mt-2" data-ce-import-json>@T("Plugins.TwinParticles.CheckEngine.Commission.ImportJson")</button>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <button type="button" class="btn btn-primary btn-lg" data-ce-save-plan>@T("Plugins.TwinParticles.CheckEngine.Commission.Save")</button>
         </div>
     </div>
 </section>
-
-<script>
-(function () {
-  var vendorId = parseInt(document.getElementById('ce-commission-vendor').textContent, 10) || 0;
-  var token = document.querySelector('input[name="__RequestVerificationToken"]');
-  function headers(json) {
-    var h = { 'Accept': 'application/json' };
-    if (json) h['Content-Type'] = 'application/json';
-    if (token && token.value) h['RequestVerificationToken'] = token.value;
-    return h;
-  }
-  fetch('/Admin/CheckEngine/CommissionAdmin/GetPlan?vendorId=' + vendorId, { headers: headers(false) })
-    .then(function (r) { return r.json(); })
-    .then(function (plan) {
-      document.getElementById('ce-commission-json').value = JSON.stringify(plan, null, 2);
-    });
-  document.getElementById('ce-commission-save').addEventListener('click', function () {
-    var body = JSON.parse(document.getElementById('ce-commission-json').value);
-    body.vendorId = vendorId;
-    fetch('/Admin/CheckEngine/CommissionAdmin/SavePlan', {
-      method: 'POST', headers: headers(true), body: JSON.stringify(body)
-    }).then(function (r) { return r.json(); }).then(function (j) {
-      document.getElementById('ce-commission-result').textContent = JSON.stringify(j, null, 2);
-    }).catch(function (e) { document.getElementById('ce-commission-result').textContent = String(e); });
-  });
-})();
-</script>

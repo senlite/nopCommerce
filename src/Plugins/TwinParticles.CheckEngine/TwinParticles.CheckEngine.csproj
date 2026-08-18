@@ -10,9 +10,9 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>TwinParticles.CheckEngine</AssemblyName>
     <RootNamespace>TwinParticles.CheckEngine</RootNamespace>
-    <Version>0.60.2</Version>
-    <AssemblyVersion>0.60.2.0</AssemblyVersion>
-    <FileVersion>0.60.2.0</FileVersion>
+    <Version>0.62.0</Version>
+    <AssemblyVersion>0.62.0.0</AssemblyVersion>
+    <FileVersion>0.62.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -40,6 +40,9 @@
     <None Remove="Content\checkengine-theme.css" />
     <None Remove="Content\checkengine-tokens.css" />
     <None Remove="Content\checkengine-storefront.js" />
+    <None Remove="Content\checkengine-marketplace.css" />
+    <None Remove="Content\checkengine-marketplace.js" />
+    <None Remove="Views\Shared\_MarketplaceAssets.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -107,6 +110,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\checkengine-storefront.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\checkengine-marketplace.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\checkengine-marketplace.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_MarketplaceAssets.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

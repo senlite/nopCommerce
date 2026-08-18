@@ -1,73 +1,139 @@
+@inject Nop.Core.IWorkContext workContext
 @{
     Layout = "_ColumnsOne";
     ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply").Text;
+    var language = await workContext.GetWorkingLanguageAsync();
+    var isRtl = language.Rtl;
+    await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_MarketplaceAssets.cshtml");
 }
 
-<div class="page vendor-apply-page">
+<div class="page vendor-apply-page ce-root ce-marketplace" dir="@(isRtl ? "rtl" : "ltr")" data-ce-page="apply">
     <div class="page-title">
         <h1>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply")</h1>
     </div>
     <div class="page-body">
         @Html.AntiForgeryToken()
-        <p>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Hint")</p>
-        <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Text")</p>
-        <div class="form-group">
-            <label for="ce-vendor-legal">@T("Plugins.TwinParticles.CheckEngine.Marketplace.LegalName")</label>
-            <input id="ce-vendor-legal" class="form-control" type="text" />
+
+        <section class="ce-hero" aria-labelledby="ce-apply-hero-title">
+            <div class="ce-hero__inner">
+                <span class="ce-hero__eyebrow">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Eyebrow")</span>
+                <h2 id="ce-apply-hero-title" class="ce-hero__title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Hero")</h2>
+                <p class="ce-hero__lead">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Hint")</p>
+            </div>
+        </section>
+
+        <ol class="ce-mp-steps" aria-label="@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Steps")">
+            <li class="ce-mp-step ce-mp-step--active">
+                <span class="ce-mp-step__badge">1</span>
+                <span>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Step.Business")</span>
+            </li>
+            <li class="ce-mp-step">
+                <span class="ce-mp-step__badge">2</span>
+                <span>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Step.Payout")</span>
+            </li>
+            <li class="ce-mp-step">
+                <span class="ce-mp-step__badge">3</span>
+                <span>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Step.Review")</span>
+            </li>
+        </ol>
+
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-apply-alert hidden role="status"></div>
+
+        <div data-ce-apply-form>
+            <div class="ce-mp-panel">
+                <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Section.Business")</h2>
+                <p class="ce-mp-panel__lead">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Section.Business.Hint")</p>
+                <div class="ce-mp-form-grid">
+                    <div class="ce-mp-field">
+                        <label for="ce-vendor-legal">@T("Plugins.TwinParticles.CheckEngine.Marketplace.LegalName")</label>
+                        <input id="ce-vendor-legal" class="ce-mp-input" type="text" autocomplete="organization" required />
+                        <span class="ce-mp-field__error" data-ce-error-for="ce-vendor-legal" aria-live="polite"></span>
+                    </div>
+                    <div class="ce-mp-field">
+                        <label for="ce-vendor-trading">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TradingName")</label>
+                        <input id="ce-vendor-trading" class="ce-mp-input" type="text" autocomplete="organization" />
+                        <span class="ce-mp-field__hint">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TradingName.Hint")</span>
+                    </div>
+                    <div class="ce-mp-field ce-mp-field--full">
+                        <label for="ce-vendor-email">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Email")</label>
+                        <input id="ce-vendor-email" class="ce-mp-input" type="email" autocomplete="email" required />
+                        <span class="ce-mp-field__error" data-ce-error-for="ce-vendor-email" aria-live="polite"></span>
+                    </div>
+                    <div class="ce-mp-field">
+                        <label for="ce-vendor-tax">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TaxIds")</label>
+                        <input id="ce-vendor-tax" class="ce-mp-input ce-code" type="text" placeholder='["VAT-123"]' spellcheck="false" required />
+                        <span class="ce-mp-field__hint">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TaxIds.Hint")</span>
+                        <span class="ce-mp-field__error" data-ce-error-for="ce-vendor-tax" aria-live="polite"></span>
+                    </div>
+                    <div class="ce-mp-field">
+                        <label for="ce-vendor-categories">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Categories")</label>
+                        <input id="ce-vendor-categories" class="ce-mp-input" type="text" placeholder="cooling,filters" required />
+                        <span class="ce-mp-field__hint">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Categories.Hint")</span>
+                        <span class="ce-mp-field__error" data-ce-error-for="ce-vendor-categories" aria-live="polite"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ce-mp-panel">
+                <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Section.Payout")</h2>
+                <p class="ce-mp-panel__lead">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Section.Payout.Hint")</p>
+                <div class="ce-mp-field ce-mp-field--full">
+                    <label for="ce-vendor-banking">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Banking")</label>
+                    <textarea id="ce-vendor-banking" class="ce-mp-textarea" autocomplete="off" required aria-describedby="ce-banking-hint"></textarea>
+                    <span id="ce-banking-hint" class="ce-mp-field__hint">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Banking.Hint")</span>
+                    <span class="ce-mp-field__error" data-ce-error-for="ce-vendor-banking" aria-live="polite"></span>
+                </div>
+            </div>
+
+            <div class="ce-mp-callout">
+                <p>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Text")</p>
+                <label class="ce-toggle">
+                    <input id="ce-vendor-agree" type="checkbox" checked="checked" />
+                    <span>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Accept")</span>
+                </label>
+            </div>
+
+            <div class="ce-mp-toolbar">
+                <button id="ce-vendor-submit" type="button" class="ce-btn ce-btn--primary" data-ce-apply-submit>
+                    @T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Submit")
+                </button>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="ce-vendor-trading">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TradingName")</label>
-            <input id="ce-vendor-trading" class="form-control" type="text" />
+
+        <div class="ce-mp-success" data-ce-apply-success hidden>
+            <div class="ce-mp-alert ce-mp-alert--success" role="status">
+                @T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Success")
+            </div>
+            <p>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Success.Hint")</p>
+            <dl>
+                <dt>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.VendorId")</dt>
+                <dd class="ce-code" data-ce-success-vendor-id>—</dd>
+                <dt>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Email")</dt>
+                <dd data-ce-success-email>—</dd>
+            </dl>
+            <div data-ce-token-wrap hidden>
+                <p><strong>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.AccessToken")</strong></p>
+                <p class="ce-mp-field__hint">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.AccessToken.Hint")</p>
+                <div class="ce-mp-token">
+                    <code class="ce-mp-token__value" data-ce-success-token></code>
+                    <button type="button" class="ce-btn ce-btn--quiet" data-ce-copy-token>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.CopyToken")</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="ce-vendor-email">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Email")</label>
-            <input id="ce-vendor-email" class="form-control" type="email" />
-        </div>
-        <div class="form-group">
-            <label for="ce-vendor-tax">@T("Plugins.TwinParticles.CheckEngine.Marketplace.TaxIds")</label>
-            <input id="ce-vendor-tax" class="form-control" type="text" placeholder='["VAT-123"]' />
-        </div>
-        <div class="form-group">
-            <label for="ce-vendor-categories">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Categories")</label>
-            <input id="ce-vendor-categories" class="form-control" type="text" placeholder="cooling,filters" />
-        </div>
-        <div class="form-group">
-            <label for="ce-vendor-banking">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Banking")</label>
-            <input id="ce-vendor-banking" class="form-control" type="password" autocomplete="off" />
-        </div>
-        <label>
-            <input id="ce-vendor-agree" type="checkbox" checked="checked" />
-            @T("Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Accept")
-        </label>
-        <div class="buttons">
-            <button id="ce-vendor-submit" type="button" class="button-1">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Submit")</button>
-        </div>
-        <pre id="ce-vendor-apply-result" style="white-space: pre-wrap;"></pre>
+
+        <script type="application/json" data-ce-i18n>
+            {
+                "errorLegal": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Legal").Text)",
+                "errorEmail": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Email").Text)",
+                "errorTax": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Tax").Text)",
+                "errorCategories": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Categories").Text)",
+                "errorBanking": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Banking").Text)",
+                "errorAgreement": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Agreement").Text)",
+                "errorSubmit": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Submit").Text)",
+                "errorNetwork": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Error.Network").Text)",
+                "submitting": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Submitting").Text)",
+                "copied": "@JavaScriptEncoder.Default.Encode(T("Plugins.TwinParticles.CheckEngine.Marketplace.Apply.Copied").Text)"
+            }
+        </script>
     </div>
 </div>
-
-<script>
-(function () {
-  var token = document.querySelector('input[name="__RequestVerificationToken"]');
-  document.getElementById('ce-vendor-submit').addEventListener('click', function () {
-    var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-    if (token && token.value) headers['RequestVerificationToken'] = token.value;
-    fetch('/check-engine/vendor/apply', {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({
-        legalName: document.getElementById('ce-vendor-legal').value,
-        tradingName: document.getElementById('ce-vendor-trading').value,
-        contactEmail: document.getElementById('ce-vendor-email').value,
-        taxIdsJson: document.getElementById('ce-vendor-tax').value || '[]',
-        categoriesCsv: document.getElementById('ce-vendor-categories').value,
-        bankingDetails: document.getElementById('ce-vendor-banking').value,
-        submitForReview: true,
-        acceptAgreement: document.getElementById('ce-vendor-agree').checked
-      })
-    }).then(function (r) { return r.text(); }).then(function (text) {
-      document.getElementById('ce-vendor-apply-result').textContent = text;
-    });
-  });
-})();
-</script>
