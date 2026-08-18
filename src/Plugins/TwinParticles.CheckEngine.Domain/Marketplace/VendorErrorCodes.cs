@@ -9,6 +9,9 @@ public static class VendorErrorCodes
     public const string IllegalTransition = "vendor.illegal_transition";
     public const string AgreementRequired = "vendor.agreement_required";
     public const string AgreementStale = "vendor.agreement_stale";
+    public const string IsolationDenied = "vendor.isolation.denied";
+    public const string IsolationUnauthenticated = "vendor.isolation.unauthenticated";
+    public const string FitmentVendorRequired = "vendor.fitment.vendor_required";
 }
 
 public static class VendorAgreementVersions

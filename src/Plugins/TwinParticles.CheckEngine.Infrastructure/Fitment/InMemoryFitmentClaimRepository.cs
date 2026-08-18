@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Fitment;
+using TwinParticles.CheckEngine.Domain.Marketplace;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Fitment;
 
@@ -33,6 +34,17 @@ public sealed class InMemoryFitmentClaimRepository : IFitmentClaimReadRepository
 
     public Task<IReadOnlyList<FitmentClaim>> GetAllClaimsAsync(CancellationToken cancellationToken)
         => Task.FromResult<IReadOnlyList<FitmentClaim>>(_claims.ToList());
+
+    public Task<IReadOnlyList<FitmentClaim>> GetClaimsByVendorIdAsync(int vendorId, CancellationToken cancellationToken)
+    {
+        var prefix = VendorSourceReference.ForVendor(vendorId);
+        var results = _claims
+            .Where(claim => claim.VendorId == vendorId
+                || (claim.VendorId is null && claim.Provenance.SourceReference == prefix))
+            .OrderByDescending(claim => claim.Provenance.CreatedUtc)
+            .ToList();
+        return Task.FromResult<IReadOnlyList<FitmentClaim>>(results);
+    }
 
     public Task UpsertAsync(FitmentClaim claim, CancellationToken cancellationToken)
     {

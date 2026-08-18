@@ -5,12 +5,38 @@ using System.Threading.Tasks;
 using LinqToDB.Data;
 using Nop.Data;
 using TwinParticles.CheckEngine.Domain.Fitment;
+using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Infrastructure.Data;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Fitment;
 
 public sealed class SqlFitmentClaimRepository : IFitmentClaimReadRepository, IFitmentClaimWriteRepository
 {
+    private const string ClaimColumns = @"c.Id,
+       c.ProductId,
+       c.VehicleConfigurationId,
+       c.OemNumberId,
+       c.VendorId,
+       c.FitmentStatusId,
+       c.Confidence,
+       c.SafetyClassId,
+       c.SourceKindId,
+       c.SourceReference,
+       c.CreatedBy,
+       c.ProvenanceCreatedUtc,
+       c.LastVerifiedUtc,
+       c.ValidFromUtc,
+       c.ValidToUtc,
+       c.IsPublished,
+       c.IsActive,
+       q.ProductionFromYear,
+       q.ProductionToYear,
+       q.SteeringSide,
+       q.MarketRegion,
+       q.DriveType,
+       q.TransmissionType,
+       q.OptionCodesCsv";
+
     private readonly INopDataProvider _dataProvider;
 
     public SqlFitmentClaimRepository(INopDataProvider dataProvider)
@@ -20,29 +46,7 @@ public sealed class SqlFitmentClaimRepository : IFitmentClaimReadRepository, IFi
 
     public async Task<IReadOnlyList<FitmentClaim>> GetClaimsAsync(int productId, int vehicleConfigurationId, CancellationToken cancellationToken)
     {
-        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>(@"SELECT c.Id,
-       c.ProductId,
-       c.VehicleConfigurationId,
-       c.OemNumberId,
-       c.FitmentStatusId,
-       c.Confidence,
-       c.SafetyClassId,
-       c.SourceKindId,
-       c.SourceReference,
-       c.CreatedBy,
-       c.ProvenanceCreatedUtc,
-       c.LastVerifiedUtc,
-       c.ValidFromUtc,
-       c.ValidToUtc,
-       c.IsPublished,
-       c.IsActive,
-       q.ProductionFromYear,
-       q.ProductionToYear,
-       q.SteeringSide,
-       q.MarketRegion,
-       q.DriveType,
-       q.TransmissionType,
-       q.OptionCodesCsv
+        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>($@"SELECT {ClaimColumns}
 FROM TP_CE_FitmentClaim c
 LEFT JOIN TP_CE_FitmentQualifier q ON q.FitmentClaimId = c.Id
 WHERE c.ProductId = @productId AND c.VehicleConfigurationId = @vehicleConfigurationId", new DataParameter("productId", productId), new DataParameter("vehicleConfigurationId", vehicleConfigurationId));
@@ -52,29 +56,7 @@ WHERE c.ProductId = @productId AND c.VehicleConfigurationId = @vehicleConfigurat
 
     public async Task<IReadOnlyList<FitmentClaim>> GetAllClaimsAsync(CancellationToken cancellationToken)
     {
-        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>(@"SELECT c.Id,
-       c.ProductId,
-       c.VehicleConfigurationId,
-       c.OemNumberId,
-       c.FitmentStatusId,
-       c.Confidence,
-       c.SafetyClassId,
-       c.SourceKindId,
-       c.SourceReference,
-       c.CreatedBy,
-       c.ProvenanceCreatedUtc,
-       c.LastVerifiedUtc,
-       c.ValidFromUtc,
-       c.ValidToUtc,
-       c.IsPublished,
-       c.IsActive,
-       q.ProductionFromYear,
-       q.ProductionToYear,
-       q.SteeringSide,
-       q.MarketRegion,
-       q.DriveType,
-       q.TransmissionType,
-       q.OptionCodesCsv
+        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>($@"SELECT {ClaimColumns}
 FROM TP_CE_FitmentClaim c
 LEFT JOIN TP_CE_FitmentQualifier q ON q.FitmentClaimId = c.Id
 ORDER BY c.Id");
@@ -84,29 +66,7 @@ ORDER BY c.Id");
 
     public async Task<FitmentClaim?> GetByIdAsync(int claimId, CancellationToken cancellationToken)
     {
-        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>(@"SELECT c.Id,
-       c.ProductId,
-       c.VehicleConfigurationId,
-       c.OemNumberId,
-       c.FitmentStatusId,
-       c.Confidence,
-       c.SafetyClassId,
-       c.SourceKindId,
-       c.SourceReference,
-       c.CreatedBy,
-       c.ProvenanceCreatedUtc,
-       c.LastVerifiedUtc,
-       c.ValidFromUtc,
-       c.ValidToUtc,
-       c.IsPublished,
-       c.IsActive,
-       q.ProductionFromYear,
-       q.ProductionToYear,
-       q.SteeringSide,
-       q.MarketRegion,
-       q.DriveType,
-       q.TransmissionType,
-       q.OptionCodesCsv
+        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>($@"SELECT {ClaimColumns}
 FROM TP_CE_FitmentClaim c
 LEFT JOIN TP_CE_FitmentQualifier q ON q.FitmentClaimId = c.Id
 WHERE c.Id = @claimId", new DataParameter("claimId", claimId));
@@ -117,33 +77,25 @@ WHERE c.Id = @claimId", new DataParameter("claimId", claimId));
 
     public async Task<IReadOnlyList<FitmentClaim>> GetReviewQueueAsync(CancellationToken cancellationToken)
     {
-        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>(@"SELECT c.Id,
-       c.ProductId,
-       c.VehicleConfigurationId,
-       c.OemNumberId,
-       c.FitmentStatusId,
-       c.Confidence,
-       c.SafetyClassId,
-       c.SourceKindId,
-       c.SourceReference,
-       c.CreatedBy,
-       c.ProvenanceCreatedUtc,
-       c.LastVerifiedUtc,
-       c.ValidFromUtc,
-       c.ValidToUtc,
-       c.IsPublished,
-       c.IsActive,
-       q.ProductionFromYear,
-       q.ProductionToYear,
-       q.SteeringSide,
-       q.MarketRegion,
-       q.DriveType,
-       q.TransmissionType,
-       q.OptionCodesCsv
+        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>($@"SELECT {ClaimColumns}
 FROM TP_CE_FitmentClaim c
 LEFT JOIN TP_CE_FitmentQualifier q ON q.FitmentClaimId = c.Id
 WHERE c.IsPublished = 0 OR c.FitmentStatusId IN (3, 4)
 ORDER BY c.Confidence DESC");
+
+        return rows.Select(Map).ToList();
+    }
+
+    public async Task<IReadOnlyList<FitmentClaim>> GetClaimsByVendorIdAsync(int vendorId, CancellationToken cancellationToken)
+    {
+        var prefix = VendorSourceReference.ForVendor(vendorId);
+        var rows = await _dataProvider.QueryAsync<FitmentClaimRow>($@"SELECT {ClaimColumns}
+FROM TP_CE_FitmentClaim c
+LEFT JOIN TP_CE_FitmentQualifier q ON q.FitmentClaimId = c.Id
+WHERE c.VendorId = @vendorId OR c.SourceReference = @prefix
+ORDER BY c.ProvenanceCreatedUtc DESC",
+            new DataParameter("vendorId", vendorId),
+            new DataParameter("prefix", prefix));
 
         return rows.Select(Map).ToList();
     }
@@ -154,6 +106,7 @@ ORDER BY c.Confidence DESC");
 SET ProductId = @productId,
     VehicleConfigurationId = @vehicleConfigurationId,
     OemNumberId = @oemNumberId,
+    VendorId = @vendorId,
     FitmentStatusId = @fitmentStatusId,
     Confidence = @confidence,
     SafetyClassId = @safetyClassId,
@@ -175,6 +128,7 @@ WHERE Id = @id";
                 new DataParameter("productId", claim.ProductId),
                 new DataParameter("vehicleConfigurationId", claim.VehicleConfigurationId),
                 new DataParameter("oemNumberId", claim.OemNumberId),
+                new DataParameter("vendorId", claim.VendorId),
                 new DataParameter("fitmentStatusId", (int)claim.Status),
                 new DataParameter("confidence", claim.Confidence),
                 new DataParameter("safetyClassId", (int)claim.SafetyClass),
@@ -193,13 +147,14 @@ WHERE Id = @id";
         if (updated == 0)
         {
             var insertedIdRow = await _dataProvider.QueryAsync<ScalarIntRow>(@"INSERT INTO TP_CE_FitmentClaim
-(ProductId, VehicleConfigurationId, OemNumberId, FitmentStatusId, Confidence, SafetyClassId, SourceKindId, SourceReference, CreatedBy, ProvenanceCreatedUtc, LastVerifiedUtc, ValidFromUtc, ValidToUtc, IsPublished, IsActive)
+(ProductId, VehicleConfigurationId, OemNumberId, VendorId, FitmentStatusId, Confidence, SafetyClassId, SourceKindId, SourceReference, CreatedBy, ProvenanceCreatedUtc, LastVerifiedUtc, ValidFromUtc, ValidToUtc, IsPublished, IsActive)
 VALUES
-(@productId, @vehicleConfigurationId, @oemNumberId, @fitmentStatusId, @confidence, @safetyClassId, @sourceKindId, @sourceReference, @createdBy, @provenanceCreatedUtc, @lastVerifiedUtc, @validFromUtc, @validToUtc, @isPublished, @isActive);
+(@productId, @vehicleConfigurationId, @oemNumberId, @vendorId, @fitmentStatusId, @confidence, @safetyClassId, @sourceKindId, @sourceReference, @createdBy, @provenanceCreatedUtc, @lastVerifiedUtc, @validFromUtc, @validToUtc, @isPublished, @isActive);
 " + CheckEngineSql.SelectInsertedIntId() + @"",
                 new DataParameter("productId", claim.ProductId),
                 new DataParameter("vehicleConfigurationId", claim.VehicleConfigurationId),
                 new DataParameter("oemNumberId", claim.OemNumberId),
+                new DataParameter("vendorId", claim.VendorId),
                 new DataParameter("fitmentStatusId", (int)claim.Status),
                 new DataParameter("confidence", claim.Confidence),
                 new DataParameter("safetyClassId", (int)claim.SafetyClass),
@@ -246,6 +201,7 @@ VALUES
             ProductId = row.ProductId,
             VehicleConfigurationId = row.VehicleConfigurationId,
             OemNumberId = row.OemNumberId,
+            VendorId = row.VendorId,
             Status = (FitmentStatus)row.FitmentStatusId,
             Confidence = row.Confidence,
             SafetyClass = (SafetyClass)row.SafetyClassId,
@@ -285,6 +241,7 @@ VALUES
         public int ProductId { get; set; }
         public int VehicleConfigurationId { get; set; }
         public int? OemNumberId { get; set; }
+        public int? VendorId { get; set; }
         public int FitmentStatusId { get; set; }
         public decimal Confidence { get; set; }
         public int SafetyClassId { get; set; }

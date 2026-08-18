@@ -25,3 +25,36 @@ public sealed class VendorReviewActionModel
 
     public string? Notes { get; set; }
 }
+
+public sealed class VendorAssignProductModel
+{
+    public int VendorId { get; set; }
+
+    public int ProductId { get; set; }
+}
+
+public sealed class VendorProductEditModel
+{
+    public int ProductId { get; set; }
+}
+
+public sealed class VendorInventoryUpdateModel
+{
+    public int ProductId { get; set; }
+
+    public int StockQuantity { get; set; }
+}
+
+public sealed class VendorFitmentProposalModel
+{
+    public int ProductId { get; set; }
+
+    public int VehicleConfigurationId { get; set; }
+
+    public int? VendorId { get; set; }
+}
+
+public sealed class VendorOnboardingAccessModel
+{
+    public string? AccessToken { get; set; }
+}

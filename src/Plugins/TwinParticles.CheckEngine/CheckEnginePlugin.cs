@@ -15,6 +15,7 @@ using Nop.Services.ScheduleTasks;
 using Nop.Services.Security;
 using Nop.Web.Framework.Infrastructure;
 using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Domain.Vehicle.Admin;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine;
@@ -28,6 +29,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
     private readonly IScheduleTaskService _scheduleTaskService;
     private readonly ISettingService _settingService;
     private readonly IWebHelper _webHelper;
+    private readonly IVehicleSeedLoader _vehicleSeedLoader;
 
     public CheckEnginePlugin(ILocalizationService localizationService,
         ILanguageService languageService,
@@ -35,7 +37,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         IPermissionService permissionService,
         IScheduleTaskService scheduleTaskService,
         ISettingService settingService,
-        IWebHelper webHelper)
+        IWebHelper webHelper,
+        IVehicleSeedLoader vehicleSeedLoader)
     {
         _localizationService = localizationService;
         _languageService = languageService;
@@ -44,6 +47,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         _scheduleTaskService = scheduleTaskService;
         _settingService = settingService;
         _webHelper = webHelper;
+        _vehicleSeedLoader = vehicleSeedLoader;
     }
 
     /// <summary>
@@ -91,6 +95,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
         await AddOrUpdateLocaleResourcesAsync();
         await EnsureWidgetActiveAsync();
+        await _vehicleSeedLoader.SeedAsync(default);
 
         await base.InstallAsync();
     }
@@ -161,6 +166,37 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Marketplace.Banking"] = "Banking / payout details",
             ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Text"] = "By applying you accept the current operator supplier agreement. A versioned acceptance record is stored.",
             ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Accept"] = "I accept the supplier agreement",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard"] = "Vendor dashboard",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Hint"] = "Manage your catalog stock, review orders, submit fitment proposals, and track performance.",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Loading"] = "Loading dashboard…",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Products"] = "Products",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.StockUnits"] = "Stock units",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Orders"] = "Orders",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Customers"] = "Customers",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard"] = "Performance scorecard",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard"] = "Supplier scoreboard",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Hint"] = "Operator view of supplier fill rate, cancellations, fitment rejections, and on-time shipment.",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.FillRate"] = "Fill rate",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.CancelRate"] = "Cancel rate",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.ClaimRejectRate"] = "Claim rejection rate",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.OnTimeShipment"] = "On-time shipment",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory"] = "Inventory",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Product"] = "Product",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Stock"] = "Stock quantity",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Save"] = "Save",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Proposals"] = "Fitment proposals",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Hint"] = "Proposals enter the operator review queue. Published claims remain globally visible to shoppers.",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.ProductId"] = "Product id",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.VehicleConfigId"] = "Vehicle configuration id",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Submit"] = "Submit proposal",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Statements"] = "Statements",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Statements.Pending"] = "Commission statements and payouts will appear here once payout reconciliation is enabled.",
+            ["Plugins.TwinParticles.CheckEngine.Commission.Configure"] = "Commission plan",
+            ["Plugins.TwinParticles.CheckEngine.Commission.Configure.Hint"] = "Rules are evaluated by priority (lower first). Category overrides beat defaults. Rates are snapshotted on each order line at placement.",
+            ["Plugins.TwinParticles.CheckEngine.Commission.Save"] = "Save commission plan",
+            ["Plugins.TwinParticles.CheckEngine.Payout.Admin"] = "Payout statements",
+            ["Plugins.TwinParticles.CheckEngine.Payout.Admin.Hint"] = "Generate periodic vendor statements from snapshotted commissions, finalize, push to ERPNext, and reconcile totals.",
+            ["Plugins.TwinParticles.CheckEngine.Marketplace.Statements.None"] = "No payout statements yet for this vendor.",
             ["Plugins.TwinParticles.CheckEngine.Dashboard"] = "Check Engine Dashboard",
             ["Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks"] = "Admin JSON endpoints",
             ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload"] = "Import upload",
@@ -363,6 +399,37 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Marketplace.Banking"] = "بيانات البنك / الدفع",
         ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Text"] = "بتقديم الطلب تقبل اتفاقية المورد الحالية. يُحفظ سجل قبول مُصدَّر.",
         ["Plugins.TwinParticles.CheckEngine.Marketplace.Agreement.Accept"] = "أوافق على اتفاقية المورد",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard"] = "لوحة المورد",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Hint"] = "أدِر مخزون المنتجات واطّلع على الطلبات وقدّم مقترحات التوافق وتابع الأداء.",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Loading"] = "جاري تحميل اللوحة…",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Products"] = "المنتجات",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.StockUnits"] = "وحدات المخزون",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Orders"] = "الطلبات",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard.Customers"] = "العملاء",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard"] = "بطاقة الأداء",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard"] = "لوحة أداء الموردين",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Hint"] = "عرض المشغّل لمعدلات التعبئة والإلغاء ورفض التوافق والشحن في الوقت.",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.FillRate"] = "معدل التعبئة",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.CancelRate"] = "معدل الإلغاء",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.ClaimRejectRate"] = "معدل رفض المطالبات",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.OnTimeShipment"] = "الشحن في الوقت",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory"] = "المخزون",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Product"] = "المنتج",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Stock"] = "كمية المخزون",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Inventory.Save"] = "حفظ",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Proposals"] = "مقترحات التوافق",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Hint"] = "تدخل المقترحات قائمة مراجعة المشغّل. المطالبات المنشورة تظل مرئية للمتسوقين.",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.ProductId"] = "معرّف المنتج",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.VehicleConfigId"] = "معرّف تكوين السيارة",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Fitment.Submit"] = "إرسال المقترح",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Statements"] = "كشوف الحساب",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Statements.Pending"] = "ستظهر كشوف العمولات والمدفوعات هنا عند تفعيل تسوية المدفوعات.",
+        ["Plugins.TwinParticles.CheckEngine.Commission.Configure"] = "خطة العمولة",
+        ["Plugins.TwinParticles.CheckEngine.Commission.Configure.Hint"] = "تُقيَّم القواعد حسب الأولوية (الأقل أولاً). تجاوزات الفئة تسبق الافتراضي. تُثبَّت النسب عند إنشاء الطلب.",
+        ["Plugins.TwinParticles.CheckEngine.Commission.Save"] = "حفظ خطة العمولة",
+        ["Plugins.TwinParticles.CheckEngine.Payout.Admin"] = "كشوف المدفوعات",
+        ["Plugins.TwinParticles.CheckEngine.Payout.Admin.Hint"] = "أنشئ كشوف المورد الدورية من العمولات المثبتة، اعتمدها، ادفعها إلى ERPNext، وسوِّ الت totals.",
+        ["Plugins.TwinParticles.CheckEngine.Marketplace.Statements.None"] = "لا توجد كشوف مدفوعات لهذا المورد بعد.",
         ["Plugins.TwinParticles.CheckEngine.Dashboard"] = "لوحة تحكم توافق قطع السيارات",
         ["Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks"] = "واجهات إدارة JSON",
         ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload"] = "رفع ملف الاستيراد",
@@ -504,6 +571,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await EnsureScheduleTasksAsync();
         await AddOrUpdateLocaleResourcesAsync();
         await EnsureWidgetActiveAsync();
+        await _vehicleSeedLoader.SeedAsync(default);
         await base.UpdateAsync(currentVersion, targetVersion);
     }
 

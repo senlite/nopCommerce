@@ -29,6 +29,7 @@ public class VendorOnboardingServiceTests
         result.Snapshot!.Vendor.Status.Should().Be(VendorStatus.Applied);
         result.Snapshot.Vendor.HasBankingDetails.Should().BeTrue();
         result.Snapshot.Vendor.BankingSecretProtected.Should().BeNull();
+        result.Snapshot.ApplicantAccessToken.Should().NotBeNullOrWhiteSpace();
         harness.Repository.StoredSecretFor(result.Snapshot.Vendor.Id).Should().StartWith("enc:");
         harness.Repository.StoredSecretFor(result.Snapshot.Vendor.Id).Should().NotContain("IBAN-SECRET");
     }
@@ -99,6 +100,35 @@ public class VendorOnboardingServiceTests
     }
 
     [Test]
+    public async Task CanAccessApplication_Should_Bind_Applicant_And_Allow_Operator()
+    {
+        var harness = Harness.Create(marketplaceEntitled: true, applicationsOpen: true);
+        var result = await harness.Service.ApplyAsync(ValidApplication(applicantCustomerId: 42), CancellationToken.None);
+        var vendorId = result.Snapshot!.Vendor.Id;
+
+        (await harness.Service.CanAccessApplicationAsync(vendorId, 42, isOperator: false, CancellationToken.None)).Should().BeTrue();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, 99, isOperator: false, CancellationToken.None)).Should().BeFalse();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, null, isOperator: false, CancellationToken.None)).Should().BeFalse();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, 99, isOperator: true, CancellationToken.None)).Should().BeTrue();
+    }
+
+    [Test]
+    public async Task CanAccessApplication_Should_Allow_Guest_With_Matching_Token()
+    {
+        var harness = Harness.Create(marketplaceEntitled: true, applicationsOpen: true);
+        var result = await harness.Service.ApplyAsync(ValidApplication(), CancellationToken.None);
+        var vendorId = result.Snapshot!.Vendor.Id;
+        var token = result.Snapshot.ApplicantAccessToken;
+
+        (await harness.Service.CanAccessApplicationAsync(vendorId, null, isOperator: false, CancellationToken.None, token)).Should().BeTrue();
+        (await harness.Service.CanAccessApplicationAsync(vendorId, null, isOperator: false, CancellationToken.None, "deadbeef")).Should().BeFalse();
+        (await harness.Service.GetSnapshotAsync(vendorId, CancellationToken.None))!
+            .ApplicantAccessToken.Should().BeNull();
+        harness.Repository.StoredTokenHashFor(vendorId).Should().Be(ApplicantAccessToken.Hash(token!));
+        harness.Repository.StoredTokenHashFor(vendorId).Should().NotBe(token);
+    }
+
+    [Test]
     public async Task Apply_Should_Deny_Without_Marketplace_Entitlement()
     {
         var harness = Harness.Create(marketplaceEntitled: false, applicationsOpen: true);
@@ -165,12 +195,13 @@ public class VendorOnboardingServiceTests
         return vendorId;
     }
 
-    private static VendorApplication ValidApplication(string legalName = "GMaster Cooling LLC")
+    private static VendorApplication ValidApplication(string legalName = "GMaster Cooling LLC", int? applicantCustomerId = null)
         => new()
         {
             LegalName = legalName,
             TradingName = "GMaster",
             ContactEmail = "vendor@parts.test",
+            ApplicantCustomerId = applicantCustomerId,
             TaxIdsJson = "[\"VAT-99\"]",
             CategoriesCsv = "cooling",
             BankingDetails = "IBAN-SECRET-0001"
@@ -261,6 +292,9 @@ public class VendorOnboardingServiceTests
         public string? StoredSecretFor(int vendorId)
             => _vendors.TryGetValue(vendorId, out var vendor) ? vendor.BankingSecretProtected : null;
 
+        public string? StoredTokenHashFor(int vendorId)
+            => _vendors.TryGetValue(vendorId, out var vendor) ? vendor.ApplicantAccessTokenHash : null;
+
         public Task<int> InsertAsync(Vendor vendor, CancellationToken cancellationToken)
         {
             vendor.Id = Interlocked.Increment(ref _nextId);
@@ -287,6 +321,15 @@ public class VendorOnboardingServiceTests
                 .Select(vendor => Clone(vendor, includeSecret: false))
                 .ToList());
 
+        public Task<Vendor?> GetOperatorAsync(CancellationToken cancellationToken)
+            => Task.FromResult(_vendors.Values.Where(vendor => vendor.IsOperator).Select(vendor => Clone(vendor, includeSecret: false)).FirstOrDefault());
+
+        public Task<Vendor?> GetByApplicantCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+            => Task.FromResult(_vendors.Values
+                .Where(vendor => vendor.ApplicantCustomerId == customerId)
+                .Select(vendor => Clone(vendor, includeSecret: false))
+                .FirstOrDefault());
+
         public Task InsertAgreementAsync(VendorAgreementAcceptance acceptance, CancellationToken cancellationToken)
         {
             acceptance.Id = Interlocked.Increment(ref _nextAgreementId);
@@ -303,6 +346,9 @@ public class VendorOnboardingServiceTests
         public Task<bool> HasAcceptedAgreementAsync(int vendorId, string agreementVersion, CancellationToken cancellationToken)
             => Task.FromResult(_agreements.Any(item => item.VendorId == vendorId && item.AgreementVersion == agreementVersion));
 
+        public Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken)
+            => Task.FromResult(_vendors.TryGetValue(vendorId, out var vendor) ? vendor.ApplicantAccessTokenHash : null);
+
         private static Vendor Clone(Vendor vendor, bool includeSecret)
         {
             return new Vendor
@@ -315,6 +361,8 @@ public class VendorOnboardingServiceTests
                 TaxIdsJson = vendor.TaxIdsJson,
                 CategoriesCsv = vendor.CategoriesCsv,
                 Status = vendor.Status,
+                IsOperator = vendor.IsOperator,
+                ApplicantAccessTokenHash = includeSecret ? vendor.ApplicantAccessTokenHash : null,
                 BankingSecretProtected = includeSecret ? vendor.BankingSecretProtected : null,
                 HasBankingDetails = vendor.HasBankingDetails || !string.IsNullOrWhiteSpace(vendor.BankingSecretProtected),
                 ReviewNotes = vendor.ReviewNotes,

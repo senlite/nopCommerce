@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-08-17
 
 ## Status legend
 - `pending` = not started
@@ -255,12 +255,12 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 | ID | Task | Status |
 |---|---|---|
 | H3.1 | Supplier onboarding, verification and agreement acceptance | done | Vendor lifecycle Applied→UnderReview→Active/Rejected, Suspend/Reinstate/Close; versioned `TP_CE_VendorAgreementAcceptance`; activate blocked without current agreement; banking encrypted and omitted from APIs/audit; marketplace admin/apply gated by `MarketplaceModuleEntitlement` (Business+) plus operator applications flag |
-| H3.2 | Vendor catalog/order/customer isolation and upgrade path | pending |
-| H3.3 | Vendor dashboards, inventory and performance analytics | pending |
-| H3.4 | Flat, percentage, tiered and category-specific commissions | pending |
-| H3.5 | Payout reconciliation and statements integrated with ERPNext | pending |
-| H3.6 | Multi-vendor cart, split orders and split shipments | pending |
-| H3.7 | Attributed, reviewable and revocable vendor fitment contributions | pending |
+| H3.2 | Vendor catalog/order/customer isolation and upgrade path | done | `TP_CE_VendorProductMap` owns products; upgrade creates the operator vendor and assigns every sellable product (FR-890, zero loss, idempotent); vendor catalog/order/customer APIs deny cross-vendor access with audit (`vendor.isolation.denied`, AC-19.1); operator admin bypasses isolation; shopper evaluation stays global |
+| H3.3 | Vendor dashboards, inventory and performance analytics | done | Vendor dashboard at `/check-engine/vendor/dashboard` (catalog counts, inventory CRUD scoped by isolation, fitment proposal submit/list, statement placeholder); FR-860 scorecards (fill/cancel/claim-reject/on-time shipment) vendor + operator scoreboard; EN/AR locale resources; plugin 0.56.0 |
+| H3.4 | Flat, percentage, tiered and category-specific commissions | done | `TP_CE_CommissionPlan` / `Rule` / `TierBand`; pure `CommissionEvaluationService`; `TP_CE_OrderLineCommissionSnapshot` on `OrderPlacedEvent` (AC-19.6); admin configure at `/Admin/CheckEngine/CommissionAdmin/Configure` |
+| H3.5 | Payout reconciliation and statements integrated with ERPNext | done | `TP_CE_PayoutStatement` / lines / adjustments; `PayoutStatementBuilder` (sales − commission − refunds + adjustments); finalize → `ErpSyncEntityType.PayoutJournal` push → cent-level reconcile; vendor dashboard statement summary; admin `/Admin/CheckEngine/PayoutAdmin` |
+| H3.6 | Multi-vendor cart, split orders and split shipments | done | `TP_CE_OrderVendorSplit` / lines / `TP_CE_ShipmentVendorMap`; `OrderVendorSplitService` on `OrderPlacedEvent` + `ShipmentCreatedEvent` (AC-19.2); vendor/admin `OrderSplits` JSON APIs; plugin 0.59.0 |
+| H3.7 | Attributed, reviewable and revocable vendor fitment contributions | done | `TP_CE_FitmentClaim.VendorId` (nullable, null = operator); `VendorFitmentContributionService` submit/list/revoke with isolation + audit; vendor `RevokeFitmentProposal` + admin `Revoke`; legacy `SourceReference` fallback; plugin 0.60.1 (onboarding Status/AcceptAgreement bound to applicant; commission snapshots fall back to operator vendor) |
 
 ### Horizon 4 — Vertical portals / v1.3–v1.5 (`EP-25`–`EP-27`)
 

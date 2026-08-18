@@ -23,9 +23,9 @@ public sealed class SqlVendorRepository : IVendorRepository
     {
         var id = await _dataProvider.QueryAsync<int>(@"
 INSERT INTO TP_CE_Vendor
-(LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, BankingSecretProtected, ReviewNotes, CreatedUtc, UpdatedUtc)
+(LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, IsOperator, BankingSecretProtected, ApplicantAccessTokenHash, ReviewNotes, CreatedUtc, UpdatedUtc)
 VALUES
-(@legalName, @tradingName, @contactEmail, @applicantCustomerId, @taxIdsJson, @categoriesCsv, @statusId, @bankingSecretProtected, @reviewNotes, @createdUtc, @updatedUtc);
+(@legalName, @tradingName, @contactEmail, @applicantCustomerId, @taxIdsJson, @categoriesCsv, @statusId, @isOperator, @bankingSecretProtected, @applicantAccessTokenHash, @reviewNotes, @createdUtc, @updatedUtc);
 " + CheckEngineSql.SelectInsertedIntId() + @";",
             new DataParameter("legalName", vendor.LegalName),
             new DataParameter("tradingName", vendor.TradingName ?? (object)DBNull.Value),
@@ -34,7 +34,9 @@ VALUES
             new DataParameter("taxIdsJson", vendor.TaxIdsJson),
             new DataParameter("categoriesCsv", vendor.CategoriesCsv),
             new DataParameter("statusId", (int)vendor.Status),
+            new DataParameter("isOperator", vendor.IsOperator),
             new DataParameter("bankingSecretProtected", vendor.BankingSecretProtected ?? (object)DBNull.Value),
+            new DataParameter("applicantAccessTokenHash", vendor.ApplicantAccessTokenHash ?? (object)DBNull.Value),
             new DataParameter("reviewNotes", vendor.ReviewNotes ?? (object)DBNull.Value),
             new DataParameter("createdUtc", vendor.CreatedUtc.UtcDateTime),
             new DataParameter("updatedUtc", vendor.UpdatedUtc.UtcDateTime));
@@ -52,6 +54,7 @@ SET LegalName = @legalName,
     TaxIdsJson = @taxIdsJson,
     CategoriesCsv = @categoriesCsv,
     StatusId = @statusId,
+    IsOperator = @isOperator,
     ReviewNotes = @reviewNotes,
     UpdatedUtc = @updatedUtc
 WHERE Id = @id",
@@ -63,13 +66,14 @@ WHERE Id = @id",
             new DataParameter("taxIdsJson", vendor.TaxIdsJson),
             new DataParameter("categoriesCsv", vendor.CategoriesCsv),
             new DataParameter("statusId", (int)vendor.Status),
+            new DataParameter("isOperator", vendor.IsOperator),
             new DataParameter("reviewNotes", vendor.ReviewNotes ?? (object)DBNull.Value),
             new DataParameter("updatedUtc", vendor.UpdatedUtc.UtcDateTime));
 
     public async Task<Vendor?> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<VendorRow>(@"
-SELECT Id, LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId,
+SELECT Id, LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, IsOperator,
        CASE WHEN BankingSecretProtected IS NULL OR BankingSecretProtected = '' THEN 0 ELSE 1 END AS HasBankingDetails,
        ReviewNotes, CreatedUtc, UpdatedUtc
 FROM TP_CE_Vendor
@@ -86,7 +90,7 @@ WHERE Id = @id",
 
         var statusList = string.Join(",", statuses.Select(status => ((int)status).ToString()));
         var rows = await _dataProvider.QueryAsync<VendorRow>($@"
-SELECT Id, LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId,
+SELECT Id, LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, IsOperator,
        CASE WHEN BankingSecretProtected IS NULL OR BankingSecretProtected = '' THEN 0 ELSE 1 END AS HasBankingDetails,
        ReviewNotes, CreatedUtc, UpdatedUtc
 FROM TP_CE_Vendor
@@ -94,6 +98,24 @@ WHERE StatusId IN ({statusList})
 ORDER BY CreatedUtc DESC");
 
         return rows.Select(Map).ToList();
+    }
+
+    public async Task<Vendor?> GetOperatorAsync(CancellationToken cancellationToken)
+    {
+        var sql = CheckEngineSql.SelectTop(1,
+            "Id, LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, IsOperator, CASE WHEN BankingSecretProtected IS NULL OR BankingSecretProtected = '' THEN 0 ELSE 1 END AS HasBankingDetails, ReviewNotes, CreatedUtc, UpdatedUtc",
+            "FROM TP_CE_Vendor WHERE IsOperator = 1 ORDER BY Id");
+        var rows = await _dataProvider.QueryAsync<VendorRow>(sql);
+        return rows.Select(Map).FirstOrDefault();
+    }
+
+    public async Task<Vendor?> GetByApplicantCustomerIdAsync(int customerId, CancellationToken cancellationToken)
+    {
+        var sql = CheckEngineSql.SelectTop(1,
+            "Id, LegalName, TradingName, ContactEmail, ApplicantCustomerId, TaxIdsJson, CategoriesCsv, StatusId, IsOperator, CASE WHEN BankingSecretProtected IS NULL OR BankingSecretProtected = '' THEN 0 ELSE 1 END AS HasBankingDetails, ReviewNotes, CreatedUtc, UpdatedUtc",
+            "FROM TP_CE_Vendor WHERE ApplicantCustomerId = @customerId ORDER BY Id");
+        var rows = await _dataProvider.QueryAsync<VendorRow>(sql, new DataParameter("customerId", customerId));
+        return rows.Select(Map).FirstOrDefault();
     }
 
     public Task InsertAgreementAsync(VendorAgreementAcceptance acceptance, CancellationToken cancellationToken)
@@ -127,6 +149,18 @@ WHERE VendorId = @vendorId AND AgreementVersion = @agreementVersion",
         return rows.FirstOrDefault() > 0;
     }
 
+    public async Task<string?> GetApplicantAccessTokenHashAsync(int vendorId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<string?>(@"
+SELECT ApplicantAccessTokenHash
+FROM TP_CE_Vendor
+WHERE Id = @id",
+            new DataParameter("id", vendorId));
+
+        var hash = rows.FirstOrDefault();
+        return string.IsNullOrWhiteSpace(hash) ? null : hash;
+    }
+
     private static Vendor Map(VendorRow row)
     {
         return new Vendor
@@ -139,6 +173,7 @@ WHERE VendorId = @vendorId AND AgreementVersion = @agreementVersion",
             TaxIdsJson = row.TaxIdsJson,
             CategoriesCsv = row.CategoriesCsv,
             Status = (VendorStatus)row.StatusId,
+            IsOperator = row.IsOperator,
             BankingSecretProtected = null,
             HasBankingDetails = row.HasBankingDetails,
             ReviewNotes = row.ReviewNotes,
@@ -172,6 +207,7 @@ WHERE VendorId = @vendorId AND AgreementVersion = @agreementVersion",
         public string TaxIdsJson { get; set; } = "[]";
         public string CategoriesCsv { get; set; } = string.Empty;
         public int StatusId { get; set; }
+        public bool IsOperator { get; set; }
         public bool HasBankingDetails { get; set; }
         public string? ReviewNotes { get; set; }
         public DateTime CreatedUtc { get; set; }
