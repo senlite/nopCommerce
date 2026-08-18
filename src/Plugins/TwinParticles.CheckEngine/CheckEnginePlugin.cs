@@ -816,6 +816,9 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             await _scheduleTaskService.DeleteTaskAsync(searchEmbeddingTask);
 
         await DeactivateWidgetAsync();
+        await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngineDealer.SystemName);
+        await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngineFleet.SystemName);
+        await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngineWorkshop.SystemName);
         await _permissionService.DeletePermissionAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
         await _settingService.DeleteSettingAsync<CheckEnginePluginSettings>();
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.TwinParticles.CheckEngine");

@@ -1,0 +1,30 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace TwinParticles.CheckEngine.Domain.Fleet;
+
+public interface IFleetPortalRepository
+{
+    Task<FleetAccount?> GetAccountByCustomerIdAsync(int customerId, CancellationToken cancellationToken);
+
+    Task<FleetAccount?> GetAccountByIdAsync(int accountId, CancellationToken cancellationToken);
+
+    Task<int> InsertVehicleAsync(FleetVehicle vehicle, CancellationToken cancellationToken);
+
+    Task<FleetVehicle?> GetVehicleAsync(int vehicleId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FleetVehicle>> GetVehiclesAsync(int fleetAccountId, CancellationToken cancellationToken);
+
+    Task<int> InsertImportBatchAsync(FleetVinImportBatch batch, CancellationToken cancellationToken);
+
+    Task<FleetBudgetCentre?> GetBudgetCentreAsync(int budgetCentreId, CancellationToken cancellationToken);
+
+    Task UpdateBudgetCentreAsync(FleetBudgetCentre centre, CancellationToken cancellationToken);
+
+    Task<int> InsertApprovalRequestAsync(FleetApprovalRequest request, CancellationToken cancellationToken);
+
+    Task UpdateApprovalRequestAsync(FleetApprovalRequest request, CancellationToken cancellationToken);
+
+    Task<FleetApprovalRequest?> GetApprovalRequestAsync(int requestId, CancellationToken cancellationToken);
+}

@@ -10,9 +10,9 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>TwinParticles.CheckEngine</AssemblyName>
     <RootNamespace>TwinParticles.CheckEngine</RootNamespace>
-    <Version>0.62.0</Version>
-    <AssemblyVersion>0.62.0.0</AssemblyVersion>
-    <FileVersion>0.62.0.0</FileVersion>
+    <Version>0.63.0</Version>
+    <AssemblyVersion>0.63.0.0</AssemblyVersion>
+    <FileVersion>0.63.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -33,6 +33,9 @@
     <None Remove="Views\Admin\PayoutAdmin.cshtml" />
     <None Remove="Views\Vendor\Apply.cshtml" />
     <None Remove="Views\Vendor\Dashboard.cshtml" />
+    <None Remove="Views\Workshop\Index.cshtml" />
+    <None Remove="Views\Fleet\Index.cshtml" />
+    <None Remove="Views\Dealer\Index.cshtml" />
     <None Remove="Views\Seo\Landing.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
     <None Remove="Views\Shared\Components\UninstallPreparation\Default.cshtml" />
@@ -89,6 +92,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Vendor\Dashboard.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Workshop\Index.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Fleet\Index.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Dealer\Index.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Seo\Landing.cshtml">
