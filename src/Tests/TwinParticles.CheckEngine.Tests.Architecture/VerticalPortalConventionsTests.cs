@@ -148,6 +148,21 @@ public class VerticalPortalConventionsTests
     }
 
     [Test]
+    public void Configure_Page_Should_Include_Licence_Panel()
+    {
+        var configure = ReadPluginFile("Views", "Configure.cshtml");
+        configure.Should().Contain("_LicencePanel.cshtml");
+        configure.Should().Contain("AntiForgeryToken");
+    }
+
+    [Test]
+    public void Licence_Admin_Assets_Should_Exist()
+    {
+        var js = ReadPluginFile("Content", "checkengine-licence-admin.js");
+        js.Should().Contain("DiagnosticsAdmin/Activate");
+        js.Should().Contain("data-ce-licence-panel");
+    }
+    [Test]
     public void Portal_Admin_Should_Provision_All_Three_Account_Types()
     {
         var controller = ReadPluginFile("Controllers", "PortalAdminController.cs");

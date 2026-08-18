@@ -51,21 +51,7 @@
             </div>
         </div>
 
-        <div class="card card-default" id="ce-licence-panel">
-            <div class="card-header">
-                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Title")</h3>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint")</p>
-                <pre id="ce-licence-status" class="bg-light p-3" style="white-space: pre-wrap;">Loading…</pre>
-                <div class="form-group">
-                    <label for="ce-licence-key">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Key")</label>
-                    <textarea id="ce-licence-key" class="form-control" rows="3" placeholder="ce-lic-v1.…"></textarea>
-                </div>
-                <button type="button" class="btn btn-primary" id="ce-licence-activate">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Activate")</button>
-                <button type="button" class="btn btn-secondary ml-2" id="ce-licence-heartbeat">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Heartbeat")</button>
-            </div>
-        </div>
+        @await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_LicencePanel.cshtml")
 
         <div class="card card-default">
             <div class="card-header">
@@ -152,66 +138,5 @@
       result.textContent = 'Import failed: ' + (err && err.message ? err.message : err);
     });
   });
-
-  var licenceStatus = document.getElementById('ce-licence-status');
-  var licenceKey = document.getElementById('ce-licence-key');
-  var activateBtn = document.getElementById('ce-licence-activate');
-  var heartbeatBtn = document.getElementById('ce-licence-heartbeat');
-
-  function licenceHeaders() {
-    var headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
-    if (tokenInput && tokenInput.value) headers.RequestVerificationToken = tokenInput.value;
-    return headers;
-  }
-
-  function renderLicence(data) {
-    if (!licenceStatus) return;
-    var licence = data && data.licence ? data.licence : data || {};
-    licenceStatus.textContent = JSON.stringify({
-      status: pick(licence, 'state', 'State'),
-      active: pick(licence, 'isActive', 'IsActive'),
-      tier: pick(licence, 'tier', 'Tier'),
-      marketplace: pick(licence, 'marketplaceModuleEntitlement', 'MarketplaceModuleEntitlement'),
-      workshop: pick(licence, 'workshopPortalEntitlement', 'WorkshopPortalEntitlement'),
-      fleet: pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement'),
-      dealer: pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement'),
-      lastHeartbeatUtc: pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'),
-      reasonCode: pick(licence, 'reasonCode', 'ReasonCode')
-    }, null, 2);
-  }
-
-  function refreshLicence() {
-    return fetch('/Admin/CheckEngine/DiagnosticsAdmin/Package', { headers: licenceHeaders() })
-      .then(function (r) { return r.json(); })
-      .then(renderLicence)
-      .catch(function () {
-        if (licenceStatus) licenceStatus.textContent = 'Unable to load licence status.';
-      });
-  }
-
-  if (activateBtn) {
-    activateBtn.addEventListener('click', function () {
-      fetch('/Admin/CheckEngine/DiagnosticsAdmin/Activate', {
-        method: 'POST',
-        headers: licenceHeaders(),
-        body: JSON.stringify({ licenceKey: licenceKey ? licenceKey.value : '' })
-      }).then(function (r) { return r.json(); }).then(function (status) {
-        renderLicence({ licence: status });
-      }).catch(refreshLicence);
-    });
-  }
-
-  if (heartbeatBtn) {
-    heartbeatBtn.addEventListener('click', function () {
-      fetch('/Admin/CheckEngine/DiagnosticsAdmin/Heartbeat', {
-        method: 'POST',
-        headers: licenceHeaders()
-      }).then(function (r) { return r.json(); }).then(function (status) {
-        renderLicence({ licence: status });
-      }).catch(refreshLicence);
-    });
-  }
-
-  refreshLicence();
 })();
 </script>
