@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -90,7 +91,7 @@ public sealed class FleetController : BasePublicController
     }
 
     [HttpPost]
-    public async Task<IActionResult> SubmitApprovalRequest([FromBody] SubmitApprovalRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> SubmitApprovalRequest([FromBody] SubmitApprovalRequestModel request, CancellationToken cancellationToken)
     {
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
@@ -101,8 +102,71 @@ public sealed class FleetController : BasePublicController
         if (!await _portalAccess.OwnsFleetAccountAsync(customer.Id, request.FleetAccountId, isOperator, cancellationToken))
             return Denied(PortalErrorCodes.AccessDenied);
 
-        var result = await _fleetService.SubmitApprovalRequestAsync(request, cancellationToken);
+        var snapshot = await _fleetService.GetDashboardAsync(customer.Id, cancellationToken);
+        var budgetCentreId = request.BudgetCentreId;
+        if (budgetCentreId <= 0)
+        {
+            budgetCentreId = snapshot?.Account.DefaultBudgetCentreId
+                ?? snapshot?.BudgetCentres.FirstOrDefault()?.Id
+                ?? 0;
+        }
+
+        if (budgetCentreId <= 0)
+            return Denied(FleetErrorCodes.NotFound, 400);
+
+        var enriched = new SubmitApprovalRequest
+        {
+            FleetAccountId = request.FleetAccountId,
+            FleetVehicleId = request.FleetVehicleId,
+            ProductId = request.ProductId,
+            Quantity = request.Quantity,
+            BudgetCentreId = budgetCentreId,
+            RequesterCustomerId = customer.Id
+        };
+
+        var result = await _fleetService.SubmitApprovalRequestAsync(enriched, cancellationToken);
         return result.Success ? Json(result) : Denied(result.ErrorCode ?? FleetErrorCodes.NotFound, 400);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ImportBatches(CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var batches = await _fleetService.ListImportBatchesAsync(customer.Id, cancellationToken);
+        return Json(batches);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ImportBatchDetail(int batchId, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isOperator = await IsOperatorAsync();
+        var fleetAccountId = await _fleetService.ResolveFleetAccountIdForBatchAsync(batchId, cancellationToken);
+        if (!fleetAccountId.HasValue || !await _portalAccess.OwnsFleetAccountAsync(customer.Id, fleetAccountId.Value, isOperator, cancellationToken))
+            return Denied(PortalErrorCodes.AccessDenied);
+
+        var detail = await _fleetService.GetImportBatchDetailAsync(batchId, cancellationToken);
+        return detail is null ? Denied(FleetErrorCodes.NotFound, 404) : Json(detail);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> VehicleCostReport(CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var report = await _fleetService.GetVehicleCostReportAsync(customer.Id, cancellationToken);
+        return Json(report);
     }
 
     [HttpPost]
@@ -117,6 +181,9 @@ public sealed class FleetController : BasePublicController
         var fleetAccountId = await _fleetService.ResolveFleetAccountIdForRequestAsync(request.RequestId, cancellationToken);
         if (!fleetAccountId.HasValue || !await _portalAccess.OwnsFleetAccountAsync(customer.Id, fleetAccountId.Value, isOperator, cancellationToken))
             return Denied(PortalErrorCodes.AccessDenied);
+
+        if (!await _portalAccess.CanApproveFleetAsync(customer.Id, fleetAccountId.Value, isOperator, cancellationToken))
+            return Denied(FleetErrorCodes.ApproverDenied);
 
         var result = await _fleetService.DecideApprovalRequestAsync(
             request.RequestId,
@@ -140,8 +207,13 @@ public sealed class FleetController : BasePublicController
         return await _portalAccess.ResolveFleetAsync(customer.Id, isOperator, cancellationToken);
     }
 
-    private Task<bool> IsOperatorAsync()
-        => _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
+    private async Task<bool> IsOperatorAsync()
+    {
+        if (await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return true;
+
+        return await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngineFleet.SystemName);
+    }
 
     private static int StatusFor(string? errorCode)
         => errorCode == PortalErrorCodes.AccessUnauthenticated ? 401 : 403;
@@ -155,6 +227,19 @@ public sealed class ImportFleetVinsRequest
     public int FleetAccountId { get; init; }
 
     public string[] Vins { get; init; } = [];
+}
+
+public sealed class SubmitApprovalRequestModel
+{
+    public int FleetAccountId { get; init; }
+
+    public int FleetVehicleId { get; init; }
+
+    public int ProductId { get; init; }
+
+    public int Quantity { get; init; }
+
+    public int BudgetCentreId { get; init; }
 }
 
 public sealed class DecideApprovalRequestModel

@@ -15,4 +15,6 @@ public sealed class WorkshopJobLine
     public string FitmentOutcome { get; set; } = string.Empty;
 
     public decimal UnitPrice { get; set; }
+
+    public int? InvoicedOrderId { get; set; }
 }

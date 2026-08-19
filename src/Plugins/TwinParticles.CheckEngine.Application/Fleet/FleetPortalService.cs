@@ -22,6 +22,7 @@ public sealed class FleetPortalService
     private readonly FitmentEvaluationService _fitment;
     private readonly IPortalOrderBridge _orderBridge;
     private readonly FleetPortalLicenceGate _licenceGate;
+    private readonly PortalTradePricingService _pricing;
     private readonly ICheckEngineAuditService _auditService;
     private readonly ICheckEngineClock _clock;
 
@@ -31,6 +32,7 @@ public sealed class FleetPortalService
         FitmentEvaluationService fitment,
         IPortalOrderBridge orderBridge,
         FleetPortalLicenceGate licenceGate,
+        PortalTradePricingService pricing,
         ICheckEngineAuditService auditService,
         ICheckEngineClock clock)
     {
@@ -39,6 +41,7 @@ public sealed class FleetPortalService
         _fitment = fitment;
         _orderBridge = orderBridge;
         _licenceGate = licenceGate;
+        _pricing = pricing;
         _auditService = auditService;
         _clock = clock;
     }
@@ -166,7 +169,8 @@ public sealed class FleetPortalService
         if (centre is null)
             return FleetApprovalResult.Fail(FleetErrorCodes.NotFound);
 
-        var lineCost = approval.Quantity * 1m;
+        var unitPrice = await _pricing.ResolveUnitPriceAsync(null, approval.ProductId, cancellationToken);
+        var lineCost = approval.Quantity * unitPrice;
         if (centre.SpendUsed + lineCost > centre.SpendLimit)
             return FleetApprovalResult.Fail(FleetErrorCodes.BudgetExceeded);
 
@@ -176,11 +180,21 @@ public sealed class FleetPortalService
 
         var orderId = await _orderBridge.CreateTradeOrderAsync(account.CustomerId, new[]
         {
-            new PortalOrderLine { ProductId = approval.ProductId, Quantity = approval.Quantity, UnitPrice = 1m }
-        }, cancellationToken);
+            new PortalOrderLine { ProductId = approval.ProductId, Quantity = approval.Quantity, UnitPrice = unitPrice }
+        }, supplementaryLabourFee: 0m, cancellationToken);
 
         centre.SpendUsed += lineCost;
         await _repository.UpdateBudgetCentreAsync(centre, cancellationToken);
+
+        await _repository.InsertVehicleSpendAsync(new FleetVehicleSpend
+        {
+            FleetAccountId = approval.FleetAccountId,
+            FleetVehicleId = approval.FleetVehicleId,
+            ProductId = approval.ProductId,
+            OrderId = orderId,
+            Amount = lineCost,
+            RecordedUtc = _clock.UtcNow
+        }, cancellationToken);
 
         approval.Status = FleetApprovalStatus.Placed;
         approval.OrderId = orderId;
@@ -203,14 +217,54 @@ public sealed class FleetPortalService
         var centres = await _repository.ListBudgetCentresByAccountAsync(account.Id, cancellationToken);
         var approvals = await _repository.ListApprovalRequestsByAccountAsync(account.Id, cancellationToken);
         var forecasts = await _repository.ListMaintenanceForecastsAsync(account.Id, cancellationToken);
+        var costSummaries = await _repository.ListVehicleCostSummariesAsync(account.Id, cancellationToken);
         return new FleetPortalSnapshot
         {
             Account = account,
             Vehicles = vehicles,
             BudgetCentres = centres,
             ApprovalRequests = approvals,
-            MaintenanceForecasts = forecasts
+            MaintenanceForecasts = forecasts,
+            VehicleCostSummaries = costSummaries
         };
+    }
+
+    public async Task<IReadOnlyList<FleetVehicleCostSummary>> GetVehicleCostReportAsync(int customerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
+            return Array.Empty<FleetVehicleCostSummary>();
+
+        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return Array.Empty<FleetVehicleCostSummary>();
+
+        return await _repository.ListVehicleCostSummariesAsync(account.Id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<FleetVinImportBatch>> ListImportBatchesAsync(int customerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
+            return Array.Empty<FleetVinImportBatch>();
+
+        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return Array.Empty<FleetVinImportBatch>();
+
+        return await _repository.ListImportBatchesAsync(account.Id, cancellationToken);
+    }
+
+    public async Task<FleetVinImportBatchDetail?> GetImportBatchDetailAsync(int batchId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
+            return null;
+
+        return await _repository.GetImportBatchDetailAsync(batchId, cancellationToken);
+    }
+
+    public async Task<int?> ResolveFleetAccountIdForBatchAsync(int batchId, CancellationToken cancellationToken)
+    {
+        var detail = await _repository.GetImportBatchDetailAsync(batchId, cancellationToken);
+        return detail?.Batch.FleetAccountId;
     }
 
     public async Task<IReadOnlyList<FleetMaintenanceForecast>> GetMaintenanceForecastAsync(int customerId, CancellationToken cancellationToken)

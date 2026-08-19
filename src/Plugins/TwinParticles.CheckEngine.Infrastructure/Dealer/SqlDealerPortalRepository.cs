@@ -53,14 +53,27 @@ ORDER BY FranchiseLabel",
 
     public async Task<IReadOnlyList<DealerCatalogItem>> GetCatalogViewAsync(int dealerAccountId, CancellationToken cancellationToken)
     {
+        var franchiseCount = await _dataProvider.QueryAsync<int>(@"
+SELECT COUNT(1) FROM TP_CE_DealerFranchise WHERE DealerAccountId = @dealerAccountId",
+            new DataParameter("dealerAccountId", dealerAccountId));
+
+        var hasFranchises = franchiseCount.FirstOrDefault() > 0;
+        var franchiseFilter = hasFranchises
+            ? @"INNER JOIN TP_CE_DealerFranchise df ON df.DealerAccountId = da.Id
+INNER JOIN TP_CE_FitmentClaim fc ON fc.ProductId = p.Id AND fc.IsPublished = 1
+INNER JOIN TP_CE_VehicleConfiguration vc ON vc.Id = fc.VehicleConfigurationId
+INNER JOIN TP_CE_VehicleModel vm ON vm.Id = vc.ModelId AND vm.MakeId = df.MakeId"
+            : string.Empty;
+
         var rows = await _dataProvider.QueryAsync<CatalogItemRow>($@"
-SELECT p.Id AS ProductId,
+SELECT DISTINCT p.Id AS ProductId,
        p.Sku,
        p.Name,
        COALESCE(pli.UnitPrice, 0) AS DealerPrice,
        COALESCE(a.PeriodCeilingUnits - a.PeriodUsedUnits, 0) AS RemainingAllocationUnits
 FROM Product p
 INNER JOIN TP_CE_DealerAccount da ON da.Id = @dealerAccountId
+{franchiseFilter}
 LEFT JOIN TP_CE_PriceListItem pli ON pli.ProductId = p.Id AND pli.PriceListId = da.DefaultPriceListId
 LEFT JOIN TP_CE_DealerAllocation a ON a.DealerAccountId = da.Id AND a.ProductId = p.Id
 WHERE p.Deleted = 0 AND p.Published = 1
@@ -134,9 +147,9 @@ WHERE Id = @id",
     {
         var id = await _dataProvider.QueryAsync<int>(@"
 INSERT INTO TP_CE_WarrantyClaim
-(DealerAccountId, OrderId, OemNumber, VehicleConfigurationId, StatusId, EvidenceJson, CreatedUtc, UpdatedUtc)
+(DealerAccountId, OrderId, OemNumber, VehicleConfigurationId, StatusId, EvidenceJson, ResolvedOemNumberId, CreatedUtc, UpdatedUtc)
 VALUES
-(@dealerAccountId, @orderId, @oemNumber, @vehicleConfigurationId, @statusId, @evidenceJson, @createdUtc, @updatedUtc);
+(@dealerAccountId, @orderId, @oemNumber, @vehicleConfigurationId, @statusId, @evidenceJson, @resolvedOemNumberId, @createdUtc, @updatedUtc);
 " + CheckEngineSql.SelectInsertedIntId() + ";",
             new DataParameter("dealerAccountId", claim.DealerAccountId),
             new DataParameter("orderId", claim.OrderId ?? (object)DBNull.Value),
@@ -144,6 +157,7 @@ VALUES
             new DataParameter("vehicleConfigurationId", claim.VehicleConfigurationId),
             new DataParameter("statusId", (int)claim.Status),
             new DataParameter("evidenceJson", claim.EvidenceJson),
+            new DataParameter("resolvedOemNumberId", claim.ResolvedOemNumberId ?? (object)DBNull.Value),
             new DataParameter("createdUtc", claim.CreatedUtc.UtcDateTime),
             new DataParameter("updatedUtc", claim.UpdatedUtc.UtcDateTime));
 
@@ -159,6 +173,7 @@ SET DealerAccountId = @dealerAccountId,
     VehicleConfigurationId = @vehicleConfigurationId,
     StatusId = @statusId,
     EvidenceJson = @evidenceJson,
+    ResolvedOemNumberId = @resolvedOemNumberId,
     UpdatedUtc = @updatedUtc
 WHERE Id = @id",
             new DataParameter("id", claim.Id),
@@ -168,12 +183,13 @@ WHERE Id = @id",
             new DataParameter("vehicleConfigurationId", claim.VehicleConfigurationId),
             new DataParameter("statusId", (int)claim.Status),
             new DataParameter("evidenceJson", claim.EvidenceJson),
+            new DataParameter("resolvedOemNumberId", claim.ResolvedOemNumberId ?? (object)DBNull.Value),
             new DataParameter("updatedUtc", claim.UpdatedUtc.UtcDateTime));
 
     public async Task<WarrantyClaim?> GetWarrantyClaimAsync(int claimId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<WarrantyClaimRow>(@"
-SELECT Id, DealerAccountId, OrderId, OemNumber, VehicleConfigurationId, StatusId, EvidenceJson, CreatedUtc, UpdatedUtc
+SELECT Id, DealerAccountId, OrderId, OemNumber, VehicleConfigurationId, StatusId, EvidenceJson, ResolvedOemNumberId, CreatedUtc, UpdatedUtc
 FROM TP_CE_WarrantyClaim
 WHERE Id = @id",
             new DataParameter("id", claimId));
@@ -184,7 +200,7 @@ WHERE Id = @id",
     public async Task<IReadOnlyList<WarrantyClaim>> ListWarrantyClaimsByAccountAsync(int dealerAccountId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<WarrantyClaimRow>(@"
-SELECT Id, DealerAccountId, OrderId, OemNumber, VehicleConfigurationId, StatusId, EvidenceJson, CreatedUtc, UpdatedUtc
+SELECT Id, DealerAccountId, OrderId, OemNumber, VehicleConfigurationId, StatusId, EvidenceJson, ResolvedOemNumberId, CreatedUtc, UpdatedUtc
 FROM TP_CE_WarrantyClaim
 WHERE DealerAccountId = @accountId
 ORDER BY UpdatedUtc DESC",
@@ -239,6 +255,106 @@ VALUES
             new DataParameter("spendUsed", quota.SpendUsed));
 
         return id.FirstOrDefault();
+    }
+
+    public async Task<int> InsertFranchiseAsync(DealerFranchise franchise, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_DealerFranchise
+(DealerAccountId, MakeId, FranchiseLabel)
+VALUES
+(@dealerAccountId, @makeId, @franchiseLabel);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("dealerAccountId", franchise.DealerAccountId),
+            new DataParameter("makeId", franchise.MakeId),
+            new DataParameter("franchiseLabel", franchise.FranchiseLabel));
+
+        return id.FirstOrDefault();
+    }
+
+    public Task UpdateAccountAsync(DealerAccount account, CancellationToken cancellationToken)
+        => _dataProvider.ExecuteNonQueryAsync(@"
+UPDATE TP_CE_DealerAccount
+SET CustomerId = @customerId,
+    DisplayName = @displayName,
+    DefaultPriceListId = @defaultPriceListId,
+    IsActive = @isActive
+WHERE Id = @id",
+            new DataParameter("id", account.Id),
+            new DataParameter("customerId", account.CustomerId),
+            new DataParameter("displayName", account.DisplayName),
+            new DataParameter("defaultPriceListId", account.DefaultPriceListId ?? (object)DBNull.Value),
+            new DataParameter("isActive", account.IsActive));
+
+    public async Task<int> InsertPriceListAsync(string name, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_PriceList (Name, IsActive) VALUES (@name, 1);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("name", name));
+
+        return id.FirstOrDefault();
+    }
+
+    public Task InsertPriceListItemAsync(int priceListId, int productId, decimal unitPrice, CancellationToken cancellationToken)
+        => _dataProvider.ExecuteNonQueryAsync(@"
+INSERT INTO TP_CE_PriceListItem (PriceListId, ProductId, UnitPrice)
+VALUES (@priceListId, @productId, @unitPrice)",
+            new DataParameter("priceListId", priceListId),
+            new DataParameter("productId", productId),
+            new DataParameter("unitPrice", unitPrice));
+
+    public async Task<IReadOnlyList<DealerTerritory>> GetTerritoriesAsync(int dealerAccountId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<TerritoryRow>(@"
+SELECT Id, DealerAccountId, MarketId, RegionCode
+FROM TP_CE_DealerTerritory
+WHERE DealerAccountId = @dealerAccountId
+ORDER BY Id",
+            new DataParameter("dealerAccountId", dealerAccountId));
+
+        return rows.Select(row => new DealerTerritory
+        {
+            Id = row.Id,
+            DealerAccountId = row.DealerAccountId,
+            MarketId = row.MarketId,
+            RegionCode = row.RegionCode
+        }).ToList();
+    }
+
+    public async Task<int> InsertTerritoryAsync(DealerTerritory territory, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_DealerTerritory (DealerAccountId, MarketId, RegionCode)
+VALUES (@dealerAccountId, @marketId, @regionCode);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("dealerAccountId", territory.DealerAccountId),
+            new DataParameter("marketId", territory.MarketId ?? (object)DBNull.Value),
+            new DataParameter("regionCode", territory.RegionCode ?? (object)DBNull.Value));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<bool> IsVehicleMarketAllowedAsync(int vehicleConfigurationId, IReadOnlyList<DealerTerritory> territories, CancellationToken cancellationToken)
+    {
+        if (territories.Count == 0)
+            return true;
+
+        var marketRows = await _dataProvider.QueryAsync<int?>(@"
+SELECT MarketId FROM TP_CE_VehicleConfiguration WHERE Id = @id",
+            new DataParameter("id", vehicleConfigurationId));
+
+        var marketId = marketRows.FirstOrDefault();
+        foreach (var territory in territories)
+        {
+            if (territory.MarketId.HasValue && territory.MarketId == marketId)
+                return true;
+
+            if (!string.IsNullOrWhiteSpace(territory.RegionCode) && marketId is null)
+                return true;
+        }
+
+        return false;
     }
 
     private static DealerAccount MapAccount(AccountRow row)
@@ -311,6 +427,7 @@ VALUES
             VehicleConfigurationId = row.VehicleConfigurationId,
             Status = (WarrantyClaimStatus)row.StatusId,
             EvidenceJson = row.EvidenceJson,
+            ResolvedOemNumberId = row.ResolvedOemNumberId,
             CreatedUtc = ToUtc(row.CreatedUtc),
             UpdatedUtc = ToUtc(row.UpdatedUtc)
         };
@@ -372,7 +489,16 @@ VALUES
         public int VehicleConfigurationId { get; set; }
         public int StatusId { get; set; }
         public string EvidenceJson { get; set; } = "[]";
+        public int? ResolvedOemNumberId { get; set; }
         public DateTime CreatedUtc { get; set; }
         public DateTime UpdatedUtc { get; set; }
+    }
+
+    private sealed class TerritoryRow
+    {
+        public int Id { get; set; }
+        public int DealerAccountId { get; set; }
+        public int? MarketId { get; set; }
+        public string? RegionCode { get; set; }
     }
 }

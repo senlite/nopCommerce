@@ -36,13 +36,102 @@
             <div class="ce-mp-toolbar">
                 <div class="ce-mp-field">
                     <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</label>
-                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-workshop-vehicle />
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-workshop-vehicle placeholder="101, 102" />
                 </div>
                 <div class="ce-mp-field">
                     <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourEstimate")</label>
                     <input class="ce-mp-input" type="number" min="0" step="0.01" data-ce-workshop-labour value="0" />
                 </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.OperationCode")</label>
+                    <input class="ce-mp-input ce-code" data-ce-workshop-operation-code placeholder="OIL" />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourHours")</label>
+                    <input class="ce-mp-input" type="number" min="0" step="0.25" data-ce-workshop-labour-hours value="0" />
+                </div>
                 <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-create>@T("Plugins.TwinParticles.CheckEngine.Workshop.CreateJob")</button>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.Customers")</h2>
+            <div class="ce-mp-toolbar">
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.CustomerName")</label>
+                    <input class="ce-mp-input" data-ce-workshop-customer-name />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.CustomerEmail")</label>
+                    <input class="ce-mp-input" type="email" data-ce-workshop-customer-email />
+                </div>
+                <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-customer-create>@T("Plugins.TwinParticles.CheckEngine.Workshop.AddCustomer")</button>
+            </div>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.CustomerName")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.CustomerEmail")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-customers>
+                        <tr><td colspan="4" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ce-mp-toolbar" data-ce-workshop-customer-vehicle-form hidden>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-workshop-customer-vehicle-config />
+                </div>
+                <div class="ce-mp-field">
+                    <label>VIN</label>
+                    <input class="ce-mp-input ce-code" data-ce-workshop-customer-vehicle-vin />
+                </div>
+                <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-customer-vehicle-add>@T("Plugins.TwinParticles.CheckEngine.Workshop.AddCustomerVehicle")</button>
+            </div>
+            <ul class="ce-mp-hint" data-ce-workshop-customer-vehicles></ul>
+            <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.ServiceHistory")</h3>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.JobId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Status")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourEstimate")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.OrderId")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-service-history>
+                        <tr><td colspan="4">@T("Plugins.TwinParticles.CheckEngine.Workshop.SelectCustomerVehicle")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel" data-ce-workshop-credit-panel hidden>
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.CreditStatements")</h2>
+            <div class="ce-mp-toolbar">
+                <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-generate-statement>@T("Plugins.TwinParticles.CheckEngine.Workshop.GenerateStatement")</button>
+            </div>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.PeriodStart")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.PeriodEnd")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.InvoicedTotal")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.ClosingBalance")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-credit-statements>
+                        <tr><td colspan="5">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -69,6 +158,13 @@
         <section class="ce-mp-panel" data-ce-workshop-detail hidden>
             <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.JobDetail")</h2>
             <p class="ce-mp-hint" data-ce-workshop-detail-summary></p>
+            <div class="ce-mp-toolbar" data-ce-workshop-assign-panel hidden>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.TechnicianCustomerId")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-workshop-assign-technician />
+                </div>
+                <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-assign-btn>@T("Plugins.TwinParticles.CheckEngine.Workshop.AssignTechnician")</button>
+            </div>
 
             <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.Vehicles")</h3>
             <div class="ce-mp-table-wrap">

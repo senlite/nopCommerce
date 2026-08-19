@@ -10,6 +10,8 @@ public sealed class WarrantyClaim
 
     public string OemNumber { get; set; } = string.Empty;
 
+    public int? ResolvedOemNumberId { get; set; }
+
     public int VehicleConfigurationId { get; set; }
 
     public WarrantyClaimStatus Status { get; set; }

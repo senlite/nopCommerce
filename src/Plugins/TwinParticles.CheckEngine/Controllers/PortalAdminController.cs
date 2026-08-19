@@ -83,6 +83,66 @@ public sealed class PortalAdminController : BasePluginController
         return result.Success ? Json(result) : BadRequestJson(result);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> SeedDealerFranchise([FromBody] SeedDealerFranchiseRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedDealerFranchiseAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SeedTradePriceListItem([FromBody] SeedTradePriceListRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedTradePriceListItemAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SeedWorkshopTechnician([FromBody] SeedWorkshopTechnicianRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedWorkshopTechnicianAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SeedWorkshopLabourRate([FromBody] SeedWorkshopLabourRateRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedWorkshopLabourRateAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SeedFleetApprover([FromBody] SeedFleetApproverRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedFleetApproverAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SeedDealerTerritory([FromBody] SeedDealerTerritoryRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedDealerTerritoryAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
     private Task<bool> AuthorizedAsync()
         => _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 

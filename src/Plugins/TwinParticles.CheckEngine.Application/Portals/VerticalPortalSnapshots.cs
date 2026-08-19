@@ -10,6 +10,12 @@ public sealed class WorkshopPortalSnapshot
     public WorkshopAccount Account { get; init; } = new();
 
     public IReadOnlyList<WorkshopJob> Jobs { get; init; } = [];
+
+    public IReadOnlyList<WorkshopCustomer> Customers { get; init; } = [];
+
+    public IReadOnlyList<WorkshopCreditStatement> CreditStatements { get; set; } = [];
+
+    public WorkshopPortalCapabilities Capabilities { get; set; } = new();
 }
 
 public sealed class WorkshopJobDetail
@@ -32,6 +38,8 @@ public sealed class FleetPortalSnapshot
     public IReadOnlyList<FleetApprovalRequest> ApprovalRequests { get; init; } = [];
 
     public IReadOnlyList<FleetMaintenanceForecast> MaintenanceForecasts { get; init; } = [];
+
+    public IReadOnlyList<FleetVehicleCostSummary> VehicleCostSummaries { get; init; } = [];
 }
 
 public sealed class DealerPortalSnapshot

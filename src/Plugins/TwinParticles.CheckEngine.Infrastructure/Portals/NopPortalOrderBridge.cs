@@ -13,6 +13,7 @@ using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
+using Nop.Core.Events;
 using Nop.Services.Orders;
 using TwinParticles.CheckEngine.Domain.Portals;
 
@@ -30,6 +31,7 @@ public sealed class NopPortalOrderBridge : IPortalOrderBridge
     private readonly ICurrencyService _currencyService;
     private readonly IStoreContext _storeContext;
     private readonly IWorkContext _workContext;
+    private readonly IEventPublisher _eventPublisher;
 
     public NopPortalOrderBridge(
         ICustomerService customerService,
@@ -38,7 +40,8 @@ public sealed class NopPortalOrderBridge : IPortalOrderBridge
         IProductService productService,
         ICurrencyService currencyService,
         IStoreContext storeContext,
-        IWorkContext workContext)
+        IWorkContext workContext,
+        IEventPublisher eventPublisher)
     {
         _customerService = customerService;
         _addressService = addressService;
@@ -47,9 +50,17 @@ public sealed class NopPortalOrderBridge : IPortalOrderBridge
         _currencyService = currencyService;
         _storeContext = storeContext;
         _workContext = workContext;
+        _eventPublisher = eventPublisher;
     }
 
-    public async Task<int> CreateTradeOrderAsync(int customerId, IReadOnlyList<PortalOrderLine> lines, CancellationToken cancellationToken)
+    public Task<int> CreateTradeOrderAsync(int customerId, IReadOnlyList<PortalOrderLine> lines, CancellationToken cancellationToken)
+        => CreateTradeOrderAsync(customerId, lines, supplementaryLabourFee: 0m, cancellationToken);
+
+    public async Task<int> CreateTradeOrderAsync(
+        int customerId,
+        IReadOnlyList<PortalOrderLine> lines,
+        decimal supplementaryLabourFee,
+        CancellationToken cancellationToken)
     {
         if (lines.Count == 0)
             throw new InvalidOperationException("portal.order.empty");
@@ -90,6 +101,9 @@ public sealed class NopPortalOrderBridge : IPortalOrderBridge
             });
         }
 
+        if (supplementaryLabourFee > 0m)
+            subtotal += supplementaryLabourFee;
+
         var order = new Order
         {
             StoreId = store.Id,
@@ -121,6 +135,8 @@ public sealed class NopPortalOrderBridge : IPortalOrderBridge
 
         order.CustomOrderNumber = $"CE-{order.Id}";
         await _orderService.UpdateOrderAsync(order);
+
+        await _eventPublisher.PublishAsync(new OrderPlacedEvent(order));
         return order.Id;
     }
 
