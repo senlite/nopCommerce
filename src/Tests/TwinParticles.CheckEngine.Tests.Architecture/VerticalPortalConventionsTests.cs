@@ -301,4 +301,30 @@ public class VerticalPortalConventionsTests
         portalsJs.Should().Contain("AssignTechnician");
         portalsJs.Should().Contain("isFrontDesk");
     }
+
+    [Test]
+    public void Horizon4_v071_Should_Add_Export_Credit_Statements_And_Technician_Scoping()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608191200_Horizon4WorkshopCompletion.cs");
+        migration.Should().Contain("TP_CE_WorkshopLabourRate");
+        migration.Should().Contain("TP_CE_WorkshopCreditStatement");
+
+        var access = ReadApplicationFile("Portals", "VerticalPortalAccessService.cs");
+        access.Should().Contain("CanModifyWorkshopJobAsync");
+        access.Should().Contain("ResolveTechnicianJobFilterAsync");
+
+        var repository = ReadInfrastructureFile("Workshop", "SqlWorkshopJobRepository.cs");
+        repository.Should().Contain("ResolveAccountForPortalUserAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("ExportCustomerAsync");
+
+        var credit = ReadApplicationFile("Workshop", "WorkshopCreditStatementService.cs");
+        credit.Should().Contain("GenerateStatementAsync");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("ExportCustomer");
+        portalsJs.Should().Contain("GenerateCreditStatement");
+        portalsJs.Should().Contain("operationCode");
+    }
 }

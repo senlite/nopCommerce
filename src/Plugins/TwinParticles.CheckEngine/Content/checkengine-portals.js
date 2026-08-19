@@ -81,7 +81,9 @@
     var customerVehiclesList = root.querySelector('[data-ce-workshop-customer-vehicles]');
     var serviceHistoryBody = root.querySelector('[data-ce-workshop-service-history]');
     var assignPanel = root.querySelector('[data-ce-workshop-assign-panel]');
-    var state = { accountId: null, jobs: [], customers: [], selectedJobId: null, selectedCustomerId: null, capabilities: {} };
+    var creditPanel = root.querySelector('[data-ce-workshop-credit-panel]');
+    var creditStatementsBody = root.querySelector('[data-ce-workshop-credit-statements]');
+    var state = { accountId: null, jobs: [], customers: [], creditStatements: [], selectedJobId: null, selectedCustomerId: null, capabilities: {} };
 
     function render() {
       if (!stats) return;
@@ -232,9 +234,15 @@
         customersBody.innerHTML = '<tr><td colspan="4">No workshop customers yet.</td></tr>';
         return;
       }
+      var canExport = pick(state.capabilities, 'canExportCustomer', 'CanExportCustomer');
       customersBody.innerHTML = state.customers
         .map(function (c) {
           var id = pick(c, 'id', 'Id');
+          var exportBtn = canExport
+            ? ' <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-export-customer="' +
+              id +
+              '">Export</button>'
+            : '';
           return (
             '<tr><td>' +
             id +
@@ -244,7 +252,37 @@
             (pick(c, 'contactEmail', 'ContactEmail') || '—') +
             '</td><td><button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-customer-view="' +
             id +
-            '">Vehicles</button></td></tr>'
+            '">Vehicles</button>' +
+            exportBtn +
+            '</td></tr>'
+          );
+        })
+        .join('');
+    }
+
+    function renderCreditStatements() {
+      if (!creditPanel || !creditStatementsBody) return;
+      var canView = pick(state.capabilities, 'canViewCredit', 'CanViewCredit');
+      creditPanel.hidden = !canView;
+      if (!canView) return;
+      if (!state.creditStatements.length) {
+        creditStatementsBody.innerHTML = '<tr><td colspan="5">No credit statements yet.</td></tr>';
+        return;
+      }
+      creditStatementsBody.innerHTML = state.creditStatements
+        .map(function (s) {
+          return (
+            '<tr><td>#' +
+            (pick(s, 'id', 'Id') || '') +
+            '</td><td>' +
+            (pick(s, 'periodStartUtc', 'PeriodStartUtc') || '') +
+            '</td><td>' +
+            (pick(s, 'periodEndUtc', 'PeriodEndUtc') || '') +
+            '</td><td>' +
+            (pick(s, 'invoicedTotal', 'InvoicedTotal') || 0) +
+            '</td><td>' +
+            (pick(s, 'closingBalance', 'ClosingBalance') || 0) +
+            '</td></tr>'
           );
         })
         .join('');
@@ -317,10 +355,12 @@
           state.accountId = pick(state.account, 'id', 'Id');
           state.jobs = pick(data, 'jobs', 'Jobs') || [];
           state.customers = pick(data, 'customers', 'Customers') || [];
+          state.creditStatements = pick(data, 'creditStatements', 'CreditStatements') || [];
           state.capabilities = pick(data, 'capabilities', 'Capabilities') || {};
           render();
           renderJobs();
           renderCustomers();
+          renderCreditStatements();
         })
         .catch(function (err) {
           showAlert(alert, 'error', portalErrorMessage(root, err));
@@ -421,6 +461,24 @@
       var historyVehicle = e.target.closest('[data-ce-workshop-history-vehicle]');
       if (historyVehicle) {
         loadServiceHistory(Number(historyVehicle.getAttribute('data-ce-workshop-history-vehicle')));
+        return;
+      }
+      var exportCustomer = e.target.closest('[data-ce-workshop-export-customer]');
+      if (exportCustomer) {
+        var customerId = Number(exportCustomer.getAttribute('data-ce-workshop-export-customer'));
+        apiGet('/check-engine/workshop/ExportCustomer?workshopCustomerId=' + encodeURIComponent(customerId), token)
+          .then(function (payload) {
+            var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'workshop-customer-' + customerId + '.json';
+            link.click();
+            URL.revokeObjectURL(url);
+          })
+          .catch(function (err) {
+            showAlert(alert, 'error', portalErrorMessage(root, err));
+          });
       }
     });
 
@@ -437,9 +495,13 @@
             return n > 0;
           });
         var labour = Number(root.querySelector('[data-ce-workshop-labour]')?.value || 0);
+        var operationCode = root.querySelector('[data-ce-workshop-operation-code]')?.value || '';
+        var labourHours = Number(root.querySelector('[data-ce-workshop-labour-hours]')?.value || 0);
         apiPost('/check-engine/workshop/CreateJob', token, {
           workshopAccountId: state.accountId,
           labourEstimate: labour,
+          operationCode: operationCode,
+          labourHours: labourHours,
           vehicles: rawVehicles.map(function (id) {
             return { vehicleConfigurationId: id };
           })
@@ -498,6 +560,22 @@
           })
           .catch(function (err) {
             showAlert(alert, 'error', (err && err.errorCode) || 'Assign failed.');
+          });
+      });
+    }
+
+    var generateStatementBtn = root.querySelector('[data-ce-workshop-generate-statement]');
+    if (generateStatementBtn) {
+      generateStatementBtn.addEventListener('click', function () {
+        var end = new Date();
+        var start = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+        apiPost('/check-engine/workshop/GenerateCreditStatement', token, {
+          periodStartUtc: start.toISOString(),
+          periodEndUtc: end.toISOString()
+        })
+          .then(refresh)
+          .catch(function (err) {
+            showAlert(alert, 'error', (err && err.errorCode) || 'Generate statement failed.');
           });
       });
     }
@@ -975,6 +1053,19 @@
         })
         .catch(function (err) {
           showAlert(alert, 'error', (err && err.errorCode) || 'Seed technician failed.');
+        });
+    });
+    root.querySelector('[data-ce-admin-seed-labour-rate]')?.addEventListener('click', function () {
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedWorkshopLabourRate', token, {
+        workshopAccountId: Number(root.querySelector('[data-ce-admin-workshop-account]')?.value || 0),
+        operationCode: root.querySelector('[data-ce-admin-labour-code]')?.value || '',
+        hourlyRate: Number(root.querySelector('[data-ce-admin-labour-rate]')?.value || 0)
+      })
+        .then(function (res) {
+          showAlert(alert, 'success', 'Seeded labour rate #' + pick(res, 'entityId', 'EntityId'));
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed labour rate failed.');
         });
     });
     root.querySelector('[data-ce-admin-seed-fleet-approver]')?.addEventListener('click', function () {

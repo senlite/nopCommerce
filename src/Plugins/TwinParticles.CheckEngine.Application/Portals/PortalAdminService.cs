@@ -251,6 +251,29 @@ public sealed class PortalAdminService
         return PortalSeedResult.Ok(technician.Id, "technician");
     }
 
+    public async Task<PortalSeedResult> SeedWorkshopLabourRateAsync(SeedWorkshopLabourRateRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _workshopGate.AllowsWorkshopAsync(cancellationToken))
+            return PortalSeedResult.Fail("portal.licence_denied");
+
+        var account = await _workshop.GetAccountByIdAsync(request.WorkshopAccountId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return PortalSeedResult.Fail("portal.account_not_found");
+
+        if (string.IsNullOrWhiteSpace(request.OperationCode) || request.HourlyRate <= 0m)
+            return PortalSeedResult.Fail("portal.labour_rate_invalid");
+
+        var rate = new WorkshopLabourRate
+        {
+            WorkshopAccountId = request.WorkshopAccountId,
+            OperationCode = request.OperationCode.Trim().ToUpperInvariant(),
+            HourlyRate = request.HourlyRate
+        };
+
+        rate.Id = await _workshop.InsertLabourRateAsync(rate, cancellationToken);
+        return PortalSeedResult.Ok(rate.Id, "labour_rate");
+    }
+
     public async Task<PortalSeedResult> SeedFleetApproverAsync(SeedFleetApproverRequest request, CancellationToken cancellationToken)
     {
         if (!await _fleetGate.AllowsFleetAsync(cancellationToken))
@@ -369,6 +392,15 @@ public sealed class SeedWorkshopTechnicianRequest
     public bool CanRaiseInvoice { get; init; }
 
     public bool IsFrontDesk { get; init; }
+}
+
+public sealed class SeedWorkshopLabourRateRequest
+{
+    public int WorkshopAccountId { get; init; }
+
+    public string OperationCode { get; init; } = string.Empty;
+
+    public decimal HourlyRate { get; init; }
 }
 
 public sealed class SeedFleetApproverRequest

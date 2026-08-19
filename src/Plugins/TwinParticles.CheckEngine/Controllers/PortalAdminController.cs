@@ -114,6 +114,16 @@ public sealed class PortalAdminController : BasePluginController
     }
 
     [HttpPost]
+    public async Task<IActionResult> SeedWorkshopLabourRate([FromBody] SeedWorkshopLabourRateRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedData();
+
+        var result = await _portalAdmin.SeedWorkshopLabourRateAsync(request, cancellationToken);
+        return result.Success ? Json(result) : BadRequestJson(result);
+    }
+
+    [HttpPost]
     public async Task<IActionResult> SeedFleetApprover([FromBody] SeedFleetApproverRequest request, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync())

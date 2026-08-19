@@ -79,6 +79,9 @@ public class VerticalPortalAccessTests
             });
         }
 
+        public Task<WorkshopAccount?> ResolveAccountForPortalUserAsync(int customerId, CancellationToken cancellationToken)
+            => GetAccountByCustomerIdAsync(customerId, cancellationToken);
+
         public Task<WorkshopAccount?> GetAccountByIdAsync(int accountId, CancellationToken cancellationToken)
         {
             if (_accountId != accountId)
@@ -106,6 +109,7 @@ public class VerticalPortalAccessTests
         public Task<IReadOnlyList<WorkshopJobLine>> GetJobLinesAsync(int jobId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<WorkshopJobVehicle?> GetJobVehicleAsync(int jobVehicleId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<IReadOnlyList<WorkshopJob>> ListJobsByAccountAsync(int workshopAccountId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<IReadOnlyList<WorkshopJob>> ListJobsByAccountAsync(int workshopAccountId, int? assignedTechnicianCustomerId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<decimal> ResolveTradePriceAsync(int priceListId, int productId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<int> InsertCustomerAsync(WorkshopCustomer customer, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<int> InsertCustomerVehicleAsync(WorkshopCustomerVehicle vehicle, CancellationToken cancellationToken) => throw new System.NotImplementedException();
@@ -115,6 +119,14 @@ public class VerticalPortalAccessTests
         public Task<WorkshopTechnician?> GetTechnicianAsync(int workshopAccountId, int customerId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task UpdateJobLineAsync(WorkshopJobLine line, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<IReadOnlyList<WorkshopServiceHistoryEntry>> ListServiceHistoryForCustomerVehicleAsync(int workshopCustomerVehicleId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<WorkshopCustomer?> GetCustomerAsync(int workshopCustomerId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<int> InsertLabourRateAsync(WorkshopLabourRate rate, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<WorkshopLabourRate?> GetLabourRateAsync(int workshopAccountId, string operationCode, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<IReadOnlyList<WorkshopInvoicedJobSummary>> ListInvoicedJobsInPeriodAsync(int workshopAccountId, System.DateTime periodStartUtc, System.DateTime periodEndUtc, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<int> InsertCreditStatementAsync(WorkshopCreditStatement statement, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task InsertCreditStatementLineAsync(WorkshopCreditStatementLine line, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<IReadOnlyList<WorkshopCreditStatement>> ListCreditStatementsAsync(int workshopAccountId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<WorkshopCreditStatement?> GetCreditStatementAsync(int statementId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
     }
 
     private sealed class StubFleetRepo : IFleetPortalRepository

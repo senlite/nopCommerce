@@ -53,7 +53,7 @@ public sealed class WorkshopJobService
         _clock = clock;
     }
 
-    public async Task<WorkshopJobResult> CreateJobAsync(CreateJobRequest request, CancellationToken cancellationToken)
+    public async Task<WorkshopJobResult> CreateJobAsync(CreateJobRequest request, int actingCustomerId, CancellationToken cancellationToken)
     {
         if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
             return WorkshopJobResult.Fail(WorkshopErrorCodes.LicenceDenied);
@@ -62,14 +62,26 @@ public sealed class WorkshopJobService
         if (account is null || !account.IsActive)
             return WorkshopJobResult.Fail(WorkshopErrorCodes.NotFound);
 
+        var labourEstimate = request.LabourEstimate;
+        if (!string.IsNullOrWhiteSpace(request.OperationCode) && request.LabourHours > 0m)
+        {
+            var rate = await _repository.GetLabourRateAsync(request.WorkshopAccountId, request.OperationCode.Trim(), cancellationToken);
+            if (rate is not null)
+                labourEstimate = Math.Round(rate.HourlyRate * request.LabourHours, 2, MidpointRounding.AwayFromZero);
+        }
+
+        var technicianId = request.TechnicianCustomerId;
+        if (!technicianId.HasValue && account.CustomerId != actingCustomerId)
+            technicianId = actingCustomerId;
+
         var now = _clock.UtcNow;
         var job = new WorkshopJob
         {
             WorkshopAccountId = request.WorkshopAccountId,
             WorkshopCustomerId = request.WorkshopCustomerId,
-            AssignedTechnicianCustomerId = request.TechnicianCustomerId,
+            AssignedTechnicianCustomerId = technicianId,
             Status = WorkshopJobStatus.Draft,
-            LabourEstimate = request.LabourEstimate,
+            LabourEstimate = labourEstimate,
             CreatedUtc = now,
             UpdatedUtc = now
         };
@@ -302,18 +314,50 @@ public sealed class WorkshopJobService
         return WorkshopJobResult.Ok(job);
     }
 
-    public async Task<WorkshopPortalSnapshot?> GetDashboardAsync(int customerId, CancellationToken cancellationToken)
+    public async Task<WorkshopPortalSnapshot?> GetDashboardAsync(
+        int customerId,
+        int? technicianJobFilter,
+        CancellationToken cancellationToken)
     {
         if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
             return null;
 
-        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        var account = await _repository.ResolveAccountForPortalUserAsync(customerId, cancellationToken);
         if (account is null || !account.IsActive)
             return null;
 
-        var jobs = await _repository.ListJobsByAccountAsync(account.Id, cancellationToken);
+        var jobs = await _repository.ListJobsByAccountAsync(account.Id, technicianJobFilter, cancellationToken);
         var customers = await _repository.ListCustomersAsync(account.Id, cancellationToken);
         return new WorkshopPortalSnapshot { Account = account, Jobs = jobs, Customers = customers };
+    }
+
+    public async Task<WorkshopCustomerExport?> ExportCustomerAsync(int workshopCustomerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return null;
+
+        var customer = await _repository.GetCustomerAsync(workshopCustomerId, cancellationToken);
+        if (customer is null)
+            return null;
+
+        var vehicles = await _repository.ListCustomerVehiclesAsync(workshopCustomerId, cancellationToken);
+        var vehicleExports = new List<WorkshopCustomerVehicleExport>();
+        foreach (var vehicle in vehicles)
+        {
+            var history = await _repository.ListServiceHistoryForCustomerVehicleAsync(vehicle.Id, cancellationToken);
+            vehicleExports.Add(new WorkshopCustomerVehicleExport
+            {
+                Vehicle = vehicle,
+                ServiceHistory = history
+            });
+        }
+
+        return new WorkshopCustomerExport
+        {
+            Customer = customer,
+            Vehicles = vehicleExports,
+            ExportedUtc = _clock.UtcNow
+        };
     }
 
     public async Task<WorkshopJobDetail?> GetJobDetailAsync(int jobId, CancellationToken cancellationToken)
@@ -350,6 +394,10 @@ public sealed class CreateJobRequest
     public int? TechnicianCustomerId { get; init; }
 
     public decimal LabourEstimate { get; init; }
+
+    public string? OperationCode { get; init; }
+
+    public decimal LabourHours { get; init; }
 
     public IReadOnlyList<CreateJobVehicleRequest> Vehicles { get; init; } = Array.Empty<CreateJobVehicleRequest>();
 }

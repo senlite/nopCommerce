@@ -42,6 +42,14 @@
                     <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourEstimate")</label>
                     <input class="ce-mp-input" type="number" min="0" step="0.01" data-ce-workshop-labour value="0" />
                 </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.OperationCode")</label>
+                    <input class="ce-mp-input ce-code" data-ce-workshop-operation-code placeholder="OIL" />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourHours")</label>
+                    <input class="ce-mp-input" type="number" min="0" step="0.25" data-ce-workshop-labour-hours value="0" />
+                </div>
                 <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-create>@T("Plugins.TwinParticles.CheckEngine.Workshop.CreateJob")</button>
             </div>
         </section>
@@ -99,6 +107,29 @@
                     </thead>
                     <tbody data-ce-workshop-service-history>
                         <tr><td colspan="4">@T("Plugins.TwinParticles.CheckEngine.Workshop.SelectCustomerVehicle")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel" data-ce-workshop-credit-panel hidden>
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.CreditStatements")</h2>
+            <div class="ce-mp-toolbar">
+                <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-generate-statement>@T("Plugins.TwinParticles.CheckEngine.Workshop.GenerateStatement")</button>
+            </div>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.PeriodStart")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.PeriodEnd")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.InvoicedTotal")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.ClosingBalance")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-credit-statements>
+                        <tr><td colspan="5">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
                     </tbody>
                 </table>
             </div>

@@ -11,4 +11,6 @@ public static class WorkshopErrorCodes
     public const string AlreadyInvoiced = "workshop.already_invoiced";
     public const string InvoiceDenied = "workshop.invoice_denied";
     public const string AssignDenied = "workshop.assign_denied";
+    public const string JobAccessDenied = "workshop.job_access_denied";
+    public const string ExportDenied = "workshop.export_denied";
 }

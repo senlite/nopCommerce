@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +8,8 @@ namespace TwinParticles.CheckEngine.Domain.Workshop;
 public interface IWorkshopJobRepository
 {
     Task<WorkshopAccount?> GetAccountByCustomerIdAsync(int customerId, CancellationToken cancellationToken);
+
+    Task<WorkshopAccount?> ResolveAccountForPortalUserAsync(int customerId, CancellationToken cancellationToken);
 
     Task<WorkshopAccount?> GetAccountByIdAsync(int accountId, CancellationToken cancellationToken);
 
@@ -27,6 +30,11 @@ public interface IWorkshopJobRepository
     Task<IReadOnlyList<WorkshopJobLine>> GetJobLinesAsync(int jobId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<WorkshopJob>> ListJobsByAccountAsync(int workshopAccountId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WorkshopJob>> ListJobsByAccountAsync(
+        int workshopAccountId,
+        int? assignedTechnicianCustomerId,
+        CancellationToken cancellationToken);
 
     Task<int> InsertAccountAsync(WorkshopAccount account, CancellationToken cancellationToken);
 
@@ -55,4 +63,24 @@ public interface IWorkshopJobRepository
     Task<IReadOnlyList<WorkshopServiceHistoryEntry>> ListServiceHistoryForCustomerVehicleAsync(
         int workshopCustomerVehicleId,
         CancellationToken cancellationToken);
+
+    Task<WorkshopCustomer?> GetCustomerAsync(int workshopCustomerId, CancellationToken cancellationToken);
+
+    Task<int> InsertLabourRateAsync(WorkshopLabourRate rate, CancellationToken cancellationToken);
+
+    Task<WorkshopLabourRate?> GetLabourRateAsync(int workshopAccountId, string operationCode, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WorkshopInvoicedJobSummary>> ListInvoicedJobsInPeriodAsync(
+        int workshopAccountId,
+        DateTime periodStartUtc,
+        DateTime periodEndUtc,
+        CancellationToken cancellationToken);
+
+    Task<int> InsertCreditStatementAsync(WorkshopCreditStatement statement, CancellationToken cancellationToken);
+
+    Task InsertCreditStatementLineAsync(WorkshopCreditStatementLine line, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WorkshopCreditStatement>> ListCreditStatementsAsync(int workshopAccountId, CancellationToken cancellationToken);
+
+    Task<WorkshopCreditStatement?> GetCreditStatementAsync(int statementId, CancellationToken cancellationToken);
 }

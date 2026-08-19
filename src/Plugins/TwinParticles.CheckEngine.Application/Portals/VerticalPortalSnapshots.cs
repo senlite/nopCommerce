@@ -13,6 +13,8 @@ public sealed class WorkshopPortalSnapshot
 
     public IReadOnlyList<WorkshopCustomer> Customers { get; init; } = [];
 
+    public IReadOnlyList<WorkshopCreditStatement> CreditStatements { get; set; } = [];
+
     public WorkshopPortalCapabilities Capabilities { get; set; } = new();
 }
 
