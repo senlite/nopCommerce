@@ -22,7 +22,9 @@ for path in \
   "/check-engine/workshop/DashboardData" \
   "/check-engine/fleet/DashboardData" \
   "/check-engine/fleet/VehicleCostReport" \
-  "/check-engine/dealer/DashboardData"
+  "/check-engine/dealer/DashboardData" \
+  "/check-engine/workshop/ExportCustomer" \
+  "/check-engine/workshop/CreditStatements"
 do
   code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL$path")"
   echo "  GET $path -> HTTP $code"

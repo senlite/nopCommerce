@@ -274,6 +274,32 @@ public sealed class PortalAdminService
         return PortalSeedResult.Ok(rate.Id, "labour_rate");
     }
 
+    public async Task<PortalSeedResult> SeedWorkshopPriceTierAsync(SeedWorkshopPriceTierRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _workshopGate.AllowsWorkshopAsync(cancellationToken))
+            return PortalSeedResult.Fail("portal.licence_denied");
+
+        var account = await _workshop.GetAccountByIdAsync(request.WorkshopAccountId, cancellationToken);
+        if (account is null || !account.IsActive)
+            return PortalSeedResult.Fail("portal.account_not_found");
+
+        if (!account.DefaultPriceListId.HasValue)
+            return PortalSeedResult.Fail("portal.price_list_missing");
+
+        if (request.MinQuantity <= 0 || request.DiscountPercent <= 0m || request.DiscountPercent > 100m)
+            return PortalSeedResult.Fail("portal.price_tier_invalid");
+
+        var tier = new WorkshopPriceTier
+        {
+            PriceListId = account.DefaultPriceListId.Value,
+            MinQuantity = request.MinQuantity,
+            DiscountPercent = request.DiscountPercent
+        };
+
+        tier.Id = await _workshop.InsertPriceTierAsync(tier, cancellationToken);
+        return PortalSeedResult.Ok(tier.Id, "price_tier");
+    }
+
     public async Task<PortalSeedResult> SeedFleetApproverAsync(SeedFleetApproverRequest request, CancellationToken cancellationToken)
     {
         if (!await _fleetGate.AllowsFleetAsync(cancellationToken))
@@ -401,6 +427,15 @@ public sealed class SeedWorkshopLabourRateRequest
     public string OperationCode { get; init; } = string.Empty;
 
     public decimal HourlyRate { get; init; }
+}
+
+public sealed class SeedWorkshopPriceTierRequest
+{
+    public int WorkshopAccountId { get; init; }
+
+    public int MinQuantity { get; init; }
+
+    public decimal DiscountPercent { get; init; }
 }
 
 public sealed class SeedFleetApproverRequest

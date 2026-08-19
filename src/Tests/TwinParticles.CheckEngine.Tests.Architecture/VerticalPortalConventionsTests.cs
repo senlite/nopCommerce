@@ -327,4 +327,23 @@ public class VerticalPortalConventionsTests
         portalsJs.Should().Contain("GenerateCreditStatement");
         portalsJs.Should().Contain("operationCode");
     }
+
+    [Test]
+    public void Horizon4_v072_Should_Add_Price_Tiers_Fleet_Member_Access_And_Credit_Override()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608191400_Horizon4TradeTiers.cs");
+        migration.Should().Contain("TP_CE_WorkshopPriceTier");
+
+        var pricing = ReadApplicationFile("Portals", "PortalTradePricingService.cs");
+        pricing.Should().Contain("ListPriceTiersAsync");
+
+        var fleetRepo = ReadInfrastructureFile("Fleet", "SqlFleetPortalRepository.cs");
+        fleetRepo.Should().Contain("ResolveAccountForPortalUserAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("allowCreditOverride");
+
+        var admin = ReadApplicationFile("Portals", "PortalAdminService.cs");
+        admin.Should().Contain("SeedWorkshopPriceTierAsync");
+    }
 }

@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TwinParticles.CheckEngine.Domain.Portals;
@@ -19,13 +21,41 @@ public sealed class PortalTradePricingService
         _catalogPrices = catalogPrices;
     }
 
-    public async Task<decimal> ResolveUnitPriceAsync(int? priceListId, int productId, CancellationToken cancellationToken)
+    public Task<decimal> ResolveUnitPriceAsync(int? priceListId, int productId, CancellationToken cancellationToken)
+        => ResolveUnitPriceAsync(priceListId, productId, quantity: 1, cancellationToken);
+
+    public async Task<decimal> ResolveUnitPriceAsync(
+        int? priceListId,
+        int productId,
+        int quantity,
+        CancellationToken cancellationToken)
     {
+        decimal unitPrice;
         if (priceListId is int listId)
         {
             var tradePrice = await _workshop.ResolveTradePriceAsync(listId, productId, cancellationToken);
-            if (tradePrice > 0m)
-                return tradePrice;
+            unitPrice = tradePrice > 0m
+                ? tradePrice
+                : await _catalogPrices.GetProductPriceAsync(productId, cancellationToken);
+
+            if (quantity > 1)
+            {
+                var tiers = await _workshop.ListPriceTiersAsync(listId, cancellationToken);
+                var tier = tiers
+                    .Where(t => quantity >= t.MinQuantity)
+                    .OrderByDescending(t => t.MinQuantity)
+                    .FirstOrDefault();
+
+                if (tier is not null && tier.DiscountPercent > 0m)
+                {
+                    unitPrice = Math.Round(
+                        unitPrice * (1m - tier.DiscountPercent / 100m),
+                        2,
+                        MidpointRounding.AwayFromZero);
+                }
+            }
+
+            return unitPrice;
         }
 
         return await _catalogPrices.GetProductPriceAsync(productId, cancellationToken);

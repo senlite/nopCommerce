@@ -209,7 +209,7 @@ public sealed class FleetPortalService
         if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
             return null;
 
-        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        var account = await _repository.ResolveAccountForPortalUserAsync(customerId, cancellationToken);
         if (account is null || !account.IsActive)
             return null;
 
@@ -234,7 +234,7 @@ public sealed class FleetPortalService
         if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
             return Array.Empty<FleetVehicleCostSummary>();
 
-        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        var account = await _repository.ResolveAccountForPortalUserAsync(customerId, cancellationToken);
         if (account is null || !account.IsActive)
             return Array.Empty<FleetVehicleCostSummary>();
 
@@ -246,7 +246,7 @@ public sealed class FleetPortalService
         if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
             return Array.Empty<FleetVinImportBatch>();
 
-        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        var account = await _repository.ResolveAccountForPortalUserAsync(customerId, cancellationToken);
         if (account is null || !account.IsActive)
             return Array.Empty<FleetVinImportBatch>();
 
@@ -272,7 +272,7 @@ public sealed class FleetPortalService
         if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
             return Array.Empty<FleetMaintenanceForecast>();
 
-        var account = await _repository.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        var account = await _repository.ResolveAccountForPortalUserAsync(customerId, cancellationToken);
         if (account is null || !account.IsActive)
             return Array.Empty<FleetMaintenanceForecast>();
 

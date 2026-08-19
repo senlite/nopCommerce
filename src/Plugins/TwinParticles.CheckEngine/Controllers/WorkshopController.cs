@@ -306,7 +306,11 @@ public sealed class WorkshopController : BasePublicController
         if (!await _portalAccess.CanModifyWorkshopJobAsync(customer.Id, detail.Job, isOperator, cancellationToken))
             return Denied(WorkshopErrorCodes.JobAccessDenied);
 
-        var result = await _jobService.RaiseJobInvoiceAsync(request.JobId, request.JobVehicleId, cancellationToken);
+        var result = await _jobService.RaiseJobInvoiceAsync(
+            request.JobId,
+            request.JobVehicleId,
+            allowCreditOverride: isOperator,
+            cancellationToken);
         return result.Success ? Json(result) : Denied(result.ErrorCode ?? WorkshopErrorCodes.NotFound, 400);
     }
 

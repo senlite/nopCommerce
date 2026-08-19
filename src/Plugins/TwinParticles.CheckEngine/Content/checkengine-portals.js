@@ -1068,6 +1068,19 @@
           showAlert(alert, 'error', (err && err.errorCode) || 'Seed labour rate failed.');
         });
     });
+    root.querySelector('[data-ce-admin-seed-price-tier]')?.addEventListener('click', function () {
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedWorkshopPriceTier', token, {
+        workshopAccountId: Number(root.querySelector('[data-ce-admin-workshop-account]')?.value || 0),
+        minQuantity: Number(root.querySelector('[data-ce-admin-tier-qty]')?.value || 0),
+        discountPercent: Number(root.querySelector('[data-ce-admin-tier-discount]')?.value || 0)
+      })
+        .then(function (res) {
+          showAlert(alert, 'success', 'Seeded price tier #' + pick(res, 'entityId', 'EntityId'));
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed price tier failed.');
+        });
+    });
     root.querySelector('[data-ce-admin-seed-fleet-approver]')?.addEventListener('click', function () {
       apiPost('/Admin/CheckEngine/PortalAdmin/SeedFleetApprover', token, {
         fleetAccountId: Number(root.querySelector('[data-ce-admin-fleet-account]')?.value || 0),

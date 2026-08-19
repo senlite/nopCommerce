@@ -266,8 +266,8 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status |
 |---|---|---|
-| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | Export (FR-1012), credit statements (FR-1022), technician scoping (FR-1025), labour rates; plugin 0.71.0 |
-| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | Requester/approver UI separation, import batch table on load; plugin 0.69.0 |
+| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | Export, credit statements, technician scoping, labour rates, quantity tiers (FR-1021), operator credit override; plugin 0.72.0 |
+| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | Fleet member portal access, import batches; plugin 0.72.0 |
 | H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | done | Order vehicle config for territory/fitment; portal-specific operator permissions; plugin 0.69.0 |
 
 ### Horizon 5 — Platform / v2.0 (`EP-28`)

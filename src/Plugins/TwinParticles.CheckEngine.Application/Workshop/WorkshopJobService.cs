@@ -130,8 +130,8 @@ public sealed class WorkshopJobService
 
         var account = await _repository.GetAccountByIdAsync(job.WorkshopAccountId, cancellationToken);
         var unitPrice = account?.DefaultPriceListId is int priceListId
-            ? await _pricing.ResolveUnitPriceAsync(priceListId, request.ProductId, cancellationToken)
-            : await _pricing.ResolveUnitPriceAsync(null, request.ProductId, cancellationToken);
+            ? await _pricing.ResolveUnitPriceAsync(priceListId, request.ProductId, request.Quantity, cancellationToken)
+            : await _pricing.ResolveUnitPriceAsync(null, request.ProductId, request.Quantity, cancellationToken);
 
         var line = new WorkshopJobLine
         {
@@ -168,9 +168,16 @@ public sealed class WorkshopJobService
     }
 
     public Task<WorkshopInvoiceResult> RaiseJobInvoiceAsync(int jobId, CancellationToken cancellationToken)
-        => RaiseJobInvoiceAsync(jobId, jobVehicleId: null, cancellationToken);
+        => RaiseJobInvoiceAsync(jobId, jobVehicleId: null, allowCreditOverride: false, cancellationToken);
 
-    public async Task<WorkshopInvoiceResult> RaiseJobInvoiceAsync(int jobId, int? jobVehicleId, CancellationToken cancellationToken)
+    public Task<WorkshopInvoiceResult> RaiseJobInvoiceAsync(int jobId, int? jobVehicleId, CancellationToken cancellationToken)
+        => RaiseJobInvoiceAsync(jobId, jobVehicleId, allowCreditOverride: false, cancellationToken);
+
+    public async Task<WorkshopInvoiceResult> RaiseJobInvoiceAsync(
+        int jobId,
+        int? jobVehicleId,
+        bool allowCreditOverride,
+        CancellationToken cancellationToken)
     {
         if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
             return WorkshopInvoiceResult.Fail(WorkshopErrorCodes.LicenceDenied);
@@ -205,7 +212,7 @@ public sealed class WorkshopJobService
 
         var partsTotal = lines.Sum(line => line.UnitPrice * line.Quantity);
         var invoiceTotal = partsTotal + labourFee;
-        if (account.CreditUsed + invoiceTotal > account.CreditLimit)
+        if (!allowCreditOverride && account.CreditUsed + invoiceTotal > account.CreditLimit)
             return WorkshopInvoiceResult.Fail(WorkshopErrorCodes.CreditExceeded);
 
         var orderLines = lines
@@ -237,7 +244,12 @@ public sealed class WorkshopJobService
         job.Status = remaining ? WorkshopJobStatus.ReadyToInvoice : WorkshopJobStatus.Invoiced;
         job.UpdatedUtc = _clock.UtcNow;
         await _repository.UpdateJobAsync(job, cancellationToken);
-        await AuditAsync("workshop.job.invoice", job.Id, cancellationToken);
+        await AuditAsync(
+            allowCreditOverride && account.CreditUsed + invoiceTotal > account.CreditLimit
+                ? "workshop.job.invoice_credit_override"
+                : "workshop.job.invoice",
+            job.Id,
+            cancellationToken);
         return WorkshopInvoiceResult.Ok(job, orderId);
     }
 

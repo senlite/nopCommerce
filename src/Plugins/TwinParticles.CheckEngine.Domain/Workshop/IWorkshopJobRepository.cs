@@ -83,4 +83,8 @@ public interface IWorkshopJobRepository
     Task<IReadOnlyList<WorkshopCreditStatement>> ListCreditStatementsAsync(int workshopAccountId, CancellationToken cancellationToken);
 
     Task<WorkshopCreditStatement?> GetCreditStatementAsync(int statementId, CancellationToken cancellationToken);
+
+    Task<int> InsertPriceTierAsync(WorkshopPriceTier tier, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WorkshopPriceTier>> ListPriceTiersAsync(int priceListId, CancellationToken cancellationToken);
 }

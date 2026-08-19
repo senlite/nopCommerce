@@ -266,6 +266,37 @@ VALUES (@priceListId, @productId, @unitPrice)",
         return rows.FirstOrDefault();
     }
 
+    public async Task<int> InsertPriceTierAsync(WorkshopPriceTier tier, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_WorkshopPriceTier (PriceListId, MinQuantity, DiscountPercent)
+VALUES (@priceListId, @minQuantity, @discountPercent);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("priceListId", tier.PriceListId),
+            new DataParameter("minQuantity", tier.MinQuantity),
+            new DataParameter("discountPercent", tier.DiscountPercent));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<IReadOnlyList<WorkshopPriceTier>> ListPriceTiersAsync(int priceListId, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<PriceTierRow>(@"
+SELECT Id, PriceListId, MinQuantity, DiscountPercent
+FROM TP_CE_WorkshopPriceTier
+WHERE PriceListId = @priceListId
+ORDER BY MinQuantity",
+            new DataParameter("priceListId", priceListId));
+
+        return rows.Select(row => new WorkshopPriceTier
+        {
+            Id = row.Id,
+            PriceListId = row.PriceListId,
+            MinQuantity = row.MinQuantity,
+            DiscountPercent = row.DiscountPercent
+        }).ToList();
+    }
+
     public async Task<int> InsertCustomerAsync(WorkshopCustomer customer, CancellationToken cancellationToken)
     {
         var id = await _dataProvider.QueryAsync<int>(@"
@@ -640,6 +671,14 @@ ORDER BY InvoicedUtc",
     private sealed class TechnicianAccountRow
     {
         public int WorkshopAccountId { get; set; }
+    }
+
+    private sealed class PriceTierRow
+    {
+        public int Id { get; set; }
+        public int PriceListId { get; set; }
+        public int MinQuantity { get; set; }
+        public decimal DiscountPercent { get; set; }
     }
 
     private sealed class AccountRow

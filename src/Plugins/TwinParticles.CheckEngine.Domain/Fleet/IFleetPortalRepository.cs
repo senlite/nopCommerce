@@ -8,6 +8,8 @@ public interface IFleetPortalRepository
 {
     Task<FleetAccount?> GetAccountByCustomerIdAsync(int customerId, CancellationToken cancellationToken);
 
+    Task<FleetAccount?> ResolveAccountForPortalUserAsync(int customerId, CancellationToken cancellationToken);
+
     Task<FleetAccount?> GetAccountByIdAsync(int accountId, CancellationToken cancellationToken);
 
     Task<int> InsertVehicleAsync(FleetVehicle vehicle, CancellationToken cancellationToken);

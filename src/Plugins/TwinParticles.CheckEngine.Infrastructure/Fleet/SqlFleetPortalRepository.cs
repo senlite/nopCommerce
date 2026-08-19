@@ -28,6 +28,24 @@ public sealed class SqlFleetPortalRepository : IFleetPortalRepository
         return rows.Select(MapAccount).FirstOrDefault();
     }
 
+    public async Task<FleetAccount?> ResolveAccountForPortalUserAsync(int customerId, CancellationToken cancellationToken)
+    {
+        var owned = await GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        if (owned is not null)
+            return owned;
+
+        var memberRows = await _dataProvider.QueryAsync<MemberAccountRow>(CheckEngineSql.SelectTop(1,
+            "m.FleetAccountId",
+            @"FROM TP_CE_FleetMember m
+INNER JOIN TP_CE_FleetAccount a ON a.Id = m.FleetAccountId
+WHERE m.CustomerId = @customerId AND a.IsActive = 1
+ORDER BY m.Id"),
+            new DataParameter("customerId", customerId));
+
+        var accountId = memberRows.Select(row => row.FleetAccountId).FirstOrDefault();
+        return accountId > 0 ? await GetAccountByIdAsync(accountId, cancellationToken) : null;
+    }
+
     public async Task<FleetAccount?> GetAccountByIdAsync(int accountId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<AccountRow>(@"
@@ -642,5 +660,10 @@ VALUES (@fleetAccountId, @customerId, @canApprove);
         public int FleetAccountId { get; set; }
         public int CustomerId { get; set; }
         public bool CanApprove { get; set; }
+    }
+
+    private sealed class MemberAccountRow
+    {
+        public int FleetAccountId { get; set; }
     }
 }

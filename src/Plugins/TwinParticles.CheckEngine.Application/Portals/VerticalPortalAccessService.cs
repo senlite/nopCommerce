@@ -36,7 +36,7 @@ public sealed class VerticalPortalAccessService
 
     public async Task<PortalAccessResult> ResolveFleetAsync(int customerId, bool isOperator, CancellationToken cancellationToken)
     {
-        var account = await _fleet.GetAccountByCustomerIdAsync(customerId, cancellationToken);
+        var account = await _fleet.ResolveAccountForPortalUserAsync(customerId, cancellationToken);
         if (account is { IsActive: true })
             return PortalAccessResult.ForAccount(account.Id);
 
@@ -71,7 +71,11 @@ public sealed class VerticalPortalAccessService
             return true;
 
         var account = await _fleet.GetAccountByIdAsync(fleetAccountId, cancellationToken);
-        return account is { IsActive: true, CustomerId: var owner } && owner == customerId;
+        if (account is { IsActive: true, CustomerId: var owner } && owner == customerId)
+            return true;
+
+        var member = await _fleet.GetMemberAsync(fleetAccountId, customerId, cancellationToken);
+        return member is not null;
     }
 
     public async Task<bool> OwnsDealerAccountAsync(int customerId, int dealerAccountId, bool isOperator, CancellationToken cancellationToken)

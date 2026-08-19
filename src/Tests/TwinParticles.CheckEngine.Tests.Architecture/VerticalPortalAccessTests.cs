@@ -127,11 +127,14 @@ public class VerticalPortalAccessTests
         public Task InsertCreditStatementLineAsync(WorkshopCreditStatementLine line, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<IReadOnlyList<WorkshopCreditStatement>> ListCreditStatementsAsync(int workshopAccountId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<WorkshopCreditStatement?> GetCreditStatementAsync(int statementId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<int> InsertPriceTierAsync(WorkshopPriceTier tier, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<IReadOnlyList<WorkshopPriceTier>> ListPriceTiersAsync(int priceListId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
     }
 
     private sealed class StubFleetRepo : IFleetPortalRepository
     {
         public Task<FleetAccount?> GetAccountByCustomerIdAsync(int customerId, CancellationToken cancellationToken) => Task.FromResult<FleetAccount?>(null);
+        public Task<FleetAccount?> ResolveAccountForPortalUserAsync(int customerId, CancellationToken cancellationToken) => Task.FromResult<FleetAccount?>(null);
         public Task<FleetAccount?> GetAccountByIdAsync(int fleetAccountId, CancellationToken cancellationToken) => Task.FromResult<FleetAccount?>(null);
         public Task<int> InsertAccountAsync(FleetAccount account, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<int> InsertBudgetCentreAsync(FleetBudgetCentre centre, CancellationToken cancellationToken) => throw new System.NotImplementedException();
