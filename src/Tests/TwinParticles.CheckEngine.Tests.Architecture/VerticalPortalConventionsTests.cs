@@ -255,4 +255,31 @@ public class VerticalPortalConventionsTests
         workshop.Should().Contain("CreateWorkshopCustomerAsync");
         workshop.Should().Contain("InvoicedOrderId");
     }
+
+    [Test]
+    public void Horizon4_v069_Should_Expose_Portal_Ui_And_Permissions()
+    {
+        var workshopController = ReadPluginFile("Controllers", "WorkshopController.cs");
+        workshopController.Should().Contain("ManageCheckEngineWorkshop");
+
+        var fleetController = ReadPluginFile("Controllers", "FleetController.cs");
+        fleetController.Should().Contain("ManageCheckEngineFleet");
+
+        var dealerController = ReadPluginFile("Controllers", "DealerController.cs");
+        dealerController.Should().Contain("ManageCheckEngineDealer");
+
+        var admin = ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml");
+        admin.Should().Contain("data-ce-admin-seed-technician");
+        admin.Should().Contain("data-ce-admin-seed-fleet-approver");
+        admin.Should().Contain("data-ce-admin-seed-territory");
+
+        var workshopView = ReadPluginFile("Views", "Workshop", "Index.cshtml");
+        workshopView.Should().Contain("data-ce-workshop-customers");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("CreateWorkshopCustomer");
+        portalsJs.Should().Contain("SeedFleetApprover");
+        portalsJs.Should().Contain("vehicleConfigurationId");
+        portalsJs.Should().Contain("data-ce-workshop-invoice-vehicle");
+    }
 }

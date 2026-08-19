@@ -186,6 +186,17 @@ public sealed class WorkshopController : BasePublicController
         return result.Success ? Json(result) : Denied(result.ErrorCode ?? WorkshopErrorCodes.NotFound, 400);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> WorkshopCustomerVehicles(int workshopCustomerId, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var vehicles = await _jobService.ListCustomerVehiclesAsync(workshopCustomerId, cancellationToken);
+        return Json(vehicles);
+    }
+
     private async Task<PortalAccessResult> ResolveAccessAsync(CancellationToken cancellationToken)
     {
         if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
@@ -199,8 +210,13 @@ public sealed class WorkshopController : BasePublicController
         return await _portalAccess.ResolveWorkshopAsync(customer.Id, isOperator, cancellationToken);
     }
 
-    private Task<bool> IsOperatorAsync()
-        => _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
+    private async Task<bool> IsOperatorAsync()
+    {
+        if (await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return true;
+
+        return await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngineWorkshop.SystemName);
+    }
 
     private static int StatusFor(string? errorCode)
         => errorCode == PortalErrorCodes.AccessUnauthenticated ? 401 : 403;

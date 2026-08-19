@@ -207,8 +207,13 @@ public sealed class FleetController : BasePublicController
         return await _portalAccess.ResolveFleetAsync(customer.Id, isOperator, cancellationToken);
     }
 
-    private Task<bool> IsOperatorAsync()
-        => _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
+    private async Task<bool> IsOperatorAsync()
+    {
+        if (await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return true;
+
+        return await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngineFleet.SystemName);
+    }
 
     private static int StatusFor(string? errorCode)
         => errorCode == PortalErrorCodes.AccessUnauthenticated ? 401 : 403;

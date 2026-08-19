@@ -76,7 +76,10 @@
     var detailSummary = root.querySelector('[data-ce-workshop-detail-summary]');
     var vehiclesBody = root.querySelector('[data-ce-workshop-vehicles]');
     var linesBody = root.querySelector('[data-ce-workshop-lines]');
-    var state = { accountId: null, jobs: [], selectedJobId: null };
+    var customersBody = root.querySelector('[data-ce-workshop-customers]');
+    var customerVehicleForm = root.querySelector('[data-ce-workshop-customer-vehicle-form]');
+    var customerVehiclesList = root.querySelector('[data-ce-workshop-customer-vehicles]');
+    var state = { accountId: null, jobs: [], customers: [], selectedJobId: null, selectedCustomerId: null };
 
     function render() {
       if (!stats) return;
@@ -170,7 +173,9 @@
                 vehicleId +
                 '" style="width:4rem" /></td><td><button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-allocate="' +
                 vehicleId +
-                '">Allocate</button></td></tr>'
+                '">Allocate</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-invoice-vehicle="' +
+                vehicleId +
+                '">Invoice vehicle</button></td></tr>'
               );
             })
             .join('');
@@ -211,14 +216,67 @@
         });
     }
 
+    function renderCustomers() {
+      if (!customersBody) return;
+      if (!state.customers.length) {
+        customersBody.innerHTML = '<tr><td colspan="4">No workshop customers yet.</td></tr>';
+        return;
+      }
+      customersBody.innerHTML = state.customers
+        .map(function (c) {
+          var id = pick(c, 'id', 'Id');
+          return (
+            '<tr><td>' +
+            id +
+            '</td><td>' +
+            (pick(c, 'displayName', 'DisplayName') || '') +
+            '</td><td>' +
+            (pick(c, 'contactEmail', 'ContactEmail') || '—') +
+            '</td><td><button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-customer-view="' +
+            id +
+            '">Vehicles</button></td></tr>'
+          );
+        })
+        .join('');
+    }
+
+    function loadCustomerVehicles(customerId) {
+      state.selectedCustomerId = customerId;
+      if (customerVehicleForm) customerVehicleForm.hidden = false;
+      return apiGet('/check-engine/workshop/WorkshopCustomerVehicles?workshopCustomerId=' + encodeURIComponent(customerId), token)
+        .then(function (vehicles) {
+          if (!customerVehiclesList) return;
+          vehicles = vehicles || [];
+          customerVehiclesList.innerHTML = vehicles.length
+            ? vehicles
+                .map(function (v) {
+                  return (
+                    '<li>#' +
+                    (pick(v, 'id', 'Id') || '') +
+                    ' — config ' +
+                    (pick(v, 'vehicleConfigurationId', 'VehicleConfigurationId') || '') +
+                    (pick(v, 'vin', 'Vin') ? ' (' + pick(v, 'vin', 'Vin') + ')' : '') +
+                    '</li>'
+                  );
+                })
+                .join('')
+            : '<li>No vehicles for this customer.</li>';
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', portalErrorMessage(root, err));
+        });
+    }
+
     function refresh() {
       return apiGet('/check-engine/workshop/DashboardData', token)
         .then(function (data) {
           state.account = pick(data, 'account', 'Account');
           state.accountId = pick(state.account, 'id', 'Id');
           state.jobs = pick(data, 'jobs', 'Jobs') || [];
+          state.customers = pick(data, 'customers', 'Customers') || [];
           render();
           renderJobs();
+          renderCustomers();
         })
         .catch(function (err) {
           showAlert(alert, 'error', portalErrorMessage(root, err));
@@ -295,6 +353,25 @@
           .catch(function (err) {
             showAlert(alert, 'error', (err && err.errorCode) || 'Invoice failed.');
           });
+        return;
+      }
+      var invoiceVehicle = e.target.closest('[data-ce-workshop-invoice-vehicle]');
+      if (invoiceVehicle && state.selectedJobId) {
+        apiPost('/check-engine/workshop/RaiseJobInvoice', token, {
+          jobId: state.selectedJobId,
+          jobVehicleId: Number(invoiceVehicle.getAttribute('data-ce-workshop-invoice-vehicle'))
+        })
+          .then(function () {
+            return loadJobDetail(state.selectedJobId).then(refresh);
+          })
+          .catch(function (err) {
+            showAlert(alert, 'error', (err && err.errorCode) || 'Invoice failed.');
+          });
+        return;
+      }
+      var customerView = e.target.closest('[data-ce-workshop-customer-view]');
+      if (customerView) {
+        loadCustomerVehicles(Number(customerView.getAttribute('data-ce-workshop-customer-view')));
       }
     });
 
@@ -321,6 +398,40 @@
           .then(refresh)
           .catch(function (err) {
             showAlert(alert, 'error', (err && err.errorCode) || 'Create job failed.');
+          });
+      });
+    }
+
+    var customerCreateBtn = root.querySelector('[data-ce-workshop-customer-create]');
+    if (customerCreateBtn) {
+      customerCreateBtn.addEventListener('click', function () {
+        if (!state.accountId) return;
+        apiPost('/check-engine/workshop/CreateWorkshopCustomer', token, {
+          workshopAccountId: state.accountId,
+          displayName: root.querySelector('[data-ce-workshop-customer-name]')?.value || '',
+          contactEmail: root.querySelector('[data-ce-workshop-customer-email]')?.value || ''
+        })
+          .then(refresh)
+          .catch(function (err) {
+            showAlert(alert, 'error', (err && err.errorCode) || 'Create customer failed.');
+          });
+      });
+    }
+
+    var customerVehicleAddBtn = root.querySelector('[data-ce-workshop-customer-vehicle-add]');
+    if (customerVehicleAddBtn) {
+      customerVehicleAddBtn.addEventListener('click', function () {
+        if (!state.selectedCustomerId) return;
+        apiPost('/check-engine/workshop/AddWorkshopCustomerVehicle', token, {
+          workshopCustomerId: state.selectedCustomerId,
+          vehicleConfigurationId: Number(root.querySelector('[data-ce-workshop-customer-vehicle-config]')?.value || 0),
+          vin: root.querySelector('[data-ce-workshop-customer-vehicle-vin]')?.value || ''
+        })
+          .then(function () {
+            return loadCustomerVehicles(state.selectedCustomerId);
+          })
+          .catch(function (err) {
+            showAlert(alert, 'error', (err && err.errorCode) || 'Add vehicle failed.');
           });
       });
     }
@@ -446,6 +557,28 @@
         .join('');
     }
 
+    function renderImports(batches) {
+      if (!importsBody) return;
+      batches = batches || [];
+      importsBody.innerHTML = batches.length
+        ? batches
+            .map(function (b) {
+              return (
+                '<tr><td>#' +
+                (pick(b, 'id', 'Id') || '') +
+                '</td><td>' +
+                (pick(b, 'succeededRows', 'SucceededRows') || 0) +
+                '/' +
+                (pick(b, 'totalRows', 'TotalRows') || 0) +
+                '</td><td>' +
+                String(pick(b, 'createdUtc', 'CreatedUtc') || '').slice(0, 10) +
+                '</td></tr>'
+              );
+            })
+            .join('')
+        : '<tr><td colspan="3">No import batches yet.</td></tr>';
+    }
+
     function refresh() {
       return apiGet('/check-engine/fleet/DashboardData', token)
         .then(function (data) {
@@ -457,6 +590,7 @@
           renderApprovals(pick(data, 'approvalRequests', 'ApprovalRequests'));
           renderForecasts(pick(data, 'maintenanceForecasts', 'MaintenanceForecasts'));
           renderCosts(pick(data, 'vehicleCostSummaries', 'VehicleCostSummaries'));
+          return apiGet('/check-engine/fleet/ImportBatches', token).then(renderImports);
         })
         .catch(function (err) {
           showAlert(alert, 'error', portalErrorMessage(root, err));
@@ -501,26 +635,7 @@
         })
           .then(function () {
             return apiGet('/check-engine/fleet/ImportBatches', token).then(function (batches) {
-              if (importsBody) {
-                batches = batches || [];
-                importsBody.innerHTML = batches.length
-                  ? batches
-                      .map(function (b) {
-                        return (
-                          '<tr><td>#' +
-                          (pick(b, 'id', 'Id') || '') +
-                          '</td><td>' +
-                          (pick(b, 'succeededRows', 'SucceededRows') || 0) +
-                          '/' +
-                          (pick(b, 'totalRows', 'TotalRows') || 0) +
-                          '</td><td>' +
-                          String(pick(b, 'createdUtc', 'CreatedUtc') || '').slice(0, 10) +
-                          '</td></tr>'
-                        );
-                      })
-                      .join('')
-                  : '<tr><td colspan="3">No import batches yet.</td></tr>';
-              }
+              renderImports(batches);
               return refresh();
             });
           })
@@ -669,6 +784,7 @@
         });
         apiPost('/check-engine/dealer/PlaceDealerOrder', token, {
           dealerAccountId: state.accountId,
+          vehicleConfigurationId: Number(root.querySelector('[data-ce-dealer-order-vehicle]')?.value || 0) || null,
           lines: lines
         })
           .then(refresh)
@@ -779,6 +895,45 @@
         })
         .catch(function (err) {
           showAlert(alert, 'error', (err && err.errorCode) || 'Seed price failed.');
+        });
+    });
+    root.querySelector('[data-ce-admin-seed-technician]')?.addEventListener('click', function () {
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedWorkshopTechnician', token, {
+        workshopAccountId: Number(root.querySelector('[data-ce-admin-workshop-account]')?.value || 0),
+        customerId: Number(root.querySelector('[data-ce-admin-technician-customer]')?.value || 0),
+        canRaiseInvoice: !!root.querySelector('[data-ce-admin-technician-invoice]')?.checked
+      })
+        .then(function (res) {
+          showAlert(alert, 'success', 'Seeded technician #' + pick(res, 'entityId', 'EntityId'));
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed technician failed.');
+        });
+    });
+    root.querySelector('[data-ce-admin-seed-fleet-approver]')?.addEventListener('click', function () {
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedFleetApprover', token, {
+        fleetAccountId: Number(root.querySelector('[data-ce-admin-fleet-account]')?.value || 0),
+        customerId: Number(root.querySelector('[data-ce-admin-fleet-approver-customer]')?.value || 0)
+      })
+        .then(function (res) {
+          showAlert(alert, 'success', 'Seeded fleet approver #' + pick(res, 'entityId', 'EntityId'));
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed fleet approver failed.');
+        });
+    });
+    root.querySelector('[data-ce-admin-seed-territory]')?.addEventListener('click', function () {
+      var marketId = Number(root.querySelector('[data-ce-admin-territory-market]')?.value || 0);
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedDealerTerritory', token, {
+        dealerAccountId: Number(root.querySelector('[data-ce-admin-territory-account]')?.value || 0),
+        marketId: marketId > 0 ? marketId : null,
+        regionCode: root.querySelector('[data-ce-admin-territory-region]')?.value || ''
+      })
+        .then(function (res) {
+          showAlert(alert, 'success', 'Seeded territory #' + pick(res, 'entityId', 'EntityId'));
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed territory failed.');
         });
     });
   }

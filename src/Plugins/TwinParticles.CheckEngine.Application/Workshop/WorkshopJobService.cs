@@ -265,6 +265,14 @@ public sealed class WorkshopJobService
         return WorkshopCustomerVehicleResult.Ok(vehicle);
     }
 
+    public async Task<IReadOnlyList<WorkshopCustomerVehicle>> ListCustomerVehiclesAsync(int workshopCustomerId, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return Array.Empty<WorkshopCustomerVehicle>();
+
+        return await _repository.ListCustomerVehiclesAsync(workshopCustomerId, cancellationToken);
+    }
+
     public async Task<WorkshopPortalSnapshot?> GetDashboardAsync(int customerId, CancellationToken cancellationToken)
     {
         if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
