@@ -5,6 +5,7 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Oem;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -26,10 +27,21 @@ public sealed class OemAdminController : BasePluginController
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
+    private IActionResult? PageOrJsonApi()
+        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Index));
+
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/OemAdmin.cshtml");
+    }
+
     [HttpGet]
     public async Task<IActionResult> Manufacturers(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetManufacturersAsync(cancellationToken));
     }
 
@@ -61,6 +73,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> OemNumbers(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetOemNumbersAsync(cancellationToken));
     }
 
@@ -92,6 +105,7 @@ public sealed class OemAdminController : BasePluginController
     public async Task<IActionResult> Relations(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetRelationsAsync(cancellationToken));
     }
 

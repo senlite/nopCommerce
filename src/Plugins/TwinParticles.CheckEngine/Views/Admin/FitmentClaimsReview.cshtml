@@ -1,0 +1,44 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("ReviewBoard", "FitmentAdmin")">@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview")</a>
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="fitment-claims">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsQueue")</h3>
+                <button type="button" class="btn btn-sm btn-secondary float-right" data-ce-fitment-refresh>@T("Admin.Common.Refresh")</button>
+            </div>
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview.Hint")</p>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Claim</th>
+                                <th>Product</th>
+                                <th>Configuration</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-fitment-body></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

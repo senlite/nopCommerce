@@ -6,6 +6,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Fitment;
 using TwinParticles.CheckEngine.Application.Marketplace;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -35,10 +36,28 @@ public sealed class FitmentAdminController : BasePluginController
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
+    private IActionResult? PageOrJsonApi(string action)
+        => Request.WantsJsonResponse() ? null : RedirectToAction(action);
+
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return RedirectToAction(nameof(ClaimsReview));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ClaimsReview(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/FitmentClaimsReview.cshtml");
+    }
+
     [HttpGet]
     public async Task<IActionResult> Queue(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(ClaimsReview)) is { } page) return page;
         return Json(await _reviewService.GetQueueAsync(cancellationToken));
     }
 
@@ -46,6 +65,7 @@ public sealed class FitmentAdminController : BasePluginController
     public async Task<IActionResult> AiQueue(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(ReviewBoard)) is { } page) return page;
         return Json(await _reviewService.GetAiQueueAsync(cancellationToken));
     }
 

@@ -7,6 +7,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Domain.Marketplace;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -65,6 +66,9 @@ public sealed class VendorAdminController : BasePluginController
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction(nameof(ReviewBoard));
+
         return Json(await _onboardingService.GetReviewQueueAsync(cancellationToken));
     }
 
@@ -77,6 +81,9 @@ public sealed class VendorAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         var snapshot = await _onboardingService.GetSnapshotAsync(vendorId, cancellationToken);
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction(nameof(ReviewBoard));
+
         return snapshot is null ? NotFound() : Json(snapshot);
     }
 
@@ -135,6 +142,9 @@ public sealed class VendorAdminController : BasePluginController
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction(nameof(Scoreboard));
+
         return Json(await _dashboardService.ListOperatorScorecardsAsync(VendorActor.OperatorAdmin, cancellationToken));
     }
 
@@ -145,6 +155,9 @@ public sealed class VendorAdminController : BasePluginController
             return AccessDeniedView();
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction(nameof(Scoreboard));
 
         var group = await _splitService.GetCheckoutGroupAsync(orderId, cancellationToken);
         if (group is null)

@@ -10,9 +10,9 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>TwinParticles.CheckEngine</AssemblyName>
     <RootNamespace>TwinParticles.CheckEngine</RootNamespace>
-    <Version>0.73.0</Version>
-    <AssemblyVersion>0.73.0.0</AssemblyVersion>
-    <FileVersion>0.73.0.0</FileVersion>
+    <Version>0.74.0</Version>
+    <AssemblyVersion>0.74.0.0</AssemblyVersion>
+    <FileVersion>0.74.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -37,6 +37,15 @@
     <None Remove="Views\Fleet\Index.cshtml" />
     <None Remove="Views\Dealer\Index.cshtml" />
     <None Remove="Views\Admin\PortalAccounts.cshtml" />
+    <None Remove="Views\Admin\VehicleAdmin.cshtml" />
+    <None Remove="Views\Admin\OemAdmin.cshtml" />
+    <None Remove="Views\Admin\FitmentClaimsReview.cshtml" />
+    <None Remove="Views\Admin\GarageAdmin.cshtml" />
+    <None Remove="Views\Admin\ErpAdmin.cshtml" />
+    <None Remove="Views\Admin\SeoAdmin.cshtml" />
+    <None Remove="Views\Admin\ImportBatch.cshtml" />
+    <None Remove="Content\checkengine-admin.js" />
+    <None Remove="Views\Shared\_CheckEngineAdminAssets.cshtml" />
     <None Remove="Content\checkengine-portals.js" />
     <None Remove="Views\Seo\Landing.cshtml" />
     <None Remove="Views\_ViewImports.cshtml" />
@@ -109,6 +118,33 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Admin\PortalAccounts.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\VehicleAdmin.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\OemAdmin.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\FitmentClaimsReview.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\GarageAdmin.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\ErpAdmin.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\SeoAdmin.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Admin\ImportBatch.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\checkengine-admin.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_CheckEngineAdminAssets.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\checkengine-portals.js">

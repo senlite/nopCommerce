@@ -8,6 +8,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Domain.Marketplace;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -58,6 +59,9 @@ public sealed class CommissionAdminController : BasePluginController
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction(nameof(Configure), new { vendorId });
+
         var plan = await _planAdmin.GetPlanAsync(vendorId, cancellationToken);
         return plan is null ? Json(new { vendorId, rules = Array.Empty<object>() }) : Json(plan);
     }
@@ -82,6 +86,9 @@ public sealed class CommissionAdminController : BasePluginController
             return AccessDeniedView();
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction("Dashboard", "CheckEngine");
 
         return Json(await _snapshotService.GetSnapshotsAsync(orderId, cancellationToken));
     }

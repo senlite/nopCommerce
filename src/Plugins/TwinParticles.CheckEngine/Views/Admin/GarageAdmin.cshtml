@@ -1,0 +1,33 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Garage.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="garage-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.CustomerId")</label>
+                        <input type="number" min="1" class="ce-mp-input ce-code" data-ce-garage-customer />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-garage-load>@T("Admin.Common.View")</button>
+                </div>
+                <pre class="mt-3" data-ce-garage-result style="white-space:pre-wrap;max-height:24rem;overflow:auto;"></pre>
+            </div>
+        </div>
+    </div>
+</section>

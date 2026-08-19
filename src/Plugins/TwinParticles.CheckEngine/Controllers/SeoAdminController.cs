@@ -5,6 +5,7 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Seo;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -25,6 +26,13 @@ public sealed class SeoAdminController : BasePluginController
     }
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
+
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/SeoAdmin.cshtml");
+    }
 
     [HttpPost]
     public async Task<IActionResult> GenerateVehicle([FromBody] SeoVehicleLandingRequestModel model, CancellationToken cancellationToken)
@@ -57,6 +65,8 @@ public sealed class SeoAdminController : BasePluginController
     public async Task<IActionResult> Sitemap(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction(nameof(Index));
 
         var urls = await _service.GetSitemapUrlsAsync(cancellationToken);
         return Json(urls);

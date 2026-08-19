@@ -1,0 +1,49 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Oem.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="oem-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.Catalog")</h3>
+                <button type="button" class="btn btn-sm btn-secondary float-right" data-ce-oem-refresh>@T("Admin.Common.Refresh")</button>
+            </div>
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.Hint")</p>
+                <div class="form-group col-md-4 pl-0">
+                    <label for="ce-oem-level">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.View")</label>
+                    <select id="ce-oem-level" class="form-control" data-ce-oem-level>
+                        <option value="Manufacturers">Manufacturers</option>
+                        <option value="OemNumbers">OEM numbers</option>
+                        <option value="Relations">Relations</option>
+                    </select>
+                </div>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Code / Number</th>
+                                <th>Linked id</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-oem-body></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

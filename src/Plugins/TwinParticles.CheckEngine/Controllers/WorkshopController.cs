@@ -11,6 +11,7 @@ using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Portals;
 using TwinParticles.CheckEngine.Application.Workshop;
 using TwinParticles.CheckEngine.Domain.Workshop;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine.Controllers;
@@ -53,9 +54,15 @@ public sealed class WorkshopController : BasePublicController
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Workshop/Index.cshtml");
     }
 
+    private IActionResult? PortalPageOrJson()
+        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Index));
+
     [HttpGet]
     public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -97,6 +104,9 @@ public sealed class WorkshopController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> ExportCustomer(int workshopCustomerId, CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -116,6 +126,9 @@ public sealed class WorkshopController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> CreditStatements(CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -161,6 +174,9 @@ public sealed class WorkshopController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> ServiceHistory(int workshopCustomerVehicleId, CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -195,6 +211,9 @@ public sealed class WorkshopController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> JobDetail(int jobId, CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -344,6 +363,9 @@ public sealed class WorkshopController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> WorkshopCustomerVehicles(int workshopCustomerId, CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));

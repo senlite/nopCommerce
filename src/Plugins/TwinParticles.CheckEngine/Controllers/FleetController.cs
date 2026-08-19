@@ -11,6 +11,7 @@ using TwinParticles.CheckEngine.Application.Fleet;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Portals;
 using TwinParticles.CheckEngine.Domain.Fleet;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine.Controllers;
@@ -50,9 +51,15 @@ public sealed class FleetController : BasePublicController
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Fleet/Index.cshtml");
     }
 
+    private IActionResult? PortalPageOrJson()
+        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Index));
+
     [HttpGet]
     public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -65,6 +72,9 @@ public sealed class FleetController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> MaintenanceForecast(CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -131,6 +141,9 @@ public sealed class FleetController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> ImportBatches(CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -143,6 +156,9 @@ public sealed class FleetController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> ImportBatchDetail(int batchId, CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
@@ -160,6 +176,9 @@ public sealed class FleetController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> VehicleCostReport(CancellationToken cancellationToken)
     {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
         var access = await ResolveAccessAsync(cancellationToken);
         if (!access.Allowed)
             return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));

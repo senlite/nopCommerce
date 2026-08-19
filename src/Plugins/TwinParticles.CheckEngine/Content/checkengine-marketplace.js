@@ -210,6 +210,12 @@
     var tabs = root.querySelectorAll('[data-ce-tab]');
     var panels = root.querySelectorAll('[data-ce-tabpanel]');
 
+    function activateTab(tabId) {
+      if (!tabId) return;
+      var tab = root.querySelector('[data-ce-tab="' + tabId + '"]');
+      if (tab) tab.click();
+    }
+
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
         var id = tab.getAttribute('data-ce-tab');
@@ -221,6 +227,8 @@
         });
       });
     });
+
+    activateTab(new URLSearchParams(window.location.search).get('tab'));
 
     function renderStats(d) {
       var grid = root.querySelector('[data-ce-stat-grid]');
