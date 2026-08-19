@@ -88,7 +88,7 @@ public sealed class CommissionAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return RedirectToAction("Scoreboard", "VendorAdmin", new { orderId });
+            return Redirect($"/Admin/CheckEngine/VendorAdmin/Scoreboard?orderId={orderId}");
 
         return Json(await _snapshotService.GetSnapshotsAsync(orderId, cancellationToken));
     }

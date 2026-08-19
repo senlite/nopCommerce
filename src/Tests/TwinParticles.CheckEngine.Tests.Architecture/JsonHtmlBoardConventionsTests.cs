@@ -62,9 +62,13 @@ public class JsonHtmlBoardConventionsTests
         marketplaceJs.Should().Contain("CommissionAdmin/OrderSnapshots");
 
         ReadPluginFile("Controllers", "VendorAdminController.cs")
-            .Should().Contain("RedirectToAction(nameof(Scoreboard), new { orderId })");
+            .Should().Contain("/Admin/CheckEngine/VendorAdmin/Scoreboard?orderId=");
         ReadPluginFile("Controllers", "CommissionAdminController.cs")
-            .Should().Contain("RedirectToAction(\"Scoreboard\", \"VendorAdmin\", new { orderId })");
+            .Should().Contain("/Admin/CheckEngine/VendorAdmin/Scoreboard?orderId=");
+        ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
+            .Should().Contain("checkengine-admin.js?v=");
+        ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
+            .Should().Contain("AddHeadCustomParts");
         ReadPluginFile("Controllers", "GarageController.cs")
             .Should().Contain("WantsJsonResponse");
         ReadPluginFile("Controllers", "GarageController.cs")
