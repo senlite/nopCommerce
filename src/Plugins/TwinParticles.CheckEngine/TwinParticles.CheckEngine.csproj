@@ -47,7 +47,7 @@
     <None Remove="Content\checkengine-storefront.js" />
     <None Remove="Content\checkengine-marketplace.css" />
     <None Remove="Content\checkengine-marketplace.js" />
-    <None Remove="Views\Shared\_MarketplaceAssets.cshtml" />
+    <None Remove="Views\Shared\_MarketplaceAdminAssets.cshtml" />
     <None Remove="Views\Shared\_PortalAssets.cshtml" />
     <None Remove="Views\Shared\_LicencePanel.cshtml" />
     <None Remove="Content\checkengine-licence-admin.js" />
@@ -139,6 +139,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Content\checkengine-marketplace.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_MarketplaceAdminAssets.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Shared\_MarketplaceAssets.cshtml">
