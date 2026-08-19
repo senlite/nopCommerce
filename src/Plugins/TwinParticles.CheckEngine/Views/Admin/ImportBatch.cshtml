@@ -27,6 +27,14 @@
                     <button type="button" class="ce-btn ce-btn--primary" data-ce-import-load>@T("Admin.Common.View")</button>
                 </div>
                 <div class="ce-mp-stat-grid mt-3" data-ce-import-stats></div>
+                <div class="ce-mp-toolbar mt-3">
+                    <label class="mb-0 mr-3">
+                        <input type="checkbox" data-ce-import-dry-run checked="checked" />
+                        @T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishDryRun")
+                    </label>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-import-publish>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Publish")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-import-publish-stats></div>
                 <div class="ce-mp-table-wrap mt-3">
                     <table class="ce-mp-table">
                         <thead>

@@ -20,7 +20,9 @@
         <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
             vendors = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Vendors").Text,
             ordersSample = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.OrdersSample").Text,
-            empty = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Empty").Text
+            empty = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Empty").Text,
+            inspectFail = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Fail").Text,
+            inspectEmpty = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Empty").Text
         }))</script>
 
         <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Hint")</p>
@@ -49,5 +51,65 @@
                 </div>
             </div>
         </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Hint")</p>
+                <div class="ce-mp-alert ce-mp-alert--info" data-ce-order-alert hidden role="status"></div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.OrderId")</label>
+                        <input type="number" min="1" class="ce-mp-input ce-code" data-ce-order-id value="@ViewBag.OrderId" />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-order-inspect>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Inspect")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-order-stats></div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Splits")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Subtotal</th>
+                                <th>Lines</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-order-splits></tbody>
+                    </table>
+                </div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Shipments")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Shipment</th>
+                                <th>Vendor</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-order-shipments></tbody>
+                    </table>
+                </div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Commissions")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Vendor</th>
+                                <th>Model</th>
+                                <th>Rate</th>
+                                <th>Commission</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-order-commissions></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
+

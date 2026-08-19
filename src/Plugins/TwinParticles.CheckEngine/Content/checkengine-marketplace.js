@@ -10,10 +10,20 @@
   }
 
   function headers(token, json) {
-    var h = { Accept: 'application/json' };
+    var h = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
     if (json) h['Content-Type'] = 'application/json';
     if (token && token.value) h.RequestVerificationToken = token.value;
     return h;
+  }
+
+  function statCard(label, value, hint) {
+    return (
+      '<article class="ce-mp-stat">' +
+      '<span class="ce-mp-stat__label">' + label + '</span>' +
+      '<span class="ce-mp-stat__value">' + (value != null ? value : '—') + '</span>' +
+      (hint ? '<span class="ce-mp-stat__hint">' + hint + '</span>' : '') +
+      '</article>'
+    );
   }
 
   function pct(v) {
@@ -241,16 +251,6 @@
         statCard(i18n.customers, pick(d, 'customerCount', 'CustomerCount'));
     }
 
-    function statCard(label, value, hint) {
-      return (
-        '<article class="ce-mp-stat">' +
-        '<span class="ce-mp-stat__label">' + label + '</span>' +
-        '<span class="ce-mp-stat__value">' + (value != null ? value : '—') + '</span>' +
-        (hint ? '<span class="ce-mp-stat__hint">' + hint + '</span>' : '') +
-        '</article>'
-      );
-    }
-
     function renderScorecard(s) {
       var host = root.querySelector('[data-ce-scorecard]');
       if (!host || !s) return;
@@ -465,7 +465,7 @@
 
     function loadVendors() {
       if (!vendorSelect) return;
-      fetch('/Admin/CheckEngine/VendorAdmin/Scorecards', { headers: headers(token, false) })
+      fetch('/Admin/CheckEngine/VendorAdmin/Scorecards?json=1', { headers: headers(token, false) })
         .then(function (r) { return r.json(); })
         .then(function (list) {
           vendorSelect.innerHTML = '';
@@ -760,7 +760,7 @@
     var tbody = root.querySelector('[data-ce-scoreboard-body]');
     var summary = root.querySelector('[data-ce-scoreboard-summary]');
 
-    fetch('/Admin/CheckEngine/VendorAdmin/Scorecards', { headers: headers(token, false) })
+    fetch('/Admin/CheckEngine/VendorAdmin/Scorecards?json=1', { headers: headers(token, false) })
       .then(function (r) { return r.json(); })
       .then(function (rows) {
         if (summary) {
@@ -804,6 +804,77 @@
         '</div>'
       );
     }
+
+    function cell(val) {
+      return val == null || val === '' ? '—' : String(val);
+    }
+
+    function fillTable(tbody, rows, cols, emptyText) {
+      if (!tbody) return;
+      if (!rows || !rows.length) {
+        tbody.innerHTML = '<tr><td colspan="' + cols + '">' + (emptyText || 'No rows.') + '</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.join('');
+    }
+
+    function inspectOrder() {
+      var orderAlert = root.querySelector('[data-ce-order-alert]');
+      var orderId = Number(root.querySelector('[data-ce-order-id]')?.value || 0);
+      var stats = root.querySelector('[data-ce-order-stats]');
+      if (!orderId) {
+        showAlert(orderAlert, 'error', i18n.inspectEmpty || 'Enter an order id.');
+        return;
+      }
+      showAlert(orderAlert, 'info', i18n.loading || 'Loading…');
+      Promise.all([
+        fetch('/Admin/CheckEngine/VendorAdmin/OrderSplits?orderId=' + orderId + '&json=1', { headers: headers(token, false) })
+          .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; }); }),
+        fetch('/Admin/CheckEngine/CommissionAdmin/OrderSnapshots?orderId=' + orderId + '&json=1', { headers: headers(token, false) })
+          .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: [] }; }); })
+      ]).then(function (results) {
+        var splitsRes = results[0];
+        var snapsRes = results[1];
+        var checkout = pick(splitsRes.body, 'checkout', 'Checkout') || splitsRes.body || {};
+        var splits = pick(checkout, 'splits', 'Splits') || [];
+        var shipments = pick(splitsRes.body, 'shipments', 'Shipments') || [];
+        var snaps = Array.isArray(snapsRes.body) ? snapsRes.body : (pick(snapsRes.body, 'items', 'Items') || []);
+        if (stats) {
+          stats.innerHTML =
+            statCard('Order', orderId) +
+            statCard('Checkout group', pick(checkout, 'checkoutGroupId', 'CheckoutGroupId') || '—') +
+            statCard('Splits', splits.length) +
+            statCard('Shipments', shipments.length) +
+            statCard('Snapshots', snaps.length);
+        }
+        fillTable(root.querySelector('[data-ce-order-splits]'), splits.map(function (row) {
+          var lines = pick(row, 'lines', 'Lines') || [];
+          return '<tr><td class="ce-code">' + cell(pick(row, 'vendorId', 'VendorId')) + '</td><td>' +
+            cell(pick(row, 'lineSubtotalExclTax', 'LineSubtotalExclTax')) + '</td><td>' + lines.length + '</td></tr>';
+        }), 3);
+        fillTable(root.querySelector('[data-ce-order-shipments]'), shipments.map(function (row) {
+          return '<tr><td class="ce-code">' + cell(pick(row, 'shipmentId', 'ShipmentId')) + '</td><td class="ce-code">' +
+            cell(pick(row, 'vendorId', 'VendorId')) + '</td><td>' + cell(pick(row, 'createdUtc', 'CreatedUtc')) + '</td></tr>';
+        }), 3);
+        fillTable(root.querySelector('[data-ce-order-commissions]'), snaps.map(function (row) {
+          return '<tr><td class="ce-code">' + cell(pick(row, 'orderItemId', 'OrderItemId')) + '</td><td class="ce-code">' +
+            cell(pick(row, 'vendorId', 'VendorId')) + '</td><td>' + cell(pick(row, 'modelKind', 'ModelKind')) +
+            '</td><td>' + cell(pick(row, 'rateApplied', 'RateApplied')) + '</td><td>' +
+            cell(pick(row, 'commissionAmount', 'CommissionAmount')) + '</td></tr>';
+        }), 5);
+        if (!splitsRes.ok && !snaps.length) {
+          showAlert(orderAlert, 'error', i18n.inspectFail || 'Order not found.');
+        } else {
+          showAlert(orderAlert, 'success', 'Order #' + orderId + ' loaded.');
+        }
+      }).catch(function () {
+        showAlert(orderAlert, 'error', i18n.inspectFail || 'Order not found.');
+      });
+    }
+
+    root.querySelector('[data-ce-order-inspect]')?.addEventListener('click', inspectOrder);
+    var initialOrder = root.querySelector('[data-ce-order-id]')?.value;
+    if (initialOrder && Number(initialOrder) > 0) inspectOrder();
   }
 
   function initPayout(root) {
@@ -817,7 +888,7 @@
 
     function loadVendors() {
       if (!vendorSelect) return;
-      fetch('/Admin/CheckEngine/VendorAdmin/Scorecards', { headers: headers(token, false) })
+      fetch('/Admin/CheckEngine/VendorAdmin/Scorecards?json=1', { headers: headers(token, false) })
         .then(function (r) { return r.json(); })
         .then(function (list) {
           vendorSelect.innerHTML = '';

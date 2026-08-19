@@ -124,13 +124,14 @@ public sealed class VendorAdminController : BasePluginController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Scoreboard(CancellationToken cancellationToken)
+    public async Task<IActionResult> Scoreboard(int? orderId, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync())
             return AccessDeniedView();
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return AccessDeniedView();
 
+        ViewBag.OrderId = orderId;
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/VendorScoreboard.cshtml");
     }
 
@@ -157,7 +158,7 @@ public sealed class VendorAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Scoreboard));
+            return RedirectToAction(nameof(Scoreboard), new { orderId });
 
         var group = await _splitService.GetCheckoutGroupAsync(orderId, cancellationToken);
         if (group is null)

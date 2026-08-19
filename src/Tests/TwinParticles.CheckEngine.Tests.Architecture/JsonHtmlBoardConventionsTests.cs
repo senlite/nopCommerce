@@ -46,6 +46,27 @@ public class JsonHtmlBoardConventionsTests
         js.Should().NotContain("[data-ce-garage-result]");
         js.Should().NotContain("[data-ce-erp-result]");
         js.Should().NotContain("[data-ce-import-result]");
+        js.Should().Contain("SeoAdmin/GenerateVehicle");
+        js.Should().Contain("ErpAdmin/InventorySnapshot");
+        js.Should().Contain("ImageAdmin/SourceFromTemplate");
+        js.Should().Contain("ImportAdmin/Publish");
+        js.Should().Contain("data-ce-erp-snapshot-stats");
+    }
+
+    [Test]
+    public void Remaining_Operator_Apis_Should_Have_Html_Boards_And_Browser_Redirects()
+    {
+        var marketplaceJs = ReadPluginFile("Content", "checkengine-marketplace.js");
+        marketplaceJs.Should().Contain("data-ce-order-splits");
+        marketplaceJs.Should().Contain("VendorAdmin/OrderSplits");
+        marketplaceJs.Should().Contain("CommissionAdmin/OrderSnapshots");
+
+        ReadPluginFile("Controllers", "VendorAdminController.cs")
+            .Should().Contain("RedirectToAction(nameof(Scoreboard), new { orderId })");
+        ReadPluginFile("Controllers", "CommissionAdminController.cs")
+            .Should().Contain("RedirectToAction(\"Scoreboard\", \"VendorAdmin\", new { orderId })");
+        ReadPluginFile("Controllers", "GarageController.cs")
+            .Should().Contain("WantsJsonResponse");
     }
 
     [Test]

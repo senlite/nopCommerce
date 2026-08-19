@@ -62,5 +62,29 @@
                 </div>
             </div>
         </div>
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Template")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Template.Hint")</p>
+                <textarea class="form-control" rows="6" data-ce-image-template-skus placeholder="SKU-1&#10;SKU-2"></textarea>
+                <button type="button" class="btn btn-secondary mt-2" data-ce-image-template-submit>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Template.Submit")</button>
+                <div class="ce-mp-stat-grid mt-3" data-ce-image-template-stats></div>
+                <div class="ce-mp-table-wrap mt-3">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Product</th>
+                                <th>Status</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-image-template-rows></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </section>

@@ -34,5 +34,35 @@
                 </div>
             </div>
         </div>
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Generate")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Generate.Hint")</p>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.ConfigurationId")</label>
+                        <input class="form-control ce-code" type="number" min="1" data-ce-seo-config />
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.ProductId")</label>
+                        <input class="form-control ce-code" type="number" min="1" data-ce-seo-product placeholder="optional" />
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Locale")</label>
+                        <select class="form-control" data-ce-seo-locale>
+                            <option value="en">en</option>
+                            <option value="ar">ar</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary mr-2" data-ce-seo-generate-vehicle>@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.GenerateVehicle")</button>
+                        <button type="button" class="btn btn-secondary" data-ce-seo-generate-part>@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.GeneratePart")</button>
+                    </div>
+                </div>
+                <div class="ce-mp-stat-grid" data-ce-seo-result></div>
+            </div>
+        </div>
     </div>
 </section>

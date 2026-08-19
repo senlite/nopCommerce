@@ -10,6 +10,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Garage;
 using TwinParticles.CheckEngine.Application.Vehicle.Admin;
 using TwinParticles.CheckEngine.Domain.Garage;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 
 namespace TwinParticles.CheckEngine.Controllers;
@@ -46,6 +47,9 @@ public sealed class GarageController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> Current(CancellationToken cancellationToken)
     {
+        if (!Request.WantsJsonResponse())
+            return Redirect("~/");
+
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsGuestAsync(customer))
             return Json(await _garageService.GetAsync(customer.Id, cancellationToken));

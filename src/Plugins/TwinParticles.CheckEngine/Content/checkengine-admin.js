@@ -75,6 +75,26 @@
       .join('');
   }
 
+  function renderBatchImageResult(statsEl, rowsEl, body) {
+    renderStatGrid(statsEl, [
+      { label: 'Replaced', value: pick(body, 'replaced', 'Replaced') },
+      { label: 'Not found', value: pick(body, 'notFound', 'NotFound') },
+      { label: 'Quarantined', value: pick(body, 'quarantined', 'Quarantined') },
+      { label: 'Failed', value: pick(body, 'failed', 'Failed') }
+    ]);
+    renderRows(
+      rowsEl,
+      asArray(pick(body, 'items', 'Items')),
+      [
+        { value: function (r) { return pick(r, 'sku', 'Sku'); }, code: true },
+        { value: function (r) { return pick(r, 'productId', 'ProductId'); }, code: true },
+        { value: function (r) { return pick(r, 'status', 'Status'); } },
+        { value: function (r) { return pick(r, 'errorCode', 'ErrorCode'); } }
+      ],
+      'No rows.'
+    );
+  }
+
   function renderRows(tbody, rows, cols, emptyText) {
     if (!tbody) return;
     if (!rows.length) {
@@ -285,6 +305,29 @@
           showAlert(alert, 'error', 'Process failed.');
         });
     });
+    root.querySelector('[data-ce-erp-snapshot]')?.addEventListener('click', function () {
+      showAlert(alert, 'info', 'Pulling inventory snapshot…');
+      var snapshotEl = root.querySelector('[data-ce-erp-snapshot-stats]');
+      apiGet('/Admin/CheckEngine/ErpAdmin/InventorySnapshot?json=1', t)
+        .then(function (data) {
+          var payload = pick(data, 'payload', 'Payload');
+          var parsed = null;
+          if (payload && typeof payload === 'object') parsed = payload;
+          else if (typeof payload === 'string') {
+            try { parsed = JSON.parse(payload); } catch (e) { parsed = null; }
+          }
+          var items = parsed ? asArray(pick(parsed, 'items', 'Items')) : [];
+          renderStatGrid(snapshotEl, [
+            { label: 'Warehouse', value: parsed ? pick(parsed, 'warehouse', 'Warehouse') : '—' },
+            { label: 'Items', value: items.length },
+            { label: 'Payload', value: parsed ? 'Structured' : (payload ? String(payload).slice(0, 80) : 'Empty') }
+          ]);
+          showAlert(alert, 'success', 'Inventory snapshot loaded.');
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Inventory snapshot failed.');
+        });
+    });
   }
 
   function initSeoAdmin(root) {
@@ -322,6 +365,56 @@
           showAlert(alert, 'error', 'Rebuild failed.');
         });
     });
+    function renderLanding(body) {
+      var landing = pick(body, 'landing', 'Landing') || {};
+      renderStatGrid(root.querySelector('[data-ce-seo-result]'), [
+        { label: 'Success', value: pick(body, 'success', 'Success') },
+        { label: 'Id', value: pick(landing, 'id', 'Id'), code: true },
+        { label: 'Type', value: pick(landing, 'type', 'Type') },
+        { label: 'Locale', value: pick(landing, 'locale', 'Locale') },
+        { label: 'URL', value: pick(landing, 'urlPath', 'UrlPath') },
+        { label: 'Indexable', value: pick(landing, 'isIndexable', 'IsIndexable') },
+        { label: 'Error', value: pick(body, 'errorCode', 'ErrorCode') }
+      ]);
+    }
+    function generate(kind) {
+      var configId = parseInt(root.querySelector('[data-ce-seo-config]')?.value || '0', 10);
+      var productId = parseInt(root.querySelector('[data-ce-seo-product]')?.value || '0', 10);
+      var locale = root.querySelector('[data-ce-seo-locale]')?.value || 'en';
+      if (!configId) {
+        showAlert(alert, 'error', 'Enter a configuration id.');
+        return;
+      }
+      if (kind === 'part' && !productId) {
+        showAlert(alert, 'error', 'Enter a product id for a part landing.');
+        return;
+      }
+      var url = kind === 'part'
+        ? '/Admin/CheckEngine/SeoAdmin/GeneratePartForVehicle'
+        : '/Admin/CheckEngine/SeoAdmin/GenerateVehicle';
+      var payload = kind === 'part'
+        ? { productId: productId, vehicleConfigurationId: configId, locale: locale }
+        : { vehicleConfigurationId: configId, locale: locale };
+      showAlert(alert, 'info', 'Generating landing…');
+      fetch(url, {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          renderLanding(res.body || {});
+          showAlert(alert, res.ok && pick(res.body, 'success', 'Success') !== false ? 'success' : 'error',
+            res.ok ? 'Landing generated.' : (pick(res.body, 'errorCode', 'ErrorCode') || 'Generate failed.'));
+          load();
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Generate failed.');
+        });
+    }
+    root.querySelector('[data-ce-seo-generate-vehicle]')?.addEventListener('click', function () { generate('vehicle'); });
+    root.querySelector('[data-ce-seo-generate-part]')?.addEventListener('click', function () { generate('part'); });
     load();
   }
 
@@ -366,6 +459,34 @@
         });
     }
     root.querySelector('[data-ce-import-load]')?.addEventListener('click', loadBatch);
+    root.querySelector('[data-ce-import-publish]')?.addEventListener('click', function () {
+      var batchId = root.querySelector('[data-ce-import-batch]')?.value || '';
+      if (!batchId.trim()) {
+        showAlert(alert, 'error', 'Enter a batch id.');
+        return;
+      }
+      var dryRun = !!root.querySelector('[data-ce-import-dry-run]')?.checked;
+      showAlert(alert, 'info', dryRun ? 'Publishing (dry run)…' : 'Publishing…');
+      fetch('/Admin/CheckEngine/ImportAdmin/Publish', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify({ batchId: batchId.trim(), dryRun: dryRun })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          renderStatGrid(root.querySelector('[data-ce-import-publish-stats]'), [
+            { label: 'Published', value: pick(res.body, 'publishedRows', 'PublishedRows') },
+            { label: 'Failed', value: pick(res.body, 'failedRows', 'FailedRows') },
+            { label: 'Dry run', value: pick(res.body, 'dryRun', 'DryRun') }
+          ]);
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Publish complete.' : 'Publish failed.');
+          loadBatch();
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Publish failed.');
+        });
+    });
     var initial = root.querySelector('[data-ce-import-batch]')?.value;
     if (initial && initial.trim()) loadBatch();
   }
@@ -517,27 +638,38 @@
       })
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
-          renderStatGrid(manifestStats, [
-            { label: 'Replaced', value: pick(res.body, 'replaced', 'Replaced') },
-            { label: 'Not found', value: pick(res.body, 'notFound', 'NotFound') },
-            { label: 'Quarantined', value: pick(res.body, 'quarantined', 'Quarantined') },
-            { label: 'Failed', value: pick(res.body, 'failed', 'Failed') }
-          ]);
-          renderRows(
-            manifestRows,
-            asArray(pick(res.body, 'items', 'Items')),
-            [
-              { value: function (r) { return pick(r, 'sku', 'Sku'); }, code: true },
-              { value: function (r) { return pick(r, 'productId', 'ProductId'); }, code: true },
-              { value: function (r) { return pick(r, 'status', 'Status'); } },
-              { value: function (r) { return pick(r, 'errorCode', 'ErrorCode'); } }
-            ],
-            'No manifest rows.'
-          );
+          renderBatchImageResult(manifestStats, manifestRows, res.body);
           showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Manifest applied.' : 'Manifest failed.');
         })
         .catch(function () {
           showAlert(alert, 'error', 'Manifest failed.');
+        });
+    });
+    root.querySelector('[data-ce-image-template-submit]')?.addEventListener('click', function () {
+      var raw = root.querySelector('[data-ce-image-template-skus]')?.value || '';
+      var skus = raw.split(/[\s,;]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!skus.length) {
+        showAlert(alert, 'error', 'Enter one or more SKUs.');
+        return;
+      }
+      showAlert(alert, 'info', 'Applying URL template…');
+      fetch('/Admin/CheckEngine/ImageAdmin/SourceFromTemplate', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify({ skus: skus })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          renderBatchImageResult(
+            root.querySelector('[data-ce-image-template-stats]'),
+            root.querySelector('[data-ce-image-template-rows]'),
+            res.body
+          );
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Template applied.' : 'Template failed.');
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Template failed.');
         });
     });
   }
