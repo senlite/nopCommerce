@@ -14,5 +14,7 @@ public sealed class WorkshopAccount
 
     public int? DefaultPriceListId { get; set; }
 
+    public string? AccountTierCode { get; set; }
+
     public bool IsActive { get; set; } = true;
 }

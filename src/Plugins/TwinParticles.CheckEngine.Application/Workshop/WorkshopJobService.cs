@@ -130,7 +130,7 @@ public sealed class WorkshopJobService
 
         var account = await _repository.GetAccountByIdAsync(job.WorkshopAccountId, cancellationToken);
         var unitPrice = account?.DefaultPriceListId is int priceListId
-            ? await _pricing.ResolveUnitPriceAsync(priceListId, request.ProductId, request.Quantity, cancellationToken)
+            ? await _pricing.ResolveUnitPriceAsync(priceListId, request.ProductId, request.Quantity, account?.AccountTierCode, cancellationToken)
             : await _pricing.ResolveUnitPriceAsync(null, request.ProductId, request.Quantity, cancellationToken);
 
         var line = new WorkshopJobLine

@@ -87,4 +87,8 @@ public interface IWorkshopJobRepository
     Task<int> InsertPriceTierAsync(WorkshopPriceTier tier, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<WorkshopPriceTier>> ListPriceTiersAsync(int priceListId, CancellationToken cancellationToken);
+
+    Task<int> InsertAccountTierAsync(WorkshopAccountTier tier, CancellationToken cancellationToken);
+
+    Task<WorkshopAccountTier?> GetAccountTierAsync(string tierCode, CancellationToken cancellationToken);
 }

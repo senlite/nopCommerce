@@ -22,7 +22,7 @@ public sealed class SqlWorkshopJobRepository : IWorkshopJobRepository
     public async Task<WorkshopAccount?> GetAccountByCustomerIdAsync(int customerId, CancellationToken cancellationToken)
     {
         var sql = CheckEngineSql.SelectTop(1,
-            "Id, CustomerId, DisplayName, CreditLimit, CreditUsed, DefaultPriceListId, IsActive",
+            "Id, CustomerId, DisplayName, CreditLimit, CreditUsed, DefaultPriceListId, AccountTierCode, IsActive",
             "FROM TP_CE_WorkshopAccount WHERE CustomerId = @customerId ORDER BY Id");
         var rows = await _dataProvider.QueryAsync<AccountRow>(sql, new DataParameter("customerId", customerId));
         return rows.Select(MapAccount).FirstOrDefault();
@@ -49,7 +49,7 @@ ORDER BY t.Id"),
     public async Task<WorkshopAccount?> GetAccountByIdAsync(int accountId, CancellationToken cancellationToken)
     {
         var rows = await _dataProvider.QueryAsync<AccountRow>(@"
-SELECT Id, CustomerId, DisplayName, CreditLimit, CreditUsed, DefaultPriceListId, IsActive
+SELECT Id, CustomerId, DisplayName, CreditLimit, CreditUsed, DefaultPriceListId, AccountTierCode, IsActive
 FROM TP_CE_WorkshopAccount
 WHERE Id = @id",
             new DataParameter("id", accountId));
@@ -204,15 +204,16 @@ ORDER BY UpdatedUtc DESC",
     {
         var id = await _dataProvider.QueryAsync<int>(@"
 INSERT INTO TP_CE_WorkshopAccount
-(CustomerId, DisplayName, CreditLimit, CreditUsed, DefaultPriceListId, IsActive)
+(CustomerId, DisplayName, CreditLimit, CreditUsed, DefaultPriceListId, AccountTierCode, IsActive)
 VALUES
-(@customerId, @displayName, @creditLimit, @creditUsed, @defaultPriceListId, @isActive);
+(@customerId, @displayName, @creditLimit, @creditUsed, @defaultPriceListId, @accountTierCode, @isActive);
 " + CheckEngineSql.SelectInsertedIntId() + ";",
             new DataParameter("customerId", account.CustomerId),
             new DataParameter("displayName", account.DisplayName),
             new DataParameter("creditLimit", account.CreditLimit),
             new DataParameter("creditUsed", account.CreditUsed),
             new DataParameter("defaultPriceListId", account.DefaultPriceListId ?? (object)DBNull.Value),
+            new DataParameter("accountTierCode", account.AccountTierCode ?? (object)DBNull.Value),
             new DataParameter("isActive", account.IsActive));
 
         return id.FirstOrDefault();
@@ -226,6 +227,7 @@ SET CustomerId = @customerId,
     CreditLimit = @creditLimit,
     CreditUsed = @creditUsed,
     DefaultPriceListId = @defaultPriceListId,
+    AccountTierCode = @accountTierCode,
     IsActive = @isActive
 WHERE Id = @id",
             new DataParameter("id", account.Id),
@@ -234,6 +236,7 @@ WHERE Id = @id",
             new DataParameter("creditLimit", account.CreditLimit),
             new DataParameter("creditUsed", account.CreditUsed),
             new DataParameter("defaultPriceListId", account.DefaultPriceListId ?? (object)DBNull.Value),
+            new DataParameter("accountTierCode", account.AccountTierCode ?? (object)DBNull.Value),
             new DataParameter("isActive", account.IsActive));
 
     public async Task<int> InsertPriceListAsync(string name, CancellationToken cancellationToken)
@@ -295,6 +298,35 @@ ORDER BY MinQuantity",
             MinQuantity = row.MinQuantity,
             DiscountPercent = row.DiscountPercent
         }).ToList();
+    }
+
+    public async Task<int> InsertAccountTierAsync(WorkshopAccountTier tier, CancellationToken cancellationToken)
+    {
+        var id = await _dataProvider.QueryAsync<int>(@"
+INSERT INTO TP_CE_WorkshopAccountTier (TierCode, DiscountPercent, Label)
+VALUES (@tierCode, @discountPercent, @label);
+" + CheckEngineSql.SelectInsertedIntId() + ";",
+            new DataParameter("tierCode", tier.TierCode),
+            new DataParameter("discountPercent", tier.DiscountPercent),
+            new DataParameter("label", tier.Label ?? (object)DBNull.Value));
+
+        return id.FirstOrDefault();
+    }
+
+    public async Task<WorkshopAccountTier?> GetAccountTierAsync(string tierCode, CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<AccountTierRow>(CheckEngineSql.SelectTop(1,
+            "Id, TierCode, DiscountPercent, Label",
+            "FROM TP_CE_WorkshopAccountTier WHERE TierCode = @tierCode ORDER BY Id"),
+            new DataParameter("tierCode", tierCode));
+
+        return rows.Select(row => new WorkshopAccountTier
+        {
+            Id = row.Id,
+            TierCode = row.TierCode,
+            DiscountPercent = row.DiscountPercent,
+            Label = row.Label
+        }).FirstOrDefault();
     }
 
     public async Task<int> InsertCustomerAsync(WorkshopCustomer customer, CancellationToken cancellationToken)
@@ -618,6 +650,7 @@ ORDER BY InvoicedUtc",
             CreditLimit = row.CreditLimit,
             CreditUsed = row.CreditUsed,
             DefaultPriceListId = row.DefaultPriceListId,
+            AccountTierCode = row.AccountTierCode,
             IsActive = row.IsActive
         };
     }
@@ -689,7 +722,16 @@ ORDER BY InvoicedUtc",
         public decimal CreditLimit { get; set; }
         public decimal CreditUsed { get; set; }
         public int? DefaultPriceListId { get; set; }
+        public string? AccountTierCode { get; set; }
         public bool IsActive { get; set; }
+    }
+
+    private sealed class AccountTierRow
+    {
+        public int Id { get; set; }
+        public string TierCode { get; set; } = string.Empty;
+        public decimal DiscountPercent { get; set; }
+        public string? Label { get; set; }
     }
 
     private sealed class JobRow

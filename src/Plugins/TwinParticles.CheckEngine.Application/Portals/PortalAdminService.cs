@@ -300,6 +300,41 @@ public sealed class PortalAdminService
         return PortalSeedResult.Ok(tier.Id, "price_tier");
     }
 
+    public async Task<PortalSeedResult> SeedWorkshopAccountTierAsync(SeedWorkshopAccountTierRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _workshopGate.AllowsWorkshopAsync(cancellationToken))
+            return PortalSeedResult.Fail("portal.licence_denied");
+
+        if (string.IsNullOrWhiteSpace(request.TierCode) || request.DiscountPercent <= 0m || request.DiscountPercent > 100m)
+            return PortalSeedResult.Fail("portal.account_tier_invalid");
+
+        var tierCode = request.TierCode.Trim().ToUpperInvariant();
+        var existing = await _workshop.GetAccountTierAsync(tierCode, cancellationToken);
+        if (existing is null)
+        {
+            var tier = new WorkshopAccountTier
+            {
+                TierCode = tierCode,
+                DiscountPercent = request.DiscountPercent,
+                Label = request.Label?.Trim()
+            };
+
+            tier.Id = await _workshop.InsertAccountTierAsync(tier, cancellationToken);
+        }
+
+        if (request.WorkshopAccountId > 0)
+        {
+            var account = await _workshop.GetAccountByIdAsync(request.WorkshopAccountId, cancellationToken);
+            if (account is null || !account.IsActive)
+                return PortalSeedResult.Fail("portal.account_not_found");
+
+            account.AccountTierCode = tierCode;
+            await _workshop.UpdateAccountAsync(account, cancellationToken);
+        }
+
+        return PortalSeedResult.Ok(0, "account_tier");
+    }
+
     public async Task<PortalSeedResult> SeedFleetApproverAsync(SeedFleetApproverRequest request, CancellationToken cancellationToken)
     {
         if (!await _fleetGate.AllowsFleetAsync(cancellationToken))
@@ -436,6 +471,17 @@ public sealed class SeedWorkshopPriceTierRequest
     public int MinQuantity { get; init; }
 
     public decimal DiscountPercent { get; init; }
+}
+
+public sealed class SeedWorkshopAccountTierRequest
+{
+    public int WorkshopAccountId { get; init; }
+
+    public string TierCode { get; init; } = string.Empty;
+
+    public decimal DiscountPercent { get; init; }
+
+    public string? Label { get; init; }
 }
 
 public sealed class SeedFleetApproverRequest

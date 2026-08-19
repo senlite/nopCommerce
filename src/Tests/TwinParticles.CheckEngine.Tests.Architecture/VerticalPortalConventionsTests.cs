@@ -346,4 +346,21 @@ public class VerticalPortalConventionsTests
         var admin = ReadApplicationFile("Portals", "PortalAdminService.cs");
         admin.Should().Contain("SeedWorkshopPriceTierAsync");
     }
+
+    [Test]
+    public void Horizon4_v073_Should_Add_Account_Tier_Pricing_Bands()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608191600_Horizon4AccountTiers.cs");
+        migration.Should().Contain("TP_CE_WorkshopAccountTier");
+        migration.Should().Contain("AccountTierCode");
+
+        var pricing = ReadApplicationFile("Portals", "PortalTradePricingService.cs");
+        pricing.Should().Contain("GetAccountTierAsync");
+
+        var admin = ReadApplicationFile("Portals", "PortalAdminService.cs");
+        admin.Should().Contain("SeedWorkshopAccountTierAsync");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("SeedWorkshopAccountTier");
+    }
 }

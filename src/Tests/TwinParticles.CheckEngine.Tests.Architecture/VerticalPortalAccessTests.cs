@@ -129,6 +129,8 @@ public class VerticalPortalAccessTests
         public Task<WorkshopCreditStatement?> GetCreditStatementAsync(int statementId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<int> InsertPriceTierAsync(WorkshopPriceTier tier, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<IReadOnlyList<WorkshopPriceTier>> ListPriceTiersAsync(int priceListId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<int> InsertAccountTierAsync(WorkshopAccountTier tier, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<WorkshopAccountTier?> GetAccountTierAsync(string tierCode, CancellationToken cancellationToken) => throw new System.NotImplementedException();
     }
 
     private sealed class StubFleetRepo : IFleetPortalRepository

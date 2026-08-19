@@ -22,12 +22,20 @@ public sealed class PortalTradePricingService
     }
 
     public Task<decimal> ResolveUnitPriceAsync(int? priceListId, int productId, CancellationToken cancellationToken)
-        => ResolveUnitPriceAsync(priceListId, productId, quantity: 1, cancellationToken);
+        => ResolveUnitPriceAsync(priceListId, productId, quantity: 1, accountTierCode: null, cancellationToken);
+
+    public Task<decimal> ResolveUnitPriceAsync(
+        int? priceListId,
+        int productId,
+        int quantity,
+        CancellationToken cancellationToken)
+        => ResolveUnitPriceAsync(priceListId, productId, quantity, accountTierCode: null, cancellationToken);
 
     public async Task<decimal> ResolveUnitPriceAsync(
         int? priceListId,
         int productId,
         int quantity,
+        string? accountTierCode,
         CancellationToken cancellationToken)
     {
         decimal unitPrice;
@@ -38,6 +46,15 @@ public sealed class PortalTradePricingService
                 ? tradePrice
                 : await _catalogPrices.GetProductPriceAsync(productId, cancellationToken);
 
+            if (!string.IsNullOrWhiteSpace(accountTierCode))
+            {
+                var accountTier = await _workshop.GetAccountTierAsync(accountTierCode.Trim(), cancellationToken);
+                if (accountTier is { DiscountPercent: > 0m })
+                {
+                    unitPrice = ApplyDiscount(unitPrice, accountTier.DiscountPercent);
+                }
+            }
+
             if (quantity > 1)
             {
                 var tiers = await _workshop.ListPriceTiersAsync(listId, cancellationToken);
@@ -46,13 +63,8 @@ public sealed class PortalTradePricingService
                     .OrderByDescending(t => t.MinQuantity)
                     .FirstOrDefault();
 
-                if (tier is not null && tier.DiscountPercent > 0m)
-                {
-                    unitPrice = Math.Round(
-                        unitPrice * (1m - tier.DiscountPercent / 100m),
-                        2,
-                        MidpointRounding.AwayFromZero);
-                }
+                if (tier is { DiscountPercent: > 0m })
+                    unitPrice = ApplyDiscount(unitPrice, tier.DiscountPercent);
             }
 
             return unitPrice;
@@ -60,4 +72,10 @@ public sealed class PortalTradePricingService
 
         return await _catalogPrices.GetProductPriceAsync(productId, cancellationToken);
     }
+
+    private static decimal ApplyDiscount(decimal unitPrice, decimal discountPercent)
+        => Math.Round(
+            unitPrice * (1m - discountPercent / 100m),
+            2,
+            MidpointRounding.AwayFromZero);
 }

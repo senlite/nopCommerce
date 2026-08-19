@@ -19,12 +19,12 @@ public class VectorMathTests
             VectorMath.EmbedText("upper radiator coolant hose")
         };
 
-        var topK = new CosineSimilarityTopK<int>(query, 2, id => id);
+        var topK = new CosineSimilarityTopK<int>(query, 3, id => id);
         for (var index = 0; index < candidates.Length; index++)
             topK.Consider(index, candidates[index]);
 
         var results = topK.Results();
-        results.Should().HaveCount(2);
+        results.Should().HaveCount(3);
         results[0].Score.Should().BeGreaterThan(results[1].Score);
         results.Select(entry => entry.Item).Should().Contain(0);
         results.Select(entry => entry.Item).Should().Contain(3);

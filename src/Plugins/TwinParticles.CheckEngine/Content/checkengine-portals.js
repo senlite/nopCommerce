@@ -1081,6 +1081,19 @@
           showAlert(alert, 'error', (err && err.errorCode) || 'Seed price tier failed.');
         });
     });
+    root.querySelector('[data-ce-admin-seed-account-tier]')?.addEventListener('click', function () {
+      apiPost('/Admin/CheckEngine/PortalAdmin/SeedWorkshopAccountTier', token, {
+        workshopAccountId: Number(root.querySelector('[data-ce-admin-workshop-account]')?.value || 0),
+        tierCode: root.querySelector('[data-ce-admin-account-tier-code]')?.value || '',
+        discountPercent: Number(root.querySelector('[data-ce-admin-account-tier-discount]')?.value || 0)
+      })
+        .then(function () {
+          showAlert(alert, 'success', 'Seeded account tier');
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', (err && err.errorCode) || 'Seed account tier failed.');
+        });
+    });
     root.querySelector('[data-ce-admin-seed-fleet-approver]')?.addEventListener('click', function () {
       apiPost('/Admin/CheckEngine/PortalAdmin/SeedFleetApprover', token, {
         fleetAccountId: Number(root.querySelector('[data-ce-admin-fleet-account]')?.value || 0),
