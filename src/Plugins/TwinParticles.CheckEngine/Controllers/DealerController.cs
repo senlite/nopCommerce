@@ -139,8 +139,13 @@ public sealed class DealerController : BasePublicController
         return await _portalAccess.ResolveDealerAsync(customer.Id, isOperator, cancellationToken);
     }
 
-    private Task<bool> IsOperatorAsync()
-        => _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
+    private async Task<bool> IsOperatorAsync()
+    {
+        if (await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return true;
+
+        return await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngineDealer.SystemName);
+    }
 
     private static int StatusFor(string? errorCode)
         => errorCode == PortalErrorCodes.AccessUnauthenticated ? 401 : 403;

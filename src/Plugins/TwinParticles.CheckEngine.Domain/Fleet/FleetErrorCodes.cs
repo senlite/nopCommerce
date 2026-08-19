@@ -7,4 +7,5 @@ public static class FleetErrorCodes
     public const string FitmentBlocked = "fleet.fitment_blocked";
     public const string BudgetExceeded = "fleet.budget_exceeded";
     public const string InvalidDecision = "fleet.invalid_decision";
+    public const string ApproverDenied = "fleet.approver_denied";
 }

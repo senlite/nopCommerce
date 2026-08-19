@@ -207,4 +207,124 @@ public class VerticalPortalConventionsTests
         admin.Should().Contain("data-ce-admin-seed-allocation");
         admin.Should().Contain("data-ce-admin-seed-quota");
     }
+
+    [Test]
+    public void Horizon4_v068_Should_Close_Remaining_Portal_Gaps()
+    {
+        var bridge = ReadInfrastructureFile("Portals", "NopPortalOrderBridge.cs");
+        bridge.Should().Contain("OrderPlacedEvent");
+
+        var fleet = ReadApplicationFile("Fleet", "FleetPortalService.cs");
+        fleet.Should().Contain("InsertVehicleSpendAsync");
+        fleet.Should().Contain("PortalTradePricingService");
+
+        var dealer = ReadApplicationFile("Dealer", "DealerPortalService.cs");
+        dealer.Should().Contain("OemResolveService");
+        dealer.Should().Contain("GetCatalogViewAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("UpdateAccountAsync");
+        workshop.Should().Contain("supplementaryLabourFee");
+
+        var migration = ReadInfrastructureFile("Migrations", "202608182200_Horizon4Completion.cs");
+        migration.Should().Contain("TP_CE_FleetVehicleSpend");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("SubmitApprovalRequest");
+        portalsJs.Should().Contain("vehicleCostSummaries");
+        portalsJs.Should().Contain("SeedDealerFranchise");
+    }
+
+    [Test]
+    public void Horizon4_Final_Should_Add_Customers_Roles_Territory_And_Split_Invoice()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608182300_Horizon4Final.cs");
+        migration.Should().Contain("TP_CE_WorkshopCustomer");
+        migration.Should().Contain("TP_CE_FleetMember");
+        migration.Should().Contain("TP_CE_DealerTerritory");
+
+        var dealer = ReadApplicationFile("Dealer", "DealerPortalService.cs");
+        dealer.Should().Contain("FitmentBlocked");
+        dealer.Should().Contain("TerritoryDenied");
+
+        var access = ReadApplicationFile("Portals", "VerticalPortalAccessService.cs");
+        access.Should().Contain("CanApproveFleetAsync");
+        access.Should().Contain("CanRaiseWorkshopInvoiceAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("CreateWorkshopCustomerAsync");
+        workshop.Should().Contain("InvoicedOrderId");
+    }
+
+    [Test]
+    public void Horizon4_v069_Should_Expose_Portal_Ui_And_Permissions()
+    {
+        var workshopController = ReadPluginFile("Controllers", "WorkshopController.cs");
+        workshopController.Should().Contain("ManageCheckEngineWorkshop");
+
+        var fleetController = ReadPluginFile("Controllers", "FleetController.cs");
+        fleetController.Should().Contain("ManageCheckEngineFleet");
+
+        var dealerController = ReadPluginFile("Controllers", "DealerController.cs");
+        dealerController.Should().Contain("ManageCheckEngineDealer");
+
+        var admin = ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml");
+        admin.Should().Contain("data-ce-admin-seed-technician");
+        admin.Should().Contain("data-ce-admin-seed-fleet-approver");
+        admin.Should().Contain("data-ce-admin-seed-territory");
+
+        var workshopView = ReadPluginFile("Views", "Workshop", "Index.cshtml");
+        workshopView.Should().Contain("data-ce-workshop-customers");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("CreateWorkshopCustomer");
+        portalsJs.Should().Contain("SeedFleetApprover");
+        portalsJs.Should().Contain("vehicleConfigurationId");
+        portalsJs.Should().Contain("data-ce-workshop-invoice-vehicle");
+    }
+
+    [Test]
+    public void Horizon4_v070_Should_Add_Service_History_And_Front_Desk()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608191000_Horizon4WorkshopRoles.cs");
+        migration.Should().Contain("IsFrontDesk");
+
+        var access = ReadApplicationFile("Portals", "VerticalPortalAccessService.cs");
+        access.Should().Contain("ResolveWorkshopCapabilitiesAsync");
+        access.Should().Contain("CanAssignWorkshopTechnicianAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("GetServiceHistoryAsync");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("ServiceHistory");
+        portalsJs.Should().Contain("AssignTechnician");
+        portalsJs.Should().Contain("isFrontDesk");
+    }
+
+    [Test]
+    public void Horizon4_v071_Should_Add_Export_Credit_Statements_And_Technician_Scoping()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608191200_Horizon4WorkshopCompletion.cs");
+        migration.Should().Contain("TP_CE_WorkshopLabourRate");
+        migration.Should().Contain("TP_CE_WorkshopCreditStatement");
+
+        var access = ReadApplicationFile("Portals", "VerticalPortalAccessService.cs");
+        access.Should().Contain("CanModifyWorkshopJobAsync");
+        access.Should().Contain("ResolveTechnicianJobFilterAsync");
+
+        var repository = ReadInfrastructureFile("Workshop", "SqlWorkshopJobRepository.cs");
+        repository.Should().Contain("ResolveAccountForPortalUserAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("ExportCustomerAsync");
+
+        var credit = ReadApplicationFile("Workshop", "WorkshopCreditStatementService.cs");
+        credit.Should().Contain("GenerateStatementAsync");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("ExportCustomer");
+        portalsJs.Should().Contain("GenerateCreditStatement");
+        portalsJs.Should().Contain("operationCode");
+    }
 }

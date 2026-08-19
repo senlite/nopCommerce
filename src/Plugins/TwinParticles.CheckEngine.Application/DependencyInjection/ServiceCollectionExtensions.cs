@@ -117,9 +117,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<PayoutStatementService>();
         services.AddScoped<OrderVendorSplitService>();
         services.AddScoped<WorkshopJobService>();
+        services.AddScoped<WorkshopCreditStatementService>();
         services.AddScoped<FleetPortalService>();
         services.AddScoped<DealerPortalService>();
         services.AddScoped<PortalAdminService>();
+        services.AddScoped<PortalTradePricingService>();
         services.AddScoped<VerticalPortalAccessService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<ErpInboundWebhookService>();

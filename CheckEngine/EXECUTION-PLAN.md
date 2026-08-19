@@ -266,9 +266,9 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status |
 |---|---|---|
-| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | `WorkshopJobService` + design-system UI at `check-engine/workshop`; `PortalAdminService` provisions accounts; plugin 0.64.0 |
-| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | `FleetPortalService` (`ImportFleetVins` via `VinDecodeApplicationService`, `SubmitApprovalRequest`/`DecideApprovalRequest` with budget enforcement); `TP_CE_Fleet*` schema; `check-engine/fleet/{action}`; `FleetPortalLicenceGate` + `ManageCheckEngineFleet` |
-| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | done | `DealerPortalService` (`GetDealerCatalogView`, `PlaceDealerOrder` with allocation/quota checks, warranty claim workflow); `TP_CE_Dealer*` + `TP_CE_WarrantyClaim`; `check-engine/dealer/{action}`; `DealerPortalLicenceGate` + `ManageCheckEngineDealer`; dealer ≠ marketplace vendor (FR-1201) |
+| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | Export (FR-1012), credit statements (FR-1022), technician scoping (FR-1025), labour rates; plugin 0.71.0 |
+| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | Requester/approver UI separation, import batch table on load; plugin 0.69.0 |
+| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | done | Order vehicle config for territory/fitment; portal-specific operator permissions; plugin 0.69.0 |
 
 ### Horizon 5 — Platform / v2.0 (`EP-28`)
 

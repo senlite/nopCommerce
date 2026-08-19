@@ -9,4 +9,5 @@ public static class DealerErrorCodes
     public const string TerritoryDenied = "dealer.territory_denied";
     public const string InvalidTransition = "dealer.invalid_transition";
     public const string EmptyOrder = "dealer.empty_order";
+    public const string FitmentBlocked = "dealer.fitment_blocked";
 }
