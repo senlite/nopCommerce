@@ -26,7 +26,34 @@
                     </div>
                     <button type="button" class="ce-btn ce-btn--primary" data-ce-garage-load>@T("Admin.Common.View")</button>
                 </div>
-                <pre class="mt-3" data-ce-garage-result style="white-space:pre-wrap;max-height:24rem;overflow:auto;"></pre>
+                <div class="ce-mp-stat-grid mt-3" data-ce-garage-stats></div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Vehicles")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>VIN</th>
+                                <th>Label</th>
+                                <th>Configuration</th>
+                                <th>Active</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-garage-vehicles></tbody>
+                    </table>
+                </div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Oems")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>OEM number</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-garage-oems></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

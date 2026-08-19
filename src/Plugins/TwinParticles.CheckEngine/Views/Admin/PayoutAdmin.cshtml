@@ -106,7 +106,28 @@
                     <button type="button" class="btn btn-secondary" data-ce-payout-push>@T("Plugins.TwinParticles.CheckEngine.Payout.PushErp")</button>
                     <button type="button" class="btn btn-primary" data-ce-payout-reconcile>@T("Plugins.TwinParticles.CheckEngine.Payout.Reconcile")</button>
                 </div>
-                <pre class="ce-code mt-3" data-ce-payout-recon hidden style="white-space: pre-wrap;"></pre>
+                <div class="ce-mp-stat-grid mt-3" data-ce-payout-recon hidden>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Succeeded</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-succeeded></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Local net</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-local></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">ERP total</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-erp></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Variance</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-variance></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Within tolerance</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-ok></span>
+                    </article>
+                </div>
             </div>
         </div>
     </div>

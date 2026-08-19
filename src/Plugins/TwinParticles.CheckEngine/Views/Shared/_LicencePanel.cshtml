@@ -10,7 +10,19 @@
         <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint")</p>
         <div class="alert alert-info" data-ce-licence-alert hidden role="status"></div>
         <p class="font-weight-bold mb-1">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Status")</p>
-        <pre data-ce-licence-status class="bg-light p-3" style="white-space: pre-wrap;">Loading…</pre>
+        <table class="table table-bordered table-sm" data-ce-licence-status>
+            <tbody>
+                <tr><th>Status</th><td data-ce-licence-state>Loading…</td></tr>
+                <tr><th>Active</th><td data-ce-licence-active>—</td></tr>
+                <tr><th>Tier</th><td data-ce-licence-tier>—</td></tr>
+                <tr><th>Marketplace</th><td data-ce-licence-marketplace>—</td></tr>
+                <tr><th>Workshop</th><td data-ce-licence-workshop>—</td></tr>
+                <tr><th>Fleet</th><td data-ce-licence-fleet>—</td></tr>
+                <tr><th>Dealer</th><td data-ce-licence-dealer>—</td></tr>
+                <tr><th>Last heartbeat</th><td data-ce-licence-heartbeat>—</td></tr>
+                <tr><th>Reason</th><td data-ce-licence-reason>—</td></tr>
+            </tbody>
+        </table>
         <div class="form-group">
             <label for="ce-licence-key-input">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Key")</label>
             <textarea id="ce-licence-key-input" data-ce-licence-key class="form-control" rows="3" placeholder="ce-lic-v1.…"></textarea>

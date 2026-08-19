@@ -38,7 +38,18 @@
                         <button id="ce-fit-infer" type="button" class="btn btn-primary btn-block">Infer</button>
                     </div>
                 </div>
-                <pre id="ce-fit-infer-result" class="mt-2" style="white-space: pre-wrap;"></pre>
+                <table class="table table-bordered table-sm mt-2" id="ce-fit-infer-result" hidden>
+                    <tbody>
+                        <tr><th>Claim id</th><td data-ce-fit-infer-id></td></tr>
+                        <tr><th>Product</th><td data-ce-fit-infer-product></td></tr>
+                        <tr><th>Configuration</th><td data-ce-fit-infer-config></td></tr>
+                        <tr><th>Status</th><td data-ce-fit-infer-status></td></tr>
+                        <tr><th>Confidence</th><td data-ce-fit-infer-confidence></td></tr>
+                        <tr><th>Source</th><td data-ce-fit-infer-source></td></tr>
+                        <tr><th>Rationale</th><td data-ce-fit-infer-rationale></td></tr>
+                    </tbody>
+                </table>
+                <p class="text-danger mt-2 mb-0" id="ce-fit-infer-error" hidden></p>
             </div>
         </div>
 
@@ -73,6 +84,16 @@
 <script>
 (function () {
   var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  function pick(obj, camel, pascal) {
+    if (!obj) return undefined;
+    if (obj[camel] !== undefined) return obj[camel];
+    if (obj[pascal] !== undefined) return obj[pascal];
+    return undefined;
+  }
+  function setText(selector, value) {
+    var el = document.querySelector(selector);
+    if (el) el.textContent = value == null || value === '' ? '—' : String(value);
+  }
   function headers(json) {
     var h = { 'Accept': 'application/json' };
     if (json) h['Content-Type'] = 'application/json';
@@ -122,15 +143,39 @@
     var productId = parseInt(document.getElementById('ce-fit-product').value, 10);
     var configurationId = parseInt(document.getElementById('ce-fit-config').value, 10);
     var productName = document.getElementById('ce-fit-name').value;
+    var table = document.getElementById('ce-fit-infer-result');
+    var errorEl = document.getElementById('ce-fit-infer-error');
+    errorEl.hidden = true;
+    table.hidden = true;
     fetch('/Admin/CheckEngine/FitmentAdmin/Infer', {
       method: 'POST',
       headers: headers(true),
       body: JSON.stringify({ productId: productId, vehicleConfigurationId: configurationId, productName: productName })
-    }).then(function (r) { return r.text(); })
-      .then(function (text) {
-        document.getElementById('ce-fit-infer-result').textContent = text;
-        load();
-      });
+    }).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+    }).then(function (res) {
+      if (!res.ok) {
+        errorEl.hidden = false;
+        errorEl.textContent = (res.body && (res.body.reasonCode || res.body.errorCode)) || 'Inference failed.';
+        return;
+      }
+      var claim = res.body || {};
+      var provenance = pick(claim, 'provenance', 'Provenance') || {};
+      var sourceReference = pick(provenance, 'sourceReference', 'SourceReference') || '';
+      var rationale = sourceReference.indexOf('|') >= 0 ? sourceReference.split('|').slice(1).join('|') : sourceReference;
+      setText('[data-ce-fit-infer-id]', pick(claim, 'id', 'Id'));
+      setText('[data-ce-fit-infer-product]', pick(claim, 'productId', 'ProductId'));
+      setText('[data-ce-fit-infer-config]', pick(claim, 'vehicleConfigurationId', 'VehicleConfigurationId'));
+      setText('[data-ce-fit-infer-status]', pick(claim, 'status', 'Status'));
+      setText('[data-ce-fit-infer-confidence]', pick(claim, 'confidence', 'Confidence'));
+      setText('[data-ce-fit-infer-source]', pick(provenance, 'sourceKind', 'SourceKind'));
+      setText('[data-ce-fit-infer-rationale]', rationale);
+      table.hidden = false;
+      load();
+    }).catch(function () {
+      errorEl.hidden = false;
+      errorEl.textContent = 'Inference failed.';
+    });
   });
   load();
 })();

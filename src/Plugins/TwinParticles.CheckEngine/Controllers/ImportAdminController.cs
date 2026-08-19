@@ -36,9 +36,10 @@ public sealed class ImportAdminController : BasePluginController
     }
 
     [HttpGet]
-    public async Task<IActionResult> BatchBoard(CancellationToken cancellationToken)
+    public async Task<IActionResult> BatchBoard(Guid? batchId, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        ViewBag.BatchId = batchId;
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/ImportBatch.cshtml");
     }
 
@@ -71,7 +72,7 @@ public sealed class ImportAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(BatchBoard));
+            return RedirectToAction(nameof(BatchBoard), new { batchId });
 
         var batch = await _orchestrator.GetBatchAsync(batchId, cancellationToken);
         if (batch is null)

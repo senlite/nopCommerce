@@ -15,29 +15,33 @@
     return headers;
   }
 
-  function renderLicence(statusEl, data) {
-    if (!statusEl) return;
-    var licence = data && data.licence ? data.licence : data || {};
-    statusEl.textContent = JSON.stringify(
-      {
-        status: pick(licence, 'state', 'State'),
-        active: pick(licence, 'isActive', 'IsActive'),
-        tier: pick(licence, 'tier', 'Tier'),
-        marketplace: pick(licence, 'marketplaceModuleEntitlement', 'MarketplaceModuleEntitlement'),
-        workshop: pick(licence, 'workshopPortalEntitlement', 'WorkshopPortalEntitlement'),
-        fleet: pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement'),
-        dealer: pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement'),
-        lastHeartbeatUtc: pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'),
-        reasonCode: pick(licence, 'reasonCode', 'ReasonCode')
-      },
-      null,
-      2
-    );
+  function yn(value) {
+    if (value === true || value === 'true') return 'Yes';
+    if (value === false || value === 'false') return 'No';
+    return value == null || value === '' ? '—' : String(value);
+  }
+
+  function setCell(root, selector, value) {
+    var el = root.querySelector(selector);
+    if (el) el.textContent = value == null || value === '' ? '—' : String(value);
+  }
+
+  function renderLicence(root, data) {
+    if (!root) return;
+    var licence = (data && (data.licence || data.Licence)) || data || {};
+    setCell(root, '[data-ce-licence-state]', pick(licence, 'state', 'State'));
+    setCell(root, '[data-ce-licence-active]', yn(pick(licence, 'isActive', 'IsActive')));
+    setCell(root, '[data-ce-licence-tier]', pick(licence, 'tier', 'Tier'));
+    setCell(root, '[data-ce-licence-marketplace]', yn(pick(licence, 'marketplaceModuleEntitlement', 'MarketplaceModuleEntitlement')));
+    setCell(root, '[data-ce-licence-workshop]', yn(pick(licence, 'workshopPortalEntitlement', 'WorkshopPortalEntitlement')));
+    setCell(root, '[data-ce-licence-fleet]', yn(pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement')));
+    setCell(root, '[data-ce-licence-dealer]', yn(pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement')));
+    setCell(root, '[data-ce-licence-heartbeat]', pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'));
+    setCell(root, '[data-ce-licence-reason]', pick(licence, 'reasonCode', 'ReasonCode'));
   }
 
   function initLicencePanel(root) {
     var token = document.querySelector('input[name="__RequestVerificationToken"]');
-    var statusEl = root.querySelector('[data-ce-licence-status]');
     var keyEl = root.querySelector('[data-ce-licence-key]');
     var activateBtn = root.querySelector('[data-ce-licence-activate]');
     var heartbeatBtn = root.querySelector('[data-ce-licence-heartbeat]');
@@ -56,10 +60,10 @@
           return r.json();
         })
         .then(function (data) {
-          renderLicence(statusEl, data);
+          renderLicence(root, data);
         })
         .catch(function () {
-          if (statusEl) statusEl.textContent = 'Unable to load licence status.';
+          setCell(root, '[data-ce-licence-state]', 'Unable to load licence status.');
         });
     }
 
@@ -78,7 +82,7 @@
             });
           })
           .then(function (status) {
-            renderLicence(statusEl, status);
+            renderLicence(root, status);
             showAlert('success', 'Licence activated.');
           })
           .catch(function (err) {
@@ -98,7 +102,7 @@
             return r.json();
           })
           .then(function (status) {
-            renderLicence(statusEl, status);
+            renderLicence(root, status);
             showAlert('success', 'Heartbeat recorded.');
           })
           .catch(refreshLicence);

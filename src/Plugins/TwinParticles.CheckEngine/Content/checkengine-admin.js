@@ -43,10 +43,42 @@
     return [];
   }
 
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function display(value) {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    return escapeHtml(value);
+  }
+
+  function renderStatGrid(el, items) {
+    if (!el) return;
+    el.innerHTML = (items || [])
+      .map(function (item) {
+        return (
+          '<article class="ce-mp-stat"><span class="ce-mp-stat__label">' +
+          escapeHtml(item.label) +
+          '</span><span class="ce-mp-stat__value' +
+          (item.code ? ' ce-code' : '') +
+          '">' +
+          display(item.value) +
+          '</span></article>'
+        );
+      })
+      .join('');
+  }
+
   function renderRows(tbody, rows, cols, emptyText) {
     if (!tbody) return;
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="' + cols.length + '">' + (emptyText || 'No rows.') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="' + cols.length + '">' + escapeHtml(emptyText || 'No rows.') + '</td></tr>';
       return;
     }
     tbody.innerHTML = rows
@@ -55,8 +87,7 @@
           '<tr>' +
           cols
             .map(function (col) {
-              var val = col.value(row);
-              return '<td' + (col.code ? ' class="ce-code"' : '') + '>' + (val == null ? '—' : val) + '</td>';
+              return '<td' + (col.code ? ' class="ce-code"' : '') + '>' + display(col.value(row)) + '</td>';
             })
             .join('') +
           '</tr>'
@@ -148,7 +179,25 @@
   function initGarageAdmin(root) {
     var t = token(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
-    var panel = root.querySelector('[data-ce-garage-result]');
+    var stats = root.querySelector('[data-ce-garage-stats]');
+    var vehiclesBody = root.querySelector('[data-ce-garage-vehicles]');
+    var oemsBody = root.querySelector('[data-ce-garage-oems]');
+    var vehicleCols = [
+      { value: function (r) { return pick(r, 'id', 'Id'); }, code: true },
+      { value: function (r) { return pick(r, 'vin', 'Vin'); }, code: true },
+      { value: function (r) { return pick(r, 'label', 'Label'); } },
+      { value: function (r) { return pick(r, 'vehicleConfigurationId', 'VehicleConfigurationId'); }, code: true },
+      { value: function (r) { return pick(r, 'isActive', 'IsActive'); } }
+    ];
+    var oemCols = [
+      { value: function (r) { return pick(r, 'id', 'Id'); }, code: true },
+      { value: function (r) { return pick(r, 'displayNumber', 'DisplayNumber') || pick(r, 'oemNumberId', 'OemNumberId'); }, code: true }
+    ];
+    function clearGarage() {
+      if (stats) stats.innerHTML = '';
+      renderRows(vehiclesBody, [], vehicleCols, 'No vehicles.');
+      renderRows(oemsBody, [], oemCols, 'No OEM numbers.');
+    }
     root.querySelector('[data-ce-garage-load]')?.addEventListener('click', function () {
       var customerId = Number(root.querySelector('[data-ce-garage-customer]')?.value || 0);
       if (!customerId) {
@@ -159,11 +208,21 @@
       apiGet('/Admin/CheckEngine/GarageAdmin/CustomerGarage?customerId=' + customerId + '&json=1', t)
         .then(function (data) {
           showAlert(alert, 'success', 'Garage loaded for customer #' + customerId);
-          if (panel) panel.textContent = JSON.stringify(data, null, 2);
+          var vehicles = asArray(pick(data, 'vehicles', 'Vehicles'));
+          var oems = asArray(pick(data, 'oems', 'Oems'));
+          renderStatGrid(stats, [
+            { label: 'Garage id', value: pick(data, 'id', 'Id'), code: true },
+            { label: 'Customer', value: pick(data, 'customerId', 'CustomerId') || customerId, code: true },
+            { label: 'Vehicles', value: vehicles.length },
+            { label: 'OEM numbers', value: oems.length },
+            { label: 'Active vehicle', value: pick(data, 'activeGarageVehicleId', 'ActiveGarageVehicleId'), code: true }
+          ]);
+          renderRows(vehiclesBody, vehicles, vehicleCols, 'No vehicles.');
+          renderRows(oemsBody, oems, oemCols, 'No OEM numbers.');
         })
         .catch(function () {
           showAlert(alert, 'error', 'Garage not found for customer #' + customerId);
-          if (panel) panel.textContent = '';
+          clearGarage();
         });
     });
   }
@@ -171,13 +230,39 @@
   function initErpAdmin(root) {
     var t = token(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
-    var panel = root.querySelector('[data-ce-erp-result]');
+    var stats = root.querySelector('[data-ce-erp-stats]');
+    var variancesBody = root.querySelector('[data-ce-erp-variances]');
+    var issuesEl = root.querySelector('[data-ce-erp-issues]');
     root.querySelector('[data-ce-erp-reconcile]')?.addEventListener('click', function () {
       showAlert(alert, 'info', 'Running reconciliation…');
       apiGet('/Admin/CheckEngine/ErpAdmin/Reconcile?json=1', t)
         .then(function (data) {
           showAlert(alert, 'success', 'Reconciliation complete.');
-          if (panel) panel.textContent = JSON.stringify(data, null, 2);
+          renderStatGrid(stats, [
+            { label: 'Total jobs', value: pick(data, 'totalJobs', 'TotalJobs') },
+            { label: 'Successful', value: pick(data, 'successfulJobs', 'SuccessfulJobs') },
+            { label: 'Failed', value: pick(data, 'failedJobs', 'FailedJobs') },
+            { label: 'Discrepancy', value: pick(data, 'hasFinancialDiscrepancy', 'HasFinancialDiscrepancy') },
+            { label: 'Generated', value: pick(data, 'generatedUtc', 'GeneratedUtc') }
+          ]);
+          renderRows(
+            variancesBody,
+            asArray(pick(data, 'variances', 'Variances')),
+            [
+              { value: function (r) { return pick(r, 'metric', 'Metric'); } },
+              { value: function (r) { return pick(r, 'local', 'Local'); } },
+              { value: function (r) { return pick(r, 'erp', 'Erp'); } },
+              { value: function (r) { return pick(r, 'absoluteVariance', 'AbsoluteVariance'); } },
+              { value: function (r) { return pick(r, 'withinTolerance', 'WithinTolerance'); } }
+            ],
+            'No variances.'
+          );
+          var issues = asArray(pick(data, 'issues', 'Issues'));
+          if (issuesEl) {
+            issuesEl.innerHTML = issues.length
+              ? issues.map(function (issue) { return '<li>' + escapeHtml(issue) + '</li>'; }).join('')
+              : '<li class="text-muted">No issues.</li>';
+          }
         })
         .catch(function () {
           showAlert(alert, 'error', 'Reconciliation failed.');
@@ -193,7 +278,7 @@
         .then(function (r) {
           return r.json().then(function (body) {
             if (!r.ok) throw body;
-            showAlert(alert, 'success', 'Processed ' + (body.processed || 0) + ' jobs.');
+            showAlert(alert, 'success', 'Processed ' + (pick(body, 'processed', 'Processed') || 0) + ' jobs.');
           });
         })
         .catch(function () {
@@ -243,8 +328,17 @@
   function initImportBatch(root) {
     var t = token(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
-    var panel = root.querySelector('[data-ce-import-result]');
-    root.querySelector('[data-ce-import-load]')?.addEventListener('click', function () {
+    var stats = root.querySelector('[data-ce-import-stats]');
+    var rowsBody = root.querySelector('[data-ce-import-rows]');
+    var rowCols = [
+      { value: function (r) { return pick(r, 'rowNumber', 'RowNumber'); } },
+      { value: function (r) { return pick(r, 'reviewStatus', 'ReviewStatus'); } },
+      { value: function (r) { return pick(r, 'oemNumberNormalized', 'OemNumberNormalized'); }, code: true },
+      { value: function (r) { return pick(r, 'vehicleConfigurationId', 'VehicleConfigurationId'); }, code: true },
+      { value: function (r) { return pick(r, 'isPublished', 'IsPublished'); } },
+      { value: function (r) { return pick(r, 'lastStageError', 'LastStageError') || pick(r, 'publishError', 'PublishError'); } }
+    ];
+    function loadBatch() {
       var batchId = root.querySelector('[data-ce-import-batch]')?.value || '';
       if (!batchId.trim()) {
         showAlert(alert, 'error', 'Enter a batch id.');
@@ -254,13 +348,26 @@
       apiGet('/Admin/CheckEngine/ImportAdmin/Batch?batchId=' + encodeURIComponent(batchId.trim()) + '&json=1', t)
         .then(function (data) {
           showAlert(alert, 'success', 'Batch loaded.');
-          if (panel) panel.textContent = JSON.stringify(data, null, 2);
+          renderStatGrid(stats, [
+            { label: 'Batch id', value: pick(data, 'batchId', 'BatchId'), code: true },
+            { label: 'File', value: pick(data, 'fileName', 'FileName') },
+            { label: 'Status', value: pick(data, 'status', 'Status') },
+            { label: 'Stage', value: pick(data, 'currentStage', 'CurrentStage') },
+            { label: 'Total rows', value: pick(data, 'totalRows', 'TotalRows') },
+            { label: 'Published', value: pick(data, 'publishedRows', 'PublishedRows') },
+            { label: 'Failed', value: pick(data, 'failedRows', 'FailedRows') }
+          ]);
+          renderRows(rowsBody, asArray(pick(data, 'rows', 'Rows')), rowCols, 'No rows.');
         })
         .catch(function () {
           showAlert(alert, 'error', 'Batch not found.');
-          if (panel) panel.textContent = '';
+          if (stats) stats.innerHTML = '';
+          renderRows(rowsBody, [], rowCols, 'No rows.');
         });
-    });
+    }
+    root.querySelector('[data-ce-import-load]')?.addEventListener('click', loadBatch);
+    var initial = root.querySelector('[data-ce-import-batch]')?.value;
+    if (initial && initial.trim()) loadBatch();
   }
 
   function initDiagnosticsAdmin(root) {
@@ -323,7 +430,13 @@
       })
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
-          if (panel) panel.textContent = JSON.stringify(res.body, null, 2);
+          renderStatGrid(panel, [
+            { label: 'Already loaded', value: pick(res.body, 'alreadyLoaded', 'AlreadyLoaded') },
+            { label: 'Products', value: pick(res.body, 'productsInserted', 'ProductsInserted') },
+            { label: 'Fitment claims', value: pick(res.body, 'fitmentClaimsInserted', 'FitmentClaimsInserted') },
+            { label: 'Configurations', value: pick(res.body, 'configurationsInserted', 'ConfigurationsInserted') },
+            { label: 'OEM entries', value: pick(res.body, 'oemEntriesUpserted', 'OemEntriesUpserted') }
+          ]);
           showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Catalog load complete.' : 'Catalog load failed.');
           load();
         })
@@ -354,6 +467,8 @@
     var t = token(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var panel = root.querySelector('[data-ce-image-result]');
+    var manifestStats = root.querySelector('[data-ce-image-manifest-stats]');
+    var manifestRows = root.querySelector('[data-ce-image-manifest-rows]');
     root.querySelector('[data-ce-image-replace]')?.addEventListener('click', function () {
       var productId = parseInt(root.querySelector('[data-ce-image-product]')?.value || '0', 10);
       var sourceUrl = root.querySelector('[data-ce-image-url]')?.value || '';
@@ -374,7 +489,14 @@
       })
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
-          if (panel) panel.textContent = JSON.stringify(res.body, null, 2);
+          renderStatGrid(panel, [
+            { label: 'Success', value: pick(res.body, 'success', 'Success') },
+            { label: 'Picture id', value: pick(res.body, 'pictureId', 'PictureId'), code: true },
+            { label: 'Placeholder', value: pick(res.body, 'usedPlaceholder', 'UsedPlaceholder') },
+            { label: 'Quarantined', value: pick(res.body, 'quarantined', 'Quarantined') },
+            { label: 'CDN URL', value: pick(res.body, 'cdnUrl', 'CdnUrl') },
+            { label: 'Error', value: pick(res.body, 'errorCode', 'ErrorCode') || pick(res.body, 'reasonCode', 'ReasonCode') }
+          ]);
           showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Primary image replaced.' : 'Replace failed.');
         })
         .catch(function () {
@@ -395,7 +517,23 @@
       })
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
-          if (panel) panel.textContent = JSON.stringify(res.body, null, 2);
+          renderStatGrid(manifestStats, [
+            { label: 'Replaced', value: pick(res.body, 'replaced', 'Replaced') },
+            { label: 'Not found', value: pick(res.body, 'notFound', 'NotFound') },
+            { label: 'Quarantined', value: pick(res.body, 'quarantined', 'Quarantined') },
+            { label: 'Failed', value: pick(res.body, 'failed', 'Failed') }
+          ]);
+          renderRows(
+            manifestRows,
+            asArray(pick(res.body, 'items', 'Items')),
+            [
+              { value: function (r) { return pick(r, 'sku', 'Sku'); }, code: true },
+              { value: function (r) { return pick(r, 'productId', 'ProductId'); }, code: true },
+              { value: function (r) { return pick(r, 'status', 'Status'); } },
+              { value: function (r) { return pick(r, 'errorCode', 'ErrorCode'); } }
+            ],
+            'No manifest rows.'
+          );
           showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Manifest applied.' : 'Manifest failed.');
         })
         .catch(function () {

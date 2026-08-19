@@ -39,6 +39,28 @@ public class JsonHtmlBoardConventionsTests
         js.Should().Contain("DiagnosticsAdmin/Package");
         js.Should().Contain("ReferenceDataAdmin/Status");
         js.Should().Contain("ImageAdmin/Replace");
+        js.Should().Contain("data-ce-garage-vehicles");
+        js.Should().Contain("data-ce-erp-variances");
+        js.Should().Contain("data-ce-import-rows");
+        js.Should().Contain("data-ce-image-manifest-rows");
+        js.Should().NotContain("[data-ce-garage-result]");
+        js.Should().NotContain("[data-ce-erp-result]");
+        js.Should().NotContain("[data-ce-import-result]");
+    }
+
+    [Test]
+    public void Admin_Boards_Should_Not_Dump_Json_Into_Pre_Tags()
+    {
+        ReadPluginFile("Content", "checkengine-admin.js").Should().NotContain("panel.textContent = JSON.stringify");
+        ReadPluginFile("Content", "checkengine-licence-admin.js").Should().Contain("data-ce-licence-state");
+        ReadPluginFile("Content", "checkengine-licence-admin.js").Should().NotContain("statusEl.textContent = JSON.stringify");
+        ReadPluginFile("Content", "checkengine-marketplace.js").Should().Contain("data-ce-payout-recon-succeeded");
+        ReadPluginFile("Content", "checkengine-marketplace.js").Should().NotContain("recon.textContent = JSON.stringify");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml").Should().NotContain("<pre");
+        ReadPluginFile("Views", "Admin", "FitmentAiReview.cshtml").Should().NotContain("<pre");
+        ReadPluginFile("Views", "Admin", "PayoutAdmin.cshtml").Should().NotContain("<pre");
+        ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml").Should().Contain("data-ce-licence-state");
+        ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml").Should().NotContain("<pre");
     }
 
     private static string AiAdmin() => ReadPluginFile("Controllers", "AiAdminController.cs");

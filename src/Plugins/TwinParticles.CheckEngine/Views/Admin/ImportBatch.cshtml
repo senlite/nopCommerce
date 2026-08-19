@@ -22,11 +22,26 @@
                 <div class="ce-mp-toolbar">
                     <div class="ce-mp-field">
                         <label>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Id")</label>
-                        <input class="ce-mp-input ce-code" data-ce-import-batch placeholder="batch-guid" />
+                        <input class="ce-mp-input ce-code" data-ce-import-batch placeholder="batch-guid" value="@ViewBag.BatchId" />
                     </div>
                     <button type="button" class="ce-btn ce-btn--primary" data-ce-import-load>@T("Admin.Common.View")</button>
                 </div>
-                <pre class="mt-3" data-ce-import-result style="white-space:pre-wrap;max-height:28rem;overflow:auto;"></pre>
+                <div class="ce-mp-stat-grid mt-3" data-ce-import-stats></div>
+                <div class="ce-mp-table-wrap mt-3">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Review</th>
+                                <th>OEM</th>
+                                <th>Vehicle</th>
+                                <th>Published</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-import-rows></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

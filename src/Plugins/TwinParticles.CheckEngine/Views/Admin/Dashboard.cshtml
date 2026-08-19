@@ -80,7 +80,18 @@
                     </label>
                 </div>
                 <button id="ce-import-submit" type="button" class="btn btn-primary">Upload &amp; Run Import</button>
-                <pre id="ce-import-result" class="mt-3" style="white-space: pre-wrap;"></pre>
+                <div id="ce-import-result" class="mt-3" hidden>
+                    <div class="alert alert-info mb-2" id="ce-import-result-msg" role="status"></div>
+                    <table class="table table-bordered table-sm" id="ce-import-result-table" hidden>
+                        <tbody>
+                            <tr><th>Batch id</th><td id="ce-import-result-batch"></td></tr>
+                            <tr><th>Status</th><td id="ce-import-result-status"></td></tr>
+                            <tr><th>Total rows</th><td id="ce-import-result-total"></td></tr>
+                            <tr><th>Review rows</th><td id="ce-import-result-review"></td></tr>
+                        </tbody>
+                    </table>
+                    <a id="ce-import-result-link" class="btn btn-secondary" hidden href="#">Open batch inspector</a>
+                </div>
             </div>
         </div>
     </div>
@@ -93,7 +104,35 @@
   var formatSelect = document.getElementById('ce-import-format');
   var dryRun = document.getElementById('ce-import-dry-run');
   var result = document.getElementById('ce-import-result');
+  var msg = document.getElementById('ce-import-result-msg');
+  var table = document.getElementById('ce-import-result-table');
+  var link = document.getElementById('ce-import-result-link');
   var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+
+  function pick(obj, camel, pascal) {
+    if (!obj) return undefined;
+    if (obj[camel] !== undefined) return obj[camel];
+    if (obj[pascal] !== undefined) return obj[pascal];
+    return undefined;
+  }
+
+  function showImport(kind, message, data) {
+    result.hidden = false;
+    msg.className = 'alert alert-' + (kind === 'error' ? 'danger' : kind === 'success' ? 'success' : 'info') + ' mb-2';
+    msg.textContent = message;
+    var batchId = data ? pick(data, 'batchId', 'BatchId') : null;
+    table.hidden = !data;
+    link.hidden = !batchId;
+    if (data) {
+      document.getElementById('ce-import-result-batch').textContent = batchId || '—';
+      document.getElementById('ce-import-result-status').textContent = pick(data, 'status', 'Status') || '—';
+      document.getElementById('ce-import-result-total').textContent = String(pick(data, 'totalRows', 'TotalRows') ?? '—');
+      document.getElementById('ce-import-result-review').textContent = String(pick(data, 'reviewRows', 'ReviewRows') ?? '—');
+    }
+    if (batchId) {
+      link.href = '/Admin/CheckEngine/ImportAdmin/BatchBoard?batchId=' + encodeURIComponent(batchId);
+    }
+  }
 
   function toBase64(file) {
     return new Promise(function (resolve, reject) {
@@ -111,10 +150,10 @@
   submit.addEventListener('click', function () {
     var file = fileInput.files && fileInput.files[0];
     if (!file) {
-      result.textContent = 'Choose a file first.';
+      showImport('error', 'Choose a file first.');
       return;
     }
-    result.textContent = 'Uploading…';
+    showImport('info', 'Uploading…');
     toBase64(file).then(function (base64) {
       var headers = {
         'Content-Type': 'application/json',
@@ -134,11 +173,17 @@
         })
       });
     }).then(function (response) {
-      return response.text().then(function (text) {
-        result.textContent = response.status + ' ' + response.statusText + '\n' + text;
+      return response.json().then(function (body) {
+        if (!response.ok) {
+          showImport('error', (body && (body.reasonCode || body.errorCode)) || (response.status + ' ' + response.statusText));
+          return;
+        }
+        showImport('success', 'Import pipeline started.', body);
+      }).catch(function () {
+        showImport('error', response.status + ' ' + response.statusText);
       });
     }).catch(function (err) {
-      result.textContent = 'Import failed: ' + (err && err.message ? err.message : err);
+      showImport('error', 'Import failed: ' + (err && err.message ? err.message : err));
     });
   });
 })();

@@ -883,6 +883,8 @@
       detail.querySelector('[data-ce-payout-net]').textContent = formatMoney(pick(stmt, 'netPayout', 'NetPayout'));
       detail.querySelector('[data-ce-payout-erp]').textContent = pick(stmt, 'erpReferenceId', 'ErpReferenceId') || '—';
       detail.querySelector('[data-ce-payout-status]').innerHTML = statusBadge(pick(stmt, 'status', 'Status'));
+      var recon = detail.querySelector('[data-ce-payout-recon]');
+      if (recon) recon.hidden = true;
     }
 
     function postAction(path, onSuccess) {
@@ -945,13 +947,23 @@
     var reconcileBtn = root.querySelector('[data-ce-payout-reconcile]');
     if (reconcileBtn) reconcileBtn.addEventListener('click', function () {
       postAction('Reconcile', function (body) {
-        if (detail) {
-          var recon = root.querySelector('[data-ce-payout-recon]');
-          if (recon) {
-            recon.hidden = false;
-            recon.textContent = JSON.stringify(body, null, 2);
-          }
+        var recon = root.querySelector('[data-ce-payout-recon]');
+        if (!recon) return;
+        recon.hidden = false;
+        function yn(value) {
+          if (value === true || value === 'true') return 'Yes';
+          if (value === false || value === 'false') return 'No';
+          return value == null || value === '' ? '—' : String(value);
         }
+        function set(sel, val) {
+          var el = recon.querySelector(sel);
+          if (el) el.textContent = val == null || val === '' ? '—' : String(val);
+        }
+        set('[data-ce-payout-recon-succeeded]', yn(pick(body, 'succeeded', 'Succeeded')));
+        set('[data-ce-payout-recon-local]', pick(body, 'localNetPayout', 'LocalNetPayout'));
+        set('[data-ce-payout-recon-erp]', pick(body, 'erpTotal', 'ErpTotal'));
+        set('[data-ce-payout-recon-variance]', pick(body, 'variance', 'Variance'));
+        set('[data-ce-payout-recon-ok]', yn(pick(body, 'withinTolerance', 'WithinTolerance')));
       });
     });
 
