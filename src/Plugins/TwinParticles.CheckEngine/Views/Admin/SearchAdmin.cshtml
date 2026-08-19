@@ -78,6 +78,30 @@
                 <p id="ce-search-synonyms-status" class="mt-3 text-muted"></p>
             </div>
         </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Hint")</p>
+                <div class="form-group col-md-3 pl-0">
+                    <label for="ce-search-analytics-days">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Days")</label>
+                    <input id="ce-search-analytics-days" class="form-control" type="number" min="1" max="365" value="30" />
+                </div>
+                <button id="ce-search-analytics-load" type="button" class="btn btn-secondary">@T("Admin.Common.Refresh")</button>
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered" id="ce-search-analytics-table">
+                        <tbody>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Searches")</th><td data-ce-search-count>—</td></tr>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Zero")</th><td data-ce-zero-count>—</td></tr>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Clicks")</th><td data-ce-click-count>—</td></tr>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Ctr")</th><td data-ce-ctr>—</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -213,7 +237,21 @@
       loadSynonyms();
     });
   });
+  function loadAnalytics() {
+    var days = document.getElementById('ce-search-analytics-days').value || 30;
+    fetch('/Admin/CheckEngine/SearchAdmin/Analytics?days=' + encodeURIComponent(days), { headers: headers(false) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        document.querySelector('[data-ce-search-count]').textContent = data.searchCount != null ? data.searchCount : (data.SearchCount || 0);
+        document.querySelector('[data-ce-zero-count]').textContent = data.zeroResultCount != null ? data.zeroResultCount : (data.ZeroResultCount || 0);
+        document.querySelector('[data-ce-click-count]').textContent = data.clickCount != null ? data.clickCount : (data.ClickCount || 0);
+        var ctr = data.clickThroughRate != null ? data.clickThroughRate : data.ClickThroughRate;
+        document.querySelector('[data-ce-ctr]').textContent = ctr == null ? '—' : (Math.round(ctr * 1000) / 10) + '%';
+      });
+  }
+  document.getElementById('ce-search-analytics-load').addEventListener('click', loadAnalytics);
   load();
   loadSynonyms();
+  loadAnalytics();
 })();
 </script>

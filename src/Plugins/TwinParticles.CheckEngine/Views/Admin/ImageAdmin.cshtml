@@ -1,0 +1,52 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Image.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Image.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="image-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Replace")</h3>
+            </div>
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Hint")</p>
+                <div class="form-group col-md-4 pl-0">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.ProductId")</label>
+                    <input class="form-control ce-code" type="number" min="1" data-ce-image-product />
+                </div>
+                <div class="form-group col-md-8 pl-0">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.SourceUrl")</label>
+                    <input class="form-control" type="url" data-ce-image-url placeholder="https://" />
+                </div>
+                <div class="form-group col-md-4 pl-0">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.SeoName")</label>
+                    <input class="form-control" data-ce-image-seo />
+                </div>
+                <button type="button" class="btn btn-primary" data-ce-image-replace>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Replace")</button>
+                <pre class="mt-3" data-ce-image-result style="white-space:pre-wrap;max-height:16rem;overflow:auto;"></pre>
+            </div>
+        </div>
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Manifest")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Manifest.Hint")</p>
+                <textarea class="form-control" rows="8" data-ce-image-manifest placeholder="sku,sourceUrl"></textarea>
+                <button type="button" class="btn btn-secondary mt-2" data-ce-image-manifest-submit>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Manifest.Submit")</button>
+            </div>
+        </div>
+    </div>
+</section>

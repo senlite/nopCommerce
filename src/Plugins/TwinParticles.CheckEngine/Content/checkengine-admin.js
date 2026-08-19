@@ -263,6 +263,149 @@
     });
   }
 
+  function initDiagnosticsAdmin(root) {
+    var t = token(root);
+    var alert = root.querySelector('[data-ce-admin-alert]');
+    var stats = root.querySelector('[data-ce-diagnostics-stats]');
+    var panel = root.querySelector('[data-ce-diagnostics-package]');
+    function load() {
+      showAlert(alert, 'info', 'Loading diagnostics…');
+      apiGet('/Admin/CheckEngine/DiagnosticsAdmin/Package?json=1', t)
+        .then(function (data) {
+          showAlert(alert, 'info', '');
+          var health = pick(data, 'health', 'Health') || {};
+          if (stats) {
+            stats.innerHTML =
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Database</span><span class="ce-mp-stat__value">' + (pick(health, 'database', 'Database') || '—') + '</span></article>' +
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Search</span><span class="ce-mp-stat__value">' + (pick(health, 'searchIndex', 'SearchIndex') || '—') + '</span></article>' +
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">ERP</span><span class="ce-mp-stat__value">' + (pick(health, 'erp', 'Erp') || '—') + '</span></article>' +
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Licence</span><span class="ce-mp-stat__value">' + (pick(health, 'licence', 'Licence') || '—') + '</span></article>';
+          }
+          if (panel) panel.textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Failed to load diagnostics package.');
+        });
+    }
+    root.querySelector('[data-ce-diagnostics-refresh]')?.addEventListener('click', load);
+    load();
+  }
+
+  function initReferenceAdmin(root) {
+    var t = token(root);
+    var alert = root.querySelector('[data-ce-admin-alert]');
+    var stats = root.querySelector('[data-ce-reference-stats]');
+    var panel = root.querySelector('[data-ce-reference-result]');
+    function load() {
+      apiGet('/Admin/CheckEngine/ReferenceDataAdmin/Status?json=1', t)
+        .then(function (data) {
+          var status = pick(data, 'status', 'Status') || {};
+          if (stats) {
+            stats.innerHTML =
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Products</span><span class="ce-mp-stat__value">' + (pick(status, 'productCount', 'ProductCount') || 0) + '</span></article>' +
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Fitment</span><span class="ce-mp-stat__value">' + (pick(status, 'fitmentClaimCount', 'FitmentClaimCount') || 0) + '</span></article>' +
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Configs</span><span class="ce-mp-stat__value">' + (pick(status, 'configurationCount', 'ConfigurationCount') || 0) + '</span></article>' +
+              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">OEM</span><span class="ce-mp-stat__value">' + (pick(status, 'oemEntryCount', 'OemEntryCount') || 0) + '</span></article>';
+          }
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Failed to load reference catalog status.');
+        });
+    }
+    root.querySelector('[data-ce-reference-refresh]')?.addEventListener('click', load);
+    root.querySelector('[data-ce-reference-load]')?.addEventListener('click', function () {
+      var scale = parseFloat(root.querySelector('[data-ce-reference-scale]')?.value || '1');
+      var replace = !!root.querySelector('[data-ce-reference-replace]')?.checked;
+      showAlert(alert, 'info', 'Loading catalog…');
+      fetch('/Admin/CheckEngine/ReferenceDataAdmin/Load', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify({ scaleFactor: scale, replaceExisting: replace, ensureBmwVehicleSeed: true })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          if (panel) panel.textContent = JSON.stringify(res.body, null, 2);
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Catalog load complete.' : 'Catalog load failed.');
+          load();
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Catalog load failed.');
+        });
+    });
+    root.querySelector('[data-ce-reference-purge]')?.addEventListener('click', function () {
+      if (!window.confirm('Purge the reference-scale catalog?')) return;
+      fetch('/Admin/CheckEngine/ReferenceDataAdmin/Purge', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: '{}'
+      })
+        .then(function (r) {
+          showAlert(alert, r.ok ? 'success' : 'error', r.ok ? 'Catalog purged.' : 'Purge failed.');
+          load();
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Purge failed.');
+        });
+    });
+    load();
+  }
+
+  function initImageAdmin(root) {
+    var t = token(root);
+    var alert = root.querySelector('[data-ce-admin-alert]');
+    var panel = root.querySelector('[data-ce-image-result]');
+    root.querySelector('[data-ce-image-replace]')?.addEventListener('click', function () {
+      var productId = parseInt(root.querySelector('[data-ce-image-product]')?.value || '0', 10);
+      var sourceUrl = root.querySelector('[data-ce-image-url]')?.value || '';
+      if (!productId || !sourceUrl.trim()) {
+        showAlert(alert, 'error', 'Enter a product id and source URL.');
+        return;
+      }
+      showAlert(alert, 'info', 'Replacing image…');
+      fetch('/Admin/CheckEngine/ImageAdmin/Replace', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          productId: productId,
+          sourceUrl: sourceUrl.trim(),
+          seoName: root.querySelector('[data-ce-image-seo]')?.value || ''
+        })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          if (panel) panel.textContent = JSON.stringify(res.body, null, 2);
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Primary image replaced.' : 'Replace failed.');
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Replace failed.');
+        });
+    });
+    root.querySelector('[data-ce-image-manifest-submit]')?.addEventListener('click', function () {
+      var csv = root.querySelector('[data-ce-image-manifest]')?.value || '';
+      if (!csv.trim()) {
+        showAlert(alert, 'error', 'Paste a CSV manifest.');
+        return;
+      }
+      fetch('/Admin/CheckEngine/ImageAdmin/SourceFromManifest', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify({ csvContent: csv })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          if (panel) panel.textContent = JSON.stringify(res.body, null, 2);
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Manifest applied.' : 'Manifest failed.');
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Manifest failed.');
+        });
+    });
+  }
+
   function boot() {
     document.querySelectorAll('[data-ce-page="vehicle-admin"]').forEach(initVehicleAdmin);
     document.querySelectorAll('[data-ce-page="oem-admin"]').forEach(initOemAdmin);
@@ -271,6 +414,9 @@
     document.querySelectorAll('[data-ce-page="erp-admin"]').forEach(initErpAdmin);
     document.querySelectorAll('[data-ce-page="seo-admin"]').forEach(initSeoAdmin);
     document.querySelectorAll('[data-ce-page="import-batch"]').forEach(initImportBatch);
+    document.querySelectorAll('[data-ce-page="diagnostics-admin"]').forEach(initDiagnosticsAdmin);
+    document.querySelectorAll('[data-ce-page="reference-admin"]').forEach(initReferenceAdmin);
+    document.querySelectorAll('[data-ce-page="image-admin"]').forEach(initImageAdmin);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

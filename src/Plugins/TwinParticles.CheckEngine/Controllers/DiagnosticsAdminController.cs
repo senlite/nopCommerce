@@ -8,6 +8,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Observability;
 using TwinParticles.CheckEngine.Domain.Licensing;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -39,10 +40,21 @@ public sealed class DiagnosticsAdminController : BasePluginController
         => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
     [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/DiagnosticsAdmin.cshtml");
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Package(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync())
             return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction(nameof(Index));
 
         var health = await _healthService.ProbeAsync(cancellationToken);
         var licence = await _licenceService.GetStatusAsync(cancellationToken);

@@ -35,6 +35,13 @@ public sealed class ImageAdminController : BasePluginController
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/ImageAdmin.cshtml");
+    }
+
     [HttpPost]
     public async Task<IActionResult> Replace([FromBody] ImageReplaceRequestModel model, CancellationToken cancellationToken)
     {

@@ -122,7 +122,7 @@ public sealed class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.ImageAdmin",
             pattern: "Admin/CheckEngine/ImageAdmin/{action}",
-            defaults: new { area = AreaNames.ADMIN, controller = "ImageAdmin", action = "Replace" });
+            defaults: new { area = AreaNames.ADMIN, controller = "ImageAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.L10nPreview",
@@ -152,12 +152,12 @@ public sealed class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.ReferenceDataAdmin",
             pattern: "Admin/CheckEngine/ReferenceDataAdmin/{action}",
-            defaults: new { area = AreaNames.ADMIN, controller = "ReferenceDataAdmin", action = "Status" });
+            defaults: new { area = AreaNames.ADMIN, controller = "ReferenceDataAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.DiagnosticsAdmin",
             pattern: "Admin/CheckEngine/DiagnosticsAdmin/{action}",
-            defaults: new { area = AreaNames.ADMIN, controller = "DiagnosticsAdmin", action = "Package" });
+            defaults: new { area = AreaNames.ADMIN, controller = "DiagnosticsAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.AssistantAsk",
@@ -167,7 +167,7 @@ public sealed class RouteProvider : IRouteProvider
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.AiAdmin",
             pattern: "Admin/CheckEngine/AiAdmin/{action}",
-            defaults: new { area = AreaNames.ADMIN, controller = "AiAdmin", action = "Queue" });
+            defaults: new { area = AreaNames.ADMIN, controller = "AiAdmin", action = "Dashboard" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.VendorAdmin",

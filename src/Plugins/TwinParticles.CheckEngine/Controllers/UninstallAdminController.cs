@@ -10,6 +10,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Observability;
 using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine.Controllers;
@@ -42,6 +43,9 @@ public sealed class UninstallAdminController : BasePluginController
     public async Task<IActionResult> Status()
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return RedirectToAction("Dashboard", "CheckEngine");
+
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         var preparedUtc = settings.UninstallExportPreparedUtc;
         return Json(new
