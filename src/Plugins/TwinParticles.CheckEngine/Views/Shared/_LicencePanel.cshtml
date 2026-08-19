@@ -1,5 +1,5 @@
 @{
-    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js", excludeFromBundle: true);
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js?v=0.76.0", excludeFromBundle: true);
 }
 
 <div class="card card-default" data-ce-licence-panel>
@@ -10,7 +10,7 @@
         <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint")</p>
         <div class="alert alert-info" data-ce-licence-alert hidden role="status"></div>
         <p class="font-weight-bold mb-1">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Status")</p>
-        <table class="table table-bordered table-sm" data-ce-licence-status>
+        <table class="table table-bordered table-sm">
             <tbody>
                 <tr><th>Status</th><td data-ce-licence-state>Loading…</td></tr>
                 <tr><th>Active</th><td data-ce-licence-active>—</td></tr>

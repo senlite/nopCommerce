@@ -61,6 +61,7 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Views", "Admin", "PayoutAdmin.cshtml").Should().NotContain("<pre");
         ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml").Should().Contain("data-ce-licence-state");
         ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml").Should().NotContain("<pre");
+        ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml").Should().Contain("checkengine-licence-admin.js?v=");
     }
 
     private static string AiAdmin() => ReadPluginFile("Controllers", "AiAdminController.cs");
