@@ -23,8 +23,9 @@
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</h3>
             </div>
             <div class="card-body">
-                <pre id="ce-ai-dashboard" style="white-space: pre-wrap;">Loading…</pre>
+                <p id="ce-ai-dashboard" class="text-muted">Loading…</p>
                 <button id="ce-ai-ack-disclosure" type="button" class="btn btn-warning">@T("Plugins.TwinParticles.CheckEngine.Ai.AcknowledgeDisclosure")</button>
+                <a class="btn btn-info" href="@Url.Action("Dashboard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</a>
             </div>
         </div>
 
@@ -59,7 +60,20 @@
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment")</h3>
             </div>
             <div class="card-body">
-                <pre id="ce-ai-fitment" style="white-space: pre-wrap;">Loading…</pre>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-ai-fitment-table">
+                        <thead>
+                            <tr>
+                                <th>Claim</th>
+                                <th>Product</th>
+                                <th>Configuration</th>
+                                <th>Status</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -117,15 +131,40 @@
   function loadDashboard() {
     fetch('/Admin/CheckEngine/AiAdmin/DashboardData', { headers: headers(false) })
       .then(function (r) { return r.json(); })
-      .then(function (data) { document.getElementById('ce-ai-dashboard').textContent = JSON.stringify(data, null, 2); });
+      .then(function (data) {
+        var el = document.getElementById('ce-ai-dashboard');
+        var disclosure = data.disclosureAcknowledged ? 'Disclosure acknowledged.' : 'Disclosure not acknowledged — AI features remain gated.';
+        el.textContent = disclosure +
+          ' Global today: ' + (data.globalDailyUsage || 0) + ' / ' + (data.globalDailyCeiling || 0) +
+          ' tokens. Pending content: ' + (data.pendingContentCount || 0) +
+          ' · Pending fitment AI: ' + (data.pendingFitmentAiCount || 0) + '.';
+      });
+  }
+  function renderFitment(items) {
+    var tbody = document.querySelector('#ce-ai-fitment-table tbody');
+    tbody.innerHTML = '';
+    if (!items || !items.length) {
+      tbody.innerHTML = '<tr><td colspan="5">No pending AI fitment claims.</td></tr>';
+      return;
+    }
+    items.forEach(function (item) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (item.id || item.Id || '') + '</td>' +
+        '<td>' + (item.productId || item.ProductId || '') + '</td>' +
+        '<td>' + (item.vehicleConfigurationId || item.VehicleConfigurationId || '') + '</td>' +
+        '<td>' + (item.status || item.Status || '') + '</td>' +
+        '<td>' + (item.confidence != null ? item.confidence : (item.Confidence != null ? item.Confidence : '')) + '</td>';
+      tbody.appendChild(tr);
+    });
   }
   function load() {
     fetch('/Admin/CheckEngine/AiAdmin/Queue', { headers: headers(false) })
       .then(function (r) { return r.json(); })
       .then(renderCandidates);
     fetch('/Admin/CheckEngine/FitmentAdmin/AiQueue', { headers: headers(false) })
-      .then(function (r) { return r.text(); })
-      .then(function (text) { document.getElementById('ce-ai-fitment').textContent = text; });
+      .then(function (r) { return r.json(); })
+      .then(renderFitment);
     loadDashboard();
   }
   function review(id, approved) {
