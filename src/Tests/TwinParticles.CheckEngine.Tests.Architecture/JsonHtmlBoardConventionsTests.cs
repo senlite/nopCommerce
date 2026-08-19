@@ -49,6 +49,8 @@ public class JsonHtmlBoardConventionsTests
         js.Should().Contain("SeoAdmin/GenerateVehicle");
         js.Should().Contain("ErpAdmin/InventorySnapshot");
         js.Should().Contain("ImageAdmin/SourceFromTemplate");
+        js.Should().Contain("urlTemplate");
+        js.Should().Contain("data-ce-image-template-url");
         js.Should().Contain("ImportAdmin/Publish");
         js.Should().Contain("ImportAdmin/Run");
         js.Should().Contain("data-ce-import-run");
@@ -76,8 +78,24 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("RedirectPortal(\"vendor\"");
         ReadPluginFile("Controllers", "SeoAdminController.cs")
             .Should().Contain("seo.generate_failed");
+        ReadPluginFile("Controllers", "ImageAdminController.cs")
+            .Should().Contain("RedirectAdmin(\"ImageAdmin\", \"Index\")");
+        ReadPluginFile("Views", "Admin", "ImageAdmin.cshtml")
+            .Should().Contain("data-ce-image-template-url");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().Contain("<option value=\"1\">Csv</option>");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().NotContain("<option value=\"0\">Csv</option>");
+        ReadPluginFile("Content", "checkengine-marketplace.css")
+            .Should().Contain(".ce-marketplace-admin");
+        ReadPluginFile("Content", "checkengine-marketplace.css")
+            .Should().Contain("--ce-text-primary: var(--ce-raw-graphite-900)");
+        ReadPluginFile("Configuration", "CheckEnginePluginSettings.cs")
+            .Should().Contain("SupplierImageUrlTemplate");
         ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
             .Should().Contain("checkengine-admin.js?v=");
+        ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
+            .Should().Contain("checkengine-marketplace.css?v=");
         ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
             .Should().Contain("AddHeadCustomParts");
         ReadPluginFile("Controllers", "GarageController.cs")

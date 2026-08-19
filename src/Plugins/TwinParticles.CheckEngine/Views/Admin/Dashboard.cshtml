@@ -70,9 +70,9 @@
                 <div class="form-group">
                     <label for="ce-import-format">Format</label>
                     <select id="ce-import-format" class="form-control">
-                        <option value="0">Csv</option>
-                        <option value="1">Excel</option>
-                        <option value="2">Pdf</option>
+                        <option value="1">Csv</option>
+                        <option value="2">Excel</option>
+                        <option value="3">Pdf</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -158,7 +158,8 @@
     toBase64(file).then(function (base64) {
       var headers = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
       };
       if (tokenInput && tokenInput.value) {
         headers['RequestVerificationToken'] = tokenInput.value;

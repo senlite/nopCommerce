@@ -41,4 +41,7 @@ public sealed class ImageSupplierManifestRequestModel
 public sealed class ImageSupplierTemplateRequestModel
 {
     public List<string> Skus { get; set; } = [];
+
+    /// <summary>Optional operator URL template, e.g. https://cdn.example/{sku}.jpg. Saved when provided.</summary>
+    public string? UrlTemplate { get; set; }
 }

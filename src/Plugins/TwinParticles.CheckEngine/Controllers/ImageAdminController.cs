@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
+using Nop.Services.Configuration;
 using TwinParticles.CheckEngine.Application.Images;
+using TwinParticles.CheckEngine.Configuration;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -19,17 +22,20 @@ public sealed class ImageAdminController : BasePluginController
     private readonly ProductImageService _service;
     private readonly BatchImageReplacementService _batchService;
     private readonly SupplierImageSourcingService _supplierSourcingService;
+    private readonly ISettingService _settingService;
     private readonly Nop.Services.Security.IPermissionService _permissionService;
 
     public ImageAdminController(
         ProductImageService service,
         BatchImageReplacementService batchService,
         SupplierImageSourcingService supplierSourcingService,
+        ISettingService settingService,
         Nop.Services.Security.IPermissionService permissionService)
     {
         _service = service;
         _batchService = batchService;
         _supplierSourcingService = supplierSourcingService;
+        _settingService = settingService;
         _permissionService = permissionService;
     }
 
@@ -39,7 +45,20 @@ public sealed class ImageAdminController : BasePluginController
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        ViewBag.SupplierImageUrlTemplate = settings.SupplierImageUrlTemplate ?? string.Empty;
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/ImageAdmin.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Template(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("ImageAdmin", "Index");
+
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        return Json(new { urlTemplate = settings.SupplierImageUrlTemplate ?? string.Empty });
     }
 
     [HttpPost]
@@ -89,7 +108,23 @@ public sealed class ImageAdminController : BasePluginController
         if (model?.Skus is null || model.Skus.Count == 0)
             return BadRequest(new { reasonCode = "image.supplier.skus_empty" });
 
-        var result = await _supplierSourcingService.ReplaceFromUrlTemplateAsync(model.Skus, actor: "admin", cancellationToken);
+        var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
+        var template = model.UrlTemplate?.Trim();
+        if (!string.IsNullOrWhiteSpace(template))
+        {
+            settings.SupplierImageUrlTemplate = template;
+            await _settingService.SaveSettingAsync(settings);
+        }
+        else
+        {
+            template = settings.SupplierImageUrlTemplate;
+        }
+
+        var result = await _supplierSourcingService.ReplaceFromUrlTemplateAsync(
+            model.Skus,
+            actor: "admin",
+            cancellationToken,
+            urlTemplateOverride: template);
         return Json(result);
     }
 }

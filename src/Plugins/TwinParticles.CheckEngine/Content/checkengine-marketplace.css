@@ -484,6 +484,17 @@
   background: color-mix(in srgb, var(--ce-action-primary) 10%, var(--ce-surface-raised));
 }
 
+/* nopCommerce admin is a light canvas; default tokens are dark storefront. */
+.ce-marketplace-admin {
+  --ce-surface-sunken: var(--ce-raw-cloud-050);
+  --ce-surface-canvas: var(--ce-raw-cloud-000);
+  --ce-surface-raised: var(--ce-raw-cloud-100);
+  --ce-border-hairline: var(--ce-raw-cloud-300);
+  --ce-text-primary: var(--ce-raw-graphite-900);
+  --ce-text-muted: var(--ce-raw-slate-600);
+  --ce-shadow-raised: 0 8px 24px color-mix(in srgb, var(--ce-raw-graphite-950) 12%, transparent);
+}
+
 .ce-marketplace-admin .ce-mp-panel,
 .ce-marketplace-admin .ce-mp-table-wrap {
   margin-block-end: var(--ce-space-4);

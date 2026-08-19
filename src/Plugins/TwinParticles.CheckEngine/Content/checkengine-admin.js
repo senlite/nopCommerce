@@ -750,7 +750,10 @@
         method: 'POST',
         headers: headers(t, true),
         credentials: 'same-origin',
-        body: JSON.stringify({ skus: skus })
+        body: JSON.stringify({
+          skus: skus,
+          urlTemplate: root.querySelector('[data-ce-image-template-url]')?.value || ''
+        })
       })
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {

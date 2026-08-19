@@ -68,7 +68,12 @@
             </div>
             <div class="card-body">
                 <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Template.Hint")</p>
-                <textarea class="form-control" rows="6" data-ce-image-template-skus placeholder="SKU-1&#10;SKU-2"></textarea>
+                <div class="form-group">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Template.Url")</label>
+                    <input class="form-control ce-code" data-ce-image-template-url placeholder="https://cdn.example/{sku}.jpg" value="@ViewBag.SupplierImageUrlTemplate" />
+                    <small class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Template.Url.Hint")</small>
+                </div>
+                <textarea class="form-control mt-2" rows="6" data-ce-image-template-skus placeholder="SKU-1&#10;SKU-2"></textarea>
                 <button type="button" class="btn btn-secondary mt-2" data-ce-image-template-submit>@T("Plugins.TwinParticles.CheckEngine.Image.Admin.Template.Submit")</button>
                 <div class="ce-mp-stat-grid mt-3" data-ce-image-template-stats></div>
                 <div class="ce-mp-table-wrap mt-3">
