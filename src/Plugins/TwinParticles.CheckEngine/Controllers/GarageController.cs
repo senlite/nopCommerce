@@ -48,7 +48,7 @@ public sealed class GarageController : BasePublicController
     public async Task<IActionResult> Current(CancellationToken cancellationToken)
     {
         if (!Request.WantsJsonResponse())
-            return Redirect("~/");
+            return Redirect("/");
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsGuestAsync(customer))

@@ -67,6 +67,8 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("RedirectToAction(\"Scoreboard\", \"VendorAdmin\", new { orderId })");
         ReadPluginFile("Controllers", "GarageController.cs")
             .Should().Contain("WantsJsonResponse");
+        ReadPluginFile("Controllers", "GarageController.cs")
+            .Should().Contain("Redirect(\"/\")");
     }
 
     [Test]
