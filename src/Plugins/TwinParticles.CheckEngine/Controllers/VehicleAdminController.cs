@@ -42,7 +42,7 @@ public sealed class VehicleAdminController : BasePluginController
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
     private IActionResult? PageOrJsonApi()
-        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Index));
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectAdmin("VehicleAdmin", "Index");
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)

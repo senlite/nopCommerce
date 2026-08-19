@@ -37,13 +37,13 @@ public sealed class FitmentAdminController : BasePluginController
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
     private IActionResult? PageOrJsonApi(string action)
-        => Request.WantsJsonResponse() ? null : RedirectToAction(action);
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectAdmin("FitmentAdmin", action);
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        return RedirectToAction(nameof(ClaimsReview));
+        return CheckEnginePaths.RedirectAdmin("FitmentAdmin", "ClaimsReview");
     }
 
     [HttpGet]

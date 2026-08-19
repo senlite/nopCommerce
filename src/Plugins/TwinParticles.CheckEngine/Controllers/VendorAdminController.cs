@@ -67,7 +67,7 @@ public sealed class VendorAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(ReviewBoard));
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "ReviewBoard");
 
         return Json(await _onboardingService.GetReviewQueueAsync(cancellationToken));
     }
@@ -82,7 +82,7 @@ public sealed class VendorAdminController : BasePluginController
 
         var snapshot = await _onboardingService.GetSnapshotAsync(vendorId, cancellationToken);
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(ReviewBoard));
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "ReviewBoard");
 
         return snapshot is null ? NotFound() : Json(snapshot);
     }
@@ -144,7 +144,7 @@ public sealed class VendorAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return Redirect("/Admin/CheckEngine/VendorAdmin/Scoreboard");
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "Scoreboard");
 
         return Json(await _dashboardService.ListOperatorScorecardsAsync(VendorActor.OperatorAdmin, cancellationToken));
     }
@@ -158,7 +158,7 @@ public sealed class VendorAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return Redirect($"/Admin/CheckEngine/VendorAdmin/Scoreboard?orderId={orderId}");
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "Scoreboard", $"orderId={orderId}");
 
         var group = await _splitService.GetCheckoutGroupAsync(orderId, cancellationToken);
         if (group is null)

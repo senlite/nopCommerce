@@ -46,7 +46,7 @@ public sealed class ReferenceDataAdminController : BasePluginController
         if (!await AuthorizedAsync())
             return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("ReferenceDataAdmin", "Index");
 
         var status = await _service.GetStatusAsync(cancellationToken);
         return Json(new

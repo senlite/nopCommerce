@@ -52,7 +52,7 @@ public sealed class FleetController : BasePublicController
     }
 
     private IActionResult? PortalPageOrJson()
-        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Index));
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectPortal("fleet", "Index");
 
     [HttpGet]
     public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)

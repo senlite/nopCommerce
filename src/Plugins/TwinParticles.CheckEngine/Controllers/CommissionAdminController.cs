@@ -60,7 +60,7 @@ public sealed class CommissionAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Configure), new { vendorId });
+            return CheckEnginePaths.RedirectAdmin("CommissionAdmin", "Configure", $"vendorId={vendorId}");
 
         var plan = await _planAdmin.GetPlanAsync(vendorId, cancellationToken);
         return plan is null ? Json(new { vendorId, rules = Array.Empty<object>() }) : Json(plan);
@@ -88,7 +88,7 @@ public sealed class CommissionAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return Redirect($"/Admin/CheckEngine/VendorAdmin/Scoreboard?orderId={orderId}");
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "Scoreboard", $"orderId={orderId}");
 
         return Json(await _snapshotService.GetSnapshotsAsync(orderId, cancellationToken));
     }

@@ -107,7 +107,8 @@
           '<tr>' +
           cols
             .map(function (col) {
-              return '<td' + (col.code ? ' class="ce-code"' : '') + '>' + display(col.value(row)) + '</td>';
+              var cell = col.html ? col.value(row) : display(col.value(row));
+              return '<td' + (col.code ? ' class="ce-code"' : '') + '>' + cell + '</td>';
             })
             .join('') +
           '</tr>'
@@ -429,7 +430,18 @@
       { value: function (r) { return pick(r, 'oemNumberNormalized', 'OemNumberNormalized'); }, code: true },
       { value: function (r) { return pick(r, 'vehicleConfigurationId', 'VehicleConfigurationId'); }, code: true },
       { value: function (r) { return pick(r, 'isPublished', 'IsPublished'); } },
-      { value: function (r) { return pick(r, 'lastStageError', 'LastStageError') || pick(r, 'publishError', 'PublishError'); } }
+      { value: function (r) { return pick(r, 'lastStageError', 'LastStageError') || pick(r, 'publishError', 'PublishError'); } },
+      { html: true, value: function (r) {
+          var n = pick(r, 'rowNumber', 'RowNumber');
+          var html = '<button type="button" class="btn btn-xs btn-success" data-ce-import-review="Approved" data-row="' + n + '">Approve</button> ' +
+            '<button type="button" class="btn btn-xs btn-danger" data-ce-import-review="Rejected" data-row="' + n + '">Reject</button>';
+          if (pick(r, 'isDuplicate', 'IsDuplicate')) {
+            html += ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="Merge" data-row="' + n + '">Merge</button>' +
+              ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="Link" data-row="' + n + '">Link</button>' +
+              ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="KeepSeparate" data-row="' + n + '">Keep</button>';
+          }
+          return html;
+        } }
     ];
     function loadBatch() {
       var batchId = root.querySelector('[data-ce-import-batch]')?.value || '';
@@ -458,7 +470,88 @@
           renderRows(rowsBody, [], rowCols, 'No rows.');
         });
     }
+    function currentBatchId() {
+      return (root.querySelector('[data-ce-import-batch]')?.value || '').trim();
+    }
+    function postRowAction(url, payload, okText) {
+      var batchId = currentBatchId();
+      if (!batchId) {
+        showAlert(alert, 'error', 'Enter a batch id.');
+        return;
+      }
+      fetch(url, {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify(Object.assign({ batchId: batchId }, payload))
+      })
+        .then(function (r) {
+          showAlert(alert, r.ok ? 'success' : 'error', r.ok ? okText : 'Action failed.');
+          if (r.ok) loadBatch();
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'Action failed.');
+        });
+    }
+    if (rowsBody) {
+      rowsBody.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('[data-ce-import-review],[data-ce-import-decision]');
+        if (!btn) return;
+        var rowNumber = parseInt(btn.getAttribute('data-row') || '0', 10);
+        if (btn.hasAttribute('data-ce-import-review')) {
+          postRowAction('/Admin/CheckEngine/ImportAdmin/SetReviewStatus', {
+            rowNumber: rowNumber,
+            reviewStatus: btn.getAttribute('data-ce-import-review')
+          }, 'Review updated.');
+        } else {
+          postRowAction('/Admin/CheckEngine/ImportAdmin/SetDuplicateDecision', {
+            rowNumber: rowNumber,
+            decision: btn.getAttribute('data-ce-import-decision')
+          }, 'Duplicate decision saved.');
+        }
+      });
+    }
     root.querySelector('[data-ce-import-load]')?.addEventListener('click', loadBatch);
+    root.querySelector('[data-ce-import-run]')?.addEventListener('click', function () {
+      var file = root.querySelector('[data-ce-import-file]')?.files?.[0];
+      if (!file) {
+        showAlert(alert, 'error', 'Choose a catalog file.');
+        return;
+      }
+      var format = parseInt(root.querySelector('[data-ce-import-format]')?.value || '1', 10);
+      var dryRun = !!root.querySelector('[data-ce-import-run-dry-run]')?.checked;
+      showAlert(alert, 'info', 'Running import…');
+      var reader = new FileReader();
+      reader.onload = function () {
+        var bytes = new Uint8Array(reader.result);
+        var binary = '';
+        for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        fetch('/Admin/CheckEngine/ImportAdmin/Run', {
+          method: 'POST',
+          headers: headers(t, true),
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            format: format,
+            fileName: file.name,
+            contentBase64: btoa(binary),
+            dryRun: dryRun
+          })
+        })
+          .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+          .then(function (res) {
+            var id = pick(res.body, 'batchId', 'BatchId');
+            if (id && root.querySelector('[data-ce-import-batch]')) {
+              root.querySelector('[data-ce-import-batch]').value = id;
+            }
+            showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Import pipeline started.' : 'Import failed.');
+            if (res.ok && id) loadBatch();
+          })
+          .catch(function () {
+            showAlert(alert, 'error', 'Import failed.');
+          });
+      };
+      reader.readAsArrayBuffer(file);
+    });
     root.querySelector('[data-ce-import-publish]')?.addEventListener('click', function () {
       var batchId = root.querySelector('[data-ce-import-batch]')?.value || '';
       if (!batchId.trim()) {

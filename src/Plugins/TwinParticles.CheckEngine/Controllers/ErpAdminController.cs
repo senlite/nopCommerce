@@ -58,7 +58,7 @@ public sealed class ErpAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("ErpAdmin", "Index");
 
         var toUtc = System.DateTime.UtcNow;
         return Json(await _service.BuildReconciliationReportAsync(toUtc.AddDays(-1), toUtc, cancellationToken));
@@ -69,7 +69,7 @@ public sealed class ErpAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("ErpAdmin", "Index");
 
         var payload = await _service.PullInventorySnapshotAsync(cancellationToken);
         return Json(new { payload });

@@ -39,8 +39,19 @@ public sealed class SeoAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var result = await _service.GenerateVehicleLandingAsync(model.VehicleConfigurationId, model.Locale, cancellationToken);
-        return Json(result);
+        try
+        {
+            var result = await _service.GenerateVehicleLandingAsync(model.VehicleConfigurationId, model.Locale, cancellationToken);
+            return Json(result);
+        }
+        catch (System.Exception)
+        {
+            return Json(new TwinParticles.CheckEngine.Domain.Seo.SeoLandingGenerationResult
+            {
+                Success = false,
+                ErrorCode = "seo.generate_failed"
+            });
+        }
     }
 
     [HttpPost]
@@ -48,8 +59,19 @@ public sealed class SeoAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var result = await _service.GeneratePartForVehicleLandingAsync(model.ProductId, model.VehicleConfigurationId, model.Locale, cancellationToken);
-        return Json(result);
+        try
+        {
+            var result = await _service.GeneratePartForVehicleLandingAsync(model.ProductId, model.VehicleConfigurationId, model.Locale, cancellationToken);
+            return Json(result);
+        }
+        catch (System.Exception)
+        {
+            return Json(new TwinParticles.CheckEngine.Domain.Seo.SeoLandingGenerationResult
+            {
+                Success = false,
+                ErrorCode = "seo.generate_failed"
+            });
+        }
     }
 
     [HttpPost]
@@ -66,7 +88,7 @@ public sealed class SeoAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("SeoAdmin", "Index");
 
         var urls = await _service.GetSitemapUrlsAsync(cancellationToken);
         return Json(urls);

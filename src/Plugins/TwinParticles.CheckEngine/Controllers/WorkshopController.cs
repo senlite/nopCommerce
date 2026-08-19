@@ -55,7 +55,7 @@ public sealed class WorkshopController : BasePublicController
     }
 
     private IActionResult? PortalPageOrJson()
-        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Index));
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectPortal("workshop", "Index");
 
     [HttpGet]
     public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)

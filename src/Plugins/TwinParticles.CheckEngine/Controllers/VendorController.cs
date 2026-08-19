@@ -139,7 +139,7 @@ public sealed class VendorController : BasePublicController
     }
 
     private IActionResult? VendorPageOrJson(string tab)
-        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Dashboard), new { tab });
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectPortal("vendor", "dashboard", "tab=" + tab);
 
     [HttpGet]
     public async Task<IActionResult> Statements(CancellationToken cancellationToken)

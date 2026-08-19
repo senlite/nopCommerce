@@ -55,7 +55,7 @@ public sealed class PayoutAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index), new { vendorId });
+            return CheckEnginePaths.RedirectAdmin("PayoutAdmin", "Index", $"vendorId={vendorId}");
 
         return Json(await _payoutService.ListAsync(vendorId, cancellationToken));
     }
@@ -69,7 +69,7 @@ public sealed class PayoutAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("PayoutAdmin", "Index");
 
         var statement = await _payoutService.GetAsync(statementId, cancellationToken);
         return statement is null ? NotFound() : Json(statement);

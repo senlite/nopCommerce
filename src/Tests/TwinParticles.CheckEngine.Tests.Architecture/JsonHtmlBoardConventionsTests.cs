@@ -15,7 +15,7 @@ public class JsonHtmlBoardConventionsTests
         AiAdmin().Should().Contain("PageOrJsonApi(nameof(ReviewBoard))");
 
         SearchAdmin().Should().Contain("WantsJsonResponse");
-        SearchAdmin().Should().Contain("RedirectToAction(nameof(Index))");
+        SearchAdmin().Should().Contain("RedirectAdmin(\"SearchAdmin\", \"Index\")");
 
         Diagnostics().Should().Contain("Views/Admin/DiagnosticsAdmin.cshtml");
         Diagnostics().Should().Contain("WantsJsonResponse");
@@ -26,7 +26,7 @@ public class JsonHtmlBoardConventionsTests
         ImageAdmin().Should().Contain("Views/Admin/ImageAdmin.cshtml");
 
         Uninstall().Should().Contain("WantsJsonResponse");
-        Uninstall().Should().Contain("RedirectToAction(\"Dashboard\", \"CheckEngine\")");
+        Uninstall().Should().Contain("RedirectAdmin(\"CheckEngine\", \"Dashboard\")");
     }
 
     [Test]
@@ -50,6 +50,9 @@ public class JsonHtmlBoardConventionsTests
         js.Should().Contain("ErpAdmin/InventorySnapshot");
         js.Should().Contain("ImageAdmin/SourceFromTemplate");
         js.Should().Contain("ImportAdmin/Publish");
+        js.Should().Contain("ImportAdmin/Run");
+        js.Should().Contain("data-ce-import-run");
+        js.Should().Contain("SetDuplicateDecision");
         js.Should().Contain("data-ce-erp-snapshot-stats");
     }
 
@@ -62,9 +65,17 @@ public class JsonHtmlBoardConventionsTests
         marketplaceJs.Should().Contain("CommissionAdmin/OrderSnapshots");
 
         ReadPluginFile("Controllers", "VendorAdminController.cs")
-            .Should().Contain("/Admin/CheckEngine/VendorAdmin/Scoreboard?orderId=");
+            .Should().Contain("RedirectAdmin(\"VendorAdmin\", \"Scoreboard\"");
         ReadPluginFile("Controllers", "CommissionAdminController.cs")
-            .Should().Contain("/Admin/CheckEngine/VendorAdmin/Scoreboard?orderId=");
+            .Should().Contain("RedirectAdmin(\"VendorAdmin\", \"Scoreboard\"");
+        ReadPluginFile("Infrastructure", "CheckEnginePaths.cs")
+            .Should().Contain("/Admin/CheckEngine/");
+        ReadPluginFile("Controllers", "VehicleAdminController.cs")
+            .Should().Contain("RedirectAdmin(\"VehicleAdmin\"");
+        ReadPluginFile("Controllers", "VendorController.cs")
+            .Should().Contain("RedirectPortal(\"vendor\"");
+        ReadPluginFile("Controllers", "SeoAdminController.cs")
+            .Should().Contain("seo.generate_failed");
         ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
             .Should().Contain("checkengine-admin.js?v=");
         ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")

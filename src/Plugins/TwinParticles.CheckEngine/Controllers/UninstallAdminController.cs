@@ -44,7 +44,7 @@ public sealed class UninstallAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction("Dashboard", "CheckEngine");
+            return CheckEnginePaths.RedirectAdmin("CheckEngine", "Dashboard");
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         var preparedUtc = settings.UninstallExportPreparedUtc;

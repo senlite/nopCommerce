@@ -32,7 +32,7 @@ public sealed class ImportAdminController : BasePluginController
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
-        return RedirectToAction(nameof(BatchBoard));
+        return CheckEnginePaths.RedirectAdmin("ImportAdmin", "BatchBoard");
     }
 
     [HttpGet]
@@ -72,7 +72,7 @@ public sealed class ImportAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(BatchBoard), new { batchId });
+            return CheckEnginePaths.RedirectAdmin("ImportAdmin", "BatchBoard", $"batchId={batchId}");
 
         var batch = await _orchestrator.GetBatchAsync(batchId, cancellationToken);
         if (batch is null)

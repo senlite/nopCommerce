@@ -73,7 +73,7 @@ public sealed class SearchAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("SearchAdmin", "Index");
 
         var keywordState = await _indexStateReader.GetStateAsync(cancellationToken);
         var embeddings = new List<object>();
@@ -184,7 +184,7 @@ public sealed class SearchAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("SearchAdmin", "Index");
         return Json(await _analyticsService.GetSummaryAsync(days, cancellationToken));
     }
 
@@ -201,7 +201,7 @@ public sealed class SearchAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("SearchAdmin", "Index");
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         var overrides = SearchSynonymOverridesJson.Parse(settings.SearchSynonymOverridesJson);

@@ -39,7 +39,7 @@ public sealed class GarageAdminController : BasePluginController
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("GarageAdmin", "Index");
 
         var garage = await _garageService.AdminViewAsync(customerId, cancellationToken);
         if (garage is null)

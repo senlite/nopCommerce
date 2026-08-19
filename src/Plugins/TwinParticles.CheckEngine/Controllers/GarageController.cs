@@ -144,6 +144,9 @@ public sealed class GarageController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> Export(CancellationToken cancellationToken)
     {
+        if (!Request.WantsJsonResponse())
+            return Redirect("/");
+
         var customer = await _workContext.GetCurrentCustomerAsync();
         if (await _customerService.IsGuestAsync(customer))
             return Unauthorized();

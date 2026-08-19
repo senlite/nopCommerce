@@ -54,7 +54,7 @@ public sealed class DiagnosticsAdminController : BasePluginController
         if (!await AuthorizedAsync())
             return AccessDeniedView();
         if (!Request.WantsJsonResponse())
-            return RedirectToAction(nameof(Index));
+            return CheckEnginePaths.RedirectAdmin("DiagnosticsAdmin", "Index");
 
         var health = await _healthService.ProbeAsync(cancellationToken);
         var licence = await _licenceService.GetStatusAsync(cancellationToken);

@@ -51,7 +51,7 @@ public sealed class DealerController : BasePublicController
     }
 
     private IActionResult? PortalPageOrJson()
-        => Request.WantsJsonResponse() ? null : RedirectToAction(nameof(Index));
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectPortal("dealer", "Index");
 
     [HttpGet]
     public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
