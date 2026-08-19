@@ -267,7 +267,6 @@
     var t = token(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var stats = root.querySelector('[data-ce-diagnostics-stats]');
-    var panel = root.querySelector('[data-ce-diagnostics-package]');
     function load() {
       showAlert(alert, 'info', 'Loading diagnostics…');
       apiGet('/Admin/CheckEngine/DiagnosticsAdmin/Package?json=1', t)
@@ -281,7 +280,6 @@
               '<article class="ce-mp-stat"><span class="ce-mp-stat__label">ERP</span><span class="ce-mp-stat__value">' + (pick(health, 'erp', 'Erp') || '—') + '</span></article>' +
               '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Licence</span><span class="ce-mp-stat__value">' + (pick(health, 'licence', 'Licence') || '—') + '</span></article>';
           }
-          if (panel) panel.textContent = JSON.stringify(data, null, 2);
         })
         .catch(function () {
           showAlert(alert, 'error', 'Failed to load diagnostics package.');
