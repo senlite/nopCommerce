@@ -130,7 +130,7 @@ and the code as of 2026-08-12.
 | 1 | `EP-02`–`EP-16` partial; `EP-17` pending |
 | 2 | `EP-18`–`EP-21` partial |
 | 3 | `EP-22`–`EP-24` pending |
-| 4 | `EP-25`–`EP-27` pending |
+| 4 | `EP-25`–`EP-27` partial |
 | 5 | `EP-28` pending |
 | **Total** | **1 done, 19 partial, 8 pending** |
 
@@ -266,9 +266,9 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status |
 |---|---|---|
-| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | pending |
-| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | pending |
-| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | pending |
+| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | `WorkshopJobService` + design-system UI at `check-engine/workshop`; `PortalAdminService` provisions accounts; plugin 0.64.0 |
+| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | `FleetPortalService` (`ImportFleetVins` via `VinDecodeApplicationService`, `SubmitApprovalRequest`/`DecideApprovalRequest` with budget enforcement); `TP_CE_Fleet*` schema; `check-engine/fleet/{action}`; `FleetPortalLicenceGate` + `ManageCheckEngineFleet` |
+| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | done | `DealerPortalService` (`GetDealerCatalogView`, `PlaceDealerOrder` with allocation/quota checks, warranty claim workflow); `TP_CE_Dealer*` + `TP_CE_WarrantyClaim`; `check-engine/dealer/{action}`; `DealerPortalLicenceGate` + `ManageCheckEngineDealer`; dealer ≠ marketplace vendor (FR-1201) |
 
 ### Horizon 5 — Platform / v2.0 (`EP-28`)
 

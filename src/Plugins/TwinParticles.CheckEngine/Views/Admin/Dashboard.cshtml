@@ -43,9 +43,15 @@
                     <li><a href="/Admin/CheckEngine/PayoutAdmin/Index">Payout statements</a></li>
                     <li><a href="/check-engine/vendor/dashboard">Vendor dashboard</a></li>
                     <li><a href="/check-engine/vendor/catalog">Vendor catalog (JSON)</a></li>
+                    <li><a href="/Admin/CheckEngine/PortalAdmin/Accounts">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</a></li>
+                    <li><a href="/check-engine/workshop">@T("Plugins.TwinParticles.CheckEngine.Workshop.Title")</a></li>
+                    <li><a href="/check-engine/fleet">@T("Plugins.TwinParticles.CheckEngine.Fleet.Title")</a></li>
+                    <li><a href="/check-engine/dealer">@T("Plugins.TwinParticles.CheckEngine.Dealer.Title")</a></li>
                 </ul>
             </div>
         </div>
+
+        @await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_LicencePanel.cshtml")
 
         <div class="card card-default">
             <div class="card-header">

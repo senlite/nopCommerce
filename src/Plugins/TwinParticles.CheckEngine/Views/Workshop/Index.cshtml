@@ -1,0 +1,111 @@
+@inject Nop.Core.IWorkContext workContext
+@{
+    Layout = "_ColumnsOne";
+    ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Workshop.Title").Text;
+    var language = await workContext.GetWorkingLanguageAsync();
+    var isRtl = language.Rtl;
+    await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalAssets.cshtml");
+}
+
+<div class="page workshop-portal-page ce-root ce-marketplace" dir="@(isRtl ? "rtl" : "ltr")" data-ce-page="workshop"
+     data-ce-error-login="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.Unauthenticated")"
+     data-ce-error-provision="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.NotProvisioned")"
+     data-ce-error-generic="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.Generic")">
+    <div class="page-title">
+        <h1>@T("Plugins.TwinParticles.CheckEngine.Workshop.Title")</h1>
+    </div>
+    <div class="page-body">
+        @Html.AntiForgeryToken()
+
+        <section class="ce-hero" aria-labelledby="ce-workshop-hero">
+            <div class="ce-hero__inner">
+                <span class="ce-hero__eyebrow">@T("Plugins.TwinParticles.CheckEngine.Workshop.Eyebrow")</span>
+                <h2 id="ce-workshop-hero" class="ce-hero__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.Hero")</h2>
+                <p class="ce-hero__lead">@T("Plugins.TwinParticles.CheckEngine.Workshop.Hint")</p>
+            </div>
+        </section>
+
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-portal-alert hidden role="status"></div>
+
+        <div class="ce-mp-stat-grid" data-ce-workshop-stats>
+            <p class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</p>
+        </div>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.CreateJob")</h2>
+            <div class="ce-mp-toolbar">
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-workshop-vehicle />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourEstimate")</label>
+                    <input class="ce-mp-input" type="number" min="0" step="0.01" data-ce-workshop-labour value="0" />
+                </div>
+                <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-create>@T("Plugins.TwinParticles.CheckEngine.Workshop.CreateJob")</button>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.Jobs")</h2>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.JobId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Status")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourEstimate")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.OrderId")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-jobs>
+                        <tr><td colspan="5" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="ce-mp-panel" data-ce-workshop-detail hidden>
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.JobDetail")</h2>
+            <p class="ce-mp-hint" data-ce-workshop-detail-summary></p>
+
+            <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.Vehicles")</h3>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</th>
+                            <th>VIN</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-vehicles>
+                        <tr><td colspan="6">@T("Plugins.TwinParticles.CheckEngine.Workshop.SelectJob")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.Lines")</h3>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Fitment")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.UnitPrice")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-lines>
+                        <tr><td colspan="5">@T("Plugins.TwinParticles.CheckEngine.Workshop.SelectJob")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>

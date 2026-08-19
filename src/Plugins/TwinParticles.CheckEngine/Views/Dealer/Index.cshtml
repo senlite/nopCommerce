@@ -1,0 +1,81 @@
+@inject Nop.Core.IWorkContext workContext
+@{
+    Layout = "_ColumnsOne";
+    ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Dealer.Title").Text;
+    var language = await workContext.GetWorkingLanguageAsync();
+    var isRtl = language.Rtl;
+    await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalAssets.cshtml");
+}
+
+<div class="page dealer-portal-page ce-root ce-marketplace" dir="@(isRtl ? "rtl" : "ltr")" data-ce-page="dealer"
+     data-ce-error-login="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.Unauthenticated")"
+     data-ce-error-provision="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.NotProvisioned")"
+     data-ce-error-generic="@T("Plugins.TwinParticles.CheckEngine.Portal.Error.Generic")">
+    <div class="page-title">
+        <h1>@T("Plugins.TwinParticles.CheckEngine.Dealer.Title")</h1>
+    </div>
+    <div class="page-body">
+        @Html.AntiForgeryToken()
+
+        <section class="ce-hero" aria-labelledby="ce-dealer-hero">
+            <div class="ce-hero__inner">
+                <span class="ce-hero__eyebrow">@T("Plugins.TwinParticles.CheckEngine.Dealer.Eyebrow")</span>
+                <h2 id="ce-dealer-hero" class="ce-hero__title">@T("Plugins.TwinParticles.CheckEngine.Dealer.Hero")</h2>
+                <p class="ce-hero__lead">@T("Plugins.TwinParticles.CheckEngine.Dealer.Hint")</p>
+            </div>
+        </section>
+
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-portal-alert hidden role="status"></div>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Dealer.Catalog")</h2>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
+                            <th>SKU</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductName")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Price")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-dealer-catalog>
+                        <tr><td colspan="5" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="ce-btn ce-btn--primary" data-ce-dealer-order>@T("Plugins.TwinParticles.CheckEngine.Dealer.PlaceOrder")</button>
+        </section>
+
+        <section class="ce-mp-panel">
+            <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Dealer.WarrantyClaim")</h2>
+            <div class="ce-mp-toolbar">
+                <div class="ce-mp-field">
+                    <label>OEM</label>
+                    <input class="ce-mp-input ce-code" data-ce-dealer-oem />
+                </div>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-dealer-vehicle />
+                </div>
+                <button type="button" class="ce-btn ce-btn--ghost" data-ce-dealer-claim>@T("Plugins.TwinParticles.CheckEngine.Dealer.SubmitClaim")</button>
+            </div>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>OEM</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Status")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-dealer-claims>
+                        <tr><td colspan="4" class="ce-mp-loading">@T("Plugins.TwinParticles.CheckEngine.Portal.Loading")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>

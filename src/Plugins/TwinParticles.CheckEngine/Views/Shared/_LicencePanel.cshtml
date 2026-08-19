@@ -1,0 +1,24 @@
+@{
+    NopHtml.AddScriptParts(ResourceLocation.Footer, "~/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js", excludeFromBundle: true);
+}
+
+<div class="card card-default" data-ce-licence-panel>
+    <div class="card-header">
+        <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Title")</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint")</p>
+        <div class="alert alert-info" data-ce-licence-alert hidden role="status"></div>
+        <p class="font-weight-bold mb-1">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Status")</p>
+        <pre data-ce-licence-status class="bg-light p-3" style="white-space: pre-wrap;">Loading…</pre>
+        <div class="form-group">
+            <label for="ce-licence-key-input">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Key")</label>
+            <textarea id="ce-licence-key-input" data-ce-licence-key class="form-control" rows="3" placeholder="ce-lic-v1.…"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" data-ce-licence-activate>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Activate")</button>
+        <button type="button" class="btn btn-secondary ml-2" data-ce-licence-heartbeat>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Heartbeat")</button>
+        <p class="form-text text-muted mt-3 mb-0">
+            <a href="/Admin/CheckEngine/PortalAdmin/Accounts">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</a>
+        </p>
+    </div>
+</div>

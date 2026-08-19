@@ -188,6 +188,26 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.VendorApply",
             pattern: "check-engine/vendor/{action}",
             defaults: new { controller = "Vendor", action = "Apply" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.Workshop",
+            pattern: "check-engine/workshop/{action}",
+            defaults: new { controller = "Workshop", action = "Index" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.Fleet",
+            pattern: "check-engine/fleet/{action}",
+            defaults: new { controller = "Fleet", action = "Index" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.Dealer",
+            pattern: "check-engine/dealer/{action}",
+            defaults: new { controller = "Dealer", action = "Index" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PortalAdmin",
+            pattern: "Admin/CheckEngine/PortalAdmin/{action}",
+            defaults: new { area = AreaNames.ADMIN, controller = "PortalAdmin", action = "Accounts" });
     }
 
     public int Priority => 0;

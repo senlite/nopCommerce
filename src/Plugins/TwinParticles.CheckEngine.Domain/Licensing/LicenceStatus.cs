@@ -23,4 +23,19 @@ public sealed class LicenceStatus
     /// Business-tier and above (FR-870). Independent of <see cref="AllowsAdminWrite"/>.
     /// </summary>
     public bool MarketplaceModuleEntitlement { get; init; }
+
+    /// <summary>
+    /// Workshop portal SKU (EP-25). Boolean add-on flag in the licence bundle.
+    /// </summary>
+    public bool WorkshopPortalEntitlement { get; init; }
+
+    /// <summary>
+    /// Fleet portal SKU (EP-26). Boolean add-on flag in the licence bundle.
+    /// </summary>
+    public bool FleetPortalEntitlement { get; init; }
+
+    /// <summary>
+    /// Dealer portal SKU (EP-27). Boolean add-on flag in the licence bundle.
+    /// </summary>
+    public bool DealerPortalEntitlement { get; init; }
 }

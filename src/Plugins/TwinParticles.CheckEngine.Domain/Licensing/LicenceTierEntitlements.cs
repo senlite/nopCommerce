@@ -10,6 +10,15 @@ public static class LicenceTierEntitlements
     public static bool GrantsMarketplace(LicenceTier tier)
         => tier is LicenceTier.Business or LicenceTier.Enterprise or LicenceTier.OemRedistribution;
 
+    public static bool GrantsWorkshopPortal(LicenceTier tier)
+        => tier is LicenceTier.Business or LicenceTier.Enterprise or LicenceTier.OemRedistribution;
+
+    public static bool GrantsFleetPortal(LicenceTier tier)
+        => tier is LicenceTier.Enterprise or LicenceTier.OemRedistribution;
+
+    public static bool GrantsDealerPortal(LicenceTier tier)
+        => tier is LicenceTier.Enterprise or LicenceTier.OemRedistribution;
+
     public static LicenceTier ParseTier(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))

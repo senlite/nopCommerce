@@ -11,6 +11,12 @@ public sealed class LicenceKeyValidationResult
     public LicenceTier Tier { get; init; }
 
     public bool MarketplaceModuleEntitlement { get; init; }
+
+    public bool WorkshopPortalEntitlement { get; init; }
+
+    public bool FleetPortalEntitlement { get; init; }
+
+    public bool DealerPortalEntitlement { get; init; }
 }
 
 /// <summary>
