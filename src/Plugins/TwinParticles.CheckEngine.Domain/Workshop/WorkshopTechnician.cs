@@ -9,4 +9,6 @@ public sealed class WorkshopTechnician
     public int CustomerId { get; set; }
 
     public bool CanRaiseInvoice { get; set; }
+
+    public bool IsFrontDesk { get; set; }
 }

@@ -243,7 +243,8 @@ public sealed class PortalAdminService
         {
             WorkshopAccountId = request.WorkshopAccountId,
             CustomerId = request.CustomerId,
-            CanRaiseInvoice = request.CanRaiseInvoice
+            IsFrontDesk = request.IsFrontDesk,
+            CanRaiseInvoice = request.IsFrontDesk || request.CanRaiseInvoice
         };
 
         technician.Id = await _workshop.InsertTechnicianAsync(technician, cancellationToken);
@@ -366,6 +367,8 @@ public sealed class SeedWorkshopTechnicianRequest
     public int CustomerId { get; init; }
 
     public bool CanRaiseInvoice { get; init; }
+
+    public bool IsFrontDesk { get; init; }
 }
 
 public sealed class SeedFleetApproverRequest

@@ -12,6 +12,8 @@ public sealed class WorkshopPortalSnapshot
     public IReadOnlyList<WorkshopJob> Jobs { get; init; } = [];
 
     public IReadOnlyList<WorkshopCustomer> Customers { get; init; } = [];
+
+    public WorkshopPortalCapabilities Capabilities { get; set; } = new();
 }
 
 public sealed class WorkshopJobDetail

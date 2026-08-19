@@ -282,4 +282,23 @@ public class VerticalPortalConventionsTests
         portalsJs.Should().Contain("vehicleConfigurationId");
         portalsJs.Should().Contain("data-ce-workshop-invoice-vehicle");
     }
+
+    [Test]
+    public void Horizon4_v070_Should_Add_Service_History_And_Front_Desk()
+    {
+        var migration = ReadInfrastructureFile("Migrations", "202608191000_Horizon4WorkshopRoles.cs");
+        migration.Should().Contain("IsFrontDesk");
+
+        var access = ReadApplicationFile("Portals", "VerticalPortalAccessService.cs");
+        access.Should().Contain("ResolveWorkshopCapabilitiesAsync");
+        access.Should().Contain("CanAssignWorkshopTechnicianAsync");
+
+        var workshop = ReadApplicationFile("Workshop", "WorkshopJobService.cs");
+        workshop.Should().Contain("GetServiceHistoryAsync");
+
+        var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
+        portalsJs.Should().Contain("ServiceHistory");
+        portalsJs.Should().Contain("AssignTechnician");
+        portalsJs.Should().Contain("isFrontDesk");
+    }
 }

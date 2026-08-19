@@ -51,4 +51,8 @@ public interface IWorkshopJobRepository
     Task<WorkshopTechnician?> GetTechnicianAsync(int workshopAccountId, int customerId, CancellationToken cancellationToken);
 
     Task UpdateJobLineAsync(WorkshopJobLine line, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<WorkshopServiceHistoryEntry>> ListServiceHistoryForCustomerVehicleAsync(
+        int workshopCustomerVehicleId,
+        CancellationToken cancellationToken);
 }

@@ -58,7 +58,51 @@ public sealed class WorkshopController : BasePublicController
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         var snapshot = await _jobService.GetDashboardAsync(customer.Id, cancellationToken);
-        return snapshot is null ? Denied(WorkshopErrorCodes.NotFound, 404) : Json(snapshot);
+        if (snapshot is null)
+            return Denied(WorkshopErrorCodes.NotFound, 404);
+
+        var isOperator = await IsOperatorAsync();
+        snapshot.Capabilities = await _portalAccess.ResolveWorkshopCapabilitiesAsync(
+            customer.Id,
+            snapshot.Account.Id,
+            isOperator,
+            cancellationToken);
+
+        return Json(snapshot);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ServiceHistory(int workshopCustomerVehicleId, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var history = await _jobService.GetServiceHistoryAsync(workshopCustomerVehicleId, cancellationToken);
+        return Json(history);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AssignTechnician([FromBody] AssignTechnicianRequest request, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var detail = await _jobService.GetJobDetailAsync(request.JobId, cancellationToken);
+        if (detail is null)
+            return Denied(WorkshopErrorCodes.NotFound, 404);
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isOperator = await IsOperatorAsync();
+        if (!await _portalAccess.OwnsWorkshopAccountAsync(customer.Id, detail.Job.WorkshopAccountId, isOperator, cancellationToken))
+            return Denied(PortalErrorCodes.AccessDenied);
+
+        if (!await _portalAccess.CanAssignWorkshopTechnicianAsync(customer.Id, detail.Job.WorkshopAccountId, isOperator, cancellationToken))
+            return Denied(WorkshopErrorCodes.AssignDenied);
+
+        var result = await _jobService.AssignTechnicianAsync(request, cancellationToken);
+        return result.Success ? Json(result) : Denied(result.ErrorCode ?? WorkshopErrorCodes.InvalidTransition, 400);
     }
 
     [HttpGet]

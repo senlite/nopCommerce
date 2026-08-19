@@ -86,6 +86,22 @@
                 <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-customer-vehicle-add>@T("Plugins.TwinParticles.CheckEngine.Workshop.AddCustomerVehicle")</button>
             </div>
             <ul class="ce-mp-hint" data-ce-workshop-customer-vehicles></ul>
+            <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.ServiceHistory")</h3>
+            <div class="ce-mp-table-wrap">
+                <table class="ce-mp-table">
+                    <thead>
+                        <tr>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.JobId")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Status")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.LabourEstimate")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.OrderId")</th>
+                        </tr>
+                    </thead>
+                    <tbody data-ce-workshop-service-history>
+                        <tr><td colspan="4">@T("Plugins.TwinParticles.CheckEngine.Workshop.SelectCustomerVehicle")</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <section class="ce-mp-panel">
@@ -111,6 +127,13 @@
         <section class="ce-mp-panel" data-ce-workshop-detail hidden>
             <h2 class="ce-mp-panel__title">@T("Plugins.TwinParticles.CheckEngine.Workshop.JobDetail")</h2>
             <p class="ce-mp-hint" data-ce-workshop-detail-summary></p>
+            <div class="ce-mp-toolbar" data-ce-workshop-assign-panel hidden>
+                <div class="ce-mp-field">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.TechnicianCustomerId")</label>
+                    <input class="ce-mp-input ce-code" type="number" min="1" data-ce-workshop-assign-technician />
+                </div>
+                <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-assign-btn>@T("Plugins.TwinParticles.CheckEngine.Workshop.AssignTechnician")</button>
+            </div>
 
             <h3 class="ce-mp-panel__subtitle">@T("Plugins.TwinParticles.CheckEngine.Workshop.Vehicles")</h3>
             <div class="ce-mp-table-wrap">

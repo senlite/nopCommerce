@@ -114,6 +114,7 @@ public class VerticalPortalAccessTests
         public Task<int> InsertTechnicianAsync(WorkshopTechnician technician, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task<WorkshopTechnician?> GetTechnicianAsync(int workshopAccountId, int customerId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
         public Task UpdateJobLineAsync(WorkshopJobLine line, CancellationToken cancellationToken) => throw new System.NotImplementedException();
+        public Task<IReadOnlyList<WorkshopServiceHistoryEntry>> ListServiceHistoryForCustomerVehicleAsync(int workshopCustomerVehicleId, CancellationToken cancellationToken) => throw new System.NotImplementedException();
     }
 
     private sealed class StubFleetRepo : IFleetPortalRepository

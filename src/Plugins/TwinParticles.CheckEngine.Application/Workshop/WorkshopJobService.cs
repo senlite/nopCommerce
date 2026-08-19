@@ -273,6 +273,35 @@ public sealed class WorkshopJobService
         return await _repository.ListCustomerVehiclesAsync(workshopCustomerId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<WorkshopServiceHistoryEntry>> GetServiceHistoryAsync(
+        int workshopCustomerVehicleId,
+        CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return Array.Empty<WorkshopServiceHistoryEntry>();
+
+        return await _repository.ListServiceHistoryForCustomerVehicleAsync(workshopCustomerVehicleId, cancellationToken);
+    }
+
+    public async Task<WorkshopJobResult> AssignTechnicianAsync(AssignTechnicianRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
+            return WorkshopJobResult.Fail(WorkshopErrorCodes.LicenceDenied);
+
+        var job = await _repository.GetJobAsync(request.JobId, cancellationToken);
+        if (job is null)
+            return WorkshopJobResult.Fail(WorkshopErrorCodes.NotFound);
+
+        if (job.Status is WorkshopJobStatus.Invoiced or WorkshopJobStatus.Cancelled)
+            return WorkshopJobResult.Fail(WorkshopErrorCodes.InvalidTransition);
+
+        job.AssignedTechnicianCustomerId = request.TechnicianCustomerId;
+        job.UpdatedUtc = _clock.UtcNow;
+        await _repository.UpdateJobAsync(job, cancellationToken);
+        await AuditAsync("workshop.job.assign_technician", job.Id, cancellationToken);
+        return WorkshopJobResult.Ok(job);
+    }
+
     public async Task<WorkshopPortalSnapshot?> GetDashboardAsync(int customerId, CancellationToken cancellationToken)
     {
         if (!await _licenceGate.AllowsWorkshopAsync(cancellationToken))
@@ -408,6 +437,13 @@ public sealed class AddWorkshopCustomerVehicleRequest
     public int VehicleConfigurationId { get; init; }
 
     public string? Vin { get; init; }
+}
+
+public sealed class AssignTechnicianRequest
+{
+    public int JobId { get; init; }
+
+    public int TechnicianCustomerId { get; init; }
 }
 
 public sealed class WorkshopCustomerResult

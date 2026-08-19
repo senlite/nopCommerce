@@ -110,6 +110,47 @@ public sealed class VerticalPortalAccessService
         var technician = await _workshop.GetTechnicianAsync(workshopAccountId, customerId, cancellationToken);
         return technician is { CanRaiseInvoice: true };
     }
+
+    public async Task<bool> CanAssignWorkshopTechnicianAsync(int customerId, int workshopAccountId, bool isOperator, CancellationToken cancellationToken)
+    {
+        if (isOperator)
+            return true;
+
+        var account = await _workshop.GetAccountByIdAsync(workshopAccountId, cancellationToken);
+        if (account is not { IsActive: true })
+            return false;
+
+        if (account.CustomerId == customerId)
+            return true;
+
+        var technician = await _workshop.GetTechnicianAsync(workshopAccountId, customerId, cancellationToken);
+        return technician is { IsFrontDesk: true };
+    }
+
+    public async Task<bool> CanViewWorkshopCreditAsync(int customerId, int workshopAccountId, bool isOperator, CancellationToken cancellationToken)
+    {
+        if (isOperator)
+            return true;
+
+        var account = await _workshop.GetAccountByIdAsync(workshopAccountId, cancellationToken);
+        return account is { IsActive: true, CustomerId: var owner } && owner == customerId;
+    }
+
+    public async Task<WorkshopPortalCapabilities> ResolveWorkshopCapabilitiesAsync(
+        int customerId,
+        int workshopAccountId,
+        bool isOperator,
+        CancellationToken cancellationToken)
+    {
+        var technician = await _workshop.GetTechnicianAsync(workshopAccountId, customerId, cancellationToken);
+        return new WorkshopPortalCapabilities
+        {
+            CanViewCredit = await CanViewWorkshopCreditAsync(customerId, workshopAccountId, isOperator, cancellationToken),
+            CanRaiseInvoice = await CanRaiseWorkshopInvoiceAsync(customerId, workshopAccountId, isOperator, cancellationToken),
+            CanAssignTechnician = await CanAssignWorkshopTechnicianAsync(customerId, workshopAccountId, isOperator, cancellationToken),
+            IsFrontDesk = technician?.IsFrontDesk ?? false
+        };
+    }
 }
 
 public sealed class PortalAccessResult

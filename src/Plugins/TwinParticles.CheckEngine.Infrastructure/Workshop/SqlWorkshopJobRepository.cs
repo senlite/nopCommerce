@@ -302,12 +302,13 @@ ORDER BY Id",
     public async Task<int> InsertTechnicianAsync(WorkshopTechnician technician, CancellationToken cancellationToken)
     {
         var id = await _dataProvider.QueryAsync<int>(@"
-INSERT INTO TP_CE_WorkshopTechnician (WorkshopAccountId, CustomerId, CanRaiseInvoice)
-VALUES (@workshopAccountId, @customerId, @canRaiseInvoice);
+INSERT INTO TP_CE_WorkshopTechnician (WorkshopAccountId, CustomerId, CanRaiseInvoice, IsFrontDesk)
+VALUES (@workshopAccountId, @customerId, @canRaiseInvoice, @isFrontDesk);
 " + CheckEngineSql.SelectInsertedIntId() + ";",
             new DataParameter("workshopAccountId", technician.WorkshopAccountId),
             new DataParameter("customerId", technician.CustomerId),
-            new DataParameter("canRaiseInvoice", technician.CanRaiseInvoice));
+            new DataParameter("canRaiseInvoice", technician.CanRaiseInvoice),
+            new DataParameter("isFrontDesk", technician.IsFrontDesk));
 
         return id.FirstOrDefault();
     }
@@ -315,7 +316,7 @@ VALUES (@workshopAccountId, @customerId, @canRaiseInvoice);
     public async Task<WorkshopTechnician?> GetTechnicianAsync(int workshopAccountId, int customerId, CancellationToken cancellationToken)
     {
         var sql = CheckEngineSql.SelectTop(1,
-            "Id, WorkshopAccountId, CustomerId, CanRaiseInvoice",
+            "Id, WorkshopAccountId, CustomerId, CanRaiseInvoice, IsFrontDesk",
             "FROM TP_CE_WorkshopTechnician WHERE WorkshopAccountId = @workshopAccountId AND CustomerId = @customerId ORDER BY Id");
         var rows = await _dataProvider.QueryAsync<TechnicianRow>(sql,
             new DataParameter("workshopAccountId", workshopAccountId),
@@ -326,8 +327,34 @@ VALUES (@workshopAccountId, @customerId, @canRaiseInvoice);
             Id = row.Id,
             WorkshopAccountId = row.WorkshopAccountId,
             CustomerId = row.CustomerId,
-            CanRaiseInvoice = row.CanRaiseInvoice
+            CanRaiseInvoice = row.CanRaiseInvoice,
+            IsFrontDesk = row.IsFrontDesk
         }).FirstOrDefault();
+    }
+
+    public async Task<IReadOnlyList<WorkshopServiceHistoryEntry>> ListServiceHistoryForCustomerVehicleAsync(
+        int workshopCustomerVehicleId,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _dataProvider.QueryAsync<ServiceHistoryRow>(@"
+SELECT DISTINCT j.Id AS JobId, j.StatusId, j.LabourEstimate, j.OrderId, j.UpdatedUtc
+FROM TP_CE_WorkshopJob j
+INNER JOIN TP_CE_WorkshopJobVehicle jv ON jv.JobId = j.Id
+INNER JOIN TP_CE_WorkshopCustomerVehicle cv ON cv.Id = @customerVehicleId
+WHERE j.WorkshopCustomerId = cv.WorkshopCustomerId
+  AND jv.VehicleConfigurationId = cv.VehicleConfigurationId
+  AND (cv.Vin IS NULL OR jv.Vin IS NULL OR jv.Vin = cv.Vin)
+ORDER BY j.UpdatedUtc DESC",
+            new DataParameter("customerVehicleId", workshopCustomerVehicleId));
+
+        return rows.Select(row => new WorkshopServiceHistoryEntry
+        {
+            JobId = row.JobId,
+            Status = (WorkshopJobStatus)row.StatusId,
+            LabourEstimate = row.LabourEstimate,
+            OrderId = row.OrderId,
+            UpdatedUtc = ToUtc(row.UpdatedUtc)
+        }).ToList();
     }
 
     public Task UpdateJobLineAsync(WorkshopJobLine line, CancellationToken cancellationToken)
@@ -465,5 +492,15 @@ WHERE Id = @id",
         public int WorkshopAccountId { get; set; }
         public int CustomerId { get; set; }
         public bool CanRaiseInvoice { get; set; }
+        public bool IsFrontDesk { get; set; }
+    }
+
+    private sealed class ServiceHistoryRow
+    {
+        public int JobId { get; set; }
+        public int StatusId { get; set; }
+        public decimal LabourEstimate { get; set; }
+        public int? OrderId { get; set; }
+        public DateTime UpdatedUtc { get; set; }
     }
 }

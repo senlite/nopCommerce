@@ -79,15 +79,26 @@
     var customersBody = root.querySelector('[data-ce-workshop-customers]');
     var customerVehicleForm = root.querySelector('[data-ce-workshop-customer-vehicle-form]');
     var customerVehiclesList = root.querySelector('[data-ce-workshop-customer-vehicles]');
-    var state = { accountId: null, jobs: [], customers: [], selectedJobId: null, selectedCustomerId: null };
+    var serviceHistoryBody = root.querySelector('[data-ce-workshop-service-history]');
+    var assignPanel = root.querySelector('[data-ce-workshop-assign-panel]');
+    var state = { accountId: null, jobs: [], customers: [], selectedJobId: null, selectedCustomerId: null, capabilities: {} };
 
     function render() {
       if (!stats) return;
       var account = state.account || {};
+      var caps = state.capabilities || {};
       var open = state.jobs.filter(function (j) {
         var s = pick(j, 'status', 'Status');
         return s !== 40 && s !== 90;
       }).length;
+      var creditHtml = caps.canViewCredit || caps.CanViewCredit
+        ? '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Credit used</span><span class="ce-mp-stat__value">' +
+          (pick(account, 'creditUsed', 'CreditUsed') || 0) +
+          '</span></div>' +
+          '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Credit limit</span><span class="ce-mp-stat__value">' +
+          (pick(account, 'creditLimit', 'CreditLimit') || 0) +
+          '</span></div>'
+        : '';
       stats.innerHTML =
         '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Account</span><span class="ce-mp-stat__value">' +
         (pick(account, 'displayName', 'DisplayName') || '—') +
@@ -95,12 +106,7 @@
         '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Open jobs</span><span class="ce-mp-stat__value">' +
         open +
         '</span></div>' +
-        '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Credit used</span><span class="ce-mp-stat__value">' +
-        (pick(account, 'creditUsed', 'CreditUsed') || 0) +
-        '</span></div>' +
-        '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Credit limit</span><span class="ce-mp-stat__value">' +
-        (pick(account, 'creditLimit', 'CreditLimit') || 0) +
-        '</span></div>';
+        creditHtml;
     }
 
     function renderJobs() {
@@ -147,6 +153,10 @@
       var jobId = pick(job, 'id', 'Id');
       state.selectedJobId = jobId;
       detailPanel.hidden = false;
+      if (assignPanel) {
+        var canAssign = pick(state.capabilities, 'canAssignTechnician', 'CanAssignTechnician');
+        assignPanel.hidden = !canAssign;
+      }
       if (detailSummary) {
         detailSummary.textContent =
           'Job #' + jobId + ' — ' + statusBadge(pick(job, 'status', 'Status'));
@@ -250,10 +260,13 @@
           customerVehiclesList.innerHTML = vehicles.length
             ? vehicles
                 .map(function (v) {
+                  var vehicleId = pick(v, 'id', 'Id');
                   return (
-                    '<li>#' +
-                    (pick(v, 'id', 'Id') || '') +
-                    ' — config ' +
+                    '<li><button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-history-vehicle="' +
+                    vehicleId +
+                    '">#' +
+                    vehicleId +
+                    '</button> — config ' +
                     (pick(v, 'vehicleConfigurationId', 'VehicleConfigurationId') || '') +
                     (pick(v, 'vin', 'Vin') ? ' (' + pick(v, 'vin', 'Vin') + ')' : '') +
                     '</li>'
@@ -267,6 +280,36 @@
         });
     }
 
+    function loadServiceHistory(vehicleId) {
+      if (!serviceHistoryBody) return Promise.resolve();
+      return apiGet('/check-engine/workshop/ServiceHistory?workshopCustomerVehicleId=' + encodeURIComponent(vehicleId), token)
+        .then(function (entries) {
+          entries = entries || [];
+          if (!entries.length) {
+            serviceHistoryBody.innerHTML = '<tr><td colspan="4">No prior jobs for this vehicle.</td></tr>';
+            return;
+          }
+          serviceHistoryBody.innerHTML = entries
+            .map(function (entry) {
+              return (
+                '<tr><td>#' +
+                (pick(entry, 'jobId', 'JobId') || '') +
+                '</td><td>' +
+                statusBadge(pick(entry, 'status', 'Status')) +
+                '</td><td>' +
+                (pick(entry, 'labourEstimate', 'LabourEstimate') || 0) +
+                '</td><td>' +
+                (pick(entry, 'orderId', 'OrderId') || '—') +
+                '</td></tr>'
+              );
+            })
+            .join('');
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', portalErrorMessage(root, err));
+        });
+    }
+
     function refresh() {
       return apiGet('/check-engine/workshop/DashboardData', token)
         .then(function (data) {
@@ -274,6 +317,7 @@
           state.accountId = pick(state.account, 'id', 'Id');
           state.jobs = pick(data, 'jobs', 'Jobs') || [];
           state.customers = pick(data, 'customers', 'Customers') || [];
+          state.capabilities = pick(data, 'capabilities', 'Capabilities') || {};
           render();
           renderJobs();
           renderCustomers();
@@ -372,6 +416,11 @@
       var customerView = e.target.closest('[data-ce-workshop-customer-view]');
       if (customerView) {
         loadCustomerVehicles(Number(customerView.getAttribute('data-ce-workshop-customer-view')));
+        return;
+      }
+      var historyVehicle = e.target.closest('[data-ce-workshop-history-vehicle]');
+      if (historyVehicle) {
+        loadServiceHistory(Number(historyVehicle.getAttribute('data-ce-workshop-history-vehicle')));
       }
     });
 
@@ -432,6 +481,23 @@
           })
           .catch(function (err) {
             showAlert(alert, 'error', (err && err.errorCode) || 'Add vehicle failed.');
+          });
+      });
+    }
+
+    var assignBtn = root.querySelector('[data-ce-workshop-assign-btn]');
+    if (assignBtn) {
+      assignBtn.addEventListener('click', function () {
+        if (!state.selectedJobId) return;
+        apiPost('/check-engine/workshop/AssignTechnician', token, {
+          jobId: state.selectedJobId,
+          technicianCustomerId: Number(root.querySelector('[data-ce-workshop-assign-technician]')?.value || 0)
+        })
+          .then(function () {
+            return loadJobDetail(state.selectedJobId);
+          })
+          .catch(function (err) {
+            showAlert(alert, 'error', (err && err.errorCode) || 'Assign failed.');
           });
       });
     }
@@ -901,7 +967,8 @@
       apiPost('/Admin/CheckEngine/PortalAdmin/SeedWorkshopTechnician', token, {
         workshopAccountId: Number(root.querySelector('[data-ce-admin-workshop-account]')?.value || 0),
         customerId: Number(root.querySelector('[data-ce-admin-technician-customer]')?.value || 0),
-        canRaiseInvoice: !!root.querySelector('[data-ce-admin-technician-invoice]')?.checked
+        canRaiseInvoice: !!root.querySelector('[data-ce-admin-technician-invoice]')?.checked,
+        isFrontDesk: !!root.querySelector('[data-ce-admin-technician-frontdesk]')?.checked
       })
         .then(function (res) {
           showAlert(alert, 'success', 'Seeded technician #' + pick(res, 'entityId', 'EntityId'));
