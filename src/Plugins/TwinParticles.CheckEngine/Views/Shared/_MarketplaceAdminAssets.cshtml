@@ -1,5 +1,6 @@
 @{
-    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css?v=0.81.2\" />");
-    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.css?v=0.81.2\" />");
-    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.js?v=0.81.2\" defer></script>");
+    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css?v=0.82.0\" />");
+    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.css?v=0.82.0\" />");
+    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.js?v=0.82.0\" defer></script>");
 }
+@await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))

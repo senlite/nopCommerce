@@ -361,8 +361,8 @@
             showAlert(alert, 'success', 'Processed ' + (pick(body, 'processed', 'Processed') || 0) + ' jobs.');
           });
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Process failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Process failed.'));
         });
     });
     root.querySelector('[data-ce-erp-snapshot]')?.addEventListener('click', function () {
@@ -417,12 +417,15 @@
         body: '{}'
       })
         .then(function (r) {
-          if (!r.ok) throw new Error('fail');
+          return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
+        })
+        .then(function (res) {
+          if (!res.ok) throw res.body;
           showAlert(alert, 'success', 'Sitemap rebuild queued.');
           load();
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Rebuild failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Rebuild failed.'));
         });
     });
     function renderLanding(body) {
@@ -466,11 +469,11 @@
         .then(function (res) {
           renderLanding(res.body || {});
           showAlert(alert, res.ok && pick(res.body, 'success', 'Success') !== false ? 'success' : 'error',
-            res.ok ? 'Landing generated.' : (pick(res.body, 'errorCode', 'ErrorCode') || 'Generate failed.'));
+            res.ok ? 'Landing generated.' : errorMessage(res.body, 'Generate failed.'));
           load();
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Generate failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Generate failed.'));
         });
     }
     root.querySelector('[data-ce-seo-generate-vehicle]')?.addEventListener('click', function () { generate('vehicle'); });
@@ -545,11 +548,14 @@
         body: JSON.stringify(Object.assign({ batchId: batchId }, payload))
       })
         .then(function (r) {
-          showAlert(alert, r.ok ? 'success' : 'error', r.ok ? okText : 'Action failed.');
-          if (r.ok) loadBatch();
+          return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Action failed.');
+        .then(function (res) {
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? okText : errorMessage(res.body, 'Action failed.'));
+          if (res.ok) loadBatch();
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Action failed.'));
         });
     }
     if (rowsBody) {
@@ -602,11 +608,11 @@
             if (id && root.querySelector('[data-ce-import-batch]')) {
               root.querySelector('[data-ce-import-batch]').value = id;
             }
-            showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Import pipeline started.' : 'Import failed.');
+            showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Import pipeline started.' : errorMessage(res.body, 'Import failed.'));
             if (res.ok && id) loadBatch();
           })
-          .catch(function () {
-            showAlert(alert, 'error', 'Import failed.');
+          .catch(function (err) {
+            showAlert(alert, 'error', errorMessage(err, 'Import failed.'));
           });
       };
       reader.readAsArrayBuffer(file);
@@ -632,11 +638,11 @@
             { label: 'Failed', value: pick(res.body, 'failedRows', 'FailedRows') },
             { label: 'Dry run', value: pick(res.body, 'dryRun', 'DryRun') }
           ]);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Publish complete.' : 'Publish failed.');
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Publish complete.' : errorMessage(res.body, 'Publish failed.'));
           loadBatch();
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Publish failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Publish failed.'));
         });
     });
     var initial = root.querySelector('[data-ce-import-batch]')?.value;
@@ -710,11 +716,11 @@
             { label: 'Configurations', value: pick(res.body, 'configurationsInserted', 'ConfigurationsInserted') },
             { label: 'OEM entries', value: pick(res.body, 'oemEntriesUpserted', 'OemEntriesUpserted') }
           ]);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Catalog load complete.' : 'Catalog load failed.');
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Catalog load complete.' : errorMessage(res.body, 'Catalog load failed.'));
           load();
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Catalog load failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Catalog load failed.'));
         });
     });
     root.querySelector('[data-ce-reference-purge]')?.addEventListener('click', function () {
@@ -726,11 +732,14 @@
         body: '{}'
       })
         .then(function (r) {
-          showAlert(alert, r.ok ? 'success' : 'error', r.ok ? 'Catalog purged.' : 'Purge failed.');
+          return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
+        })
+        .then(function (res) {
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Catalog purged.' : errorMessage(res.body, 'Purge failed.'));
           load();
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Purge failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Purge failed.'));
         });
     });
     load();
@@ -770,10 +779,10 @@
             { label: 'CDN URL', value: pick(res.body, 'cdnUrl', 'CdnUrl') },
             { label: 'Error', value: pick(res.body, 'errorCode', 'ErrorCode') || pick(res.body, 'reasonCode', 'ReasonCode') }
           ]);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Primary image replaced.' : 'Replace failed.');
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Primary image replaced.' : errorMessage(res.body, 'Replace failed.'));
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Replace failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Replace failed.'));
         });
     });
     root.querySelector('[data-ce-image-manifest-submit]')?.addEventListener('click', function () {
@@ -791,10 +800,10 @@
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
           renderBatchImageResult(manifestStats, manifestRows, res.body);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Manifest applied.' : 'Manifest failed.');
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Manifest applied.' : errorMessage(res.body, 'Manifest failed.'));
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Manifest failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Manifest failed.'));
         });
     });
     root.querySelector('[data-ce-image-template-submit]')?.addEventListener('click', function () {
@@ -821,10 +830,10 @@
             root.querySelector('[data-ce-image-template-rows]'),
             res.body
           );
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Template applied.' : 'Template failed.');
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Template applied.' : errorMessage(res.body, 'Template failed.'));
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'Template failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'Template failed.'));
         });
     });
   }

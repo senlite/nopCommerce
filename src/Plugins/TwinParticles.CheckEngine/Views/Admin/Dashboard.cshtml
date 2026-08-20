@@ -187,6 +187,13 @@
     });
   }
 
+  function importError(body, fallback) {
+    var code = body && (body.reasonCode || body.errorCode);
+    if (code === 'licence.read_only')
+      return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+    return code || fallback;
+  }
+
   submit.addEventListener('click', function () {
     var file = fileInput.files && fileInput.files[0];
     if (!file) {
@@ -216,7 +223,7 @@
     }).then(function (response) {
       return response.json().then(function (body) {
         if (!response.ok) {
-          showImport('error', (body && (body.reasonCode || body.errorCode)) || (response.status + ' ' + response.statusText));
+          showImport('error', importError(body, response.status + ' ' + response.statusText));
           return;
         }
         showImport('success', 'Import pipeline started.', body);

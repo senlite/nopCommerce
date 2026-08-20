@@ -5,6 +5,8 @@
     await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalAssets.cshtml");
 }
 
+@await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))
+
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</h1>
 </div>

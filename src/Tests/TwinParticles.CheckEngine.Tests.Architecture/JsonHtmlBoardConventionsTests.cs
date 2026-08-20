@@ -128,6 +128,34 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("checkengine-marketplace.css?v=");
         ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
             .Should().Contain("AddHeadCustomParts");
+        ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
+            .Should().Contain("LicenceReadOnlyBannerViewComponent");
+        ReadPluginFile("Views", "Shared", "_MarketplaceAdminAssets.cshtml")
+            .Should().Contain("LicenceReadOnlyBannerViewComponent");
+        ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml")
+            .Should().Contain("LicenceReadOnlyBannerViewComponent");
+        ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml")
+            .Should().NotContain("LicenceReadOnlyBannerViewComponent");
+        ReadPluginFile("Views", "Configure.cshtml")
+            .Should().Contain("LicenceReadOnlyBannerViewComponent");
+        ReadPluginFile("Components", "LicenceReadOnlyBannerViewComponent.cs")
+            .Should().Contain("AllowsAdminWriteAsync");
+        ReadPluginFile("Views", "Shared", "Components", "LicenceReadOnlyBanner", "Default.cshtml")
+            .Should().Contain("data-ce-licence-readonly-banner");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("errorMessage(res.body, 'Template failed.')");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("errorMessage(res.body, 'Publish failed.')");
+        ReadPluginFile("Views", "Workshop", "Index.cshtml")
+            .Should().NotContain("LicenceReadOnlyBannerViewComponent");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().Contain("importError");
+        ReadPluginFile("Content", "checkengine-marketplace.js")
+            .Should().Contain("licence.read_only");
+        ReadPluginFile("Content", "checkengine-portals.js")
+            .Should().Contain("function adminError");
+        ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml")
+            .Should().Contain("Licence.Panel.LastHeartbeat");
         ReadPluginFile("Controllers", "GarageController.cs")
             .Should().Contain("WantsJsonResponse");
         ReadPluginFile("Controllers", "GarageController.cs")

@@ -16,6 +16,7 @@
     </div>
 </div>
 
+@await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))
 @await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_LicencePanel.cshtml")
 
 @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))

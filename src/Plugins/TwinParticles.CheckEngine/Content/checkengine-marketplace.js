@@ -9,6 +9,13 @@
     return undefined;
   }
 
+  function errorMessage(err, fallback) {
+    var code = pick(err, 'reasonCode', 'ReasonCode') || pick(err, 'errorCode', 'ErrorCode') || '';
+    if (code === 'licence.read_only')
+      return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+    return code || fallback || 'Request failed.';
+  }
+
   function headers(token, json) {
     var h = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
     if (json) h['Content-Type'] = 'application/json';
@@ -166,7 +173,7 @@
         .then(function (res) {
           setLoading(submitBtn, false);
           if (!res.ok) {
-            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.errorSubmit || 'Submission failed');
+            showAlert(alert, 'error', errorMessage(res.body, i18n.errorSubmit || 'Submission failed'));
             return;
           }
 
@@ -640,7 +647,7 @@
             renderPlan(res.body);
             showAlert(alert, 'success', 'Commission plan saved.');
           } else {
-            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || 'Save failed');
+            showAlert(alert, 'error', errorMessage(res.body, 'Save failed'));
           }
         });
     });
@@ -692,7 +699,7 @@
           if (!tbody) return;
           tbody.innerHTML = '';
           if (!res.ok) {
-            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.errorLoad || 'Could not load queue');
+            showAlert(alert, 'error', errorMessage(res.body, i18n.errorLoad || 'Could not load queue'));
             return;
           }
           var rows = res.body || [];
@@ -744,7 +751,7 @@
             showAlert(alert, 'success', (i18n.actionOk || 'Updated') + ' #' + vendorId);
             loadQueue();
           } else {
-            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.actionFail || 'Action failed');
+            showAlert(alert, 'error', errorMessage(res.body, i18n.actionFail || 'Action failed'));
           }
         });
     }
@@ -975,7 +982,7 @@
             if (onSuccess) onSuccess(res.body);
             loadStatements();
           } else {
-            showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.actionFail || 'Action failed');
+            showAlert(alert, 'error', errorMessage(res.body, i18n.actionFail || 'Action failed'));
           }
         });
     }
@@ -1001,7 +1008,7 @@
               showAlert(alert, 'success', (i18n.generated || 'Statement created') + ' #' + pick(res.body, 'id', 'Id'));
               loadStatements();
             } else {
-              showAlert(alert, 'error', pick(res.body, 'reasonCode', 'ReasonCode') || i18n.actionFail || 'Generate failed');
+              showAlert(alert, 'error', errorMessage(res.body, i18n.actionFail || 'Generate failed'));
             }
           });
       });
