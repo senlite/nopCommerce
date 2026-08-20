@@ -26,6 +26,14 @@
     });
   }
 
+  function formatErpIssue(issue, i18n) {
+    if (issue === 'reconciliation:local_unavailable')
+      return i18n.issueLocalUnavailable || 'Local reconciliation data is unavailable.';
+    if (issue === 'reconciliation:erp_unavailable')
+      return i18n.issueErpUnavailable || 'ERP reconciliation data is unavailable.';
+    return issue;
+  }
+
   function token(root) {
     return root.querySelector('input[name="__RequestVerificationToken"]');
   }
@@ -364,7 +372,7 @@
           var issues = asArray(pick(data, 'issues', 'Issues'));
           if (issuesEl) {
             issuesEl.innerHTML = issues.length
-              ? issues.map(function (issue) { return '<li>' + escapeHtml(issue) + '</li>'; }).join('')
+              ? issues.map(function (issue) { return '<li>' + escapeHtml(formatErpIssue(issue, i18n)) + '</li>'; }).join('')
               : '<li class="text-muted">' + escapeHtml(i18n.emptyIssues || 'No issues.') + '</li>';
           }
         })
@@ -577,11 +585,11 @@
           return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
         })
         .then(function (res) {
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? okText : errorMessage(res.body, 'Action failed.'));
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? okText : errorMessage(res.body, i18n.actionFailed || 'Action failed.'));
           if (res.ok) loadBatch();
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Action failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.actionFailed || 'Action failed.'));
         });
     }
     if (rowsBody) {
@@ -668,7 +676,7 @@
           loadBatch();
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Publish failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.publishFailed || 'Publish failed.'));
         });
     });
     var initial = root.querySelector('[data-ce-import-batch]')?.value;

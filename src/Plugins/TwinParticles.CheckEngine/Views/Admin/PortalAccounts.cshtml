@@ -14,6 +14,30 @@
 <section class="content ce-marketplace" data-ce-page="portal-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            provisioned = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Provisioned").Text,
+            provisionFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionFailed").Text,
+            seededAllocation = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededAllocation").Text,
+            seedAllocationFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedAllocationFailed").Text,
+            seededQuota = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededQuota").Text,
+            seedQuotaFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedQuotaFailed").Text,
+            seededFranchise = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededFranchise").Text,
+            seedFranchiseFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedFranchiseFailed").Text,
+            seededPriceList = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededPriceList").Text,
+            seedPriceFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedPriceFailed").Text,
+            seededTechnician = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededTechnician").Text,
+            seedTechnicianFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedTechnicianFailed").Text,
+            seededLabourRate = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededLabourRate").Text,
+            seedLabourRateFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedLabourRateFailed").Text,
+            seededPriceTier = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededPriceTier").Text,
+            seedPriceTierFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedPriceTierFailed").Text,
+            seededAccountTier = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededAccountTier").Text,
+            seedAccountTierFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedAccountTierFailed").Text,
+            seededFleetApprover = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededFleetApprover").Text,
+            seedFleetApproverFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedFleetApproverFailed").Text,
+            seededTerritory = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededTerritory").Text,
+            seedTerritoryFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedTerritoryFailed").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-portal-alert hidden role="status"></div>
 
         <div class="card card-default">

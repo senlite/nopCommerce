@@ -418,7 +418,7 @@
             return loadJobDetail(state.selectedJobId);
           })
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Allocate failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.allocateFailed || 'Allocate failed.'));
           });
         return;
       }
@@ -465,7 +465,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Invoice failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.invoiceFailed || 'Invoice failed.'));
           });
         return;
       }
@@ -479,7 +479,7 @@
             return loadJobDetail(state.selectedJobId).then(refresh);
           })
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Invoice failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.invoiceFailed || 'Invoice failed.'));
           });
         return;
       }
@@ -538,7 +538,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Create job failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.createJobFailed || 'Create job failed.'));
           });
       });
     }
@@ -554,7 +554,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Create customer failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.createCustomerFailed || 'Create customer failed.'));
           });
       });
     }
@@ -572,7 +572,7 @@
             return loadCustomerVehicles(state.selectedCustomerId);
           })
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Add vehicle failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.addVehicleFailed || 'Add vehicle failed.'));
           });
       });
     }
@@ -589,7 +589,7 @@
             return loadJobDetail(state.selectedJobId);
           })
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Assign failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.assignFailed || 'Assign failed.'));
           });
       });
     }
@@ -605,7 +605,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Generate statement failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.generateStatementFailed || 'Generate statement failed.'));
           });
       });
     }
@@ -815,7 +815,7 @@
             });
           })
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Import failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.importFailed || 'Import failed.'));
           });
       });
     }
@@ -833,7 +833,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Submit approval failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.submitApprovalFailed || 'Submit approval failed.'));
           });
       });
     }
@@ -965,7 +965,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Order failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.orderFailed || 'Order failed.'));
           });
       });
     }
@@ -981,7 +981,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Claim failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.claimFailed || 'Claim failed.'));
           });
       });
     }
@@ -991,6 +991,7 @@
 
   function initPortalAdmin(root) {
     var token = root.querySelector('input[name="__RequestVerificationToken"]');
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-portal-alert]');
     function provision(path) {
       var customerId = Number(root.querySelector('[data-ce-admin-customer]')?.value || 0);
@@ -999,10 +1000,10 @@
         .then(function (res) {
           var kind = pick(res, 'portalKind', 'PortalKind') || 'account';
           var accountId = pick(res, 'accountId', 'AccountId');
-          showAlert(alert, 'success', 'Provisioned ' + kind + ' #' + accountId);
+          showAlert(alert, 'success', fmt(i18n.provisioned || 'Provisioned {0} #{1}', kind, accountId));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Provision failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.provisionFailed || 'Provision failed.'));
         });
     }
     root.querySelector('[data-ce-admin-workshop]')?.addEventListener('click', function () {
@@ -1026,10 +1027,10 @@
         periodCeilingUnits: periodCeilingUnits
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded allocation #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededAllocation || 'Seeded allocation #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed allocation failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedAllocationFailed || 'Seed allocation failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-quota]')?.addEventListener('click', function () {
@@ -1040,10 +1041,10 @@
         spendCeiling: spendCeiling
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded quota #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededQuota || 'Seeded quota #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed quota failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedQuotaFailed || 'Seed quota failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-franchise]')?.addEventListener('click', function () {
@@ -1053,10 +1054,10 @@
         franchiseLabel: root.querySelector('[data-ce-admin-franchise-label]')?.value || ''
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded franchise #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededFranchise || 'Seeded franchise #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed franchise failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedFranchiseFailed || 'Seed franchise failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-price]')?.addEventListener('click', function () {
@@ -1067,10 +1068,10 @@
         unitPrice: Number(root.querySelector('[data-ce-admin-trade-price]')?.value || 0)
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Price list #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededPriceList || 'Price list #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed price failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedPriceFailed || 'Seed price failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-technician]')?.addEventListener('click', function () {
@@ -1081,10 +1082,10 @@
         isFrontDesk: !!root.querySelector('[data-ce-admin-technician-frontdesk]')?.checked
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded technician #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededTechnician || 'Seeded technician #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed technician failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedTechnicianFailed || 'Seed technician failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-labour-rate]')?.addEventListener('click', function () {
@@ -1094,10 +1095,10 @@
         hourlyRate: Number(root.querySelector('[data-ce-admin-labour-rate]')?.value || 0)
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded labour rate #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededLabourRate || 'Seeded labour rate #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed labour rate failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedLabourRateFailed || 'Seed labour rate failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-price-tier]')?.addEventListener('click', function () {
@@ -1107,10 +1108,10 @@
         discountPercent: Number(root.querySelector('[data-ce-admin-tier-discount]')?.value || 0)
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded price tier #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededPriceTier || 'Seeded price tier #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed price tier failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedPriceTierFailed || 'Seed price tier failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-account-tier]')?.addEventListener('click', function () {
@@ -1120,10 +1121,10 @@
         discountPercent: Number(root.querySelector('[data-ce-admin-account-tier-discount]')?.value || 0)
       })
         .then(function () {
-          showAlert(alert, 'success', 'Seeded account tier');
+          showAlert(alert, 'success', i18n.seededAccountTier || 'Seeded account tier');
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed account tier failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedAccountTierFailed || 'Seed account tier failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-fleet-approver]')?.addEventListener('click', function () {
@@ -1132,10 +1133,10 @@
         customerId: Number(root.querySelector('[data-ce-admin-fleet-approver-customer]')?.value || 0)
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded fleet approver #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededFleetApprover || 'Seeded fleet approver #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed fleet approver failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedFleetApproverFailed || 'Seed fleet approver failed.'));
         });
     });
     root.querySelector('[data-ce-admin-seed-territory]')?.addEventListener('click', function () {
@@ -1146,10 +1147,10 @@
         regionCode: root.querySelector('[data-ce-admin-territory-region]')?.value || ''
       })
         .then(function (res) {
-          showAlert(alert, 'success', 'Seeded territory #' + pick(res, 'entityId', 'EntityId'));
+          showAlert(alert, 'success', fmt(i18n.seededTerritory || 'Seeded territory #{0}', pick(res, 'entityId', 'EntityId')));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', adminError(err, 'Seed territory failed.'));
+          showAlert(alert, 'error', adminError(err, i18n.seedTerritoryFailed || 'Seed territory failed.'));
         });
     });
   }
