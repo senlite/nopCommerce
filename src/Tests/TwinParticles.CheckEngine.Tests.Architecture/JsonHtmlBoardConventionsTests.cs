@@ -129,7 +129,21 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Views", "Admin", "VehicleAdmin.cshtml")
             .Should().Contain("TwinParticles.CheckEngine.VehicleAdmin");
         ReadPluginFile("Views", "Admin", "OemAdmin.cshtml")
-            .Should().Contain("TwinParticles.CheckEngine.OemAdmin");
+            .Should().Contain("Oem.Admin.Level.Manufacturers");
+        ReadPluginFile("Views", "Admin", "OemAdmin.cshtml")
+            .Should().NotContain(">Manufacturers</option>");
+        ReadPluginFile("Views", "Admin", "FitmentClaimsReview.cshtml")
+            .Should().Contain("Fitment.ClaimsReview.Col.Claim");
+        ReadPluginFile("Views", "Admin", "GarageAdmin.cshtml")
+            .Should().Contain("Common.Col.Vin");
+        ReadPluginFile("Views", "Admin", "ImageAdmin.cshtml")
+            .Should().Contain("Common.Col.Sku");
+        ReadPluginFile("Views", "Admin", "ImageAdmin.cshtml")
+            .Should().NotContain("<th>SKU</th>");
+        ReadPluginFile("Views", "Admin", "ImportBatch.cshtml")
+            .Should().Contain("ImportUpload.Format.Csv");
+        ReadPluginFile("Views", "Admin", "ErpAdmin.cshtml")
+            .Should().Contain("Erp.Admin.Col.Metric");
         ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml")
             .Should().NotContain("SetActiveMenuItemSystemName(\"CheckEngine\")");
         ReadPluginFile("Content", "checkengine-marketplace.css")

@@ -26,18 +26,18 @@
                 <div class="form-group col-md-4 pl-0">
                     <label for="ce-oem-level">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.View")</label>
                     <select id="ce-oem-level" class="form-control" data-ce-oem-level>
-                        <option value="Manufacturers">Manufacturers</option>
-                        <option value="OemNumbers">OEM numbers</option>
-                        <option value="Relations">Relations</option>
+                        <option value="Manufacturers">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.Level.Manufacturers")</option>
+                        <option value="OemNumbers">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.Level.OemNumbers")</option>
+                        <option value="Relations">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.Level.Relations")</option>
                     </select>
                 </div>
                 <div class="ce-mp-table-wrap">
                     <table class="ce-mp-table">
                         <thead>
                             <tr>
-                                <th>Id</th>
-                                <th>Code / Number</th>
-                                <th>Linked id</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.Col.Code")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Oem.Admin.Col.LinkedId")</th>
                             </tr>
                         </thead>
                         <tbody data-ce-oem-body></tbody>

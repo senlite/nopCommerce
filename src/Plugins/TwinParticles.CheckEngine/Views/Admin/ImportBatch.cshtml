@@ -27,9 +27,9 @@
                     <div class="ce-mp-field">
                         <label>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Format")</label>
                         <select class="form-control" data-ce-import-format>
-                            <option value="1">CSV</option>
-                            <option value="2">Excel</option>
-                            <option value="3">PDF</option>
+                            <option value="1">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Csv")</option>
+                            <option value="2">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Excel")</option>
+                            <option value="3">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Pdf")</option>
                         </select>
                     </div>
                     <label class="mb-0 mr-3">
@@ -58,13 +58,13 @@
                     <table class="ce-mp-table">
                         <thead>
                             <tr>
-                                <th>Row</th>
-                                <th>Review</th>
-                                <th>OEM</th>
-                                <th>Vehicle</th>
-                                <th>Published</th>
-                                <th>Error</th>
-                                <th>Actions</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Row")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Review")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Oem")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Vehicle")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Published")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Error")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Actions")</th>
                             </tr>
                         </thead>
                         <tbody data-ce-import-rows></tbody>
