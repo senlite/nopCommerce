@@ -116,6 +116,22 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("/Admin/CheckEngine/VehicleAdmin/Index");
         ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
             .Should().Contain("AfterMenuSystemName => \"Configuration\"");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("Dashboard.Group.Catalog");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("/Admin/CheckEngine/OemAdmin/Index");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("/Admin/CheckEngine/SeoAdmin/Index");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("/Admin/CheckEngine/GarageAdmin/Index");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("private async Task<AdminMenuItem> Group");
+        ReadPluginFile("Views", "Admin", "VehicleAdmin.cshtml")
+            .Should().Contain("TwinParticles.CheckEngine.VehicleAdmin");
+        ReadPluginFile("Views", "Admin", "OemAdmin.cshtml")
+            .Should().Contain("TwinParticles.CheckEngine.OemAdmin");
+        ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml")
+            .Should().NotContain("SetActiveMenuItemSystemName(\"CheckEngine\")");
         ReadPluginFile("Content", "checkengine-marketplace.css")
             .Should().Contain(".ce-marketplace-admin");
         ReadPluginFile("Content", "checkengine-marketplace.css")
