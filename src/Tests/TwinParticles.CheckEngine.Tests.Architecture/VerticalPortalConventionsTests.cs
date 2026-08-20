@@ -11,9 +11,9 @@ public class VerticalPortalConventionsTests
     public void Portal_Routes_Should_Register_Workshop_Fleet_And_Dealer()
     {
         var routes = ReadPluginFile("Infrastructure", "RouteProvider.cs");
-        routes.Should().Contain("check-engine/workshop/{action}");
-        routes.Should().Contain("check-engine/fleet/{action}");
-        routes.Should().Contain("check-engine/dealer/{action}");
+        routes.Should().Contain("check-engine/workshop/{action?}");
+        routes.Should().Contain("check-engine/fleet/{action?}");
+        routes.Should().Contain("check-engine/dealer/{action?}");
     }
 
     [Test]

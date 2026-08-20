@@ -18,6 +18,6 @@ public class HostSeoConventionsBySearchTests
         var content = System.IO.File.ReadAllText(routePath);
 
         content.Should().Contain("Plugin.TwinParticles.CheckEngine.SeoAdmin");
-        content.Should().Contain("Admin/CheckEngine/SeoAdmin/{action}");
+        content.Should().Contain("Admin/CheckEngine/SeoAdmin/{action?}");
     }
 }

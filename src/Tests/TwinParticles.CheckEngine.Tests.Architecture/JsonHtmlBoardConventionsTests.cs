@@ -83,6 +83,16 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Views", "Admin", "ImageAdmin.cshtml")
             .Should().Contain("data-ce-image-template-url");
         ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().Contain("href=\"/Admin/CheckEngine/VehicleAdmin/Index\"");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().NotContain("href=\"/Admin/CheckEngine/VehicleAdmin\">");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().Contain("Dashboard.Group.Catalog");
+        ReadPluginFile("Infrastructure", "RouteProvider.cs")
+            .Should().Contain("VehicleAdmin/{action?}");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("imageStatusLabel");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
             .Should().Contain("<option value=\"1\">Csv</option>");
         ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
             .Should().NotContain("<option value=\"0\">Csv</option>");

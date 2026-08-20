@@ -75,6 +75,20 @@
       .join('');
   }
 
+  function imageStatusLabel(value) {
+    var map = {
+      1: 'Replaced',
+      2: 'Not found',
+      3: 'Quarantined',
+      4: 'Failed',
+      Replaced: 'Replaced',
+      SkuNotFound: 'Not found',
+      Quarantined: 'Quarantined',
+      Failed: 'Failed'
+    };
+    return map[value] || value;
+  }
+
   function renderBatchImageResult(statsEl, rowsEl, body) {
     renderStatGrid(statsEl, [
       { label: 'Replaced', value: pick(body, 'replaced', 'Replaced') },
@@ -88,7 +102,7 @@
       [
         { value: function (r) { return pick(r, 'sku', 'Sku'); }, code: true },
         { value: function (r) { return pick(r, 'productId', 'ProductId'); }, code: true },
-        { value: function (r) { return pick(r, 'status', 'Status'); } },
+        { value: function (r) { return imageStatusLabel(pick(r, 'status', 'Status')); } },
         { value: function (r) { return pick(r, 'errorCode', 'ErrorCode'); } }
       ],
       'No rows.'

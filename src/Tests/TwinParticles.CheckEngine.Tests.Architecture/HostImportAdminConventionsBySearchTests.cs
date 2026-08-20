@@ -25,6 +25,6 @@ public class HostImportAdminConventionsBySearchTests
 
         var routes = System.IO.File.ReadAllText(routePath);
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.ImportAdmin");
-        routes.Should().Contain("Admin/CheckEngine/ImportAdmin/{action}");
+        routes.Should().Contain("Admin/CheckEngine/ImportAdmin/{action?}");
     }
 }

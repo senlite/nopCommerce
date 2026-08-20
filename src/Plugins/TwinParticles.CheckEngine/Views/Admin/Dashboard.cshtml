@@ -3,6 +3,7 @@
     NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Dashboard").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">
@@ -18,40 +19,78 @@
         @Html.AntiForgeryToken()
         @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
 
-        <div class="card card-default">
-            <div class="card-header">
-                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks")</h3>
+        <div class="row ce-marketplace-admin">
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Catalog")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/VehicleAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/OemAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/FitmentAdmin/ClaimsReview">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview")</a></li>
+                            <li><a href="/Admin/CheckEngine/ImportAdmin/BatchBoard">@T("Plugins.TwinParticles.CheckEngine.Import.Batch")</a></li>
+                            <li><a href="/Admin/CheckEngine/ImageAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Image.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/ReferenceDataAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin")</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li><a href="/Admin/CheckEngine/VehicleAdmin">Vehicle catalog admin</a></li>
-                    <li><a href="/Admin/CheckEngine/OemAdmin">OEM catalog admin</a></li>
-                    <li><a href="/Admin/CheckEngine/FitmentAdmin/ClaimsReview">Fitment claims review</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/Dashboard">AI usage dashboard</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/ReviewBoard">AI Content Review</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/GlossaryBoard">Automotive glossary</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/SpecKeysBoard">Specification keys</a></li>
-                    <li><a href="/Admin/CheckEngine/FitmentAdmin/ReviewBoard">AI Fitment Review</a></li>
-                    <li><a href="/Admin/CheckEngine/ImportAdmin/BatchBoard">Import batch inspector</a></li>
-                    <li><a href="/Admin/CheckEngine/SearchAdmin/Index">Search admin</a></li>
-                    <li><a href="/Admin/CheckEngine/GarageAdmin">Garage admin</a></li>
-                    <li><a href="/Admin/CheckEngine/ErpAdmin">ERP sync admin</a></li>
-                    <li><a href="/Admin/CheckEngine/SeoAdmin">SEO landing admin</a></li>
-                    <li><a href="/Admin/CheckEngine/DiagnosticsAdmin">Diagnostics &amp; health</a></li>
-                    <li><a href="/Admin/CheckEngine/ReferenceDataAdmin">Reference catalog</a></li>
-                    <li><a href="/Admin/CheckEngine/ImageAdmin">Product images</a></li>
-                    <li><a href="/Admin/CheckEngine/VendorAdmin/ReviewBoard">Vendor onboarding review</a></li>
-                    <li><a href="/Admin/CheckEngine/VendorAdmin/Scoreboard">Vendor scoreboard</a></li>
-                    <li><a href="/Admin/CheckEngine/VendorAdmin/Scoreboard">Order splits &amp; commission snapshots</a></li>
-                    <li><a href="/Admin/CheckEngine/CommissionAdmin/Configure?vendorId=1">Commission plan (vendor 1)</a></li>
-                    <li><a href="/Admin/CheckEngine/PayoutAdmin/Index">Payout statements</a></li>
-                    <li><a href="/check-engine/vendor/dashboard">Vendor dashboard</a></li>
-                    <li><a href="/check-engine/vendor/dashboard?tab=catalog">Vendor catalog</a></li>
-                    <li><a href="/Admin/CheckEngine/PortalAdmin/Accounts">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</a></li>
-                    <li><a href="/check-engine/workshop">@T("Plugins.TwinParticles.CheckEngine.Workshop.Title")</a></li>
-                    <li><a href="/check-engine/fleet">@T("Plugins.TwinParticles.CheckEngine.Fleet.Title")</a></li>
-                    <li><a href="/check-engine/dealer">@T("Plugins.TwinParticles.CheckEngine.Dealer.Title")</a></li>
-                </ul>
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Intelligence")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/SearchAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Search.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/SeoAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Seo.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/Dashboard">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/ReviewBoard">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/GlossaryBoard">@T("Plugins.TwinParticles.CheckEngine.Glossary.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/SpecKeysBoard">@T("Plugins.TwinParticles.CheckEngine.SpecKeys.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/FitmentAdmin/ReviewBoard">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment")</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Operations")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/GarageAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/ErpAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Erp.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/DiagnosticsAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin")</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Marketplace")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/VendorAdmin/ReviewBoard">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Review")</a></li>
+                            <li><a href="/Admin/CheckEngine/VendorAdmin/Scoreboard">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard")</a></li>
+                            <li><a href="/Admin/CheckEngine/VendorAdmin/Scoreboard">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector")</a></li>
+                            <li><a href="/Admin/CheckEngine/CommissionAdmin/Configure?vendorId=1">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure")</a></li>
+                            <li><a href="/Admin/CheckEngine/PayoutAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Payout.Admin")</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Portals")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/PortalAdmin/Accounts">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</a></li>
+                            <li><a href="/check-engine/vendor/dashboard">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard")</a></li>
+                            <li><a href="/check-engine/vendor/dashboard?tab=catalog">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Inventory")</a></li>
+                            <li><a href="/check-engine/workshop">@T("Plugins.TwinParticles.CheckEngine.Workshop.Title")</a></li>
+                            <li><a href="/check-engine/fleet">@T("Plugins.TwinParticles.CheckEngine.Fleet.Title")</a></li>
+                            <li><a href="/check-engine/dealer">@T("Plugins.TwinParticles.CheckEngine.Dealer.Title")</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 

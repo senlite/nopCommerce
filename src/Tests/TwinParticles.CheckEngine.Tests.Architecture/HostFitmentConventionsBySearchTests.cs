@@ -24,6 +24,6 @@ public class HostFitmentConventionsBySearchTests
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.FitmentEvaluate");
         routes.Should().Contain("check-engine/fitment/evaluate");
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.FitmentAdmin");
-        routes.Should().Contain("Admin/CheckEngine/FitmentAdmin/{action}");
+        routes.Should().Contain("Admin/CheckEngine/FitmentAdmin/{action?}");
     }
 }
