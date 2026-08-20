@@ -22,6 +22,6 @@ public class HostImageConventionsBySearchTests
         var routes = System.IO.File.ReadAllText(routePath);
 
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.ImageAdmin");
-        routes.Should().Contain("Admin/CheckEngine/ImageAdmin/{action?}");
+        routes.Should().Contain("Admin/CheckEngine/ImageAdmin/{action}");
     }
 }

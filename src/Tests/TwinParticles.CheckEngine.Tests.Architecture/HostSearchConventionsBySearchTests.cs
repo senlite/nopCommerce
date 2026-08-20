@@ -28,7 +28,7 @@ public class HostSearchConventionsBySearchTests
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.SearchRecommend");
         routes.Should().Contain("check-engine/search/recommend");
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.SearchAdmin");
-        routes.Should().Contain("Admin/CheckEngine/SearchAdmin/{action?}");
+        routes.Should().Contain("Admin/CheckEngine/SearchAdmin/{action}");
         routes.Should().Contain("action = \"Index\"");
     }
 

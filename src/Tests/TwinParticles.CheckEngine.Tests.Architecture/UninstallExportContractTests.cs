@@ -49,7 +49,7 @@ public class UninstallExportContractTests
         controller.Should().Contain("CheckEngineUninstallExportService");
         controller.Should().Contain("File(bytes, \"application/json\", filename)");
         controller.Should().Contain("UninstallExportPreparedUtc = DateTime.UtcNow");
-        route.Should().Contain("Admin/CheckEngine/UninstallAdmin/{action?}");
+        route.Should().Contain("Admin/CheckEngine/UninstallAdmin/{action}");
     }
 
     [Test]

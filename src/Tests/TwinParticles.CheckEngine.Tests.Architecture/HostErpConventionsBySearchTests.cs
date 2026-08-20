@@ -18,6 +18,6 @@ public class HostErpConventionsBySearchTests
         var content = System.IO.File.ReadAllText(routePath);
 
         content.Should().Contain("Plugin.TwinParticles.CheckEngine.ErpAdmin");
-        content.Should().Contain("Admin/CheckEngine/ErpAdmin/{action?}");
+        content.Should().Contain("Admin/CheckEngine/ErpAdmin/{action}");
     }
 }

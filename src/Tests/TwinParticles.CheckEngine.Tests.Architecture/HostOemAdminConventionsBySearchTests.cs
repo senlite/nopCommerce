@@ -45,7 +45,7 @@ public class HostOemAdminConventionsBySearchTests
 
         var content = System.IO.File.ReadAllText(path);
         content.Should().Contain("Plugin.TwinParticles.CheckEngine.OemAdmin");
-        content.Should().Contain("Admin/CheckEngine/OemAdmin/{action?}");
+        content.Should().Contain("Admin/CheckEngine/OemAdmin/{action}");
         content.Should().Contain("Plugin.TwinParticles.CheckEngine.OemResolve");
         content.Should().Contain("check-engine/oem/resolve");
     }

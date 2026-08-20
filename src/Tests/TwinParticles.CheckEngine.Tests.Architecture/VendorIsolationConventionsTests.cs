@@ -29,7 +29,7 @@ public class VendorIsolationConventionsTests
         fitment.Should().Contain("VendorId");
         fitment.Should().Contain("VendorSourceReference");
 
-        routes.Should().Contain("check-engine/vendor/{action?}");
+        routes.Should().Contain("check-engine/vendor/{action}");
 
         var dashboardView = ReadPluginFile("Views", "Vendor", "Dashboard.cshtml");
         var marketplaceJs = ReadPluginFile("Content", "checkengine-marketplace.js");
@@ -54,7 +54,7 @@ public class VendorIsolationConventionsTests
         admin.Should().Contain("EnableMarketplace");
         admin.Should().Contain("AssignProduct");
 
-        routes.Should().Contain("check-engine/vendor/{action?}");
+        routes.Should().Contain("check-engine/vendor/{action}");
     }
 
     [Test]

@@ -22,8 +22,8 @@ public class HostGarageConventionsBySearchTests
         var routes = System.IO.File.ReadAllText(routePath);
 
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.Garage");
-        routes.Should().Contain("check-engine/garage/{action?}");
+        routes.Should().Contain("check-engine/garage/{action}");
         routes.Should().Contain("Plugin.TwinParticles.CheckEngine.GarageAdmin");
-        routes.Should().Contain("Admin/CheckEngine/GarageAdmin/{action?}");
+        routes.Should().Contain("Admin/CheckEngine/GarageAdmin/{action}");
     }
 }

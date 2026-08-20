@@ -29,9 +29,9 @@ public class VendorOnboardingConventionsTests
         apply.Should().NotContain("IgnoreAntiforgeryToken");
         apply.Should().NotContain("BankingSecretProtected");
 
-        routes.Should().Contain("Admin/CheckEngine/VendorAdmin/{action?}");
+        routes.Should().Contain("Admin/CheckEngine/VendorAdmin/{action}");
         routes.Should().Contain("area = AreaNames.ADMIN");
-        routes.Should().Contain("check-engine/vendor/{action?}");
+        routes.Should().Contain("check-engine/vendor/{action}");
     }
 
     [Test]

@@ -44,9 +44,13 @@ public sealed class RouteProvider : IRouteProvider
             pattern: "parts/product-{productId:int}/for/config-{vehicleConfigurationId:int}",
             defaults: new { controller = "SeoLanding", action = "PartForVehicle", locale = "en" });
 
+        // Use {action} with a default — not an optional {action} segment marked with '?'.
+        // ASP.NET Core throws "An optional parameter cannot have default value" and Nop.Web
+        // will not start. Dashboard hrefs include /Index so they are not stolen by the host
+        // {area}/{controller}/{action} route (which would bind CheckEngine/VehicleAdmin).
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.VehicleAdmin",
-            pattern: "Admin/CheckEngine/VehicleAdmin/{action?}",
+            pattern: "Admin/CheckEngine/VehicleAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "VehicleAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
@@ -56,7 +60,7 @@ public sealed class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.OemAdmin",
-            pattern: "Admin/CheckEngine/OemAdmin/{action?}",
+            pattern: "Admin/CheckEngine/OemAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "OemAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
@@ -66,7 +70,7 @@ public sealed class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.ImportAdmin",
-            pattern: "Admin/CheckEngine/ImportAdmin/{action?}",
+            pattern: "Admin/CheckEngine/ImportAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "ImportAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
@@ -76,7 +80,7 @@ public sealed class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.FitmentAdmin",
-            pattern: "Admin/CheckEngine/FitmentAdmin/{action?}",
+            pattern: "Admin/CheckEngine/FitmentAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "FitmentAdmin", action = "ClaimsReview" });
 
         endpointRouteBuilder.MapControllerRoute(
@@ -101,27 +105,27 @@ public sealed class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.SearchAdmin",
-            pattern: "Admin/CheckEngine/SearchAdmin/{action?}",
+            pattern: "Admin/CheckEngine/SearchAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "SearchAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.UninstallAdmin",
-            pattern: "Admin/CheckEngine/UninstallAdmin/{action?}",
+            pattern: "Admin/CheckEngine/UninstallAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "UninstallAdmin", action = "Status" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.Garage",
-            pattern: "check-engine/garage/{action?}",
+            pattern: "check-engine/garage/{action}",
             defaults: new { controller = "Garage", action = "Current" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.GarageAdmin",
-            pattern: "Admin/CheckEngine/GarageAdmin/{action?}",
+            pattern: "Admin/CheckEngine/GarageAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "GarageAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.ImageAdmin",
-            pattern: "Admin/CheckEngine/ImageAdmin/{action?}",
+            pattern: "Admin/CheckEngine/ImageAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "ImageAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
@@ -131,12 +135,12 @@ public sealed class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.SeoAdmin",
-            pattern: "Admin/CheckEngine/SeoAdmin/{action?}",
+            pattern: "Admin/CheckEngine/SeoAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "SeoAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.ErpAdmin",
-            pattern: "Admin/CheckEngine/ErpAdmin/{action?}",
+            pattern: "Admin/CheckEngine/ErpAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "ErpAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
@@ -151,12 +155,12 @@ public sealed class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.ReferenceDataAdmin",
-            pattern: "Admin/CheckEngine/ReferenceDataAdmin/{action?}",
+            pattern: "Admin/CheckEngine/ReferenceDataAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "ReferenceDataAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.DiagnosticsAdmin",
-            pattern: "Admin/CheckEngine/DiagnosticsAdmin/{action?}",
+            pattern: "Admin/CheckEngine/DiagnosticsAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "DiagnosticsAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
@@ -166,47 +170,47 @@ public sealed class RouteProvider : IRouteProvider
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.AiAdmin",
-            pattern: "Admin/CheckEngine/AiAdmin/{action?}",
+            pattern: "Admin/CheckEngine/AiAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "AiAdmin", action = "Dashboard" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.VendorAdmin",
-            pattern: "Admin/CheckEngine/VendorAdmin/{action?}",
+            pattern: "Admin/CheckEngine/VendorAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "VendorAdmin", action = "ReviewBoard" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.PayoutAdmin",
-            pattern: "Admin/CheckEngine/PayoutAdmin/{action?}",
+            pattern: "Admin/CheckEngine/PayoutAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "PayoutAdmin", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.CommissionAdmin",
-            pattern: "Admin/CheckEngine/CommissionAdmin/{action?}",
+            pattern: "Admin/CheckEngine/CommissionAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "CommissionAdmin", action = "Configure" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.VendorApply",
-            pattern: "check-engine/vendor/{action?}",
+            pattern: "check-engine/vendor/{action}",
             defaults: new { controller = "Vendor", action = "Apply" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.Workshop",
-            pattern: "check-engine/workshop/{action?}",
+            pattern: "check-engine/workshop/{action}",
             defaults: new { controller = "Workshop", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.Fleet",
-            pattern: "check-engine/fleet/{action?}",
+            pattern: "check-engine/fleet/{action}",
             defaults: new { controller = "Fleet", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.Dealer",
-            pattern: "check-engine/dealer/{action?}",
+            pattern: "check-engine/dealer/{action}",
             defaults: new { controller = "Dealer", action = "Index" });
 
         endpointRouteBuilder.MapControllerRoute(
             name: "Plugin.TwinParticles.CheckEngine.PortalAdmin",
-            pattern: "Admin/CheckEngine/PortalAdmin/{action?}",
+            pattern: "Admin/CheckEngine/PortalAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "PortalAdmin", action = "Accounts" });
     }
 

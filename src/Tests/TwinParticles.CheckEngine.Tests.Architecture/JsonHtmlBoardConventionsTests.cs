@@ -89,7 +89,9 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
             .Should().Contain("Dashboard.Group.Catalog");
         ReadPluginFile("Infrastructure", "RouteProvider.cs")
-            .Should().Contain("VehicleAdmin/{action?}");
+            .Should().Contain("VehicleAdmin/{action}");
+        ReadPluginFile("Infrastructure", "RouteProvider.cs")
+            .Should().NotContain("{action?}");
         ReadPluginFile("Content", "checkengine-admin.js")
             .Should().Contain("imageStatusLabel");
         ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
