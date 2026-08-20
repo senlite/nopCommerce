@@ -95,9 +95,23 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Content", "checkengine-admin.js")
             .Should().Contain("imageStatusLabel");
         ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
-            .Should().Contain("<option value=\"1\">Csv</option>");
+            .Should().Contain("<option value=\"1\">");
         ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
-            .Should().NotContain("<option value=\"0\">Csv</option>");
+            .Should().Contain("ImportUpload.Format.Csv");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().NotContain("<option value=\"0\">");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().NotContain("CSV / Excel / PDF file");
+        ReadPluginFile("Views", "Admin", "VehicleAdmin.cshtml")
+            .Should().Contain("data-ce-vehicle-seed");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("VehicleAdmin/Seed");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("BaseAdminMenuCreatedEventConsumer");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("/Admin/CheckEngine/VehicleAdmin/Index");
+        ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
+            .Should().Contain("AfterMenuSystemName => \"Configuration\"");
         ReadPluginFile("Content", "checkengine-marketplace.css")
             .Should().Contain(".ce-marketplace-admin");
         ReadPluginFile("Content", "checkengine-marketplace.css")

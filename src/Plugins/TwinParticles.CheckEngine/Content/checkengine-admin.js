@@ -157,6 +157,42 @@
     }
     select && select.addEventListener('change', load);
     root.querySelector('[data-ce-vehicle-refresh]')?.addEventListener('click', load);
+    var seedBtn = root.querySelector('[data-ce-vehicle-seed]');
+    seedBtn && seedBtn.addEventListener('click', function () {
+      seedBtn.disabled = true;
+      showAlert(alert, 'info', 'Seeding BMW reference data…');
+      fetch('/Admin/CheckEngine/VehicleAdmin/Seed', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: '{}'
+      })
+        .then(function (r) {
+          return r.json().then(function (body) {
+            return { ok: r.ok, body: body };
+          });
+        })
+        .then(function (res) {
+          var body = res.body || {};
+          var makes = pick(body, 'makesInserted', 'MakesInserted') || 0;
+          var configs = pick(body, 'configurationsInserted', 'ConfigurationsInserted') || 0;
+          var aliases = pick(body, 'aliasesInserted', 'AliasesInserted') || 0;
+          showAlert(
+            alert,
+            res.ok ? 'success' : 'error',
+            res.ok
+              ? 'BMW seed complete. Makes +' + makes + ', configurations +' + configs + ', aliases +' + aliases + '.'
+              : (pick(body, 'errorCode', 'ErrorCode') || 'BMW seed failed.')
+          );
+          load();
+        })
+        .catch(function () {
+          showAlert(alert, 'error', 'BMW seed failed.');
+        })
+        .then(function () {
+          seedBtn.disabled = false;
+        });
+    });
     load();
   }
 

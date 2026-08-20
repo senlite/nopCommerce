@@ -19,31 +19,35 @@
         <div class="card card-default">
             <div class="card-header clearfix">
                 <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Hierarchy")</h3>
-                <button type="button" class="btn btn-sm btn-secondary float-right" data-ce-vehicle-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.Refresh")</button>
+                <div class="float-right">
+                    <button type="button" class="btn btn-sm btn-primary" data-ce-vehicle-seed>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Seed")</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-ce-vehicle-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.Refresh")</button>
+                </div>
             </div>
             <div class="card-body">
                 <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Hint")</p>
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Seed.Hint")</p>
                 <div class="form-group col-md-4 pl-0">
                     <label for="ce-vehicle-level">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level")</label>
                     <select id="ce-vehicle-level" class="form-control" data-ce-vehicle-level>
-                        <option value="Makes">Makes</option>
-                        <option value="Models">Models</option>
-                        <option value="Generations">Generations</option>
-                        <option value="Bodies">Bodies</option>
-                        <option value="Engines">Engines</option>
-                        <option value="Markets">Markets</option>
-                        <option value="Configurations">Configurations</option>
-                        <option value="Aliases">Aliases</option>
+                        <option value="Makes">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Makes")</option>
+                        <option value="Models">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Models")</option>
+                        <option value="Generations">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Generations")</option>
+                        <option value="Bodies">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Bodies")</option>
+                        <option value="Engines">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Engines")</option>
+                        <option value="Markets">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Markets")</option>
+                        <option value="Configurations">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Configurations")</option>
+                        <option value="Aliases">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Aliases")</option>
                     </select>
                 </div>
                 <div class="ce-mp-table-wrap">
                     <table class="ce-mp-table">
                         <thead>
                             <tr>
-                                <th>Id</th>
-                                <th>Name / Code</th>
-                                <th>Arabic</th>
-                                <th>Active</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Name")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Arabic")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Active")</th>
                             </tr>
                         </thead>
                         <tbody data-ce-vehicle-body></tbody>
