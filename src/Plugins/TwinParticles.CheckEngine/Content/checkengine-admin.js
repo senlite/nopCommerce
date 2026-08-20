@@ -145,13 +145,12 @@
     var alert = root.querySelector('[data-ce-admin-alert]');
     var tbody = root.querySelector('[data-ce-vehicle-body]');
     var select = root.querySelector('[data-ce-vehicle-level]');
-    function load() {
+    function load(doneKind, doneMessage) {
       var level = (select && select.value) || 'Makes';
       var url = '/Admin/CheckEngine/VehicleAdmin/' + level + '?json=1';
-      showAlert(alert, 'info', 'Loading…');
-      apiGet(url, t)
+      if (!doneMessage) showAlert(alert, 'info', 'Loading…');
+      return apiGet(url, t)
         .then(function (data) {
-          showAlert(alert, 'info', '');
           var rows = asArray(data);
           renderRows(tbody, rows, [
             { value: function (r) { return pick(r, 'id', 'Id'); }, code: true },
@@ -159,9 +158,10 @@
             { value: function (r) { return pick(r, 'nameAr', 'NameAr'); } },
             { value: function (r) { return pick(r, 'isActive', 'IsActive'); } }
           ]);
+          showAlert(alert, doneKind || 'info', doneMessage || '');
         })
         .catch(function (err) {
-          showAlert(alert, 'error', (err && err.reasonCode) || 'Failed to load vehicle data.');
+          showAlert(alert, 'error', errorMessage(err, 'Failed to load vehicle data.'));
         });
     }
     select && select.addEventListener('change', load);
@@ -183,17 +183,17 @@
         })
         .then(function (res) {
           var body = res.body || {};
+          if (!res.ok) {
+            showAlert(alert, 'error', errorMessage(body, 'BMW seed failed.'));
+            return;
+          }
           var makes = pick(body, 'makesInserted', 'MakesInserted') || 0;
           var configs = pick(body, 'configurationsInserted', 'ConfigurationsInserted') || 0;
           var aliases = pick(body, 'aliasesInserted', 'AliasesInserted') || 0;
-          showAlert(
-            alert,
-            res.ok ? 'success' : 'error',
-            res.ok
-              ? 'BMW seed complete. Makes +' + makes + ', configurations +' + configs + ', aliases +' + aliases + '.'
-              : errorMessage(body, 'BMW seed failed.')
+          return load(
+            'success',
+            'BMW seed complete. Makes +' + makes + ', configurations +' + configs + ', aliases +' + aliases + '.'
           );
-          load();
         })
         .catch(function (err) {
           showAlert(alert, 'error', errorMessage(err, 'BMW seed failed.'));
