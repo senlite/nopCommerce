@@ -167,7 +167,15 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Views", "Admin", "VendorScoreboard.cshtml")
             .Should().Contain("OrderInspector.Col.Subtotal");
         ReadPluginFile("Views", "Admin", "VendorScoreboard.cshtml")
+            .Should().Contain("OrderInspector.Stat.Order");
+        ReadPluginFile("Views", "Admin", "VendorScoreboard.cshtml")
             .Should().NotContain("<th>Vendor</th>");
+        ReadPluginFile("Views", "Admin", "CommissionConfigure.cshtml")
+            .Should().Contain("data-ce-i18n");
+        ReadPluginFile("Views", "Admin", "CommissionConfigure.cshtml")
+            .Should().Contain("Commission.Saved");
+        ReadPluginFile("Views", "Shared", "_MarketplaceAdminAssets.cshtml")
+            .Should().Contain("checkengine-marketplace.js?v=");
         ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml")
             .Should().Contain("checkengine-portals.js?v=");
         ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml")
@@ -188,6 +196,10 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("importError");
         ReadPluginFile("Content", "checkengine-marketplace.js")
             .Should().Contain("licence.read_only");
+        ReadPluginFile("Content", "checkengine-marketplace.js")
+            .Should().Contain("i18n.planSaved || 'Commission plan saved.'");
+        ReadPluginFile("Content", "checkengine-marketplace.js")
+            .Should().Contain("i18n.statOrder || 'Order'");
         ReadPluginFile("Content", "checkengine-portals.js")
             .Should().Contain("function adminError");
         ReadPluginFile("Views", "Admin", "SearchAdmin.cshtml")

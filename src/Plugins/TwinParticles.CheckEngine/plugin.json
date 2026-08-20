@@ -2,7 +2,7 @@
   "Group": "Misc",
   "FriendlyName": "Check Engine",
   "SystemName": "TwinParticles.CheckEngine",
-  "Version": "0.87.0",
+  "Version": "0.88.0",
   "SupportedVersions": [ "4.90" ],
   "Author": "Twin Particles",
   "DisplayOrder": 1,

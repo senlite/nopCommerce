@@ -55,6 +55,13 @@
     }
   }
 
+  function fmt(template) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return String(template == null ? '' : template).replace(/\{(\d+)\}/g, function (_, i) {
+      return args[i] != null ? String(args[i]) : '';
+    });
+  }
+
   function setLoading(btn, loading, loadingText) {
     if (!btn) return;
     if (loading) {
@@ -443,6 +450,7 @@
   }
 
   function initCommission(root) {
+    var i18n = readI18n(root);
     var token = root.querySelector('input[name="__RequestVerificationToken"]');
     var vendorSelect = root.querySelector('[data-ce-commission-vendor]');
     var alert = root.querySelector('[data-ce-commission-alert]');
@@ -454,16 +462,16 @@
     var vendorIdInput = root.querySelector('[data-ce-vendor-id]');
 
     var modelKinds = [
-      { v: 1, l: 'Flat fee' },
-      { v: 2, l: 'Percentage' },
-      { v: 3, l: 'Tiered' },
-      { v: 4, l: 'Category override' }
+      { v: 1, l: i18n.kindFlat || 'Flat fee' },
+      { v: 2, l: i18n.kindPercentage || 'Percentage' },
+      { v: 3, l: i18n.kindTiered || 'Tiered' },
+      { v: 4, l: i18n.kindCategory || 'Category override' }
     ];
     var bases = [
-      { v: 1, l: 'Per order' },
-      { v: 2, l: 'Per line item' },
-      { v: 3, l: 'Line subtotal' },
-      { v: 4, l: 'Order subtotal' }
+      { v: 1, l: i18n.basisPerOrder || 'Per order' },
+      { v: 2, l: i18n.basisPerLine || 'Per line item' },
+      { v: 3, l: i18n.basisLineSubtotal || 'Line subtotal' },
+      { v: 4, l: i18n.basisOrderSubtotal || 'Order subtotal' }
     ];
 
     function currentVendorId() {
@@ -532,20 +540,20 @@
       card.setAttribute('data-ce-rule', '1');
       card.innerHTML =
         '<div class="card-header clearfix">' +
-        '<h3 class="card-title float-left">Rule ' + (idx + 1) + '</h3>' +
-        '<button type="button" class="btn btn-sm btn-danger float-right" data-ce-remove-rule>Remove</button>' +
+        '<h3 class="card-title float-left">' + fmt(i18n.rule || 'Rule {0}', idx + 1) + '</h3>' +
+        '<button type="button" class="btn btn-sm btn-danger float-right" data-ce-remove-rule>' + (i18n.remove || 'Remove') + '</button>' +
         '</div><div class="card-body"><div class="form-row">' +
         '<input type="hidden" data-ce-rule-id value="' + (pick(rule, 'id', 'Id') || 0) + '" />' +
-        selectField('Model', 'data-ce-rule-kind', modelKinds, pick(rule, 'modelKind', 'ModelKind') || 2) +
-        selectField('Basis', 'data-ce-rule-basis', bases, pick(rule, 'basis', 'Basis') || 3) +
-        numberField('Priority', 'data-ce-rule-priority', pick(rule, 'priority', 'Priority') || idx + 1) +
-        numberField('Flat amount', 'data-ce-rule-flat', pick(rule, 'flatAmount', 'FlatAmount')) +
-        numberField('Percent %', 'data-ce-rule-percent', pick(rule, 'percentageRate', 'PercentageRate')) +
-        numberField('Category id', 'data-ce-rule-category', pick(rule, 'categoryId', 'CategoryId')) +
+        selectField(i18n.model || 'Model', 'data-ce-rule-kind', modelKinds, pick(rule, 'modelKind', 'ModelKind') || 2) +
+        selectField(i18n.basis || 'Basis', 'data-ce-rule-basis', bases, pick(rule, 'basis', 'Basis') || 3) +
+        numberField(i18n.priority || 'Priority', 'data-ce-rule-priority', pick(rule, 'priority', 'Priority') || idx + 1) +
+        numberField(i18n.flatAmount || 'Flat amount', 'data-ce-rule-flat', pick(rule, 'flatAmount', 'FlatAmount')) +
+        numberField(i18n.percent || 'Percent %', 'data-ce-rule-percent', pick(rule, 'percentageRate', 'PercentageRate')) +
+        numberField(i18n.categoryId || 'Category id', 'data-ce-rule-category', pick(rule, 'categoryId', 'CategoryId')) +
         '<div class="form-group col-md-3 d-flex align-items-end">' +
-        '<label class="mb-0"><input type="checkbox" data-ce-rule-active ' + (pick(rule, 'isActive', 'IsActive') !== false ? 'checked' : '') + ' /> Active</label></div>' +
+        '<label class="mb-0"><input type="checkbox" data-ce-rule-active ' + (pick(rule, 'isActive', 'IsActive') !== false ? 'checked' : '') + ' /> ' + (i18n.active || 'Active') + '</label></div>' +
         '</div><div data-ce-tiers></div>' +
-        '<button type="button" class="btn btn-sm btn-secondary mt-2" data-ce-add-tier>Add tier band</button></div>';
+        '<button type="button" class="btn btn-sm btn-secondary mt-2" data-ce-add-tier>' + (i18n.addTier || 'Add tier band') + '</button></div>';
       var tiersHost = card.querySelector('[data-ce-tiers]');
       (pick(rule, 'tierBands', 'TierBands') || []).forEach(function (band) {
         tiersHost.appendChild(tierRow(band));
@@ -582,11 +590,11 @@
       row.className = 'form-row mt-2';
       row.setAttribute('data-ce-tier', '1');
       row.innerHTML =
-        numberField('Min volume', 'data-ce-tier-min', pick(band, 'minVolume', 'MinVolume')) +
-        numberField('Max volume', 'data-ce-tier-max', pick(band, 'maxVolume', 'MaxVolume')) +
-        numberField('Rate %', 'data-ce-tier-rate', pick(band, 'percentageRate', 'PercentageRate')) +
+        numberField(i18n.minVolume || 'Min volume', 'data-ce-tier-min', pick(band, 'minVolume', 'MinVolume')) +
+        numberField(i18n.maxVolume || 'Max volume', 'data-ce-tier-max', pick(band, 'maxVolume', 'MaxVolume')) +
+        numberField(i18n.ratePercent || 'Rate %', 'data-ce-tier-rate', pick(band, 'percentageRate', 'PercentageRate')) +
         '<div class="form-group col-md-3 d-flex align-items-end">' +
-        '<button type="button" class="btn btn-sm btn-outline-danger" data-ce-remove-tier>Remove tier</button></div>';
+        '<button type="button" class="btn btn-sm btn-outline-danger" data-ce-remove-tier>' + (i18n.removeTier || 'Remove tier') + '</button></div>';
       row.querySelector('[data-ce-remove-tier]').addEventListener('click', function () {
         row.remove();
         syncJson();
@@ -645,9 +653,9 @@
         .then(function (res) {
           if (res.ok) {
             renderPlan(res.body);
-            showAlert(alert, 'success', 'Commission plan saved.');
+            showAlert(alert, 'success', i18n.planSaved || 'Commission plan saved.');
           } else {
-            showAlert(alert, 'error', errorMessage(res.body, 'Save failed'));
+            showAlert(alert, 'error', errorMessage(res.body, i18n.saveFailed || 'Save failed'));
           }
         });
     });
@@ -657,7 +665,7 @@
         try {
           renderPlan(JSON.parse(jsonArea.value));
         } catch (e) {
-          showAlert(alert, 'error', 'Invalid JSON');
+          showAlert(alert, 'error', i18n.invalidJson || 'Invalid JSON');
         }
       });
     }
@@ -819,7 +827,7 @@
     function fillTable(tbody, rows, cols, emptyText) {
       if (!tbody) return;
       if (!rows || !rows.length) {
-        tbody.innerHTML = '<tr><td colspan="' + cols + '">' + (emptyText || 'No rows.') + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="' + cols + '">' + (emptyText || i18n.noRows || 'No rows.') + '</td></tr>';
         return;
       }
       tbody.innerHTML = rows.join('');
@@ -848,11 +856,11 @@
         var snaps = Array.isArray(snapsRes.body) ? snapsRes.body : (pick(snapsRes.body, 'items', 'Items') || []);
         if (stats) {
           stats.innerHTML =
-            statCard('Order', orderId) +
-            statCard('Checkout group', pick(checkout, 'checkoutGroupId', 'CheckoutGroupId') || '—') +
-            statCard('Splits', splits.length) +
-            statCard('Shipments', shipments.length) +
-            statCard('Snapshots', snaps.length);
+            statCard(i18n.statOrder || 'Order', orderId) +
+            statCard(i18n.statCheckoutGroup || 'Checkout group', pick(checkout, 'checkoutGroupId', 'CheckoutGroupId') || '—') +
+            statCard(i18n.statSplits || 'Splits', splits.length) +
+            statCard(i18n.statShipments || 'Shipments', shipments.length) +
+            statCard(i18n.statSnapshots || 'Snapshots', snaps.length);
         }
         fillTable(root.querySelector('[data-ce-order-splits]'), splits.map(function (row) {
           var lines = pick(row, 'lines', 'Lines') || [];
@@ -872,7 +880,7 @@
         if (!splitsRes.ok && !snaps.length) {
           showAlert(orderAlert, 'error', i18n.inspectFail || 'Order not found.');
         } else {
-          showAlert(orderAlert, 'success', 'Order #' + orderId + ' loaded.');
+          showAlert(orderAlert, 'success', fmt(i18n.loaded || 'Order #{0} loaded.', orderId));
         }
       }).catch(function () {
         showAlert(orderAlert, 'error', i18n.inspectFail || 'Order not found.');
