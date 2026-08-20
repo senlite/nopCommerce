@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-20
 
 ## Status legend
 - `pending` = not started
@@ -274,10 +274,10 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status | Dependency |
 |---|---|---|---|
-| H5.1 | Multi-tenant data/configuration isolation | pending | Marketplace foundations |
-| H5.2 | Metered billing and per-tenant operations | pending | Multi-tenant runtime |
-| H5.3 | Versioned public REST API and webhooks | pending | Stable product contracts |
-| H5.4 | Vehicle data as a service with the documented ethics/licensing guardrails | pending | Owned dataset and legal approval |
+| H5.1 | Multi-tenant data/configuration isolation | done | Control-plane `TP_CE_Tenant*` (no `TenantId` on Horizon 1 `Ce*` tables); database-per-tenant routing; request middleware; cache/job isolation tests |
+| H5.2 | Metered billing and per-tenant operations | partial | Usage ledger + `ITenantBillingAdapter` port; optional `usage.limit.{metric}` throttle; no billing vendor or invoicing |
+| H5.3 | Versioned public REST API and webhooks | partial | `/api/v1/*` with API keys (401 unauthenticated); HMAC webhooks; OAuth2 client-credentials not shipped |
+| H5.4 | Vehicle data as a service with the documented ethics/licensing guardrails | partial | Public vehicles/VIN/OEM/fitment payloads include confidence/provenance; bulk data marketplace and legal pack not shipped |
 | H5.5 | Retarget to .NET 10 | blocked | nopCommerce release supporting .NET 10 |
 
 ### Evaluated but not committed
@@ -326,3 +326,4 @@ in the scripts above but does not block closing the implementation gap.
 - H1.35 / G8 security assessment sign-off; G11 production licence vendor signing key; G7
   product-owner sign-off; G12 Marketplace submission.
 - H1.6 / H1.7 further BMW VDS→generation patterns beyond the curated NHTSA/Check Engine corpus (must not be fabricated for a safety-relevant decode).
+- H5.4 legal/ethics approval for vehicle data as a service; H5.5 nopCommerce .NET 10 host.

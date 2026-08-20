@@ -212,6 +212,46 @@ public sealed class RouteProvider : IRouteProvider
             name: "Plugin.TwinParticles.CheckEngine.PortalAdmin",
             pattern: "Admin/CheckEngine/PortalAdmin/{action}",
             defaults: new { area = AreaNames.ADMIN, controller = "PortalAdmin", action = "Accounts" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.TenantAdmin",
+            pattern: "Admin/CheckEngine/TenantAdmin/{action}",
+            defaults: new { area = AreaNames.ADMIN, controller = "TenantAdmin", action = "Index" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PublicApiVehicles",
+            pattern: "api/v1/vehicles",
+            defaults: new { controller = "PublicApi", action = "Vehicles" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PublicApiVin",
+            pattern: "api/v1/vin/decode",
+            defaults: new { controller = "PublicApi", action = "VinDecode" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PublicApiOem",
+            pattern: "api/v1/oem/resolve",
+            defaults: new { controller = "PublicApi", action = "OemResolve" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PublicApiFitment",
+            pattern: "api/v1/fitment/evaluate",
+            defaults: new { controller = "PublicApi", action = "FitmentEvaluate" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PublicApiSearch",
+            pattern: "api/v1/search",
+            defaults: new { controller = "PublicApi", action = "Search" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PublicApiWebhooks",
+            pattern: "api/v1/webhooks",
+            defaults: new { controller = "PublicApi", action = "Webhooks" });
+
+        endpointRouteBuilder.MapControllerRoute(
+            name: "Plugin.TwinParticles.CheckEngine.PublicApiWebhookRegister",
+            pattern: "api/v1/webhooks/register",
+            defaults: new { controller = "PublicApi", action = "RegisterWebhook" });
     }
 
     public int Priority => 0;

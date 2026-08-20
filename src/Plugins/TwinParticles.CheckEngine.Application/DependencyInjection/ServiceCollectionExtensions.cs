@@ -20,6 +20,7 @@ using TwinParticles.CheckEngine.Application.Observability;
 using TwinParticles.CheckEngine.Application.ReferenceScale;
 using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Application.Seo;
+using TwinParticles.CheckEngine.Application.Tenancy;
 using TwinParticles.CheckEngine.Application.Vehicle.Admin;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Import;
 using TwinParticles.CheckEngine.Application.Vehicle.Aliases.Services;
@@ -28,6 +29,7 @@ using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Licensing;
 using TwinParticles.CheckEngine.Domain.Marketplace;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Domain.Tenancy;
 
 namespace TwinParticles.CheckEngine.Application.DependencyInjection;
 
@@ -123,6 +125,16 @@ public static class ServiceCollectionExtensions
         services.AddScoped<PortalAdminService>();
         services.AddScoped<PortalTradePricingService>();
         services.AddScoped<VerticalPortalAccessService>();
+        services.AddScoped<TenantIsolationService>();
+        services.AddSingleton<ITenantConnectionRouter, TenantConnectionRouter>();
+        services.AddScoped<ITenantJobScope, TenantJobScope>();
+        services.AddScoped<TenantRegistryService>();
+        services.AddScoped<TenantResolver>();
+        services.AddScoped<PublicApiKeyService>();
+        services.AddScoped<TenantUsageLimitService>();
+        services.AddScoped<TenantWebhookService>();
+        services.AddScoped<ITenantBillingAdapter, UsageLedgerBillingAdapter>();
+        services.AddScoped<PublicApiService>();
         services.AddScoped<ErpSyncService>();
         services.AddScoped<ErpInboundWebhookService>();
         services.AddScoped<CheckEngineHealthService>();

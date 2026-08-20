@@ -208,6 +208,16 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("Garage.Admin.NeedCustomer");
         ReadPluginFile("Views", "Admin", "ErpAdmin.cshtml")
             .Should().Contain("Erp.Admin.ReconcileComplete");
+        ReadPluginFile("Views", "Admin", "TenantAdmin.cshtml")
+            .Should().Contain("Tenant.Admin.Provisioned");
+        ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
+            .Should().Contain("Dashboard.Group.Platform");
+        ReadPluginFile("Infrastructure", "RouteProvider.cs")
+            .Should().Contain("api/v1/vehicles");
+        ReadPluginFile("Infrastructure", "RouteProvider.cs")
+            .Should().Contain("api/v1/webhooks");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("i18n.provisionFailed || 'Provision failed.'");
         ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml")
             .Should().Contain("Portal.Admin.Provisioned");
         ReadPluginFile("Content", "checkengine-portals.js")
