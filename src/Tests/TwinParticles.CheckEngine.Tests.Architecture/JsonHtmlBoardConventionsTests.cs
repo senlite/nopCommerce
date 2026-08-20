@@ -154,6 +154,26 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("licence.read_only");
         ReadPluginFile("Content", "checkengine-portals.js")
             .Should().Contain("function adminError");
+        ReadPluginFile("Views", "Admin", "SearchAdmin.cshtml")
+            .Should().Contain("_CheckEngineAdminAssets");
+        ReadPluginFile("Views", "Admin", "SearchAdmin.cshtml")
+            .Should().Contain("CheckEngineAdmin.errorMessage");
+        ReadPluginFile("Views", "Admin", "SearchAdmin.cshtml")
+            .Should().Contain("Keyword rebuild failed.");
+        ReadPluginFile("Views", "Admin", "GlossaryAdmin.cshtml")
+            .Should().Contain("_CheckEngineAdminAssets");
+        ReadPluginFile("Views", "Admin", "GlossaryAdmin.cshtml")
+            .Should().Contain("CheckEngineAdmin.errorMessage");
+        ReadPluginFile("Views", "Admin", "SpecKeysAdmin.cshtml")
+            .Should().Contain("_CheckEngineAdminAssets");
+        ReadPluginFile("Views", "Admin", "AiDashboard.cshtml")
+            .Should().Contain("_CheckEngineAdminAssets");
+        ReadPluginFile("Views", "Admin", "AiReview.cshtml")
+            .Should().Contain("CheckEngineAdmin.errorMessage");
+        ReadPluginFile("Views", "Admin", "FitmentAiReview.cshtml")
+            .Should().Contain("CheckEngineAdmin.errorMessage");
+        ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
+            .Should().Contain("CheckEngineAdmin.errorMessage");
         ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml")
             .Should().Contain("Licence.Panel.LastHeartbeat");
         ReadPluginFile("Controllers", "GarageController.cs")

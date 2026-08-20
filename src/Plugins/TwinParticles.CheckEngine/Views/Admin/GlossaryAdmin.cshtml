@@ -3,6 +3,7 @@
     NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Glossary.Admin").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Glossary.Admin")</h1>
@@ -13,9 +14,10 @@
     </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
 
         <div class="card card-default">
             <div class="card-header">
@@ -55,6 +57,18 @@
     if (token && token.value) h['RequestVerificationToken'] = token.value;
     return h;
   }
+  function errorMessage(err, fallback) {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.errorMessage)
+      ? CheckEngineAdmin.errorMessage(err, fallback)
+      : (fallback || 'Request failed.');
+  }
+  function showAlert(kind, message) {
+    var el = document.querySelector('[data-ce-admin-alert]');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+    el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
+  }
   function render(data) {
     document.getElementById('ce-glossary-summary').textContent =
       'Embedded: ' + data.embeddedCount + ', overrides: ' + data.overrideCount;
@@ -84,14 +98,26 @@
     try {
       overrides = JSON.parse(document.getElementById('ce-glossary-overrides').value || '{}');
     } catch (e) {
-      alert('Invalid JSON');
+      showAlert('error', 'Invalid JSON.');
       return;
     }
     fetch('/Admin/CheckEngine/AiAdmin/SaveGlossary', {
       method: 'POST',
       headers: headers(true),
+      credentials: 'same-origin',
       body: JSON.stringify({ overrides: overrides })
-    }).then(function () { load(); });
+    }).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
+    }).then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, 'Save failed.'));
+        return;
+      }
+      showAlert('success', 'Glossary overrides saved.');
+      load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Save failed.'));
+    });
   });
   load();
 })();

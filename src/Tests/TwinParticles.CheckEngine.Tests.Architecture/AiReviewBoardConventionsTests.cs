@@ -16,7 +16,8 @@ public class AiReviewBoardConventionsTests
         view.Should().Contain("qualityScore < 1");
         view.Should().Contain("Translation");
         view.Should().Contain("Specification");
-        view.Should().Contain("body.reasonCode");
+        view.Should().Contain("CheckEngineAdmin.errorMessage");
+        view.Should().Contain("Review blocked.");
         view.Should().Contain("/Admin/CheckEngine/AiAdmin/Review");
     }
 

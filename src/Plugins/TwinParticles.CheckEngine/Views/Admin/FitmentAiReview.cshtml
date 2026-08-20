@@ -3,6 +3,7 @@
     NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview")</h1>
@@ -12,9 +13,10 @@
     </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
 
         <div class="card card-default">
             <div class="card-header">
@@ -90,6 +92,18 @@
     if (obj[pascal] !== undefined) return obj[pascal];
     return undefined;
   }
+  function errorMessage(err, fallback) {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.errorMessage)
+      ? CheckEngineAdmin.errorMessage(err, fallback)
+      : (fallback || 'Request failed.');
+  }
+  function showAlert(kind, message) {
+    var el = document.querySelector('[data-ce-admin-alert]');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+    el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
+  }
   function setText(selector, value) {
     var el = document.querySelector(selector);
     if (el) el.textContent = value == null || value === '' ? '—' : String(value);
@@ -136,8 +150,20 @@
     fetch(url, {
       method: 'POST',
       headers: headers(true),
+      credentials: 'same-origin',
       body: JSON.stringify({ claimId: claimId })
-    }).then(load);
+    }).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
+    }).then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, approved ? 'Approval failed.' : 'Rejection failed.'));
+        return;
+      }
+      showAlert('success', approved ? 'Claim approved.' : 'Claim rejected.');
+      load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Action failed.'));
+    });
   }
   document.getElementById('ce-fit-infer').addEventListener('click', function () {
     var productId = parseInt(document.getElementById('ce-fit-product').value, 10);
@@ -156,7 +182,8 @@
     }).then(function (res) {
       if (!res.ok) {
         errorEl.hidden = false;
-        errorEl.textContent = (res.body && (res.body.reasonCode || res.body.errorCode)) || 'Inference failed.';
+        errorEl.textContent = errorMessage(res.body, 'Inference failed.');
+        showAlert('error', errorMessage(res.body, 'Inference failed.'));
         return;
       }
       var claim = res.body || {};
@@ -172,9 +199,10 @@
       setText('[data-ce-fit-infer-rationale]', rationale);
       table.hidden = false;
       load();
-    }).catch(function () {
+    }).catch(function (err) {
       errorEl.hidden = false;
-      errorEl.textContent = 'Inference failed.';
+      errorEl.textContent = errorMessage(err, 'Inference failed.');
+      showAlert('error', errorMessage(err, 'Inference failed.'));
     });
   });
   load();

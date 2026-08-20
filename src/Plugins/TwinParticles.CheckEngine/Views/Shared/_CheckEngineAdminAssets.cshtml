@@ -1,7 +1,18 @@
 @{
     // AddCssFileParts/AddScriptParts strip ?v= via WebOptimizer; development also disables hash cache-busting.
-    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css?v=0.82.0\" />");
-    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.css?v=0.82.0\" />");
-    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-admin.js?v=0.82.0\" defer></script>");
+    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css?v=0.83.0\" />");
+    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.css?v=0.83.0\" />");
+    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-admin.js?v=0.83.0\" defer></script>");
 }
+<script>
+window.CheckEngineAdmin = window.CheckEngineAdmin || {};
+window.CheckEngineAdmin.errorMessage = function (err, fallback) {
+  var code = '';
+  if (typeof err === 'string') code = err;
+  else if (err) code = err.reasonCode || err.ReasonCode || err.errorCode || err.ErrorCode || '';
+  if (code === 'licence.read_only')
+    return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+  return code || fallback || 'Request failed.';
+};
+</script>
 @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))

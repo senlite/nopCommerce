@@ -3,6 +3,7 @@
     NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Search.Admin").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Search.Admin")</h1>
@@ -12,9 +13,10 @@
     </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header">
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Search.Admin.KeywordIndex")</h3>
@@ -32,14 +34,14 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered" id="ce-search-embedding-table">
+                    <table class="table table-bordered" id="ce-search-embedding-table" data-ce-rebuild-label="@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings.Rebuild")">
                         <thead>
                             <tr>
-                                <th>Locale</th>
-                                <th>Semantic ready</th>
-                                <th>Vectors</th>
-                                <th>Catalog</th>
-                                <th>Stale</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings.Locale")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings.Ready")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings.Vectors")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings.Catalog")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Search.Admin.Embeddings.Stale")</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -108,11 +110,34 @@
 <script>
 (function () {
   var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  var rebuildLabel = document.querySelector('#ce-search-embedding-table').getAttribute('data-ce-rebuild-label') || 'Rebuild';
   function headers(json) {
-    var h = { 'Accept': 'application/json' };
+    var h = { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
     if (json) h['Content-Type'] = 'application/json';
     if (token && token.value) h['RequestVerificationToken'] = token.value;
     return h;
+  }
+  function errorMessage(err, fallback) {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.errorMessage)
+      ? CheckEngineAdmin.errorMessage(err, fallback)
+      : (fallback || 'Request failed.');
+  }
+  function showAlert(kind, message) {
+    var el = document.querySelector('[data-ce-admin-alert]');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+    el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
+  }
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: headers(body != null),
+      credentials: 'same-origin',
+      body: body != null ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().then(function (data) { return { ok: r.ok, body: data }; }).catch(function () { return { ok: r.ok, body: {} }; });
+    });
   }
   function renderKeyword(state) {
     var text = 'Healthy: ' + (state.isHealthy ? 'yes' : 'no') +
@@ -131,7 +156,7 @@
         '<td>' + (row.count || 0) + '</td>' +
         '<td>' + (row.catalogCount || 0) + '</td>' +
         '<td>' + (row.staleCount || 0) + '</td>' +
-        '<td><button type="button" class="btn btn-sm btn-secondary" data-ce-locale="' + row.locale + '">Rebuild</button></td>';
+        '<td><button type="button" class="btn btn-sm btn-secondary" data-ce-locale="' + row.locale + '">' + rebuildLabel + '</button></td>';
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('[data-ce-locale]').forEach(function (button) {
@@ -152,46 +177,68 @@
     var url = locale
       ? '/Admin/CheckEngine/SearchAdmin/RebuildEmbeddings?locale=' + encodeURIComponent(locale)
       : '/Admin/CheckEngine/SearchAdmin/RebuildEmbeddingsAll';
-    fetch(url, { method: 'POST', headers: headers(false) })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (data.locales) {
-          document.getElementById('ce-search-rebuild-result').textContent =
-            'Rebuilt all locales · indexed ' + (data.totalIndexed || 0) + ' vectors.';
-        } else {
-          document.getElementById('ce-search-rebuild-result').textContent =
-            'Locale ' + (data.locale || locale) + ': indexed ' + (data.indexed || 0) +
-            ', skipped ' + (data.skipped || 0) + ', failed ' + (data.failed || 0) +
-            ' of ' + (data.catalogCount || 0) + '.';
-        }
-        load();
-      });
+    post(url).then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, 'Rebuild failed.'));
+        return;
+      }
+      showAlert('success', '');
+      var data = res.body || {};
+      if (data.locales) {
+        document.getElementById('ce-search-rebuild-result').textContent =
+          'Rebuilt all locales · indexed ' + (data.totalIndexed || 0) + ' vectors.';
+      } else {
+        document.getElementById('ce-search-rebuild-result').textContent =
+          'Locale ' + (data.locale || locale) + ': indexed ' + (data.indexed || 0) +
+          ', skipped ' + (data.skipped || 0) + ', failed ' + (data.failed || 0) +
+          ' of ' + (data.catalogCount || 0) + '.';
+      }
+      load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Rebuild failed.'));
+    });
   }
   document.getElementById('ce-search-rebuild-keyword').addEventListener('click', function () {
-    fetch('/Admin/CheckEngine/SearchAdmin/Rebuild', { method: 'POST', headers: headers(false) })
-      .then(load);
+    post('/Admin/CheckEngine/SearchAdmin/Rebuild').then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, 'Keyword rebuild failed.'));
+        return;
+      }
+      showAlert('success', 'Keyword index rebuilt.');
+      load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Keyword rebuild failed.'));
+    });
   });
   document.getElementById('ce-search-rebuild-keyword-and-embeddings').addEventListener('click', function () {
-    fetch('/Admin/CheckEngine/SearchAdmin/RebuildKeywordAndRefreshEmbeddings', {
-      method: 'POST',
-      headers: headers(false)
-    }).then(function (r) { return r.json(); }).then(function (data) {
+    post('/Admin/CheckEngine/SearchAdmin/RebuildKeywordAndRefreshEmbeddings').then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, 'Rebuild failed.'));
+        return;
+      }
+      showAlert('success', '');
       document.getElementById('ce-search-rebuild-result').textContent =
-        'Keyword rebuild complete · refreshed ' + (data.totalIndexed || 0) + ' stale embedding vectors.';
+        'Keyword rebuild complete · refreshed ' + (res.body.totalIndexed || 0) + ' stale embedding vectors.';
       load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Rebuild failed.'));
     });
   });
   document.getElementById('ce-search-rebuild-embeddings-all').addEventListener('click', function () {
     rebuildEmbeddings(null);
   });
   document.getElementById('ce-search-refresh-embeddings').addEventListener('click', function () {
-    fetch('/Admin/CheckEngine/SearchAdmin/RefreshEmbeddingsIncrementalAll', {
-      method: 'POST',
-      headers: headers(false)
-    }).then(function (r) { return r.json(); }).then(function (data) {
+    post('/Admin/CheckEngine/SearchAdmin/RefreshEmbeddingsIncrementalAll').then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, 'Refresh failed.'));
+        return;
+      }
+      showAlert('success', '');
       document.getElementById('ce-search-rebuild-result').textContent =
-        'Incremental refresh indexed ' + (data.totalIndexed || 0) + ' stale vectors.';
+        'Incremental refresh indexed ' + (res.body.totalIndexed || 0) + ' stale vectors.';
       load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Refresh failed.'));
     });
   });
   function loadSynonyms() {
@@ -224,17 +271,20 @@
     try {
       overrides = JSON.parse(raw);
     } catch (e) {
-      document.getElementById('ce-search-synonyms-status').textContent = 'Invalid JSON.';
+      showAlert('error', 'Invalid JSON.');
       return;
     }
-    fetch('/Admin/CheckEngine/SearchAdmin/SaveSynonyms', {
-      method: 'POST',
-      headers: headers(true),
-      body: JSON.stringify({ overrides: overrides })
-    }).then(function (r) { return r.json(); }).then(function (data) {
+    post('/Admin/CheckEngine/SearchAdmin/SaveSynonyms', { overrides: overrides }).then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, 'Save failed.'));
+        return;
+      }
+      showAlert('success', '');
       document.getElementById('ce-search-synonyms-status').textContent =
-        'Saved ' + (data.overrideCount || 0) + ' override(s). Rebuild embeddings to apply index-time expansion.';
+        'Saved ' + (res.body.overrideCount || 0) + ' override(s). Rebuild embeddings to apply index-time expansion.';
       loadSynonyms();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Save failed.'));
     });
   });
   function loadAnalytics() {

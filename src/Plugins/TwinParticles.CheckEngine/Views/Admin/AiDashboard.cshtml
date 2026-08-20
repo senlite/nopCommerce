@@ -3,6 +3,7 @@
     NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</h1>
@@ -13,9 +14,10 @@
     </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header">
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Usage")</h3>
@@ -57,6 +59,18 @@
     if (json) h['Content-Type'] = 'application/json';
     if (token && token.value) h['RequestVerificationToken'] = token.value;
     return h;
+  }
+  function errorMessage(err, fallback) {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.errorMessage)
+      ? CheckEngineAdmin.errorMessage(err, fallback)
+      : (fallback || 'Request failed.');
+  }
+  function showAlert(kind, message) {
+    var el = document.querySelector('[data-ce-admin-alert]');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+    el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
   }
   function pct(usage, ceiling) {
     if (!ceiling) return '—';
@@ -117,8 +131,20 @@
   document.getElementById('ce-ai-ack-disclosure').addEventListener('click', function () {
     fetch('/Admin/CheckEngine/AiAdmin/AcknowledgeDisclosure', {
       method: 'POST',
-      headers: headers(false)
-    }).then(load);
+      headers: headers(false),
+      credentials: 'same-origin'
+    }).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
+    }).then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, 'Acknowledgement failed.'));
+        return;
+      }
+      showAlert('success', 'Disclosure acknowledged.');
+      load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, 'Acknowledgement failed.'));
+    });
   });
   load();
 })();
