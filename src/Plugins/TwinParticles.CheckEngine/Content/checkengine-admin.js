@@ -874,6 +874,104 @@
     });
   }
 
+  function initTenantAdmin(root) {
+    var t = token(root);
+    var i18n = readI18n(root);
+    var alert = root.querySelector('[data-ce-admin-alert]');
+    var body = root.querySelector('[data-ce-tenant-body]');
+    var stats = root.querySelector('[data-ce-tenant-stats]');
+    function load() {
+      showAlert(alert, 'info', i18n.loading || 'Loading tenants…');
+      apiGet('/Admin/CheckEngine/TenantAdmin/Tenants?json=1', t)
+        .then(function (data) {
+          var rows = asArray(pick(data, 'items', 'Items'));
+          renderStatGrid(stats, [
+            { label: i18n.statTenants || 'Tenants', value: rows.length },
+            { label: i18n.statActive || 'Active', value: rows.filter(function (r) { return String(pick(r, 'status', 'Status') || '') === 'Active'; }).length }
+          ]);
+          renderRows(body, rows, [
+            { value: function (r) { return pick(r, 'id', 'Id'); }, code: true },
+            { value: function (r) { return pick(r, 'slug', 'Slug'); }, code: true },
+            { value: function (r) { return pick(r, 'displayName', 'DisplayName'); } },
+            { value: function (r) { return pick(r, 'status', 'Status'); } },
+            { value: function (r) { return pick(r, 'hostnamesCsv', 'HostnamesCsv'); } },
+            { html: true, value: function (r) {
+              var id = pick(r, 'id', 'Id');
+              return '<button type="button" class="ce-btn ce-btn--ghost" data-ce-tenant-suspend="' + id + '">' +
+                escapeHtml(i18n.suspend || 'Suspend') +
+                '</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-tenant-key="' + id + '">' +
+                escapeHtml(i18n.issueKey || 'Issue API key') + '</button>';
+            } }
+          ], i18n.emptyTenants || 'No tenants.');
+          showAlert(alert, 'success', i18n.loaded || 'Tenants loaded.');
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, i18n.loadFailed || 'Failed to load tenants.'));
+        });
+    }
+    root.querySelector('[data-ce-tenant-refresh]')?.addEventListener('click', load);
+    root.querySelector('[data-ce-tenant-provision]')?.addEventListener('click', function () {
+      var slug = (root.querySelector('[data-ce-tenant-slug]')?.value || '').trim();
+      if (!slug) {
+        showAlert(alert, 'error', i18n.needSlug || 'Enter a tenant slug.');
+        return;
+      }
+      fetch('/Admin/CheckEngine/TenantAdmin/Provision', {
+        method: 'POST',
+        headers: headers(t, true),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          slug: slug,
+          displayName: root.querySelector('[data-ce-tenant-name]')?.value || '',
+          hostnamesCsv: root.querySelector('[data-ce-tenant-hosts]')?.value || ''
+        })
+      })
+        .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+        .then(function (res) {
+          showAlert(alert, res.ok ? 'success' : 'error',
+            res.ok ? (i18n.provisioned || 'Tenant provisioned.') : errorMessage(res.body, i18n.provisionFailed || 'Provision failed.'));
+          if (res.ok) load();
+        })
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, i18n.provisionFailed || 'Provision failed.'));
+        });
+    });
+    root.addEventListener('click', function (e) {
+      var suspend = e.target.closest('[data-ce-tenant-suspend]');
+      if (suspend) {
+        fetch('/Admin/CheckEngine/TenantAdmin/Suspend', {
+          method: 'POST',
+          headers: headers(t, true),
+          credentials: 'same-origin',
+          body: JSON.stringify({ tenantId: Number(suspend.getAttribute('data-ce-tenant-suspend')) })
+        })
+          .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+          .then(function (res) {
+            showAlert(alert, res.ok ? 'success' : 'error',
+              res.ok ? (i18n.suspended || 'Tenant suspended.') : errorMessage(res.body, i18n.provisionFailed || 'Provision failed.'));
+            if (res.ok) load();
+          });
+        return;
+      }
+      var issue = e.target.closest('[data-ce-tenant-key]');
+      if (issue) {
+        fetch('/Admin/CheckEngine/TenantAdmin/IssueApiKey', {
+          method: 'POST',
+          headers: headers(t, true),
+          credentials: 'same-origin',
+          body: JSON.stringify({ tenantId: Number(issue.getAttribute('data-ce-tenant-key')) })
+        })
+          .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
+          .then(function (res) {
+            var key = pick(res.body, 'plaintext', 'Plaintext');
+            showAlert(alert, res.ok ? 'success' : 'error',
+              res.ok ? ((i18n.keyIssued || 'API key issued: {0}').replace('{0}', key || '')) : errorMessage(res.body, i18n.keyFailed || 'API key failed.'));
+          });
+      }
+    });
+    load();
+  }
+
   function boot() {
     document.querySelectorAll('[data-ce-page="vehicle-admin"]').forEach(initVehicleAdmin);
     document.querySelectorAll('[data-ce-page="oem-admin"]').forEach(initOemAdmin);
@@ -885,6 +983,7 @@
     document.querySelectorAll('[data-ce-page="diagnostics-admin"]').forEach(initDiagnosticsAdmin);
     document.querySelectorAll('[data-ce-page="reference-admin"]').forEach(initReferenceAdmin);
     document.querySelectorAll('[data-ce-page="image-admin"]').forEach(initImageAdmin);
+    document.querySelectorAll('[data-ce-page="tenant-admin"]').forEach(initTenantAdmin);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

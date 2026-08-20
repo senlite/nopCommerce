@@ -72,6 +72,8 @@ public sealed class CheckEngineStartup : INopStartup
     /// </summary>
     public void Configure(IApplicationBuilder application)
     {
+        application.UseMiddleware<TenantResolutionMiddleware>();
+
         if (!DataSettingsManager.IsDatabaseInstalled())
             return;
 

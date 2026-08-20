@@ -16,6 +16,7 @@ using TwinParticles.CheckEngine.Domain.Fleet;
 using TwinParticles.CheckEngine.Domain.Dealer;
 using TwinParticles.CheckEngine.Domain.Observability;
 using TwinParticles.CheckEngine.Domain.Seo;
+using TwinParticles.CheckEngine.Domain.Tenancy;
 using TwinParticles.CheckEngine.Domain.Oem;
 using TwinParticles.CheckEngine.Domain.Oem.Admin;
 using TwinParticles.CheckEngine.Domain.Performance;
@@ -41,6 +42,7 @@ using TwinParticles.CheckEngine.Infrastructure.Portals;
 using TwinParticles.CheckEngine.Domain.Portals;
 using TwinParticles.CheckEngine.Infrastructure.Oem;
 using TwinParticles.CheckEngine.Infrastructure.Seo;
+using TwinParticles.CheckEngine.Infrastructure.Tenancy;
 using TwinParticles.CheckEngine.Infrastructure.Observability;
 using TwinParticles.CheckEngine.Infrastructure.Performance;
 using TwinParticles.CheckEngine.Infrastructure.ReferenceScale;
@@ -86,7 +88,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<PdfImportExtractionParser>();
         services.AddSingleton<IImportExtractionParser>(sp => sp.GetRequiredService<PdfImportExtractionParser>());
 
-        services.AddSingleton<IFitmentCache, MemoryFitmentCache>();
+        services.AddSingleton<ITenantAccessor, TwinParticles.CheckEngine.Infrastructure.Tenancy.TenantContextAccessor>();
+        services.AddSingleton<IFitmentCache, TwinParticles.CheckEngine.Infrastructure.Tenancy.TenantAwareFitmentCache>();
         services.AddScoped<SqlFitmentClaimRepository>();
         services.AddScoped<IFitmentClaimReadRepository>(sp => sp.GetRequiredService<SqlFitmentClaimRepository>());
         services.AddScoped<IFitmentClaimWriteRepository>(sp => sp.GetRequiredService<SqlFitmentClaimRepository>());
@@ -165,6 +168,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDealerPortalRepository, SqlDealerPortalRepository>();
         services.AddScoped<IPortalOrderBridge, NopPortalOrderBridge>();
         services.AddScoped<IPortalCatalogPriceProvider, NopPortalCatalogPriceProvider>();
+
+        services.AddScoped<ITenantRegistry, SqlTenantRegistry>();
+        services.AddScoped<ITenantSettingsStore, SqlTenantSettingsStore>();
+        services.AddScoped<ITenantApiKeyStore, SqlTenantApiKeyStore>();
+        services.AddScoped<ITenantUsageLedger, SqlTenantUsageLedger>();
+        services.AddScoped<ITenantWebhookStore, SqlTenantWebhookStore>();
+        services.AddScoped<ITenantWebhookSecretProtector, NopTenantWebhookSecretProtector>();
+        services.AddSingleton<ITenantWebhookDeliveryPort, HttpTenantWebhookDeliveryPort>();
+        services.AddSingleton<IPublicApiRateLimiter, InMemoryPublicApiRateLimiter>();
 
         services.AddScoped<ISeoLandingRepository, SqlSeoLandingRepository>();
         services.AddScoped<ISeoIndexabilityPolicy, SqlSeoIndexabilityPolicy>();

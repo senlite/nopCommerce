@@ -76,6 +76,8 @@ public sealed class AdminMenuCreatedEventConsumer : BaseAdminMenuCreatedEventCon
                     await Item("PayoutAdmin", "Plugins.TwinParticles.CheckEngine.Payout.Admin", "/Admin/CheckEngine/PayoutAdmin/Index")),
                 await Group("Group.Portals", "Plugins.TwinParticles.CheckEngine.Dashboard.Group.Portals",
                     await Item("PortalAdmin", "Plugins.TwinParticles.CheckEngine.Portal.Admin.Title", "/Admin/CheckEngine/PortalAdmin/Accounts")),
+                await Group("Group.Platform", "Plugins.TwinParticles.CheckEngine.Dashboard.Group.Platform",
+                    await Item("TenantAdmin", "Plugins.TwinParticles.CheckEngine.Tenant.Admin", "/Admin/CheckEngine/TenantAdmin/Index")),
                 await Item("Configure", "Plugins.TwinParticles.CheckEngine.Configuration", "/Admin/CheckEngine/Configure")
             ]
         };

@@ -1,0 +1,74 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.TenantAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="tenant-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            loaded = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Loaded").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.LoadFailed").Text,
+            provisioned = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Provisioned").Text,
+            provisionFailed = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.ProvisionFailed").Text,
+            suspended = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Suspended").Text,
+            keyIssued = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.KeyIssued").Text,
+            keyFailed = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.KeyFailed").Text,
+            emptyTenants = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Empty").Text,
+            needSlug = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.NeedSlug").Text,
+            needTenant = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.NeedTenant").Text,
+            statTenants = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Stat.Tenants").Text,
+            statActive = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Stat.Active").Text,
+            suspend = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Suspend").Text,
+            issueKey = T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.IssueKey").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Slug")</label>
+                        <input class="ce-mp-input ce-code" data-ce-tenant-slug />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.DisplayName")</label>
+                        <input class="ce-mp-input" data-ce-tenant-name />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Hostnames")</label>
+                        <input class="ce-mp-input" data-ce-tenant-hosts />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-tenant-provision>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Provision")</button>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-tenant-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.View")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-tenant-stats></div>
+                <div class="ce-mp-table-wrap mt-3">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Slug")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.DisplayName")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Status")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Hostnames")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Tenant.Admin.Col.Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-tenant-body></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

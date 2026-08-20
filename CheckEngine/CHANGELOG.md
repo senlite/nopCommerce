@@ -42,6 +42,11 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — Horizon 5 control plane (v0.92.0):** tenant registry (database-per-tenant, implicit
+  `self` tenant), tenant-qualified fitment cache keys (`FR-1312`), `/api/v1` REST with API keys
+  (`FR-1331`, unauthenticated → 401), HMAC webhooks, usage ledger + billing adapter port (`FR-1320`–
+  `FR-1321`), optional per-metric overage throttle (`FR-1322`). Horizon 1 `Ce*` tables remain without
+  `TenantId`.
 - **Software — EXECUTION-PLAN Tracks 0–7 complete (engineering):**
   - Deterministic build scripts (`CheckEngine/scripts/build-checkengine.sh|.ps1`) and CI wiring
   - SQL product search, storefront widgets (search/fitment/garage), admin dashboard
