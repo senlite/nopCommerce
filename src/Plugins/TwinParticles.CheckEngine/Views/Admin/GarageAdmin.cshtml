@@ -15,6 +15,19 @@
 <section class="content ce-marketplace-admin" data-ce-page="garage-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            needCustomer = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.NeedCustomer").Text,
+            loaded = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Loaded").Text,
+            notFound = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.NotFound").Text,
+            emptyVehicles = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.EmptyVehicles").Text,
+            emptyOems = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.EmptyOems").Text,
+            statGarageId = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.GarageId").Text,
+            statCustomer = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.Customer").Text,
+            statVehicles = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Vehicles").Text,
+            statOems = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.Oems").Text,
+            statActiveVehicle = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.ActiveVehicle").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-body">

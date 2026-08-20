@@ -17,6 +17,15 @@
     try { return JSON.parse(node.textContent || '{}'); } catch (e) { return {}; }
   }
 
+  function fmt(template) {
+    if (window.CheckEngineAdmin && typeof CheckEngineAdmin.format === 'function')
+      return CheckEngineAdmin.format.apply(null, arguments);
+    var args = Array.prototype.slice.call(arguments, 1);
+    return String(template == null ? '' : template).replace(/\{(\d+)\}/g, function (_, i) {
+      return args[i] != null ? String(args[i]) : '';
+    });
+  }
+
   function token(root) {
     return root.querySelector('input[name="__RequestVerificationToken"]');
   }
@@ -152,13 +161,14 @@
 
   function initVehicleAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var tbody = root.querySelector('[data-ce-vehicle-body]');
     var select = root.querySelector('[data-ce-vehicle-level]');
     function load(doneKind, doneMessage) {
       var level = (select && select.value) || 'Makes';
       var url = '/Admin/CheckEngine/VehicleAdmin/' + level + '?json=1';
-      if (!doneMessage) showAlert(alert, 'info', 'Loading…');
+      if (!doneMessage) showAlert(alert, 'info', i18n.loading || 'Loading…');
       return apiGet(url, t)
         .then(function (data) {
           var rows = asArray(data);
@@ -167,11 +177,11 @@
             { value: function (r) { return pick(r, 'code', 'Code') || pick(r, 'nameEn', 'NameEn') || pick(r, 'name', 'Name'); } },
             { value: function (r) { return pick(r, 'nameAr', 'NameAr'); } },
             { value: function (r) { return pick(r, 'isActive', 'IsActive'); } }
-          ]);
+          ], i18n.noRows || 'No rows.');
           showAlert(alert, doneKind || 'info', doneMessage || '');
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Failed to load vehicle data.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.loadFailed || 'Failed to load vehicle data.'));
         });
     }
     select && select.addEventListener('change', load);
@@ -179,7 +189,7 @@
     var seedBtn = root.querySelector('[data-ce-vehicle-seed]');
     seedBtn && seedBtn.addEventListener('click', function () {
       seedBtn.disabled = true;
-      showAlert(alert, 'info', 'Seeding BMW reference data…');
+      showAlert(alert, 'info', i18n.seeding || 'Seeding BMW reference data…');
       fetch('/Admin/CheckEngine/VehicleAdmin/Seed', {
         method: 'POST',
         headers: headers(t, true),
@@ -194,7 +204,7 @@
         .then(function (res) {
           var body = res.body || {};
           if (!res.ok) {
-            showAlert(alert, 'error', errorMessage(body, 'BMW seed failed.'));
+            showAlert(alert, 'error', errorMessage(body, i18n.seedFailed || 'BMW seed failed.'));
             return;
           }
           var makes = pick(body, 'makesInserted', 'MakesInserted') || 0;
@@ -202,11 +212,11 @@
           var aliases = pick(body, 'aliasesInserted', 'AliasesInserted') || 0;
           return load(
             'success',
-            'BMW seed complete. Makes +' + makes + ', configurations +' + configs + ', aliases +' + aliases + '.'
+            fmt(i18n.seedComplete || 'BMW seed complete. Makes +{0}, configurations +{1}, aliases +{2}.', makes, configs, aliases)
           );
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'BMW seed failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.seedFailed || 'BMW seed failed.'));
         })
         .then(function () {
           seedBtn.disabled = false;
@@ -217,12 +227,13 @@
 
   function initOemAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var tbody = root.querySelector('[data-ce-oem-body]');
     var select = root.querySelector('[data-ce-oem-level]');
     function load() {
       var level = (select && select.value) || 'Manufacturers';
-      showAlert(alert, 'info', 'Loading…');
+      showAlert(alert, 'info', i18n.loading || 'Loading…');
       apiGet('/Admin/CheckEngine/OemAdmin/' + level + '?json=1', t)
         .then(function (data) {
           showAlert(alert, 'info', '');
@@ -230,10 +241,10 @@
             { value: function (r) { return pick(r, 'id', 'Id'); }, code: true },
             { value: function (r) { return pick(r, 'code', 'Code') || pick(r, 'oemNumber', 'OemNumber') || pick(r, 'name', 'Name'); } },
             { value: function (r) { return pick(r, 'manufacturerId', 'ManufacturerId') || pick(r, 'productId', 'ProductId'); }, code: true }
-          ]);
+          ], i18n.noRows || 'No rows.');
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Failed to load OEM data.');
+          showAlert(alert, 'error', i18n.loadFailed || 'Failed to load OEM data.');
         });
     }
     select && select.addEventListener('change', load);
@@ -243,10 +254,11 @@
 
   function initFitmentClaims(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var tbody = root.querySelector('[data-ce-fitment-body]');
     function load() {
-      showAlert(alert, 'info', 'Loading…');
+      showAlert(alert, 'info', i18n.loading || 'Loading…');
       apiGet('/Admin/CheckEngine/FitmentAdmin/Queue?json=1', t)
         .then(function (data) {
           showAlert(alert, 'info', '');
@@ -256,10 +268,10 @@
             { value: function (r) { return pick(r, 'vehicleConfigurationId', 'VehicleConfigurationId'); }, code: true },
             { value: function (r) { return pick(r, 'status', 'Status') || pick(r, 'fitmentStatus', 'FitmentStatus'); } },
             { value: function (r) { return pick(r, 'source', 'Source'); } }
-          ]);
+          ], i18n.noRows || 'No rows.');
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Failed to load fitment queue.');
+          showAlert(alert, 'error', i18n.loadFailed || 'Failed to load fitment queue.');
         });
     }
     root.querySelector('[data-ce-fitment-refresh]')?.addEventListener('click', load);
@@ -268,6 +280,7 @@
 
   function initGarageAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var stats = root.querySelector('[data-ce-garage-stats]');
     var vehiclesBody = root.querySelector('[data-ce-garage-vehicles]');
@@ -285,33 +298,33 @@
     ];
     function clearGarage() {
       if (stats) stats.innerHTML = '';
-      renderRows(vehiclesBody, [], vehicleCols, 'No vehicles.');
-      renderRows(oemsBody, [], oemCols, 'No OEM numbers.');
+      renderRows(vehiclesBody, [], vehicleCols, i18n.emptyVehicles || 'No vehicles.');
+      renderRows(oemsBody, [], oemCols, i18n.emptyOems || 'No OEM numbers.');
     }
     root.querySelector('[data-ce-garage-load]')?.addEventListener('click', function () {
       var customerId = Number(root.querySelector('[data-ce-garage-customer]')?.value || 0);
       if (!customerId) {
-        showAlert(alert, 'error', 'Enter a customer id.');
+        showAlert(alert, 'error', i18n.needCustomer || 'Enter a customer id.');
         return;
       }
-      showAlert(alert, 'info', 'Loading…');
+      showAlert(alert, 'info', i18n.loading || 'Loading…');
       apiGet('/Admin/CheckEngine/GarageAdmin/CustomerGarage?customerId=' + customerId + '&json=1', t)
         .then(function (data) {
-          showAlert(alert, 'success', 'Garage loaded for customer #' + customerId);
+          showAlert(alert, 'success', fmt(i18n.loaded || 'Garage loaded for customer #{0}.', customerId));
           var vehicles = asArray(pick(data, 'vehicles', 'Vehicles'));
           var oems = asArray(pick(data, 'oems', 'Oems'));
           renderStatGrid(stats, [
-            { label: 'Garage id', value: pick(data, 'id', 'Id'), code: true },
-            { label: 'Customer', value: pick(data, 'customerId', 'CustomerId') || customerId, code: true },
-            { label: 'Vehicles', value: vehicles.length },
-            { label: 'OEM numbers', value: oems.length },
-            { label: 'Active vehicle', value: pick(data, 'activeGarageVehicleId', 'ActiveGarageVehicleId'), code: true }
+            { label: i18n.statGarageId || 'Garage id', value: pick(data, 'id', 'Id'), code: true },
+            { label: i18n.statCustomer || 'Customer', value: pick(data, 'customerId', 'CustomerId') || customerId, code: true },
+            { label: i18n.statVehicles || 'Vehicles', value: vehicles.length },
+            { label: i18n.statOems || 'OEM numbers', value: oems.length },
+            { label: i18n.statActiveVehicle || 'Active vehicle', value: pick(data, 'activeGarageVehicleId', 'ActiveGarageVehicleId'), code: true }
           ]);
-          renderRows(vehiclesBody, vehicles, vehicleCols, 'No vehicles.');
-          renderRows(oemsBody, oems, oemCols, 'No OEM numbers.');
+          renderRows(vehiclesBody, vehicles, vehicleCols, i18n.emptyVehicles || 'No vehicles.');
+          renderRows(oemsBody, oems, oemCols, i18n.emptyOems || 'No OEM numbers.');
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Garage not found for customer #' + customerId);
+          showAlert(alert, 'error', fmt(i18n.notFound || 'Garage not found for customer #{0}', customerId));
           clearGarage();
         });
     });
@@ -319,21 +332,22 @@
 
   function initErpAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var stats = root.querySelector('[data-ce-erp-stats]');
     var variancesBody = root.querySelector('[data-ce-erp-variances]');
     var issuesEl = root.querySelector('[data-ce-erp-issues]');
     root.querySelector('[data-ce-erp-reconcile]')?.addEventListener('click', function () {
-      showAlert(alert, 'info', 'Running reconciliation…');
+      showAlert(alert, 'info', i18n.reconciling || 'Running reconciliation…');
       apiGet('/Admin/CheckEngine/ErpAdmin/Reconcile?json=1', t)
         .then(function (data) {
-          showAlert(alert, 'success', 'Reconciliation complete.');
+          showAlert(alert, 'success', i18n.reconcileComplete || 'Reconciliation complete.');
           renderStatGrid(stats, [
-            { label: 'Total jobs', value: pick(data, 'totalJobs', 'TotalJobs') },
-            { label: 'Successful', value: pick(data, 'successfulJobs', 'SuccessfulJobs') },
-            { label: 'Failed', value: pick(data, 'failedJobs', 'FailedJobs') },
-            { label: 'Discrepancy', value: pick(data, 'hasFinancialDiscrepancy', 'HasFinancialDiscrepancy') },
-            { label: 'Generated', value: pick(data, 'generatedUtc', 'GeneratedUtc') }
+            { label: i18n.statTotalJobs || 'Total jobs', value: pick(data, 'totalJobs', 'TotalJobs') },
+            { label: i18n.statSuccessful || 'Successful', value: pick(data, 'successfulJobs', 'SuccessfulJobs') },
+            { label: i18n.statFailed || 'Failed', value: pick(data, 'failedJobs', 'FailedJobs') },
+            { label: i18n.statDiscrepancy || 'Discrepancy', value: pick(data, 'hasFinancialDiscrepancy', 'HasFinancialDiscrepancy') },
+            { label: i18n.statGenerated || 'Generated', value: pick(data, 'generatedUtc', 'GeneratedUtc') }
           ]);
           renderRows(
             variancesBody,
@@ -345,17 +359,17 @@
               { value: function (r) { return pick(r, 'absoluteVariance', 'AbsoluteVariance'); } },
               { value: function (r) { return pick(r, 'withinTolerance', 'WithinTolerance'); } }
             ],
-            'No variances.'
+            i18n.emptyVariances || 'No variances.'
           );
           var issues = asArray(pick(data, 'issues', 'Issues'));
           if (issuesEl) {
             issuesEl.innerHTML = issues.length
               ? issues.map(function (issue) { return '<li>' + escapeHtml(issue) + '</li>'; }).join('')
-              : '<li class="text-muted">No issues.</li>';
+              : '<li class="text-muted">' + escapeHtml(i18n.emptyIssues || 'No issues.') + '</li>';
           }
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Reconciliation failed.');
+          showAlert(alert, 'error', i18n.reconcileFailed || 'Reconciliation failed.');
         });
     });
     root.querySelector('[data-ce-erp-process]')?.addEventListener('click', function () {
@@ -368,15 +382,15 @@
         .then(function (r) {
           return r.json().then(function (body) {
             if (!r.ok) throw body;
-            showAlert(alert, 'success', 'Processed ' + (pick(body, 'processed', 'Processed') || 0) + ' jobs.');
+            showAlert(alert, 'success', fmt(i18n.processed || 'Processed {0} jobs.', pick(body, 'processed', 'Processed') || 0));
           });
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Process failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.processFailed || 'Process failed.'));
         });
     });
     root.querySelector('[data-ce-erp-snapshot]')?.addEventListener('click', function () {
-      showAlert(alert, 'info', 'Pulling inventory snapshot…');
+      showAlert(alert, 'info', i18n.snapshotLoading || 'Pulling inventory snapshot…');
       var snapshotEl = root.querySelector('[data-ce-erp-snapshot-stats]');
       apiGet('/Admin/CheckEngine/ErpAdmin/InventorySnapshot?json=1', t)
         .then(function (data) {
@@ -388,14 +402,14 @@
           }
           var items = parsed ? asArray(pick(parsed, 'items', 'Items')) : [];
           renderStatGrid(snapshotEl, [
-            { label: 'Warehouse', value: parsed ? pick(parsed, 'warehouse', 'Warehouse') : '—' },
-            { label: 'Items', value: items.length },
-            { label: 'Payload', value: parsed ? 'Structured' : (payload ? String(payload).slice(0, 80) : 'Empty') }
+            { label: i18n.statWarehouse || 'Warehouse', value: parsed ? pick(parsed, 'warehouse', 'Warehouse') : '—' },
+            { label: i18n.statItems || 'Items', value: items.length },
+            { label: i18n.statPayload || 'Payload', value: parsed ? (i18n.payloadStructured || 'Structured') : (payload ? String(payload).slice(0, 80) : (i18n.payloadEmpty || 'Empty')) }
           ]);
-          showAlert(alert, 'success', 'Inventory snapshot loaded.');
+          showAlert(alert, 'success', i18n.snapshotLoaded || 'Inventory snapshot loaded.');
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Inventory snapshot failed.');
+          showAlert(alert, 'error', i18n.snapshotFailed || 'Inventory snapshot failed.');
         });
     });
   }

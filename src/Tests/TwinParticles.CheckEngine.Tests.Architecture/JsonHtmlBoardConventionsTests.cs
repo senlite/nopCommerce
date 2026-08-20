@@ -198,6 +198,20 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("Seo.Admin.RebuildQueued");
         ReadPluginFile("Views", "Admin", "ImageAdmin.cshtml")
             .Should().Contain("Image.Admin.TemplateFailed");
+        ReadPluginFile("Views", "Admin", "VehicleAdmin.cshtml")
+            .Should().Contain("Vehicle.Admin.SeedComplete");
+        ReadPluginFile("Views", "Admin", "OemAdmin.cshtml")
+            .Should().Contain("Oem.Admin.LoadFailed");
+        ReadPluginFile("Views", "Admin", "FitmentClaimsReview.cshtml")
+            .Should().Contain("Fitment.ClaimsReview.LoadFailed");
+        ReadPluginFile("Views", "Admin", "GarageAdmin.cshtml")
+            .Should().Contain("Garage.Admin.NeedCustomer");
+        ReadPluginFile("Views", "Admin", "ErpAdmin.cshtml")
+            .Should().Contain("Erp.Admin.ReconcileComplete");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("i18n.needCustomer || 'Enter a customer id.'");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("i18n.loadFailed || 'Failed to load vehicle data.'");
         ReadPluginFile("Content", "checkengine-admin.js")
             .Should().Contain("i18n.publishFailed || 'Publish failed.'");
         ReadPluginFile("Views", "Workshop", "Index.cshtml")

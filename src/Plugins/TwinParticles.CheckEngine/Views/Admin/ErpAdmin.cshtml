@@ -15,6 +15,28 @@
 <section class="content ce-marketplace-admin" data-ce-page="erp-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            reconciling = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Reconciling").Text,
+            reconcileComplete = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.ReconcileComplete").Text,
+            reconcileFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.ReconcileFailed").Text,
+            processed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Processed").Text,
+            processFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.ProcessFailed").Text,
+            snapshotLoading = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.SnapshotLoading").Text,
+            snapshotLoaded = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.SnapshotLoaded").Text,
+            snapshotFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.SnapshotFailed").Text,
+            emptyVariances = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.EmptyVariances").Text,
+            emptyIssues = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.EmptyIssues").Text,
+            statTotalJobs = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.TotalJobs").Text,
+            statSuccessful = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Successful").Text,
+            statFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Failed").Text,
+            statDiscrepancy = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Discrepancy").Text,
+            statGenerated = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Generated").Text,
+            statWarehouse = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Warehouse").Text,
+            statItems = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Items").Text,
+            statPayload = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Payload").Text,
+            payloadStructured = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Payload.Structured").Text,
+            payloadEmpty = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Payload.Empty").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-body">

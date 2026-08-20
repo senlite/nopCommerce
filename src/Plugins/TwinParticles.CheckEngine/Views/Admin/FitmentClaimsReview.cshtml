@@ -16,6 +16,11 @@
 <section class="content ce-marketplace-admin" data-ce-page="fitment-claims">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview.LoadFailed").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header clearfix">
