@@ -15,6 +15,25 @@
 <section class="content ce-marketplace-admin" data-ce-page="seo-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Loading").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.LoadFailed").Text,
+            rebuildQueued = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.RebuildQueued").Text,
+            rebuildFailed = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.RebuildFailed").Text,
+            needConfig = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.NeedConfig").Text,
+            needProduct = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.NeedProduct").Text,
+            generating = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Generating").Text,
+            generated = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Generated").Text,
+            generateFailed = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.GenerateFailed").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text,
+            statSuccess = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Stat.Success").Text,
+            statId = T("Plugins.TwinParticles.CheckEngine.Common.Col.Id").Text,
+            statType = T("Plugins.TwinParticles.CheckEngine.Common.Col.Type").Text,
+            statLocale = T("Plugins.TwinParticles.CheckEngine.Common.Col.Locale").Text,
+            statUrl = T("Plugins.TwinParticles.CheckEngine.Common.Col.Url").Text,
+            statIndexable = T("Plugins.TwinParticles.CheckEngine.Seo.Admin.Stat.Indexable").Text,
+            statError = T("Plugins.TwinParticles.CheckEngine.Common.Col.Error").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header clearfix">

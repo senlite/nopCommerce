@@ -187,7 +187,17 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Views", "Shared", "Components", "LicenceReadOnlyBanner", "Default.cshtml")
             .Should().Contain("data-ce-licence-readonly-banner");
         ReadPluginFile("Content", "checkengine-admin.js")
-            .Should().Contain("errorMessage(res.body, 'Template failed.')");
+            .Should().Contain("i18n.templateFailed || 'Template failed.'");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("i18n.statDatabase || 'Database'");
+        ReadPluginFile("Views", "Admin", "DiagnosticsAdmin.cshtml")
+            .Should().Contain("Diagnostics.Admin.Stat.Database");
+        ReadPluginFile("Views", "Admin", "ReferenceDataAdmin.cshtml")
+            .Should().Contain("ReferenceData.Admin.LoadComplete");
+        ReadPluginFile("Views", "Admin", "SeoAdmin.cshtml")
+            .Should().Contain("Seo.Admin.RebuildQueued");
+        ReadPluginFile("Views", "Admin", "ImageAdmin.cshtml")
+            .Should().Contain("Image.Admin.TemplateFailed");
         ReadPluginFile("Content", "checkengine-admin.js")
             .Should().Contain("i18n.publishFailed || 'Publish failed.'");
         ReadPluginFile("Views", "Workshop", "Index.cshtml")

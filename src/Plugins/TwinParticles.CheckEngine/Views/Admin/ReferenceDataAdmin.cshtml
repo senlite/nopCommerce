@@ -15,6 +15,23 @@
 <section class="content ce-marketplace-admin" data-ce-page="reference-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            statusFailed = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.StatusFailed").Text,
+            loading = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Loading").Text,
+            loadComplete = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.LoadComplete").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.LoadFailed").Text,
+            purgeConfirm = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.PurgeConfirm").Text,
+            purged = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Purged").Text,
+            purgeFailed = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.PurgeFailed").Text,
+            statProducts = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Products").Text,
+            statFitment = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Fitment").Text,
+            statConfigs = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Configs").Text,
+            statOem = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Oem").Text,
+            statAlreadyLoaded = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.AlreadyLoaded").Text,
+            statFitmentClaims = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.FitmentClaims").Text,
+            statConfigurations = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Configurations").Text,
+            statOemEntries = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.OemEntries").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header clearfix">

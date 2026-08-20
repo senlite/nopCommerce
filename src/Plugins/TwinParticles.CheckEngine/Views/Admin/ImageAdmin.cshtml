@@ -15,6 +15,29 @@
 <section class="content ce-marketplace-admin" data-ce-page="image-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            needProductUrl = T("Plugins.TwinParticles.CheckEngine.Image.Admin.NeedProductUrl").Text,
+            replacing = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Replacing").Text,
+            replaceComplete = T("Plugins.TwinParticles.CheckEngine.Image.Admin.ReplaceComplete").Text,
+            replaceFailed = T("Plugins.TwinParticles.CheckEngine.Image.Admin.ReplaceFailed").Text,
+            needManifest = T("Plugins.TwinParticles.CheckEngine.Image.Admin.NeedManifest").Text,
+            manifestApplied = T("Plugins.TwinParticles.CheckEngine.Image.Admin.ManifestApplied").Text,
+            manifestFailed = T("Plugins.TwinParticles.CheckEngine.Image.Admin.ManifestFailed").Text,
+            needSkus = T("Plugins.TwinParticles.CheckEngine.Image.Admin.NeedSkus").Text,
+            applyingTemplate = T("Plugins.TwinParticles.CheckEngine.Image.Admin.ApplyingTemplate").Text,
+            templateApplied = T("Plugins.TwinParticles.CheckEngine.Image.Admin.TemplateApplied").Text,
+            templateFailed = T("Plugins.TwinParticles.CheckEngine.Image.Admin.TemplateFailed").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text,
+            statSuccess = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.Success").Text,
+            statPictureId = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.PictureId").Text,
+            statPlaceholder = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.Placeholder").Text,
+            statQuarantined = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.Quarantined").Text,
+            statCdnUrl = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.CdnUrl").Text,
+            statReplaced = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.Replaced").Text,
+            statNotFound = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.NotFound").Text,
+            statFailed = T("Plugins.TwinParticles.CheckEngine.Image.Admin.Stat.Failed").Text,
+            statError = T("Plugins.TwinParticles.CheckEngine.Common.Col.Error").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header">

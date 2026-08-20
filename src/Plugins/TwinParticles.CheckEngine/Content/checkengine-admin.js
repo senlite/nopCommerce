@@ -92,26 +92,28 @@
       .join('');
   }
 
-  function imageStatusLabel(value) {
+  function imageStatusLabel(value, i18n) {
+    i18n = i18n || {};
     var map = {
-      1: 'Replaced',
-      2: 'Not found',
-      3: 'Quarantined',
-      4: 'Failed',
-      Replaced: 'Replaced',
-      SkuNotFound: 'Not found',
-      Quarantined: 'Quarantined',
-      Failed: 'Failed'
+      1: i18n.statReplaced || 'Replaced',
+      2: i18n.statNotFound || 'Not found',
+      3: i18n.statQuarantined || 'Quarantined',
+      4: i18n.statFailed || 'Failed',
+      Replaced: i18n.statReplaced || 'Replaced',
+      SkuNotFound: i18n.statNotFound || 'Not found',
+      Quarantined: i18n.statQuarantined || 'Quarantined',
+      Failed: i18n.statFailed || 'Failed'
     };
     return map[value] || value;
   }
 
-  function renderBatchImageResult(statsEl, rowsEl, body) {
+  function renderBatchImageResult(statsEl, rowsEl, body, i18n) {
+    i18n = i18n || {};
     renderStatGrid(statsEl, [
-      { label: 'Replaced', value: pick(body, 'replaced', 'Replaced') },
-      { label: 'Not found', value: pick(body, 'notFound', 'NotFound') },
-      { label: 'Quarantined', value: pick(body, 'quarantined', 'Quarantined') },
-      { label: 'Failed', value: pick(body, 'failed', 'Failed') }
+      { label: i18n.statReplaced || 'Replaced', value: pick(body, 'replaced', 'Replaced') },
+      { label: i18n.statNotFound || 'Not found', value: pick(body, 'notFound', 'NotFound') },
+      { label: i18n.statQuarantined || 'Quarantined', value: pick(body, 'quarantined', 'Quarantined') },
+      { label: i18n.statFailed || 'Failed', value: pick(body, 'failed', 'Failed') }
     ]);
     renderRows(
       rowsEl,
@@ -119,10 +121,10 @@
       [
         { value: function (r) { return pick(r, 'sku', 'Sku'); }, code: true },
         { value: function (r) { return pick(r, 'productId', 'ProductId'); }, code: true },
-        { value: function (r) { return imageStatusLabel(pick(r, 'status', 'Status')); } },
+        { value: function (r) { return imageStatusLabel(pick(r, 'status', 'Status'), i18n); } },
         { value: function (r) { return pick(r, 'errorCode', 'ErrorCode'); } }
       ],
-      'No rows.'
+      i18n.noRows || 'No rows.'
     );
   }
 
@@ -400,20 +402,21 @@
 
   function initSeoAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var tbody = root.querySelector('[data-ce-seo-body]');
     function load() {
-      showAlert(alert, 'info', 'Loading sitemap…');
+      showAlert(alert, 'info', i18n.loading || 'Loading sitemap…');
       apiGet('/Admin/CheckEngine/SeoAdmin/Sitemap?json=1', t)
         .then(function (data) {
           showAlert(alert, 'info', '');
           var rows = asArray(data);
           renderRows(tbody, rows, [
             { value: function (r) { return typeof r === 'string' ? r : pick(r, 'url', 'Url') || pick(r, 'loc', 'Loc'); } }
-          ]);
+          ], i18n.noRows || 'No rows.');
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Failed to load sitemap URLs.');
+          showAlert(alert, 'error', i18n.loadFailed || 'Failed to load sitemap URLs.');
         });
     }
     root.querySelector('[data-ce-seo-refresh]')?.addEventListener('click', load);
@@ -429,23 +432,23 @@
         })
         .then(function (res) {
           if (!res.ok) throw res.body;
-          showAlert(alert, 'success', 'Sitemap rebuild queued.');
+          showAlert(alert, 'success', i18n.rebuildQueued || 'Sitemap rebuild queued.');
           load();
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Rebuild failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.rebuildFailed || 'Rebuild failed.'));
         });
     });
     function renderLanding(body) {
       var landing = pick(body, 'landing', 'Landing') || {};
       renderStatGrid(root.querySelector('[data-ce-seo-result]'), [
-        { label: 'Success', value: pick(body, 'success', 'Success') },
-        { label: 'Id', value: pick(landing, 'id', 'Id'), code: true },
-        { label: 'Type', value: pick(landing, 'type', 'Type') },
-        { label: 'Locale', value: pick(landing, 'locale', 'Locale') },
-        { label: 'URL', value: pick(landing, 'urlPath', 'UrlPath') },
-        { label: 'Indexable', value: pick(landing, 'isIndexable', 'IsIndexable') },
-        { label: 'Error', value: pick(body, 'errorCode', 'ErrorCode') }
+        { label: i18n.statSuccess || 'Success', value: pick(body, 'success', 'Success') },
+        { label: i18n.statId || 'Id', value: pick(landing, 'id', 'Id'), code: true },
+        { label: i18n.statType || 'Type', value: pick(landing, 'type', 'Type') },
+        { label: i18n.statLocale || 'Locale', value: pick(landing, 'locale', 'Locale') },
+        { label: i18n.statUrl || 'URL', value: pick(landing, 'urlPath', 'UrlPath') },
+        { label: i18n.statIndexable || 'Indexable', value: pick(landing, 'isIndexable', 'IsIndexable') },
+        { label: i18n.statError || 'Error', value: pick(body, 'errorCode', 'ErrorCode') }
       ]);
     }
     function generate(kind) {
@@ -453,11 +456,11 @@
       var productId = parseInt(root.querySelector('[data-ce-seo-product]')?.value || '0', 10);
       var locale = root.querySelector('[data-ce-seo-locale]')?.value || 'en';
       if (!configId) {
-        showAlert(alert, 'error', 'Enter a configuration id.');
+        showAlert(alert, 'error', i18n.needConfig || 'Enter a configuration id.');
         return;
       }
       if (kind === 'part' && !productId) {
-        showAlert(alert, 'error', 'Enter a product id for a part landing.');
+        showAlert(alert, 'error', i18n.needProduct || 'Enter a product id for a part landing.');
         return;
       }
       var url = kind === 'part'
@@ -466,7 +469,7 @@
       var payload = kind === 'part'
         ? { productId: productId, vehicleConfigurationId: configId, locale: locale }
         : { vehicleConfigurationId: configId, locale: locale };
-      showAlert(alert, 'info', 'Generating landing…');
+      showAlert(alert, 'info', i18n.generating || 'Generating landing…');
       fetch(url, {
         method: 'POST',
         headers: headers(t, true),
@@ -477,11 +480,11 @@
         .then(function (res) {
           renderLanding(res.body || {});
           showAlert(alert, res.ok && pick(res.body, 'success', 'Success') !== false ? 'success' : 'error',
-            res.ok ? 'Landing generated.' : errorMessage(res.body, 'Generate failed.'));
+            res.ok ? (i18n.generated || 'Landing generated.') : errorMessage(res.body, i18n.generateFailed || 'Generate failed.'));
           load();
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Generate failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.generateFailed || 'Generate failed.'));
         });
     }
     root.querySelector('[data-ce-seo-generate-vehicle]')?.addEventListener('click', function () { generate('vehicle'); });
@@ -660,24 +663,24 @@
 
   function initDiagnosticsAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var stats = root.querySelector('[data-ce-diagnostics-stats]');
     function load() {
-      showAlert(alert, 'info', 'Loading diagnostics…');
+      showAlert(alert, 'info', i18n.loading || 'Loading diagnostics…');
       apiGet('/Admin/CheckEngine/DiagnosticsAdmin/Package?json=1', t)
         .then(function (data) {
           showAlert(alert, 'info', '');
           var health = pick(data, 'health', 'Health') || {};
-          if (stats) {
-            stats.innerHTML =
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Database</span><span class="ce-mp-stat__value">' + (pick(health, 'database', 'Database') || '—') + '</span></article>' +
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Search</span><span class="ce-mp-stat__value">' + (pick(health, 'searchIndex', 'SearchIndex') || '—') + '</span></article>' +
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">ERP</span><span class="ce-mp-stat__value">' + (pick(health, 'erp', 'Erp') || '—') + '</span></article>' +
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Licence</span><span class="ce-mp-stat__value">' + (pick(health, 'licence', 'Licence') || '—') + '</span></article>';
-          }
+          renderStatGrid(stats, [
+            { label: i18n.statDatabase || 'Database', value: pick(health, 'database', 'Database') },
+            { label: i18n.statSearch || 'Search', value: pick(health, 'searchIndex', 'SearchIndex') },
+            { label: i18n.statErp || 'ERP', value: pick(health, 'erp', 'Erp') },
+            { label: i18n.statLicence || 'Licence', value: pick(health, 'licence', 'Licence') }
+          ]);
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Failed to load diagnostics package.');
+          showAlert(alert, 'error', i18n.loadFailed || 'Failed to load diagnostics package.');
         });
     }
     root.querySelector('[data-ce-diagnostics-refresh]')?.addEventListener('click', load);
@@ -686,6 +689,7 @@
 
   function initReferenceAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var stats = root.querySelector('[data-ce-reference-stats]');
     var panel = root.querySelector('[data-ce-reference-result]');
@@ -693,23 +697,22 @@
       apiGet('/Admin/CheckEngine/ReferenceDataAdmin/Status?json=1', t)
         .then(function (data) {
           var status = pick(data, 'status', 'Status') || {};
-          if (stats) {
-            stats.innerHTML =
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Products</span><span class="ce-mp-stat__value">' + (pick(status, 'productCount', 'ProductCount') || 0) + '</span></article>' +
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Fitment</span><span class="ce-mp-stat__value">' + (pick(status, 'fitmentClaimCount', 'FitmentClaimCount') || 0) + '</span></article>' +
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">Configs</span><span class="ce-mp-stat__value">' + (pick(status, 'configurationCount', 'ConfigurationCount') || 0) + '</span></article>' +
-              '<article class="ce-mp-stat"><span class="ce-mp-stat__label">OEM</span><span class="ce-mp-stat__value">' + (pick(status, 'oemEntryCount', 'OemEntryCount') || 0) + '</span></article>';
-          }
+          renderStatGrid(stats, [
+            { label: i18n.statProducts || 'Products', value: pick(status, 'productCount', 'ProductCount') || 0 },
+            { label: i18n.statFitment || 'Fitment', value: pick(status, 'fitmentClaimCount', 'FitmentClaimCount') || 0 },
+            { label: i18n.statConfigs || 'Configs', value: pick(status, 'configurationCount', 'ConfigurationCount') || 0 },
+            { label: i18n.statOem || 'OEM', value: pick(status, 'oemEntryCount', 'OemEntryCount') || 0 }
+          ]);
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Failed to load reference catalog status.');
+          showAlert(alert, 'error', i18n.statusFailed || 'Failed to load reference catalog status.');
         });
     }
     root.querySelector('[data-ce-reference-refresh]')?.addEventListener('click', load);
     root.querySelector('[data-ce-reference-load]')?.addEventListener('click', function () {
       var scale = parseFloat(root.querySelector('[data-ce-reference-scale]')?.value || '1');
       var replace = !!root.querySelector('[data-ce-reference-replace]')?.checked;
-      showAlert(alert, 'info', 'Loading catalog…');
+      showAlert(alert, 'info', i18n.loading || 'Loading catalog…');
       fetch('/Admin/CheckEngine/ReferenceDataAdmin/Load', {
         method: 'POST',
         headers: headers(t, true),
@@ -719,21 +722,21 @@
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
           renderStatGrid(panel, [
-            { label: 'Already loaded', value: pick(res.body, 'alreadyLoaded', 'AlreadyLoaded') },
-            { label: 'Products', value: pick(res.body, 'productsInserted', 'ProductsInserted') },
-            { label: 'Fitment claims', value: pick(res.body, 'fitmentClaimsInserted', 'FitmentClaimsInserted') },
-            { label: 'Configurations', value: pick(res.body, 'configurationsInserted', 'ConfigurationsInserted') },
-            { label: 'OEM entries', value: pick(res.body, 'oemEntriesUpserted', 'OemEntriesUpserted') }
+            { label: i18n.statAlreadyLoaded || 'Already loaded', value: pick(res.body, 'alreadyLoaded', 'AlreadyLoaded') },
+            { label: i18n.statProducts || 'Products', value: pick(res.body, 'productsInserted', 'ProductsInserted') },
+            { label: i18n.statFitmentClaims || 'Fitment claims', value: pick(res.body, 'fitmentClaimsInserted', 'FitmentClaimsInserted') },
+            { label: i18n.statConfigurations || 'Configurations', value: pick(res.body, 'configurationsInserted', 'ConfigurationsInserted') },
+            { label: i18n.statOemEntries || 'OEM entries', value: pick(res.body, 'oemEntriesUpserted', 'OemEntriesUpserted') }
           ]);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Catalog load complete.' : errorMessage(res.body, 'Catalog load failed.'));
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? (i18n.loadComplete || 'Catalog load complete.') : errorMessage(res.body, i18n.loadFailed || 'Catalog load failed.'));
           load();
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Catalog load failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.loadFailed || 'Catalog load failed.'));
         });
     });
     root.querySelector('[data-ce-reference-purge]')?.addEventListener('click', function () {
-      if (!window.confirm('Purge the reference-scale catalog?')) return;
+      if (!window.confirm(i18n.purgeConfirm || 'Purge the reference-scale catalog?')) return;
       fetch('/Admin/CheckEngine/ReferenceDataAdmin/Purge', {
         method: 'POST',
         headers: headers(t, true),
@@ -744,11 +747,11 @@
           return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
         })
         .then(function (res) {
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Catalog purged.' : errorMessage(res.body, 'Purge failed.'));
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? (i18n.purged || 'Catalog purged.') : errorMessage(res.body, i18n.purgeFailed || 'Purge failed.'));
           load();
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Purge failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.purgeFailed || 'Purge failed.'));
         });
     });
     load();
@@ -756,6 +759,7 @@
 
   function initImageAdmin(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var panel = root.querySelector('[data-ce-image-result]');
     var manifestStats = root.querySelector('[data-ce-image-manifest-stats]');
@@ -764,10 +768,10 @@
       var productId = parseInt(root.querySelector('[data-ce-image-product]')?.value || '0', 10);
       var sourceUrl = root.querySelector('[data-ce-image-url]')?.value || '';
       if (!productId || !sourceUrl.trim()) {
-        showAlert(alert, 'error', 'Enter a product id and source URL.');
+        showAlert(alert, 'error', i18n.needProductUrl || 'Enter a product id and source URL.');
         return;
       }
-      showAlert(alert, 'info', 'Replacing image…');
+      showAlert(alert, 'info', i18n.replacing || 'Replacing image…');
       fetch('/Admin/CheckEngine/ImageAdmin/Replace', {
         method: 'POST',
         headers: headers(t, true),
@@ -781,23 +785,23 @@
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
           renderStatGrid(panel, [
-            { label: 'Success', value: pick(res.body, 'success', 'Success') },
-            { label: 'Picture id', value: pick(res.body, 'pictureId', 'PictureId'), code: true },
-            { label: 'Placeholder', value: pick(res.body, 'usedPlaceholder', 'UsedPlaceholder') },
-            { label: 'Quarantined', value: pick(res.body, 'quarantined', 'Quarantined') },
-            { label: 'CDN URL', value: pick(res.body, 'cdnUrl', 'CdnUrl') },
-            { label: 'Error', value: pick(res.body, 'errorCode', 'ErrorCode') || pick(res.body, 'reasonCode', 'ReasonCode') }
+            { label: i18n.statSuccess || 'Success', value: pick(res.body, 'success', 'Success') },
+            { label: i18n.statPictureId || 'Picture id', value: pick(res.body, 'pictureId', 'PictureId'), code: true },
+            { label: i18n.statPlaceholder || 'Placeholder', value: pick(res.body, 'usedPlaceholder', 'UsedPlaceholder') },
+            { label: i18n.statQuarantined || 'Quarantined', value: pick(res.body, 'quarantined', 'Quarantined') },
+            { label: i18n.statCdnUrl || 'CDN URL', value: pick(res.body, 'cdnUrl', 'CdnUrl') },
+            { label: i18n.statError || 'Error', value: pick(res.body, 'errorCode', 'ErrorCode') || pick(res.body, 'reasonCode', 'ReasonCode') }
           ]);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Primary image replaced.' : errorMessage(res.body, 'Replace failed.'));
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? (i18n.replaceComplete || 'Primary image replaced.') : errorMessage(res.body, i18n.replaceFailed || 'Replace failed.'));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Replace failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.replaceFailed || 'Replace failed.'));
         });
     });
     root.querySelector('[data-ce-image-manifest-submit]')?.addEventListener('click', function () {
       var csv = root.querySelector('[data-ce-image-manifest]')?.value || '';
       if (!csv.trim()) {
-        showAlert(alert, 'error', 'Paste a CSV manifest.');
+        showAlert(alert, 'error', i18n.needManifest || 'Paste a CSV manifest.');
         return;
       }
       fetch('/Admin/CheckEngine/ImageAdmin/SourceFromManifest', {
@@ -808,21 +812,21 @@
       })
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
-          renderBatchImageResult(manifestStats, manifestRows, res.body);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Manifest applied.' : errorMessage(res.body, 'Manifest failed.'));
+          renderBatchImageResult(manifestStats, manifestRows, res.body, i18n);
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? (i18n.manifestApplied || 'Manifest applied.') : errorMessage(res.body, i18n.manifestFailed || 'Manifest failed.'));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Manifest failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.manifestFailed || 'Manifest failed.'));
         });
     });
     root.querySelector('[data-ce-image-template-submit]')?.addEventListener('click', function () {
       var raw = root.querySelector('[data-ce-image-template-skus]')?.value || '';
       var skus = raw.split(/[\s,;]+/).map(function (s) { return s.trim(); }).filter(Boolean);
       if (!skus.length) {
-        showAlert(alert, 'error', 'Enter one or more SKUs.');
+        showAlert(alert, 'error', i18n.needSkus || 'Enter one or more SKUs.');
         return;
       }
-      showAlert(alert, 'info', 'Applying URL template…');
+      showAlert(alert, 'info', i18n.applyingTemplate || 'Applying URL template…');
       fetch('/Admin/CheckEngine/ImageAdmin/SourceFromTemplate', {
         method: 'POST',
         headers: headers(t, true),
@@ -837,12 +841,13 @@
           renderBatchImageResult(
             root.querySelector('[data-ce-image-template-stats]'),
             root.querySelector('[data-ce-image-template-rows]'),
-            res.body
+            res.body,
+            i18n
           );
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Template applied.' : errorMessage(res.body, 'Template failed.'));
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? (i18n.templateApplied || 'Template applied.') : errorMessage(res.body, i18n.templateFailed || 'Template failed.'));
         })
         .catch(function (err) {
-          showAlert(alert, 'error', errorMessage(err, 'Template failed.'));
+          showAlert(alert, 'error', errorMessage(err, i18n.templateFailed || 'Template failed.'));
         });
     });
   }
