@@ -175,7 +175,7 @@ public class JsonHtmlBoardConventionsTests
         ReadPluginFile("Content", "checkengine-admin.js")
             .Should().Contain("errorMessage(res.body, 'Template failed.')");
         ReadPluginFile("Content", "checkengine-admin.js")
-            .Should().Contain("errorMessage(res.body, 'Publish failed.')");
+            .Should().Contain("i18n.publishFailed || 'Publish failed.'");
         ReadPluginFile("Views", "Workshop", "Index.cshtml")
             .Should().NotContain("LicenceReadOnlyBannerViewComponent");
         ReadPluginFile("Views", "Admin", "Dashboard.cshtml")
