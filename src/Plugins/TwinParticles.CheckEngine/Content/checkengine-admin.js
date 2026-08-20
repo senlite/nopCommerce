@@ -9,6 +9,14 @@
     return undefined;
   }
 
+  function readI18n(root) {
+    if (window.CheckEngineAdmin && typeof CheckEngineAdmin.readI18n === 'function')
+      return CheckEngineAdmin.readI18n(root);
+    var node = root && root.querySelector('[data-ce-i18n]');
+    if (!node) return {};
+    try { return JSON.parse(node.textContent || '{}'); } catch (e) { return {}; }
+  }
+
   function token(root) {
     return root.querySelector('input[name="__RequestVerificationToken"]');
   }
@@ -483,6 +491,7 @@
 
   function initImportBatch(root) {
     var t = token(root);
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-admin-alert]');
     var stats = root.querySelector('[data-ce-import-stats]');
     var rowsBody = root.querySelector('[data-ce-import-rows]');
@@ -495,12 +504,12 @@
       { value: function (r) { return pick(r, 'lastStageError', 'LastStageError') || pick(r, 'publishError', 'PublishError'); } },
       { html: true, value: function (r) {
           var n = pick(r, 'rowNumber', 'RowNumber');
-          var html = '<button type="button" class="btn btn-xs btn-success" data-ce-import-review="Approved" data-row="' + n + '">Approve</button> ' +
-            '<button type="button" class="btn btn-xs btn-danger" data-ce-import-review="Rejected" data-row="' + n + '">Reject</button>';
+          var html = '<button type="button" class="btn btn-xs btn-success" data-ce-import-review="Approved" data-row="' + n + '">' + (i18n.approve || 'Approve') + '</button> ' +
+            '<button type="button" class="btn btn-xs btn-danger" data-ce-import-review="Rejected" data-row="' + n + '">' + (i18n.reject || 'Reject') + '</button>';
           if (pick(r, 'isDuplicate', 'IsDuplicate')) {
-            html += ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="Merge" data-row="' + n + '">Merge</button>' +
-              ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="Link" data-row="' + n + '">Link</button>' +
-              ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="KeepSeparate" data-row="' + n + '">Keep</button>';
+            html += ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="Merge" data-row="' + n + '">' + (i18n.merge || 'Merge') + '</button>' +
+              ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="Link" data-row="' + n + '">' + (i18n.link || 'Link') + '</button>' +
+              ' <button type="button" class="btn btn-xs btn-secondary" data-ce-import-decision="KeepSeparate" data-row="' + n + '">' + (i18n.keep || 'Keep') + '</button>';
           }
           return html;
         } }
@@ -508,28 +517,28 @@
     function loadBatch() {
       var batchId = root.querySelector('[data-ce-import-batch]')?.value || '';
       if (!batchId.trim()) {
-        showAlert(alert, 'error', 'Enter a batch id.');
+        showAlert(alert, 'error', i18n.needId || 'Enter a batch id.');
         return;
       }
-      showAlert(alert, 'info', 'Loading batch…');
+      showAlert(alert, 'info', i18n.loading || 'Loading batch…');
       apiGet('/Admin/CheckEngine/ImportAdmin/Batch?batchId=' + encodeURIComponent(batchId.trim()) + '&json=1', t)
         .then(function (data) {
-          showAlert(alert, 'success', 'Batch loaded.');
+          showAlert(alert, 'success', i18n.loaded || 'Batch loaded.');
           renderStatGrid(stats, [
-            { label: 'Batch id', value: pick(data, 'batchId', 'BatchId'), code: true },
-            { label: 'File', value: pick(data, 'fileName', 'FileName') },
-            { label: 'Status', value: pick(data, 'status', 'Status') },
-            { label: 'Stage', value: pick(data, 'currentStage', 'CurrentStage') },
-            { label: 'Total rows', value: pick(data, 'totalRows', 'TotalRows') },
-            { label: 'Published', value: pick(data, 'publishedRows', 'PublishedRows') },
-            { label: 'Failed', value: pick(data, 'failedRows', 'FailedRows') }
+            { label: i18n.batchId || 'Batch id', value: pick(data, 'batchId', 'BatchId'), code: true },
+            { label: i18n.file || 'File', value: pick(data, 'fileName', 'FileName') },
+            { label: i18n.status || 'Status', value: pick(data, 'status', 'Status') },
+            { label: i18n.stage || 'Stage', value: pick(data, 'currentStage', 'CurrentStage') },
+            { label: i18n.totalRows || 'Total rows', value: pick(data, 'totalRows', 'TotalRows') },
+            { label: i18n.published || 'Published', value: pick(data, 'publishedRows', 'PublishedRows') },
+            { label: i18n.failed || 'Failed', value: pick(data, 'failedRows', 'FailedRows') }
           ]);
-          renderRows(rowsBody, asArray(pick(data, 'rows', 'Rows')), rowCols, 'No rows.');
+          renderRows(rowsBody, asArray(pick(data, 'rows', 'Rows')), rowCols, i18n.noRows || 'No rows.');
         })
         .catch(function () {
-          showAlert(alert, 'error', 'Batch not found.');
+          showAlert(alert, 'error', i18n.notFound || 'Batch not found.');
           if (stats) stats.innerHTML = '';
-          renderRows(rowsBody, [], rowCols, 'No rows.');
+          renderRows(rowsBody, [], rowCols, i18n.noRows || 'No rows.');
         });
     }
     function currentBatchId() {
@@ -538,7 +547,7 @@
     function postRowAction(url, payload, okText) {
       var batchId = currentBatchId();
       if (!batchId) {
-        showAlert(alert, 'error', 'Enter a batch id.');
+        showAlert(alert, 'error', i18n.needId || 'Enter a batch id.');
         return;
       }
       fetch(url, {
@@ -567,12 +576,12 @@
           postRowAction('/Admin/CheckEngine/ImportAdmin/SetReviewStatus', {
             rowNumber: rowNumber,
             reviewStatus: btn.getAttribute('data-ce-import-review')
-          }, 'Review updated.');
+          }, i18n.reviewUpdated || 'Review updated.');
         } else {
           postRowAction('/Admin/CheckEngine/ImportAdmin/SetDuplicateDecision', {
             rowNumber: rowNumber,
             decision: btn.getAttribute('data-ce-import-decision')
-          }, 'Duplicate decision saved.');
+          }, i18n.decisionSaved || 'Duplicate decision saved.');
         }
       });
     }
@@ -580,12 +589,12 @@
     root.querySelector('[data-ce-import-run]')?.addEventListener('click', function () {
       var file = root.querySelector('[data-ce-import-file]')?.files?.[0];
       if (!file) {
-        showAlert(alert, 'error', 'Choose a catalog file.');
+        showAlert(alert, 'error', i18n.chooseFile || 'Choose a catalog file.');
         return;
       }
       var format = parseInt(root.querySelector('[data-ce-import-format]')?.value || '1', 10);
       var dryRun = !!root.querySelector('[data-ce-import-run-dry-run]')?.checked;
-      showAlert(alert, 'info', 'Running import…');
+      showAlert(alert, 'info', i18n.running || 'Running import…');
       var reader = new FileReader();
       reader.onload = function () {
         var bytes = new Uint8Array(reader.result);
@@ -608,11 +617,11 @@
             if (id && root.querySelector('[data-ce-import-batch]')) {
               root.querySelector('[data-ce-import-batch]').value = id;
             }
-            showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Import pipeline started.' : errorMessage(res.body, 'Import failed.'));
+            showAlert(alert, res.ok ? 'success' : 'error', res.ok ? (i18n.started || 'Import pipeline started.') : errorMessage(res.body, i18n.importFailed || 'Import failed.'));
             if (res.ok && id) loadBatch();
           })
           .catch(function (err) {
-            showAlert(alert, 'error', errorMessage(err, 'Import failed.'));
+            showAlert(alert, 'error', errorMessage(err, i18n.importFailed || 'Import failed.'));
           });
       };
       reader.readAsArrayBuffer(file);
@@ -620,11 +629,11 @@
     root.querySelector('[data-ce-import-publish]')?.addEventListener('click', function () {
       var batchId = root.querySelector('[data-ce-import-batch]')?.value || '';
       if (!batchId.trim()) {
-        showAlert(alert, 'error', 'Enter a batch id.');
+        showAlert(alert, 'error', i18n.needId || 'Enter a batch id.');
         return;
       }
       var dryRun = !!root.querySelector('[data-ce-import-dry-run]')?.checked;
-      showAlert(alert, 'info', dryRun ? 'Publishing (dry run)…' : 'Publishing…');
+      showAlert(alert, 'info', dryRun ? (i18n.publishingDryRun || 'Publishing (dry run)…') : (i18n.publishing || 'Publishing…'));
       fetch('/Admin/CheckEngine/ImportAdmin/Publish', {
         method: 'POST',
         headers: headers(t, true),
@@ -634,11 +643,11 @@
         .then(function (r) { return r.json().then(function (body) { return { ok: r.ok, body: body }; }); })
         .then(function (res) {
           renderStatGrid(root.querySelector('[data-ce-import-publish-stats]'), [
-            { label: 'Published', value: pick(res.body, 'publishedRows', 'PublishedRows') },
-            { label: 'Failed', value: pick(res.body, 'failedRows', 'FailedRows') },
-            { label: 'Dry run', value: pick(res.body, 'dryRun', 'DryRun') }
+            { label: i18n.published || 'Published', value: pick(res.body, 'publishedRows', 'PublishedRows') },
+            { label: i18n.failed || 'Failed', value: pick(res.body, 'failedRows', 'FailedRows') },
+            { label: i18n.dryRun || 'Dry run', value: pick(res.body, 'dryRun', 'DryRun') }
           ]);
-          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? 'Publish complete.' : errorMessage(res.body, 'Publish failed.'));
+          showAlert(alert, res.ok ? 'success' : 'error', res.ok ? (i18n.publishComplete || 'Publish complete.') : errorMessage(res.body, i18n.publishFailed || 'Publish failed.'));
           loadBatch();
         })
         .catch(function (err) {

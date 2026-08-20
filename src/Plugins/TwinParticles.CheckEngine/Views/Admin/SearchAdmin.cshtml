@@ -16,6 +16,24 @@
 <section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            yes = T("Plugins.TwinParticles.CheckEngine.Common.Yes").Text,
+            no = T("Plugins.TwinParticles.CheckEngine.Common.No").Text,
+            never = T("Plugins.TwinParticles.CheckEngine.Common.Never").Text,
+            invalidJson = T("Plugins.TwinParticles.CheckEngine.Common.InvalidJson").Text,
+            saveFailed = T("Plugins.TwinParticles.CheckEngine.Common.SaveFailed").Text,
+            keywordStatus = T("Plugins.TwinParticles.CheckEngine.Search.Admin.Status.Keyword").Text,
+            rebuiltAll = T("Plugins.TwinParticles.CheckEngine.Search.Admin.Status.RebuiltAll").Text,
+            rebuiltLocale = T("Plugins.TwinParticles.CheckEngine.Search.Admin.Status.RebuiltLocale").Text,
+            keywordAndEmbeddings = T("Plugins.TwinParticles.CheckEngine.Search.Admin.Status.KeywordAndEmbeddings").Text,
+            incremental = T("Plugins.TwinParticles.CheckEngine.Search.Admin.Status.Incremental").Text,
+            embedded = T("Plugins.TwinParticles.CheckEngine.Search.Admin.Status.Embedded").Text,
+            saved = T("Plugins.TwinParticles.CheckEngine.Search.Admin.Status.Saved").Text,
+            keywordRebuilt = T("Plugins.TwinParticles.CheckEngine.Search.Admin.KeywordRebuilt").Text,
+            rebuildFailed = T("Plugins.TwinParticles.CheckEngine.Search.Admin.RebuildFailed").Text,
+            keywordRebuildFailed = T("Plugins.TwinParticles.CheckEngine.Search.Admin.KeywordRebuildFailed").Text,
+            refreshFailed = T("Plugins.TwinParticles.CheckEngine.Search.Admin.RefreshFailed").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header">
@@ -111,6 +129,14 @@
 (function () {
   var token = document.querySelector('input[name="__RequestVerificationToken"]');
   var rebuildLabel = document.querySelector('#ce-search-embedding-table').getAttribute('data-ce-rebuild-label') || 'Rebuild';
+  var i18n = (window.CheckEngineAdmin && CheckEngineAdmin.readI18n)
+    ? CheckEngineAdmin.readI18n(document)
+    : {};
+  function fmt() {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.format)
+      ? CheckEngineAdmin.format.apply(null, arguments)
+      : String(arguments[0] || '');
+  }
   function headers(json) {
     var h = { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
     if (json) h['Content-Type'] = 'application/json';
@@ -140,10 +166,11 @@
     });
   }
   function renderKeyword(state) {
-    var text = 'Healthy: ' + (state.isHealthy ? 'yes' : 'no') +
-      ' · Indexed: ' + (state.indexedCount || 0) +
-      ' · Last rebuild: ' + (state.lastRebuildUtc || 'never');
-    document.getElementById('ce-search-keyword-status').textContent = text;
+    document.getElementById('ce-search-keyword-status').textContent = fmt(
+      i18n.keywordStatus || 'Healthy: {0} · Indexed: {1} · Last rebuild: {2}',
+      state.isHealthy ? (i18n.yes || 'Yes') : (i18n.no || 'No'),
+      state.indexedCount || 0,
+      state.lastRebuildUtc || i18n.never || 'never');
   }
   function renderEmbeddings(embeddings) {
     var tbody = document.querySelector('#ce-search-embedding-table tbody');
@@ -152,7 +179,7 @@
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + row.locale + '</td>' +
-        '<td>' + (row.semanticReady ? 'yes' : 'no') + '</td>' +
+        '<td>' + (row.semanticReady ? (i18n.yes || 'Yes') : (i18n.no || 'No')) + '</td>' +
         '<td>' + (row.count || 0) + '</td>' +
         '<td>' + (row.catalogCount || 0) + '</td>' +
         '<td>' + (row.staleCount || 0) + '</td>' +
@@ -179,49 +206,54 @@
       : '/Admin/CheckEngine/SearchAdmin/RebuildEmbeddingsAll';
     post(url).then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, 'Rebuild failed.'));
+        showAlert('error', errorMessage(res.body, i18n.rebuildFailed || 'Rebuild failed.'));
         return;
       }
       showAlert('success', '');
       var data = res.body || {};
       if (data.locales) {
-        document.getElementById('ce-search-rebuild-result').textContent =
-          'Rebuilt all locales · indexed ' + (data.totalIndexed || 0) + ' vectors.';
+        document.getElementById('ce-search-rebuild-result').textContent = fmt(
+          i18n.rebuiltAll || 'Rebuilt all locales · indexed {0} vectors.',
+          data.totalIndexed || 0);
       } else {
-        document.getElementById('ce-search-rebuild-result').textContent =
-          'Locale ' + (data.locale || locale) + ': indexed ' + (data.indexed || 0) +
-          ', skipped ' + (data.skipped || 0) + ', failed ' + (data.failed || 0) +
-          ' of ' + (data.catalogCount || 0) + '.';
+        document.getElementById('ce-search-rebuild-result').textContent = fmt(
+          i18n.rebuiltLocale || 'Locale {0}: indexed {1}, skipped {2}, failed {3} of {4}.',
+          data.locale || locale,
+          data.indexed || 0,
+          data.skipped || 0,
+          data.failed || 0,
+          data.catalogCount || 0);
       }
       load();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Rebuild failed.'));
+      showAlert('error', errorMessage(err, i18n.rebuildFailed || 'Rebuild failed.'));
     });
   }
   document.getElementById('ce-search-rebuild-keyword').addEventListener('click', function () {
     post('/Admin/CheckEngine/SearchAdmin/Rebuild').then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, 'Keyword rebuild failed.'));
+        showAlert('error', errorMessage(res.body, i18n.keywordRebuildFailed || 'Keyword rebuild failed.'));
         return;
       }
-      showAlert('success', 'Keyword index rebuilt.');
+      showAlert('success', i18n.keywordRebuilt || 'Keyword index rebuilt.');
       load();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Keyword rebuild failed.'));
+      showAlert('error', errorMessage(err, i18n.keywordRebuildFailed || 'Keyword rebuild failed.'));
     });
   });
   document.getElementById('ce-search-rebuild-keyword-and-embeddings').addEventListener('click', function () {
     post('/Admin/CheckEngine/SearchAdmin/RebuildKeywordAndRefreshEmbeddings').then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, 'Rebuild failed.'));
+        showAlert('error', errorMessage(res.body, i18n.rebuildFailed || 'Rebuild failed.'));
         return;
       }
       showAlert('success', '');
-      document.getElementById('ce-search-rebuild-result').textContent =
-        'Keyword rebuild complete · refreshed ' + (res.body.totalIndexed || 0) + ' stale embedding vectors.';
+      document.getElementById('ce-search-rebuild-result').textContent = fmt(
+        i18n.keywordAndEmbeddings || 'Keyword rebuild complete · refreshed {0} stale embedding vectors.',
+        res.body.totalIndexed || 0);
       load();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Rebuild failed.'));
+      showAlert('error', errorMessage(err, i18n.rebuildFailed || 'Rebuild failed.'));
     });
   });
   document.getElementById('ce-search-rebuild-embeddings-all').addEventListener('click', function () {
@@ -230,15 +262,16 @@
   document.getElementById('ce-search-refresh-embeddings').addEventListener('click', function () {
     post('/Admin/CheckEngine/SearchAdmin/RefreshEmbeddingsIncrementalAll').then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, 'Refresh failed.'));
+        showAlert('error', errorMessage(res.body, i18n.refreshFailed || 'Refresh failed.'));
         return;
       }
       showAlert('success', '');
-      document.getElementById('ce-search-rebuild-result').textContent =
-        'Incremental refresh indexed ' + (res.body.totalIndexed || 0) + ' stale vectors.';
+      document.getElementById('ce-search-rebuild-result').textContent = fmt(
+        i18n.incremental || 'Incremental refresh indexed {0} stale vectors.',
+        res.body.totalIndexed || 0);
       load();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Refresh failed.'));
+      showAlert('error', errorMessage(err, i18n.refreshFailed || 'Refresh failed.'));
     });
   });
   function loadSynonyms() {
@@ -261,8 +294,10 @@
         });
         document.getElementById('ce-search-synonyms-overrides').value =
           Object.keys(overrides).length ? JSON.stringify(overrides, null, 2) : '{}';
-        document.getElementById('ce-search-synonyms-status').textContent =
-          'Embedded: ' + (data.embeddedCount || 0) + ' · Overrides: ' + (data.overrideCount || 0);
+        document.getElementById('ce-search-synonyms-status').textContent = fmt(
+          i18n.embedded || 'Embedded: {0} · Overrides: {1}',
+          data.embeddedCount || 0,
+          data.overrideCount || 0);
       });
   }
   document.getElementById('ce-search-synonyms-save').addEventListener('click', function () {
@@ -271,20 +306,21 @@
     try {
       overrides = JSON.parse(raw);
     } catch (e) {
-      showAlert('error', 'Invalid JSON.');
+      showAlert('error', i18n.invalidJson || 'Invalid JSON.');
       return;
     }
     post('/Admin/CheckEngine/SearchAdmin/SaveSynonyms', { overrides: overrides }).then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, 'Save failed.'));
+        showAlert('error', errorMessage(res.body, i18n.saveFailed || 'Save failed.'));
         return;
       }
       showAlert('success', '');
-      document.getElementById('ce-search-synonyms-status').textContent =
-        'Saved ' + (res.body.overrideCount || 0) + ' override(s). Rebuild embeddings to apply index-time expansion.';
+      document.getElementById('ce-search-synonyms-status').textContent = fmt(
+        i18n.saved || 'Saved {0} override(s). Rebuild embeddings to apply index-time expansion.',
+        res.body.overrideCount || 0);
       loadSynonyms();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Save failed.'));
+      showAlert('error', errorMessage(err, i18n.saveFailed || 'Save failed.'));
     });
   });
   function loadAnalytics() {

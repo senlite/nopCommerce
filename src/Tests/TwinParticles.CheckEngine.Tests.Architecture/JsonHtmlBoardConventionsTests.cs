@@ -190,6 +190,24 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("CheckEngineAdmin.errorMessage");
         ReadPluginFile("Views", "Admin", "SearchAdmin.cshtml")
             .Should().Contain("Keyword rebuild failed.");
+        ReadPluginFile("Views", "Admin", "AiReview.cshtml")
+            .Should().Contain("Common.Col.Feature");
+        ReadPluginFile("Views", "Admin", "AiReview.cshtml")
+            .Should().NotContain("<th>Id</th>");
+        ReadPluginFile("Views", "Admin", "AiDashboard.cshtml")
+            .Should().Contain("Ai.Dashboard.Col.TodayTokens");
+        ReadPluginFile("Views", "Admin", "AiDashboard.cshtml")
+            .Should().NotContain("<th>Feature</th>");
+        ReadPluginFile("Views", "Admin", "FitmentAiReview.cshtml")
+            .Should().Contain("Fitment.AiReview.InferButton");
+        ReadPluginFile("Views", "Admin", "FitmentAiReview.cshtml")
+            .Should().NotContain("<th>Claim id</th>");
+        ReadPluginFile("Views", "Admin", "ImportBatch.cshtml")
+            .Should().Contain("Import.Batch.Action.Merge");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("i18n.approve");
+        ReadPluginFile("Views", "Shared", "_CheckEngineAdminAssets.cshtml")
+            .Should().Contain("CheckEngineAdmin.readI18n");
         ReadPluginFile("Views", "Admin", "GlossaryAdmin.cshtml")
             .Should().Contain("_CheckEngineAdminAssets");
         ReadPluginFile("Views", "Admin", "GlossaryAdmin.cshtml")

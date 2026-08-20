@@ -17,6 +17,16 @@
 <section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            disclosureAck = T("Plugins.TwinParticles.CheckEngine.Ai.Review.DisclosureAck").Text,
+            disclosurePending = T("Plugins.TwinParticles.CheckEngine.Ai.Review.DisclosurePending").Text,
+            globalToday = T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.GlobalToday").Text,
+            pending = T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Pending").Text,
+            budgetAlerts = T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.BudgetAlerts").Text,
+            budgetAlertItem = T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.BudgetAlertItem").Text,
+            budgetGlobal = T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.BudgetGlobal").Text,
+            ackFailed = T("Plugins.TwinParticles.CheckEngine.Ai.Review.AckFailed").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-header">
@@ -29,15 +39,15 @@
                     <table class="table table-bordered" id="ce-ai-usage-table">
                         <thead>
                             <tr>
-                                <th>Feature</th>
-                                <th>Today tokens</th>
-                                <th>Today cost (USD)</th>
-                                <th>7d tokens</th>
-                                <th>30d tokens</th>
-                                <th>Ceiling</th>
-                                <th>Today util.</th>
-                                <th>7d fail rate</th>
-                                <th>30d fail rate</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Feature")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.TodayTokens")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.TodayCost")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.Tokens7d")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.Tokens30d")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.Ceiling")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.TodayUtil")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.Fail7d")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard.Col.Fail30d")</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -54,6 +64,14 @@
 <script>
 (function () {
   var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  var i18n = (window.CheckEngineAdmin && CheckEngineAdmin.readI18n)
+    ? CheckEngineAdmin.readI18n(document)
+    : {};
+  function fmt() {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.format)
+      ? CheckEngineAdmin.format.apply(null, arguments)
+      : String(arguments[0] || '');
+  }
   function headers(json) {
     var h = { 'Accept': 'application/json' };
     if (json) h['Content-Type'] = 'application/json';
@@ -86,10 +104,14 @@
   }
   function render(data) {
     document.getElementById('ce-ai-disclosure-status').textContent =
-      data.disclosureAcknowledged ? 'Disclosure acknowledged.' : 'Disclosure not acknowledged — AI features remain gated.';
-    document.getElementById('ce-ai-global-usage').textContent =
-      'Global today: ' + (data.globalDailyUsage || 0) + ' / ' + (data.globalDailyCeiling || 0) +
-      ' tokens · rate $' + (data.tokenCostPer1KUsd || 0) + ' / 1K tokens';
+      data.disclosureAcknowledged
+        ? (i18n.disclosureAck || 'Disclosure acknowledged.')
+        : (i18n.disclosurePending || 'Disclosure not acknowledged — AI features remain gated.');
+    document.getElementById('ce-ai-global-usage').textContent = fmt(
+      i18n.globalToday || 'Global today: {0} / {1} tokens · rate ${2} / 1K tokens',
+      data.globalDailyUsage || 0,
+      data.globalDailyCeiling || 0,
+      data.tokenCostPer1KUsd || 0);
     var tbody = document.querySelector('#ce-ai-usage-table tbody');
     tbody.innerHTML = '';
     (data.usage || []).forEach(function (row) {
@@ -107,16 +129,17 @@
         '<td>' + rate(row.last30DaysFailureRate) + '</td>';
       tbody.appendChild(tr);
     });
-    document.getElementById('ce-ai-pending-count').textContent =
-      'Pending content candidates: ' + (data.pendingContentCount || 0) +
-      ' · Pending fitment AI proposals: ' + (data.pendingFitmentAiCount || 0);
+    document.getElementById('ce-ai-pending-count').textContent = fmt(
+      i18n.pending || 'Pending content candidates: {0} · Pending fitment AI proposals: {1}',
+      data.pendingContentCount || 0,
+      data.pendingFitmentAiCount || 0);
     var alerts = document.getElementById('ce-ai-alerts');
     var recent = data.recentBudgetAlerts || [];
     if (recent.length) {
       alerts.hidden = false;
-      alerts.innerHTML = '<strong>Budget alerts today</strong><ul>' + recent.map(function (alert) {
-        var scope = alert.global ? 'global' : alert.featureKey;
-        return '<li>' + scope + ': ' + alert.usage + ' / ' + alert.ceiling + ' tokens</li>';
+      alerts.innerHTML = '<strong>' + (i18n.budgetAlerts || 'Budget alerts today') + '</strong><ul>' + recent.map(function (alert) {
+        var scope = alert.global ? (i18n.budgetGlobal || 'global') : alert.featureKey;
+        return '<li>' + fmt(i18n.budgetAlertItem || '{0}: {1} / {2} tokens', scope, alert.usage, alert.ceiling) + '</li>';
       }).join('') + '</ul>';
     } else {
       alerts.hidden = true;
@@ -137,13 +160,13 @@
       return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
     }).then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, 'Acknowledgement failed.'));
+        showAlert('error', errorMessage(res.body, i18n.ackFailed || 'Acknowledgement failed.'));
         return;
       }
-      showAlert('success', 'Disclosure acknowledged.');
+      showAlert('success', i18n.disclosureAck || 'Disclosure acknowledged.');
       load();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Acknowledgement failed.'));
+      showAlert('error', errorMessage(err, i18n.ackFailed || 'Acknowledgement failed.'));
     });
   });
   load();

@@ -16,6 +16,16 @@
 <section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            approve = T("Plugins.TwinParticles.CheckEngine.Common.Action.Approve").Text,
+            reject = T("Plugins.TwinParticles.CheckEngine.Common.Action.Reject").Text,
+            approved = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.Approved").Text,
+            rejected = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.Rejected").Text,
+            approvalFailed = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.ApprovalFailed").Text,
+            rejectionFailed = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.RejectionFailed").Text,
+            actionFailed = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.ActionFailed").Text,
+            inferFailed = T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.InferFailed").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
 
         <div class="card card-default">
@@ -25,30 +35,30 @@
             <div class="card-body">
                 <div class="form-row">
                     <div class="form-group col-md-3">
-                        <label>Product id</label>
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.ProductId")</label>
                         <input id="ce-fit-product" type="number" class="form-control" />
                     </div>
                     <div class="form-group col-md-3">
-                        <label>Configuration id</label>
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Seo.Admin.ConfigurationId")</label>
                         <input id="ce-fit-config" type="number" class="form-control" />
                     </div>
                     <div class="form-group col-md-4">
-                        <label>Product name</label>
-                        <input id="ce-fit-name" type="text" class="form-control" placeholder="Water pump" />
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.ProductName")</label>
+                        <input id="ce-fit-name" type="text" class="form-control" placeholder="@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.ProductName.Placeholder")" />
                     </div>
                     <div class="form-group col-md-2 d-flex align-items-end">
-                        <button id="ce-fit-infer" type="button" class="btn btn-primary btn-block">Infer</button>
+                        <button id="ce-fit-infer" type="button" class="btn btn-primary btn-block">@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview.InferButton")</button>
                     </div>
                 </div>
                 <table class="table table-bordered table-sm mt-2" id="ce-fit-infer-result" hidden>
                     <tbody>
-                        <tr><th>Claim id</th><td data-ce-fit-infer-id></td></tr>
-                        <tr><th>Product</th><td data-ce-fit-infer-product></td></tr>
-                        <tr><th>Configuration</th><td data-ce-fit-infer-config></td></tr>
-                        <tr><th>Status</th><td data-ce-fit-infer-status></td></tr>
-                        <tr><th>Confidence</th><td data-ce-fit-infer-confidence></td></tr>
-                        <tr><th>Source</th><td data-ce-fit-infer-source></td></tr>
-                        <tr><th>Rationale</th><td data-ce-fit-infer-rationale></td></tr>
+                        <tr><th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.ClaimId")</th><td data-ce-fit-infer-id></td></tr>
+                        <tr><th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Product")</th><td data-ce-fit-infer-product></td></tr>
+                        <tr><th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Configuration")</th><td data-ce-fit-infer-config></td></tr>
+                        <tr><th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Status")</th><td data-ce-fit-infer-status></td></tr>
+                        <tr><th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Confidence")</th><td data-ce-fit-infer-confidence></td></tr>
+                        <tr><th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Source")</th><td data-ce-fit-infer-source></td></tr>
+                        <tr><th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Rationale")</th><td data-ce-fit-infer-rationale></td></tr>
                     </tbody>
                 </table>
                 <p class="text-danger mt-2 mb-0" id="ce-fit-infer-error" hidden></p>
@@ -65,13 +75,13 @@
                     <table class="table table-bordered table-striped" id="ce-fit-table">
                         <thead>
                             <tr>
-                                <th>Claim id</th>
-                                <th>Product</th>
-                                <th>Configuration</th>
-                                <th>Status</th>
-                                <th>Confidence</th>
-                                <th>Source</th>
-                                <th>Rationale</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.ClaimId")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Product")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Configuration")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Status")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Confidence")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Source")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Rationale")</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -86,6 +96,9 @@
 <script>
 (function () {
   var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  var i18n = (window.CheckEngineAdmin && CheckEngineAdmin.readI18n)
+    ? CheckEngineAdmin.readI18n(document)
+    : {};
   function pick(obj, camel, pascal) {
     if (!obj) return undefined;
     if (obj[camel] !== undefined) return obj[camel];
@@ -130,8 +143,8 @@
         '<td>' + item.confidence + '</td>' +
         '<td>' + source + '</td>' +
         '<td><small>' + rationale + '</small></td>' +
-        '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-action="approve">Approve</button>' +
-        '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-action="reject">Reject</button></td>';
+        '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-action="approve">' + (i18n.approve || 'Approve') + '</button>' +
+        '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-action="reject">' + (i18n.reject || 'Reject') + '</button></td>';
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('button[data-id]').forEach(function (btn) {
@@ -156,13 +169,15 @@
       return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
     }).then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, approved ? 'Approval failed.' : 'Rejection failed.'));
+        showAlert('error', errorMessage(res.body, approved
+          ? (i18n.approvalFailed || 'Approval failed.')
+          : (i18n.rejectionFailed || 'Rejection failed.')));
         return;
       }
-      showAlert('success', approved ? 'Claim approved.' : 'Claim rejected.');
+      showAlert('success', approved ? (i18n.approved || 'Claim approved.') : (i18n.rejected || 'Claim rejected.'));
       load();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Action failed.'));
+      showAlert('error', errorMessage(err, i18n.actionFailed || 'Action failed.'));
     });
   }
   document.getElementById('ce-fit-infer').addEventListener('click', function () {
@@ -182,8 +197,8 @@
     }).then(function (res) {
       if (!res.ok) {
         errorEl.hidden = false;
-        errorEl.textContent = errorMessage(res.body, 'Inference failed.');
-        showAlert('error', errorMessage(res.body, 'Inference failed.'));
+        errorEl.textContent = errorMessage(res.body, i18n.inferFailed || 'Inference failed.');
+        showAlert('error', errorMessage(res.body, i18n.inferFailed || 'Inference failed.'));
         return;
       }
       var claim = res.body || {};
@@ -201,8 +216,8 @@
       load();
     }).catch(function (err) {
       errorEl.hidden = false;
-      errorEl.textContent = errorMessage(err, 'Inference failed.');
-      showAlert('error', errorMessage(err, 'Inference failed.'));
+      errorEl.textContent = errorMessage(err, i18n.inferFailed || 'Inference failed.');
+      showAlert('error', errorMessage(err, i18n.inferFailed || 'Inference failed.'));
     });
   });
   load();

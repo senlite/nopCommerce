@@ -2,7 +2,7 @@
     // AddCssFileParts/AddScriptParts strip ?v= via WebOptimizer; development also disables hash cache-busting.
     NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css?v=0.83.0\" />");
     NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.css?v=0.83.0\" />");
-    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-admin.js?v=0.83.0\" defer></script>");
+    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-admin.js?v=0.86.0\" defer></script>");
 }
 <script>
 window.CheckEngineAdmin = window.CheckEngineAdmin || {};
@@ -13,6 +13,17 @@ window.CheckEngineAdmin.errorMessage = function (err, fallback) {
   if (code === 'licence.read_only')
     return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
   return code || fallback || 'Request failed.';
+};
+window.CheckEngineAdmin.readI18n = function (root) {
+  var node = (root || document).querySelector('[data-ce-i18n]');
+  if (!node) return {};
+  try { return JSON.parse(node.textContent || '{}'); } catch (e) { return {}; }
+};
+window.CheckEngineAdmin.format = function (template) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return String(template == null ? '' : template).replace(/\{(\d+)\}/g, function (_, i) {
+    return args[i] != null ? String(args[i]) : '';
+  });
 };
 </script>
 @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))

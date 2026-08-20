@@ -17,6 +17,12 @@
 <section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            summary = T("Plugins.TwinParticles.CheckEngine.SpecKeys.Summary").Text,
+            saved = T("Plugins.TwinParticles.CheckEngine.SpecKeys.Saved").Text,
+            invalidJson = T("Plugins.TwinParticles.CheckEngine.Common.InvalidJson").Text,
+            saveFailed = T("Plugins.TwinParticles.CheckEngine.Common.SaveFailed").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
 
         <div class="card card-default">
@@ -50,6 +56,14 @@
 <script>
 (function () {
   var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  var i18n = (window.CheckEngineAdmin && CheckEngineAdmin.readI18n)
+    ? CheckEngineAdmin.readI18n(document)
+    : {};
+  function fmt() {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.format)
+      ? CheckEngineAdmin.format.apply(null, arguments)
+      : String(arguments[0] || '');
+  }
   function headers(json) {
     var h = { 'Accept': 'application/json' };
     if (json) h['Content-Type'] = 'application/json';
@@ -69,11 +83,12 @@
     el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
   }
   function render(data) {
-    document.getElementById('ce-speckeys-summary').textContent =
-      'Embedded: ' + data.embeddedCount +
-      ', added: ' + data.addCount +
-      ', removed: ' + data.removeCount +
-      ', active: ' + data.mergedCount;
+    document.getElementById('ce-speckeys-summary').textContent = fmt(
+      i18n.summary || 'Embedded: {0}, added: {1}, removed: {2}, active: {3}',
+      data.embeddedCount,
+      data.addCount,
+      data.removeCount,
+      data.mergedCount);
     var tbody = document.querySelector('#ce-speckeys-table tbody');
     tbody.innerHTML = '';
     (data.keys || []).forEach(function (row) {
@@ -101,7 +116,7 @@
     try {
       overrides = JSON.parse(document.getElementById('ce-speckeys-overrides').value || '{}');
     } catch (e) {
-      showAlert('error', 'Invalid JSON.');
+      showAlert('error', i18n.invalidJson || 'Invalid JSON.');
       return;
     }
     fetch('/Admin/CheckEngine/AiAdmin/SaveSpecKeys', {
@@ -116,13 +131,13 @@
       return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
     }).then(function (res) {
       if (!res.ok) {
-        showAlert('error', errorMessage(res.body, 'Save failed.'));
+        showAlert('error', errorMessage(res.body, i18n.saveFailed || 'Save failed.'));
         return;
       }
-      showAlert('success', 'Specification keys saved.');
+      showAlert('success', i18n.saved || 'Specification keys saved.');
       load();
     }).catch(function (err) {
-      showAlert('error', errorMessage(err, 'Save failed.'));
+      showAlert('error', errorMessage(err, i18n.saveFailed || 'Save failed.'));
     });
   });
   load();

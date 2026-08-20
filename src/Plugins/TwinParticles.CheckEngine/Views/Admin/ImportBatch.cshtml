@@ -15,6 +15,36 @@
 <section class="content ce-marketplace-admin" data-ce-page="import-batch">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            approve = T("Plugins.TwinParticles.CheckEngine.Common.Action.Approve").Text,
+            reject = T("Plugins.TwinParticles.CheckEngine.Common.Action.Reject").Text,
+            merge = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Action.Merge").Text,
+            link = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Action.Link").Text,
+            keep = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Action.Keep").Text,
+            needId = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NeedId").Text,
+            loading = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Loading").Text,
+            loaded = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Loaded").Text,
+            notFound = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NotFound").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text,
+            reviewUpdated = T("Plugins.TwinParticles.CheckEngine.Import.Batch.ReviewUpdated").Text,
+            decisionSaved = T("Plugins.TwinParticles.CheckEngine.Import.Batch.DecisionSaved").Text,
+            chooseFile = T("Plugins.TwinParticles.CheckEngine.Import.Batch.ChooseFile").Text,
+            batchId = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Id").Text,
+            file = T("Plugins.TwinParticles.CheckEngine.Import.Batch.File").Text,
+            status = T("Plugins.TwinParticles.CheckEngine.Common.Col.Status").Text,
+            stage = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Stat.Stage").Text,
+            totalRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Stat.TotalRows").Text,
+            published = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Published").Text,
+            failed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Stat.Failed").Text,
+            running = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Running").Text,
+            started = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Started").Text,
+            importFailed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Failed").Text,
+            publishing = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Publishing").Text,
+            publishingDryRun = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishingDryRun").Text,
+            publishComplete = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishComplete").Text,
+            publishFailed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishFailed").Text,
+            dryRun = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishDryRun").Text
+        }))</script>
         <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
         <div class="card card-default">
             <div class="card-body">

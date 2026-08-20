@@ -18,7 +18,8 @@ public class AiReviewBoardConventionsTests
         view.Should().Contain("Specification");
         view.Should().Contain("CheckEngineAdmin.errorMessage");
         view.Should().Contain("Review blocked.");
-        view.Should().Contain("/Admin/CheckEngine/AiAdmin/Review");
+        view.Should().Contain("CheckEngineAdmin.readI18n");
+        view.Should().Contain("i18n.approve");
     }
 
     [Test]
