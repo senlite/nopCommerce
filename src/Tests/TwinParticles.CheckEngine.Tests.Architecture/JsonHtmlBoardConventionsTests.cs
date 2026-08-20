@@ -106,6 +106,8 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("data-ce-vehicle-seed");
         ReadPluginFile("Content", "checkengine-admin.js")
             .Should().Contain("VehicleAdmin/Seed");
+        ReadPluginFile("Content", "checkengine-admin.js")
+            .Should().Contain("licence.read_only");
         ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")
             .Should().Contain("BaseAdminMenuCreatedEventConsumer");
         ReadPluginFile("Consumers", "AdminMenuCreatedEventConsumer.cs")

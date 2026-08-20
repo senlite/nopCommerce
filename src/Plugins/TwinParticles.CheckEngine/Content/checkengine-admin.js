@@ -29,6 +29,15 @@
     });
   }
 
+  function errorMessage(err, fallback) {
+    var code = '';
+    if (typeof err === 'string') code = err;
+    else if (err) code = pick(err, 'reasonCode', 'ReasonCode') || pick(err, 'errorCode', 'ErrorCode') || '';
+    if (code === 'licence.read_only')
+      return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+    return code || fallback || 'Request failed.';
+  }
+
   function showAlert(el, kind, message) {
     if (!el) return;
     el.hidden = !message;
@@ -182,12 +191,12 @@
             res.ok ? 'success' : 'error',
             res.ok
               ? 'BMW seed complete. Makes +' + makes + ', configurations +' + configs + ', aliases +' + aliases + '.'
-              : (pick(body, 'errorCode', 'ErrorCode') || 'BMW seed failed.')
+              : errorMessage(body, 'BMW seed failed.')
           );
           load();
         })
-        .catch(function () {
-          showAlert(alert, 'error', 'BMW seed failed.');
+        .catch(function (err) {
+          showAlert(alert, 'error', errorMessage(err, 'BMW seed failed.'));
         })
         .then(function () {
           seedBtn.disabled = false;
