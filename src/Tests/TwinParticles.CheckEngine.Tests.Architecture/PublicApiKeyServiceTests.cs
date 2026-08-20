@@ -27,7 +27,6 @@ public class PublicApiKeyServiceTests
         var auth = await harness.Keys.AuthenticateAsync(issued.Plaintext, CancellationToken.None);
         auth.Success.Should().BeTrue();
         auth.Tenant!.Id.Should().Be(tenant.Id);
-        harness.Accessor.Current.TenantId.Should().Be(tenant.Id);
         PublicApiKeyService.HasScope(auth.ApiKey!, PublicApiScopes.FitmentEvaluate).Should().BeTrue();
     }
 

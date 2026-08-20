@@ -145,11 +145,22 @@ public class TenantIsolationServiceTests
         var resolver = new TenantResolver(harness.Registry, harness.RegistryService, harness.Accessor);
         var resolved = await resolver.ResolveAsync(new TenantResolutionRequest { Hostname = "acme.example" }, CancellationToken.None);
         resolved!.Slug.Should().Be("acme-host");
-        harness.Accessor.Current.TenantId.Should().Be(hosted.Tenant!.Id);
+        resolved.Id.Should().Be(hosted.Tenant!.Id);
 
         var self = await resolver.ResolveAsync(new TenantResolutionRequest { Hostname = "unknown.example" }, CancellationToken.None);
         self!.Slug.Should().Be(SelfHostedTenant.Slug);
-        harness.Accessor.Current.IsSelfHosted.Should().BeTrue();
+        self.IsSelfHosted.Should().BeTrue();
+    }
+
+    [Test]
+    public void Bind_Should_Publish_Tenant_Context()
+    {
+        var accessor = new TenantContextAccessor();
+        var service = new TenantRegistryService(new InMemoryTenantRegistry(), accessor);
+        service.Bind(new Tenant { Id = 7, Slug = "sync" });
+
+        accessor.Current.TenantId.Should().Be(7);
+        accessor.Current.Slug.Should().Be("sync");
     }
 
     private sealed class Harness

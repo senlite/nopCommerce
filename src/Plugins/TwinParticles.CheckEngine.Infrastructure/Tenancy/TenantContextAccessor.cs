@@ -1,13 +1,14 @@
+using System.Threading;
 using TwinParticles.CheckEngine.Domain.Tenancy;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Tenancy;
 
 public sealed class TenantContextAccessor : ITenantAccessor
 {
-    private static readonly AsyncLocal<TenantContext?> Holder = new();
+    private readonly AsyncLocal<TenantContext?> _holder = new();
 
-    public TenantContext Current => Holder.Value ?? TenantContext.Unresolved;
+    public TenantContext Current => _holder.Value ?? TenantContext.Unresolved;
 
     public void SetCurrent(TenantContext context)
-        => Holder.Value = context ?? TenantContext.Unresolved;
+        => _holder.Value = context ?? TenantContext.Unresolved;
 }
