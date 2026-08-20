@@ -164,6 +164,12 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("LicenceReadOnlyBannerViewComponent");
         ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml")
             .Should().Contain("LicenceReadOnlyBannerViewComponent");
+        ReadPluginFile("Views", "Admin", "VendorScoreboard.cshtml")
+            .Should().Contain("OrderInspector.Col.Subtotal");
+        ReadPluginFile("Views", "Admin", "VendorScoreboard.cshtml")
+            .Should().NotContain("<th>Vendor</th>");
+        ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml")
+            .Should().Contain("checkengine-portals.js?v=");
         ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml")
             .Should().NotContain("LicenceReadOnlyBannerViewComponent");
         ReadPluginFile("Views", "Configure.cshtml")

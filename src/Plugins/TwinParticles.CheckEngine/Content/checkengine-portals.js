@@ -9,6 +9,19 @@
     return undefined;
   }
 
+  function readI18n(root) {
+    var node = root && root.querySelector('[data-ce-i18n]');
+    if (!node) return {};
+    try { return JSON.parse(node.textContent || '{}'); } catch (e) { return {}; }
+  }
+
+  function fmt(template) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return String(template == null ? '' : template).replace(/\{(\d+)\}/g, function (_, i) {
+      return args[i] != null ? String(args[i]) : '';
+    });
+  }
+
   function headers(token, json) {
     var h = { Accept: 'application/json' };
     if (json) h['Content-Type'] = 'application/json';
@@ -66,10 +79,18 @@
     });
   }
 
-  function statusBadge(status) {
+  function statusBadge(status, i18n) {
     var label = status;
+    i18n = i18n || {};
     if (typeof status === 'number') {
-      var map = { 0: 'Draft', 10: 'In progress', 20: 'Awaiting parts', 30: 'Ready', 40: 'Invoiced', 90: 'Cancelled' };
+      var map = {
+        0: i18n.statusDraft || 'Draft',
+        10: i18n.statusInProgress || 'In progress',
+        20: i18n.statusAwaitingParts || 'Awaiting parts',
+        30: i18n.statusReady || 'Ready',
+        40: i18n.statusInvoiced || 'Invoiced',
+        90: i18n.statusCancelled || 'Cancelled'
+      };
       label = map[status] || String(status);
     }
     return '<span class="ce-mp-badge">' + label + '</span>';
@@ -77,6 +98,7 @@
 
   function initWorkshop(root) {
     var token = root.querySelector('input[name="__RequestVerificationToken"]');
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-portal-alert]');
     var stats = root.querySelector('[data-ce-workshop-stats]');
     var jobsBody = root.querySelector('[data-ce-workshop-jobs]');
@@ -102,18 +124,18 @@
         return s !== 40 && s !== 90;
       }).length;
       var creditHtml = caps.canViewCredit || caps.CanViewCredit
-        ? '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Credit used</span><span class="ce-mp-stat__value">' +
+        ? '<div class="ce-mp-stat"><span class="ce-mp-stat__label">' + (i18n.creditUsed || 'Credit used') + '</span><span class="ce-mp-stat__value">' +
           (pick(account, 'creditUsed', 'CreditUsed') || 0) +
           '</span></div>' +
-          '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Credit limit</span><span class="ce-mp-stat__value">' +
+          '<div class="ce-mp-stat"><span class="ce-mp-stat__label">' + (i18n.creditLimit || 'Credit limit') + '</span><span class="ce-mp-stat__value">' +
           (pick(account, 'creditLimit', 'CreditLimit') || 0) +
           '</span></div>'
         : '';
       stats.innerHTML =
-        '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Account</span><span class="ce-mp-stat__value">' +
+        '<div class="ce-mp-stat"><span class="ce-mp-stat__label">' + (i18n.account || 'Account') + '</span><span class="ce-mp-stat__value">' +
         (pick(account, 'displayName', 'DisplayName') || '—') +
         '</span></div>' +
-        '<div class="ce-mp-stat"><span class="ce-mp-stat__label">Open jobs</span><span class="ce-mp-stat__value">' +
+        '<div class="ce-mp-stat"><span class="ce-mp-stat__label">' + (i18n.openJobs || 'Open jobs') + '</span><span class="ce-mp-stat__value">' +
         open +
         '</span></div>' +
         creditHtml;
@@ -122,7 +144,7 @@
     function renderJobs() {
       if (!jobsBody) return;
       if (!state.jobs.length) {
-        jobsBody.innerHTML = '<tr><td colspan="5">No jobs yet.</td></tr>';
+        jobsBody.innerHTML = '<tr><td colspan="5">' + (i18n.emptyJobs || 'No jobs yet.') + '</td></tr>';
         return;
       }
       jobsBody.innerHTML = state.jobs
@@ -136,22 +158,22 @@
             '"><td>#' +
             id +
             '</td><td>' +
-            statusBadge(statusId) +
+            statusBadge(statusId, i18n) +
             '</td><td>' +
             (pick(job, 'labourEstimate', 'LabourEstimate') || 0) +
             '</td><td>' +
             (pick(job, 'orderId', 'OrderId') || '—') +
             '</td><td><button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-view="' +
             id +
-            '">View</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-start="' +
+            '">' + (i18n.view || 'View') + '</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-start="' +
             id +
-            '">Start</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-ready="' +
+            '">' + (i18n.start || 'Start') + '</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-ready="' +
             id +
-            '">Mark ready</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-cancel="' +
+            '">' + (i18n.markReady || 'Mark ready') + '</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-cancel="' +
             id +
-            '">Cancel</button> <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-invoice="' +
+            '">' + (i18n.cancel || 'Cancel') + '</button> <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-invoice="' +
             id +
-            '">Invoice</button></td></tr>'
+            '">' + (i18n.invoice || 'Invoice') + '</button></td></tr>'
           );
         })
         .join('');
@@ -168,14 +190,14 @@
         assignPanel.hidden = !canAssign;
       }
       if (detailSummary) {
-        detailSummary.textContent =
-          'Job #' + jobId + ' — ' + statusBadge(pick(job, 'status', 'Status'));
+        detailSummary.innerHTML =
+          fmt(i18n.jobSummary || 'Job #{0}', jobId) + ' — ' + statusBadge(pick(job, 'status', 'Status'), i18n);
       }
 
       var vehicles = pick(detail, 'vehicles', 'Vehicles') || [];
       if (vehiclesBody) {
         if (!vehicles.length) {
-          vehiclesBody.innerHTML = '<tr><td colspan="6">No vehicles on this job.</td></tr>';
+          vehiclesBody.innerHTML = '<tr><td colspan="6">' + (i18n.emptyJobVehicles || 'No vehicles on this job.') + '</td></tr>';
         } else {
           vehiclesBody.innerHTML = vehicles
             .map(function (v) {
@@ -193,9 +215,9 @@
                 vehicleId +
                 '" style="width:4rem" /></td><td><button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-allocate="' +
                 vehicleId +
-                '">Allocate</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-invoice-vehicle="' +
+                '">' + (i18n.allocate || 'Allocate') + '</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-invoice-vehicle="' +
                 vehicleId +
-                '">Invoice vehicle</button></td></tr>'
+                '">' + (i18n.invoiceVehicle || 'Invoice vehicle') + '</button></td></tr>'
               );
             })
             .join('');
@@ -205,7 +227,7 @@
       var lines = pick(detail, 'lines', 'Lines') || [];
       if (linesBody) {
         if (!lines.length) {
-          linesBody.innerHTML = '<tr><td colspan="5">No lines allocated yet.</td></tr>';
+          linesBody.innerHTML = '<tr><td colspan="5">' + (i18n.emptyLines || 'No lines allocated yet.') + '</td></tr>';
         } else {
           linesBody.innerHTML = lines
             .map(function (line) {
@@ -239,7 +261,7 @@
     function renderCustomers() {
       if (!customersBody) return;
       if (!state.customers.length) {
-        customersBody.innerHTML = '<tr><td colspan="4">No workshop customers yet.</td></tr>';
+        customersBody.innerHTML = '<tr><td colspan="4">' + (i18n.emptyCustomers || 'No workshop customers yet.') + '</td></tr>';
         return;
       }
       var canExport = pick(state.capabilities, 'canExportCustomer', 'CanExportCustomer');
@@ -249,7 +271,7 @@
           var exportBtn = canExport
             ? ' <button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-export-customer="' +
               id +
-              '">Export</button>'
+              '">' + (i18n.export || 'Export') + '</button>'
             : '';
           return (
             '<tr><td>' +
@@ -260,7 +282,7 @@
             (pick(c, 'contactEmail', 'ContactEmail') || '—') +
             '</td><td><button type="button" class="ce-btn ce-btn--ghost" data-ce-workshop-customer-view="' +
             id +
-            '">Vehicles</button>' +
+            '">' + (i18n.viewVehicles || 'Vehicles') + '</button>' +
             exportBtn +
             '</td></tr>'
           );
@@ -274,7 +296,7 @@
       creditPanel.hidden = !canView;
       if (!canView) return;
       if (!state.creditStatements.length) {
-        creditStatementsBody.innerHTML = '<tr><td colspan="5">No credit statements yet.</td></tr>';
+        creditStatementsBody.innerHTML = '<tr><td colspan="5">' + (i18n.emptyStatements || 'No credit statements yet.') + '</td></tr>';
         return;
       }
       creditStatementsBody.innerHTML = state.creditStatements
@@ -332,7 +354,7 @@
         .then(function (entries) {
           entries = entries || [];
           if (!entries.length) {
-            serviceHistoryBody.innerHTML = '<tr><td colspan="4">No prior jobs for this vehicle.</td></tr>';
+            serviceHistoryBody.innerHTML = '<tr><td colspan="4">' + (i18n.emptyHistory || 'No prior jobs for this vehicle.') + '</td></tr>';
             return;
           }
           serviceHistoryBody.innerHTML = entries
@@ -341,7 +363,7 @@
                 '<tr><td>#' +
                 (pick(entry, 'jobId', 'JobId') || '') +
                 '</td><td>' +
-                statusBadge(pick(entry, 'status', 'Status')) +
+                statusBadge(pick(entry, 'status', 'Status'), i18n) +
                 '</td><td>' +
                 (pick(entry, 'labourEstimate', 'LabourEstimate') || 0) +
                 '</td><td>' +
@@ -408,7 +430,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Transition failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.transitionFailed || 'Transition failed.'));
           });
         return;
       }
@@ -420,7 +442,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Transition failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.transitionFailed || 'Transition failed.'));
           });
         return;
       }
@@ -432,7 +454,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Transition failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.transitionFailed || 'Transition failed.'));
           });
         return;
       }
@@ -593,6 +615,7 @@
 
   function initFleet(root) {
     var token = root.querySelector('input[name="__RequestVerificationToken"]');
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-portal-alert]');
     var vehiclesBody = root.querySelector('[data-ce-fleet-vehicles]');
     var approvalsBody = root.querySelector('[data-ce-fleet-approvals]');
@@ -605,7 +628,7 @@
       if (!vehiclesBody) return;
       vehicles = vehicles || [];
       if (!vehicles.length) {
-        vehiclesBody.innerHTML = '<tr><td colspan="4">No vehicles registered.</td></tr>';
+        vehiclesBody.innerHTML = '<tr><td colspan="4">' + (i18n.emptyFleetVehicles || 'No vehicles registered.') + '</td></tr>';
         return;
       }
       vehiclesBody.innerHTML = vehicles
@@ -629,7 +652,7 @@
       if (!approvalsBody) return;
       requests = requests || [];
       if (!requests.length) {
-        approvalsBody.innerHTML = '<tr><td colspan="5">No approval requests.</td></tr>';
+        approvalsBody.innerHTML = '<tr><td colspan="5">' + (i18n.emptyApprovals || 'No approval requests.') + '</td></tr>';
         return;
       }
       approvalsBody.innerHTML = requests
@@ -641,9 +664,9 @@
             statusId === 0
               ? '<button type="button" class="ce-btn ce-btn--primary" data-ce-fleet-approve="' +
                 id +
-                '">Approve</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-fleet-reject="' +
+                '">' + (i18n.approve || 'Approve') + '</button> <button type="button" class="ce-btn ce-btn--ghost" data-ce-fleet-reject="' +
                 id +
-                '">Reject</button>'
+                '">' + (i18n.reject || 'Reject') + '</button>'
               : '—';
           return (
             '<tr><td>#' +
@@ -653,7 +676,7 @@
             '</td><td>' +
             (pick(r, 'quantity', 'Quantity') || '') +
             '</td><td>' +
-            statusBadge(statusId) +
+            statusBadge(statusId, i18n) +
             '</td><td>' +
             actions +
             '</td></tr>'
@@ -666,7 +689,7 @@
       if (!forecastsBody) return;
       forecasts = forecasts || [];
       if (!forecasts.length) {
-        forecastsBody.innerHTML = '<tr><td colspan="3">No maintenance forecasts yet. Import VINs to populate.</td></tr>';
+        forecastsBody.innerHTML = '<tr><td colspan="3">' + (i18n.emptyForecasts || 'No maintenance forecasts yet. Import VINs to populate.') + '</td></tr>';
         return;
       }
       forecastsBody.innerHTML = forecasts
@@ -689,7 +712,7 @@
       if (!costsBody) return;
       costs = costs || [];
       if (!costs.length) {
-        costsBody.innerHTML = '<tr><td colspan="4">No spend recorded yet.</td></tr>';
+        costsBody.innerHTML = '<tr><td colspan="4">' + (i18n.emptySpend || 'No spend recorded yet.') + '</td></tr>';
         return;
       }
       costsBody.innerHTML = costs
@@ -728,7 +751,7 @@
               );
             })
             .join('')
-        : '<tr><td colspan="3">No import batches yet.</td></tr>';
+        : '<tr><td colspan="3">' + (i18n.emptyImports || 'No import batches yet.') + '</td></tr>';
     }
 
     function refresh() {
@@ -758,7 +781,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Approval failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.approvalFailed || 'Approval failed.'));
           });
         return;
       }
@@ -767,11 +790,11 @@
         apiPost('/check-engine/fleet/DecideApprovalRequest', token, {
           requestId: Number(reject.getAttribute('data-ce-fleet-reject')),
           approve: false,
-          rejectionReason: 'Rejected from portal'
+          rejectionReason: i18n.rejectionReason || 'Rejected from portal'
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Rejection failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.rejectionFailed || 'Rejection failed.'));
           });
       }
     });
@@ -820,6 +843,7 @@
 
   function initDealer(root) {
     var token = root.querySelector('input[name="__RequestVerificationToken"]');
+    var i18n = readI18n(root);
     var alert = root.querySelector('[data-ce-portal-alert]');
     var catalogBody = root.querySelector('[data-ce-dealer-catalog]');
     var claimsBody = root.querySelector('[data-ce-dealer-claims]');
@@ -828,7 +852,7 @@
     function renderCatalog() {
       if (!catalogBody) return;
       if (!state.catalog.length) {
-        catalogBody.innerHTML = '<tr><td colspan="6">No catalog items.</td></tr>';
+        catalogBody.innerHTML = '<tr><td colspan="6">' + (i18n.emptyCatalog || 'No catalog items.') + '</td></tr>';
         return;
       }
       catalogBody.innerHTML = state.catalog
@@ -857,7 +881,7 @@
       if (!claimsBody) return;
       claims = claims || [];
       if (!claims.length) {
-        claimsBody.innerHTML = '<tr><td colspan="4">No warranty claims.</td></tr>';
+        claimsBody.innerHTML = '<tr><td colspan="5">' + (i18n.emptyClaims || 'No warranty claims.') + '</td></tr>';
         return;
       }
       claimsBody.innerHTML = claims
@@ -869,7 +893,7 @@
             statusId === 0 || statusId === 1
               ? ' <button type="button" class="ce-btn ce-btn--ghost" data-ce-dealer-review="' +
                 claimId +
-                '">Review</button>'
+                '">' + (i18n.review || 'Review') + '</button>'
               : '';
           return (
             '<tr><td>#' +
@@ -877,7 +901,7 @@
             '</td><td class="ce-code">' +
             (pick(c, 'oemNumber', 'OemNumber') || '') +
             '</td><td>' +
-            statusBadge(statusId) +
+            statusBadge(statusId, i18n) +
             '</td><td>' +
             (pick(c, 'vehicleConfigurationId', 'VehicleConfigurationId') || '') +
             '</td><td>' +
@@ -911,7 +935,7 @@
         })
           .then(refresh)
           .catch(function (err) {
-            showAlert(alert, 'error', adminError(err, 'Transition failed.'));
+            showAlert(alert, 'error', adminError(err, i18n.transitionFailed || 'Transition failed.'));
           });
       }
     });

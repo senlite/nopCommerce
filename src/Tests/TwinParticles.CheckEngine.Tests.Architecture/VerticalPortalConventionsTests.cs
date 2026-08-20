@@ -136,15 +136,26 @@ public class VerticalPortalConventionsTests
         var portalsJs = ReadPluginFile("Content", "checkengine-portals.js");
 
         workshop.Should().Contain("_PortalAssets.cshtml");
+        workshop.Should().Contain("_PortalI18n.cshtml");
         workshop.Should().Contain("data-ce-page=\"workshop\"");
+        workshop.Should().Contain("Common.Col.Id");
+        workshop.Should().NotContain("<th>ID</th>");
+        workshop.Should().NotContain("<th>VIN</th>");
         fleet.Should().Contain("data-ce-page=\"fleet\"");
+        fleet.Should().Contain("Common.Col.Vin");
+        fleet.Should().NotContain("<th>VIN</th>");
         dealer.Should().Contain("data-ce-page=\"dealer\"");
+        dealer.Should().Contain("Common.Col.Sku");
+        dealer.Should().NotContain("<th>SKU</th>");
+        dealer.Should().NotContain("<th>OEM</th>");
         admin.Should().Contain("data-ce-page=\"portal-admin\"");
 
         portalsJs.Should().Contain("initWorkshop");
         portalsJs.Should().Contain("initFleet");
         portalsJs.Should().Contain("initDealer");
         portalsJs.Should().Contain("/check-engine/workshop/DashboardData");
+        portalsJs.Should().Contain("i18n.approve");
+        portalsJs.Should().Contain("readI18n");
     }
 
     [Test]

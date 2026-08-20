@@ -16,6 +16,7 @@
     </div>
     <div class="page-body">
         @Html.AntiForgeryToken()
+        @await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalI18n.cshtml")
 
         <section class="ce-hero" aria-labelledby="ce-workshop-hero">
             <div class="ce-hero__inner">
@@ -71,7 +72,7 @@
                 <table class="ce-mp-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.CustomerName")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.CustomerEmail")</th>
                             <th></th>
@@ -88,7 +89,7 @@
                     <input class="ce-mp-input ce-code" type="number" min="1" data-ce-workshop-customer-vehicle-config />
                 </div>
                 <div class="ce-mp-field">
-                    <label>VIN</label>
+                    <label>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Vin")</label>
                     <input class="ce-mp-input ce-code" data-ce-workshop-customer-vehicle-vin />
                 </div>
                 <button type="button" class="ce-btn ce-btn--primary" data-ce-workshop-customer-vehicle-add>@T("Plugins.TwinParticles.CheckEngine.Workshop.AddCustomerVehicle")</button>
@@ -121,7 +122,7 @@
                 <table class="ce-mp-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.PeriodStart")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.PeriodEnd")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.InvoicedTotal")</th>
@@ -171,9 +172,9 @@
                 <table class="ce-mp-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</th>
-                            <th>VIN</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Vin")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
                             <th></th>
@@ -190,7 +191,7 @@
                 <table class="ce-mp-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Fitment")</th>

@@ -16,6 +16,7 @@
     </div>
     <div class="page-body">
         @Html.AntiForgeryToken()
+        @await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalI18n.cshtml")
 
         <section class="ce-hero" aria-labelledby="ce-fleet-hero">
             <div class="ce-hero__inner">
@@ -65,8 +66,8 @@
                 <table class="ce-mp-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>VIN</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Vin")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.VehicleConfigId")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.AssetTag")</th>
                         </tr>
@@ -84,7 +85,7 @@
                 <table class="ce-mp-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Dealer.Quantity")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Workshop.Status")</th>
@@ -123,7 +124,7 @@
                     <thead>
                         <tr>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.VehicleId")</th>
-                            <th>VIN</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Vin")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.TotalSpend")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.OrderCount")</th>
                         </tr>
@@ -141,7 +142,7 @@
                 <table class="ce-mp-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.ImportResult")</th>
                             <th>@T("Plugins.TwinParticles.CheckEngine.Fleet.DueDate")</th>
                         </tr>
