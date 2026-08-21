@@ -16,6 +16,10 @@ public class OperatorLocalizationConventionsTests
         view.Should().Contain("Licence.Panel.HeartbeatRecorded");
         view.Should().Contain("Licence.Panel.ActivationFailed");
         view.Should().Contain("Licence.Panel.LoadFailed");
+        view.Should().Contain("Licence.Reason.NotActivated");
+        view.Should().Contain("Licence.Panel.State.Inactive");
+        view.Should().Contain("states");
+        view.Should().Contain("reasons");
         view.Should().Contain("data-ce-licence-last-heartbeat");
         view.Should().Contain("data-ce-licence-heartbeat>");
         view.Should().NotContain("<td data-ce-licence-heartbeat");
@@ -25,6 +29,8 @@ public class OperatorLocalizationConventionsTests
         js.Should().Contain("i18n.heartbeatRecorded");
         js.Should().Contain("i18n.loadFailed");
         js.Should().Contain("i18n.yes");
+        js.Should().Contain("i18n.states");
+        js.Should().Contain("i18n.reasons");
         js.Should().Contain("[data-ce-licence-last-heartbeat]");
         js.Should().Contain("[data-ce-licence-heartbeat]");
         js.Should().NotContain("return 'Yes';");
@@ -38,8 +44,14 @@ public class OperatorLocalizationConventionsTests
         configure.Should().Contain("AiProviderKind.AzureOpenAi");
         configure.Should().Contain("AiProviderKind.Anthropic");
         configure.Should().Contain("AiPerFeatureDailyTokenCeilings.Hint");
+        configure.Should().Contain("data-ce-disclosure-i18n");
+        configure.Should().Contain("pick(item, 'category', 'Category')");
+        configure.Should().Contain("DisclosureLoading");
+        configure.Should().Contain("DisclosureLoadFailed");
         configure.Should().NotContain("<option value=\"1\">OpenAI-compatible</option>");
         configure.Should().NotContain("import.ai.enrichment=50000;assistant.customer=20000</small>");
+        configure.Should().NotContain("item.category + ':");
+        configure.Should().NotContain("Loading disclosure categories…</p>");
     }
 
     [Test]

@@ -18,9 +18,19 @@
   }
 
   function licenceHeaders(token) {
-    var headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
+    var headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
     if (token && token.value) headers.RequestVerificationToken = token.value;
     return headers;
+  }
+
+  function label(map, key, fallback) {
+    if (key == null || key === '') return fallback || '—';
+    var value = map && map[key];
+    return value || fallback || String(key);
   }
 
   function yn(value, i18n) {
@@ -37,7 +47,7 @@
   function renderLicence(root, data, i18n) {
     if (!root) return;
     var licence = (data && (data.licence || data.Licence)) || data || {};
-    setCell(root, '[data-ce-licence-state]', pick(licence, 'state', 'State'));
+    setCell(root, '[data-ce-licence-state]', label(i18n.states, pick(licence, 'state', 'State')));
     setCell(root, '[data-ce-licence-active]', yn(pick(licence, 'isActive', 'IsActive'), i18n));
     setCell(root, '[data-ce-licence-tier]', pick(licence, 'tier', 'Tier'));
     setCell(root, '[data-ce-licence-marketplace]', yn(pick(licence, 'marketplaceModuleEntitlement', 'MarketplaceModuleEntitlement'), i18n));
@@ -45,7 +55,7 @@
     setCell(root, '[data-ce-licence-fleet]', yn(pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement'), i18n));
     setCell(root, '[data-ce-licence-dealer]', yn(pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement'), i18n));
     setCell(root, '[data-ce-licence-last-heartbeat]', pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'));
-    setCell(root, '[data-ce-licence-reason]', pick(licence, 'reasonCode', 'ReasonCode'));
+    setCell(root, '[data-ce-licence-reason]', label(i18n.reasons, pick(licence, 'reasonCode', 'ReasonCode')));
   }
 
   function initLicencePanel(root) {
@@ -92,10 +102,16 @@
           })
           .then(function (status) {
             renderLicence(root, status, i18n);
-            showAlert('success', i18n.activated || 'Licence activated.');
+            var licence = (status && (status.licence || status.Licence)) || status || {};
+            var active = pick(licence, 'isActive', 'IsActive');
+            if (active === true || active === 'true') {
+              showAlert('success', i18n.activated || 'Licence activated.');
+              return;
+            }
+            showAlert('error', label(i18n.reasons, pick(licence, 'reasonCode', 'ReasonCode'), i18n.activationFailed || 'Activation failed.'));
           })
           .catch(function (err) {
-            showAlert('error', (err && (err.reasonCode || err.errorCode)) || i18n.activationFailed || 'Activation failed.');
+            showAlert('error', label(i18n.reasons, err && (pick(err, 'reasonCode', 'ReasonCode') || pick(err, 'errorCode', 'ErrorCode')), i18n.activationFailed || 'Activation failed.'));
             refreshLicence();
           });
       });

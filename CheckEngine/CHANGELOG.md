@@ -42,6 +42,10 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — licence reason/state + disclosure chrome (v0.94.0):** Configure licence panel maps
+  `inactive` / `licence.not_activated` (and the other signed-bundle reason codes) through EN/AR
+  resources, and the AI disclosure catalog binds PascalCase `Category`/`Description` so the panel
+  no longer renders `undefined: undefined`.
 - **Software — remaining operator/storefront localization (v0.93.0):** licence panel toasts, Yes/No
   entitlement cells, Configure AI provider option labels, storefront unmatched/mode/degraded copy,
   and admin `licence.read_only` errors now flow through EN/AR locale resources. Remaining Horizon 5

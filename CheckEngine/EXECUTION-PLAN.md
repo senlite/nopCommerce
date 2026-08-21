@@ -324,9 +324,10 @@ Work follows dependency order rather than skipping to later roadmap features.
 
 **Autonomously completable (code + local/live verification):**
 
-- Remaining operator/storefront localization of hardcoded JS/view English (plugin 0.93.0): licence
-  panel toasts, Configure AI provider labels, storefront unmatched/mode names, admin
-  `licence.read_only` copy.
+- Remaining operator/storefront localization of hardcoded JS/view English (plugin 0.94.0): licence
+  panel state/reason codes and Configure AI disclosure catalog chrome (PascalCase bind).
+  0.93.0 already shipped licence toasts, AI provider labels, storefront unmatched/mode names, and
+  admin `licence.read_only` copy. Leftover: portal JS still hardcodes the read-only sentence.
 - G2 coverage thresholds; G6 a11y/RTL/CWV evidence; G4 remaining performance evidence.
 - All H1 code items are `done` except **H1.35** (external security assessment). Operator-run
   evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP field-mapping sign-off) is documented

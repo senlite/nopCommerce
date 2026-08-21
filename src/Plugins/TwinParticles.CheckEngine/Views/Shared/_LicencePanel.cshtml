@@ -1,5 +1,5 @@
 @{
-    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js?v=0.93.0\" defer></script>");
+    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js?v=0.94.0\" defer></script>");
 }
 
 <div class="card card-default" data-ce-licence-panel>
@@ -14,7 +14,27 @@
             activated = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Activated").Text,
             heartbeatRecorded = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.HeartbeatRecorded").Text,
             activationFailed = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.ActivationFailed").Text,
-            loadFailed = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.LoadFailed").Text
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.LoadFailed").Text,
+            states = new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["inactive"] = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.State.Inactive").Text,
+                ["active"] = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.State.Active").Text,
+                ["invalid"] = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.State.Invalid").Text,
+                ["read_only"] = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.State.ReadOnly").Text
+            },
+            reasons = new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["licence.not_activated"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.NotActivated").Text,
+                ["licence.invalid_key"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.InvalidKey").Text,
+                ["licence.unsigned_key_not_allowed"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.UnsignedKeyNotAllowed").Text,
+                ["licence.bundle_malformed"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.BundleMalformed").Text,
+                ["licence.bundle_signature_invalid"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.BundleSignatureInvalid").Text,
+                ["licence.bundle_missing_expiry"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.BundleMissingExpiry").Text,
+                ["licence.bundle_invalid_expiry"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.BundleInvalidExpiry").Text,
+                ["licence.bundle_expired"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.BundleExpired").Text,
+                ["licence.grace_expired"] = T("Plugins.TwinParticles.CheckEngine.Licence.Reason.GraceExpired").Text,
+                ["licence.read_only"] = T("Plugins.TwinParticles.CheckEngine.Licence.ReadOnly.Message").Text
+            }
         }))</script>
         <div class="alert alert-info" data-ce-licence-alert hidden role="status"></div>
         <p class="font-weight-bold mb-1">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Status")</p>
