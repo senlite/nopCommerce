@@ -125,6 +125,33 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:3CZRU5H50GM000001;make=HONDA;model=HR-V;year=2016"
+    },
+    {
+      "pattern": "RL6",
+      "modelCode": "ODYSSEY",
+      "generationCode": "RL5",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5FNRL6H75KB000001;make=HONDA;model=Odyssey;year=2019"
+    },
+    {
+      "pattern": "RL5",
+      "modelCode": "ODYSSEY",
+      "generationCode": "RL4",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5FNRL5H61GB000001;make=HONDA;model=Odyssey;year=2016"
+    },
+    {
+      "pattern": "GK5",
+      "modelCode": "FIT",
+      "generationCode": "GK",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JHMGK5H54GS000001;make=HONDA;model=Fit;year=2016"
     }
   ]
 }

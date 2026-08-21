@@ -79,6 +79,42 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:1V2BR2CA0KC000001;make=VOLKSWAGEN;model=Atlas;year=2019"
+    },
+    {
+      "pattern": "5T7",
+      "modelCode": "GOLF",
+      "generationCode": "MK7",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VW5T7AU5LM000001;make=VOLKSWAGEN;model=Golf GTI;year=2020"
+    },
+    {
+      "pattern": "G17",
+      "modelCode": "GOLF",
+      "generationCode": "MK7",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VWG17AU1KM000001;make=VOLKSWAGEN;model=Golf;year=2019"
+    },
+    {
+      "pattern": "4B7",
+      "modelCode": "TIGUAN",
+      "generationCode": "MK2",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VV4B7AX0MM000001;make=VOLKSWAGEN;model=Tiguan;year=2021"
+    },
+    {
+      "pattern": "C57",
+      "modelCode": "JETTA",
+      "generationCode": "MK7",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VWC57BU5KM000001;make=VOLKSWAGEN;model=Jetta;year=2019"
     }
   ]
 }

@@ -106,6 +106,60 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:1G1FY6S07K4000001;make=CHEVROLET;model=Bolt EV;year=2019"
+    },
+    {
+      "pattern": "GTB",
+      "modelCode": "COLORADO",
+      "generationCode": "GMT31XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCGTBEN0L1100001;make=CHEVROLET;model=Colorado;year=2020"
+    },
+    {
+      "pattern": "GTE",
+      "modelCode": "COLORADO",
+      "generationCode": "GMT31XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCGTEEN0L1100001;make=CHEVROLET;model=Colorado;year=2020"
+    },
+    {
+      "pattern": "ERG",
+      "modelCode": "TRAVERSE",
+      "generationCode": "C1XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNERGKW0JJ000001;make=CHEVROLET;model=Traverse;year=2018"
+    },
+    {
+      "pattern": "ERF",
+      "modelCode": "TRAVERSE",
+      "generationCode": "C1XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNERFKW0KJ000001;make=CHEVROLET;model=Traverse;year=2019"
+    },
+    {
+      "pattern": "KBC",
+      "modelCode": "BLAZER",
+      "generationCode": "C1UL",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3GNKBCRS0KS000001;make=CHEVROLET;model=Blazer;year=2019"
+    },
+    {
+      "pattern": "FB1",
+      "modelCode": "CAMARO",
+      "generationCode": "A1XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1FB1RX0L0100001;make=CHEVROLET;model=Camaro;year=2020"
     }
   ]
 }

@@ -97,6 +97,42 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:W1N0G8DB0MA000001;make=MERCEDES-BENZ;model=GLC-Class;year=2021"
+    },
+    {
+      "pattern": "DA5",
+      "modelCode": "MCLASS",
+      "generationCode": "W166",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4JGDA5HB0FA000001;make=MERCEDES-BENZ;model=ML-Class;year=2015"
+    },
+    {
+      "pattern": "FB4",
+      "modelCode": "GLE",
+      "generationCode": "V167",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4JGFB4KB0MA000001;make=MERCEDES-BENZ;model=GLE-Class;year=2021"
+    },
+    {
+      "pattern": "UG8",
+      "modelCode": "SCLASS",
+      "generationCode": "W222",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDDUG8CB0KA000001;make=MERCEDES-BENZ;model=S-Class;year=2019"
+    },
+    {
+      "pattern": "3G4",
+      "modelCode": "ACLASS",
+      "generationCode": "W177",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1K3G4EB0NN000001;make=MERCEDES-BENZ;model=A-Class;year=2022"
     }
   ]
 }

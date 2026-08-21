@@ -78,6 +78,33 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:KM8R74HE0MU000001;make=HYUNDAI;model=Palisade;year=2021"
+    },
+    {
+      "pattern": "K33",
+      "modelCode": "KONA",
+      "generationCode": "OS",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8K33AG0LU000001;make=HYUNDAI;model=Kona;year=2020"
+    },
+    {
+      "pattern": "K2C",
+      "modelCode": "KONA",
+      "generationCode": "OS",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8K2CAA0LU000001;make=HYUNDAI;model=Kona;year=2020"
+    },
+    {
+      "pattern": "C75",
+      "modelCode": "IONIQ",
+      "generationCode": "AE",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHC75LC0KU000001;make=HYUNDAI;model=Ioniq;year=2019"
     }
   ]
 }

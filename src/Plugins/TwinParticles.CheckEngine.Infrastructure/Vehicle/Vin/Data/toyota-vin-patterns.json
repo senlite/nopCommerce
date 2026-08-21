@@ -166,6 +166,51 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:JTEBU5JR7H5000001;make=TOYOTA;model=4Runner;year=2017"
+    },
+    {
+      "pattern": "YZ3",
+      "modelCode": "SIENNA",
+      "generationCode": "XL30",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDYZ3DC0HS000001;make=TOYOTA;model=Sienna;year=2017"
+    },
+    {
+      "pattern": "KZ3",
+      "modelCode": "SIENNA",
+      "generationCode": "XL30",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDKZ3DC4HS000001;make=TOYOTA;model=Sienna;year=2017"
+    },
+    {
+      "pattern": "BY5",
+      "modelCode": "SEQUOIA",
+      "generationCode": "XK60",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDBY5G16HS000001;make=TOYOTA;model=Sequoia;year=2017"
+    },
+    {
+      "pattern": "DY5",
+      "modelCode": "TUNDRA",
+      "generationCode": "XK50",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TFDY5F19HX000001;make=TOYOTA;model=Tundra;year=2017"
+    },
+    {
+      "pattern": "B21",
+      "modelCode": "CAMRY",
+      "generationCode": "XV70",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1B21HK5KU000001;make=TOYOTA;model=Camry;year=2019"
     }
   ]
 }

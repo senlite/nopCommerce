@@ -101,6 +101,24 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:KNDMB5C15H6000001;make=KIA;model=Sedona;year=2017"
+    },
+    {
+      "pattern": "E55",
+      "modelCode": "STINGER",
+      "generationCode": "CK",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNAE55LC0L6000001;make=KIA;model=Stinger;year=2020"
+    },
+    {
+      "pattern": "CC3",
+      "modelCode": "NIRO",
+      "generationCode": "DE",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDCC3LD0J5000001;make=KIA;model=Niro;year=2018"
     }
   ]
 }

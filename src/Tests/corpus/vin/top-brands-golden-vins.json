@@ -1,0 +1,134 @@
+{
+  "description": "H1.6a golden VIN vectors with NHTSA-documented Make/Model/year. Application-layer decode enforces ISO check digits, so only checkDigitValid=true rows are executed by VinDecodeApplicationService tests.",
+  "vectors": [
+    {
+      "vin": "1HGCM82633A004352",
+      "checkDigitValid": true,
+      "wmi": "1HG",
+      "vdsPrefix": "CM8",
+      "makeCode": "HONDA",
+      "modelCode": "ACCORD",
+      "generationCode": "CM",
+      "modelYear": 2003,
+      "provenance": "nhtsa-vpic:1HGCM82633A004352;make=HONDA;model=Accord;year=2003"
+    },
+    {
+      "vin": "1FA6P8TD5M5100001",
+      "checkDigitValid": true,
+      "wmi": "1FA",
+      "vdsPrefix": "6P8",
+      "makeCode": "FORD",
+      "modelCode": "MUSTANG",
+      "generationCode": "S550",
+      "modelYear": 2021,
+      "provenance": "nhtsa-vpic:1FA6P8TD5M5100001;make=FORD;model=Mustang;year=2021"
+    },
+    {
+      "vin": "1FTMW1T88MFA00001",
+      "checkDigitValid": true,
+      "wmi": "1FT",
+      "vdsPrefix": "MW1",
+      "makeCode": "FORD",
+      "modelCode": "F150",
+      "generationCode": "P702",
+      "modelYear": 2021,
+      "provenance": "nhtsa-vpic:1FTMW1T88MFA00001;make=FORD;model=F-150;year=2021"
+    },
+    {
+      "vin": "1G1ZD5ST1JF000001",
+      "checkDigitValid": true,
+      "wmi": "1G1",
+      "vdsPrefix": "ZD5",
+      "makeCode": "CHEVROLET",
+      "modelCode": "MALIBU",
+      "generationCode": "MALIBU9",
+      "modelYear": 2018,
+      "provenance": "nhtsa-vpic:1G1ZD5ST1JF000001;make=CHEVROLET;model=Malibu;year=2018"
+    },
+    {
+      "vin": "2T3W1RFV0MW000001",
+      "checkDigitValid": true,
+      "wmi": "2T3",
+      "vdsPrefix": "W1R",
+      "makeCode": "TOYOTA",
+      "modelCode": "RAV4",
+      "generationCode": "XA50",
+      "modelYear": 2021,
+      "provenance": "nhtsa-vpic:2T3W1RFV0MW000001;make=TOYOTA;model=RAV4;year=2021"
+    },
+    {
+      "vin": "3VV0B7AX0KM000001",
+      "checkDigitValid": true,
+      "wmi": "3VV",
+      "vdsPrefix": "0B7",
+      "makeCode": "VOLKSWAGEN",
+      "modelCode": "TIGUAN",
+      "generationCode": "MK2",
+      "modelYear": 2019,
+      "provenance": "nhtsa-vpic:3VV0B7AX0KM000001;make=VOLKSWAGEN;model=Tiguan;year=2019"
+    },
+    {
+      "vin": "5XYPG4A31KG000001",
+      "checkDigitValid": true,
+      "wmi": "5XY",
+      "vdsPrefix": "PG4",
+      "makeCode": "KIA",
+      "modelCode": "SORENTO",
+      "generationCode": "UM",
+      "modelYear": 2019,
+      "provenance": "nhtsa-vpic:5XYPG4A31KG000001;make=KIA;model=Sorento;year=2019"
+    },
+    {
+      "vin": "1FMCU0GD0JUA00001",
+      "checkDigitValid": true,
+      "wmi": "1FM",
+      "vdsPrefix": "CU0",
+      "makeCode": "FORD",
+      "modelCode": "ESCAPE",
+      "generationCode": "C520",
+      "modelYear": 2018,
+      "provenance": "nhtsa-vpic:1FMCU0GD0JUA00001;make=FORD;model=Escape;year=2018"
+    },
+    {
+      "vin": "3VWC57BU5KM000001",
+      "checkDigitValid": true,
+      "wmi": "3VW",
+      "vdsPrefix": "C57",
+      "makeCode": "VOLKSWAGEN",
+      "modelCode": "JETTA",
+      "generationCode": "MK7",
+      "modelYear": 2019,
+      "provenance": "nhtsa-vpic:3VWC57BU5KM000001;make=VOLKSWAGEN;model=Jetta;year=2019"
+    },
+    {
+      "vin": "5TDKZ3DC4HS000001",
+      "checkDigitValid": true,
+      "wmi": "5TD",
+      "vdsPrefix": "KZ3",
+      "makeCode": "TOYOTA",
+      "modelCode": "SIENNA",
+      "generationCode": "XL30",
+      "modelYear": 2017,
+      "provenance": "nhtsa-vpic:5TDKZ3DC4HS000001;make=TOYOTA;model=Sienna;year=2017"
+    },
+    {
+      "vin": "4JGDA5HB0FA000001",
+      "checkDigitValid": true,
+      "wmi": "4JG",
+      "vdsPrefix": "DA5",
+      "makeCode": "MERCEDES",
+      "modelCode": "MCLASS",
+      "generationCode": "W166",
+      "modelYear": 2015,
+      "provenance": "nhtsa-vpic:4JGDA5HB0FA000001;make=MERCEDES-BENZ;model=ML-Class;year=2015"
+    },
+    {
+      "vin": "1HGBH41JXMN109186",
+      "checkDigitValid": true,
+      "wmi": "1HG",
+      "vdsPrefix": "BH4",
+      "expectReason": "vin.decode_failed",
+      "note": "ISO check-digit control VIN. WMI is Honda; NHTSA returned no model, so no VDS pattern is seeded."
+    }
+  ]
+}

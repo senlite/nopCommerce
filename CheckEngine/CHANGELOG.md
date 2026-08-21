@@ -42,6 +42,10 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — top-10 brands slice 3 (H1.6a, v0.98.0):** more NHTSA-documented flagships
+  (Golf, Odyssey, GLE, Sienna, Ranger/Bronco, Kona, Colorado/Traverse and peers), 107
+  non-BMW VDS prefixes, and a check-digit-valid golden VIN corpus decoded through
+  `VinDecodeApplicationService`.
 - **Software — top-10 brands slice 2 (H1.6a, v0.97.0):** deeper flagship trees (Camry/RAV4/CR-V/
   Explorer/C-Class and peers), EN/AR configuration aliases for VIN labels, extra NHTSA WMIs,
   and 73 documented non-BMW VDS prefixes. Same-VDS generations disambiguate on model year.
