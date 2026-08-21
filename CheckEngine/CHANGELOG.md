@@ -42,6 +42,10 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — top-10 brands slice 4 (H1.6a, v0.99.0):** VIN disambiguation labels now include
+  market name and production years (`Honda Accord CM LX (Europe, 2003-2007)` vs
+  `(Gulf, 2003-2007)`), so ECE/GCC candidates are distinguishable in the picker
+  (`FR-204`, H1.7).
 - **Software — top-10 brands slice 3 (H1.6a, v0.98.0):** more NHTSA-documented flagships
   (Golf, Odyssey, GLE, Sienna, Ranger/Bronco, Kona, Colorado/Traverse and peers), 107
   non-BMW VDS prefixes, and a check-digit-valid golden VIN corpus decoded through

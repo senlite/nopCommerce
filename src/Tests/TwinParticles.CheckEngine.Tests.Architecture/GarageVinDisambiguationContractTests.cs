@@ -41,6 +41,19 @@ public class GarageVinDisambiguationContractTests
     }
 
     [Test]
+    public void Configuration_Display_Labels_Should_Qualify_With_Market_Name_And_Years()
+    {
+        var source = ReadApplicationFile("Vehicle", "Admin", "VehicleAdminService.cs");
+
+        source.Should().Contain("configuration.MarketId");
+        source.Should().Contain("GetMarketByIdAsync");
+        source.Should().Contain("market.Name");
+        source.Should().Contain("FormatProductionWindow");
+        source.Should().Contain("ProductionFromYear");
+        source.Should().Contain("ProductionToYear");
+    }
+
+    [Test]
     public void Storefront_Should_Handle_409_And_Guest_Vin_Decode_Disambiguation()
     {
         var storefront = ReadPluginFile(
@@ -71,5 +84,18 @@ public class GarageVinDisambiguationContractTests
         }
 
         throw new FileNotFoundException($"Unable to locate {project}/{string.Join('/', relativePath)}");
+    }
+
+    private static string ReadApplicationFile(params string[] relativePath)
+    {
+        var start = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        for (var dir = start; dir is not null; dir = dir.Parent)
+        {
+            var candidate = Path.Combine([dir.FullName, "src", "Plugins", "TwinParticles.CheckEngine.Application", .. relativePath]);
+            if (File.Exists(candidate))
+                return File.ReadAllText(candidate);
+        }
+
+        throw new FileNotFoundException($"Unable to locate Application/{string.Join('/', relativePath)}");
     }
 }

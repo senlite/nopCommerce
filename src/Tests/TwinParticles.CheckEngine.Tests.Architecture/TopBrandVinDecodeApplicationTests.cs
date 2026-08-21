@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -5,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
+using TwinParticles.CheckEngine.Application.Vehicle.Admin;
 using TwinParticles.CheckEngine.Application.Vehicle.Vin;
 using TwinParticles.CheckEngine.Domain.Observability;
 using TwinParticles.CheckEngine.Domain.Vehicle;
@@ -62,6 +64,28 @@ public class TopBrandVinDecodeApplicationTests
     }
 
     [Test]
+    public async Task Honda_Accord_Disambiguation_Labels_Should_Include_Distinct_Markets()
+    {
+        var harness = await CreateSeededHarnessAsync();
+        var result = await harness.Decode.DecodeAsync("1HGCM82633A004352", CancellationToken.None);
+
+        result.Outcome.Should().Be("NeedsDisambiguation");
+        result.Candidates.Should().HaveCount(2);
+
+        var labels = await harness.Admin.GetConfigurationDisplayLabelsAsync(
+            result.Candidates.Select(candidate => candidate.VehicleConfigurationId),
+            CancellationToken.None);
+
+        labels.Should().HaveCount(2);
+        labels.Values.Should().OnlyHaveUniqueItems();
+        labels.Values.Should().Contain(label => label.Contains("Europe", StringComparison.Ordinal));
+        labels.Values.Should().Contain(label => label.Contains("Gulf", StringComparison.Ordinal));
+        labels.Values.Should().OnlyContain(label =>
+            label.Contains("Honda Accord CM LX", StringComparison.Ordinal)
+            && label.Contains("2003-2007", StringComparison.Ordinal));
+    }
+
+    [Test]
     public void Golden_Corpus_Should_Declare_Provenance_For_Resolvable_Rows()
     {
         foreach (var vector in ReadGoldenVectors().Where(vector => vector.ExpectReason is null))
@@ -73,13 +97,16 @@ public class TopBrandVinDecodeApplicationTests
     }
 
     private static async Task<VinDecodeApplicationService> CreateSeededServiceAsync()
+        => (await CreateSeededHarnessAsync()).Decode;
+
+    private static async Task<SeededHarness> CreateSeededHarnessAsync()
     {
         var vehicleRepository = new InMemoryVehicleAdminRepository();
         var vinRepository = new InMemoryVinSupportRepository();
-        await new CompositeVehicleSeedLoader(
+        var seedLoader = new CompositeVehicleSeedLoader(
             new BmwReferenceVehicleSeedLoader(vehicleRepository, new BmwVinPatternSeedLoader(vehicleRepository, vinRepository)),
-            new TopBrandReferenceVehicleSeedLoader(vehicleRepository, new VinPatternSeedLoader(vehicleRepository, vinRepository)))
-            .SeedAsync(CancellationToken.None);
+            new TopBrandReferenceVehicleSeedLoader(vehicleRepository, new VinPatternSeedLoader(vehicleRepository, vinRepository)));
+        await seedLoader.SeedAsync(CancellationToken.None);
 
         var catalogs = await VinPatternCatalog.LoadAllAsync(CancellationToken.None);
         var bmw = catalogs.Single(VinPatternCatalog.IsBmw);
@@ -93,7 +120,9 @@ public class TopBrandVinDecodeApplicationTests
                 resolver)
         ]);
 
-        return new VinDecodeApplicationService(registry, new NoopTelemetry());
+        return new SeededHarness(
+            new VinDecodeApplicationService(registry, new NoopTelemetry()),
+            new VehicleAdminService(vehicleRepository, seedLoader));
     }
 
     private static IReadOnlyList<GoldenVinVector> ReadGoldenVectors()
@@ -123,6 +152,8 @@ public class TopBrandVinDecodeApplicationTests
 
         throw new FileNotFoundException($"Unable to locate {string.Join('/', relativePath)}");
     }
+
+    private sealed record SeededHarness(VinDecodeApplicationService Decode, VehicleAdminService Admin);
 
     private sealed class GoldenVinVector
     {
