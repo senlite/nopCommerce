@@ -11,10 +11,13 @@
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</h1>
 </div>
 
-<section class="content ce-marketplace" data-ce-page="portal-admin">
+<section class="content ce-marketplace" data-ce-page="portal-admin"
+         data-ce-error-readonly="@T("Plugins.TwinParticles.CheckEngine.Licence.ReadOnly.Message")">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
         <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            licenceReadOnly = T("Plugins.TwinParticles.CheckEngine.Licence.ReadOnly.Message").Text,
+            requestFailed = T("Plugins.TwinParticles.CheckEngine.Common.RequestFailed").Text,
             provisioned = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Provisioned").Text,
             provisionFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionFailed").Text,
             seededAllocation = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededAllocation").Text,

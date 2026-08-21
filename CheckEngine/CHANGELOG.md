@@ -42,6 +42,20 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Engineering — G2 coverage gate:** architecture tests collect coverlet cobertura for
+  `TwinParticles.CheckEngine.Domain` / `.Application` only. CI and `build-checkengine.sh` fail when
+  Domain line coverage is below 80% (`NFR-058`) or Application below 70% (`NFR-059`).
+- **Software — portal/dashboard licence-read-only chrome (v0.95.0):** workshop/fleet/dealer portal
+  JS and the Check Engine dashboard import uploader map `licence.read_only` through
+  `Licence.ReadOnly.Message`; dashboard choose-file/uploading/started toasts use locale resources.
+- **Software — licence reason/state + disclosure chrome (v0.94.0):** Configure licence panel maps
+  `inactive` / `licence.not_activated` (and the other signed-bundle reason codes) through EN/AR
+  resources, and the AI disclosure catalog binds PascalCase `Category`/`Description` so the panel
+  no longer renders `undefined: undefined`.
+- **Software — remaining operator/storefront localization (v0.93.0):** licence panel toasts, Yes/No
+  entitlement cells, Configure AI provider option labels, storefront unmatched/mode/degraded copy,
+  and admin `licence.read_only` errors now flow through EN/AR locale resources. Remaining Horizon 5
+  billing/OAuth2/legal/.NET 10 work is parked in [EXECUTION-PLAN.md](EXECUTION-PLAN.md).
 - **Software — Horizon 5 control plane (v0.92.0):** tenant registry (database-per-tenant, implicit
   `self` tenant), tenant-qualified fitment cache keys (`FR-1312`), `/api/v1` REST with API keys
   (`FR-1331`, unauthenticated → 401), HMAC webhooks, usage ledger + billing adapter port (`FR-1320`–

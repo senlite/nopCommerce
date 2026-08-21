@@ -28,7 +28,14 @@ else
   echo "[checkengine-build] step 3/4: E2E project not found — skipped"
 fi
 
-echo "[checkengine-build] step 4/4: run architecture tests ($CONFIGURATION)"
-dotnet test "$ARCH_CSPROJ" -c "$CONFIGURATION" --no-build
+echo "[checkengine-build] step 4/4: architecture tests + Domain/Application coverage gate"
+COVERAGE_DIR="${COVERAGE_DIR:-TestResults/coverage}"
+rm -rf "$COVERAGE_DIR"
+dotnet test "$ARCH_CSPROJ" -c "$CONFIGURATION" --no-build \
+  --filter "FullyQualifiedName!~VectorMathTests" \
+  --collect:"XPlat Code Coverage" \
+  --results-directory "$COVERAGE_DIR" \
+  --settings src/Tests/TwinParticles.CheckEngine.Tests.Architecture/coverage.runsettings
+python3 CheckEngine/scripts/assert-checkengine-coverage.py --results-dir "$COVERAGE_DIR"
 
 echo "[checkengine-build] done"

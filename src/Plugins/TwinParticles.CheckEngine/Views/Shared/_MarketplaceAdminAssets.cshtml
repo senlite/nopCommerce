@@ -1,6 +1,22 @@
 @{
     NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css?v=0.83.0\" />");
     NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.css?v=0.83.0\" />");
-    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.js?v=0.88.0\" defer></script>");
+    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-marketplace.js?v=0.93.0\" defer></script>");
 }
+<script>
+window.CheckEngineAdmin = window.CheckEngineAdmin || {};
+window.CheckEngineAdmin.i18n = window.CheckEngineAdmin.i18n || @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+    licenceReadOnly = T("Plugins.TwinParticles.CheckEngine.Licence.ReadOnly.Message").Text,
+    requestFailed = T("Plugins.TwinParticles.CheckEngine.Common.RequestFailed").Text
+}));
+window.CheckEngineAdmin.errorMessage = window.CheckEngineAdmin.errorMessage || function (err, fallback) {
+  var i18n = window.CheckEngineAdmin.i18n || {};
+  var code = '';
+  if (typeof err === 'string') code = err;
+  else if (err) code = err.reasonCode || err.ReasonCode || err.errorCode || err.ErrorCode || '';
+  if (code === 'licence.read_only')
+    return i18n.licenceReadOnly || 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+  return code || fallback || i18n.requestFailed || 'Request failed.';
+};
+</script>
 @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))

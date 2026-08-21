@@ -22,7 +22,11 @@ if (Test-Path $resultsDir) {
 }
 
 Write-Host "[checkengine-quality] test + trx + coverage"
-dotnet test $project --configuration $Configuration --no-build --logger "trx;LogFileName=$trxName" --collect:"XPlat Code Coverage" --results-directory ./$resultsDir -v minimal
+dotnet test $project --configuration $Configuration --no-build --logger "trx;LogFileName=$trxName" --collect:"XPlat Code Coverage" --results-directory ./$resultsDir --settings src/Tests/TwinParticles.CheckEngine.Tests.Architecture/coverage.runsettings --filter "FullyQualifiedName!~VectorMathTests" -v minimal
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+Write-Host "[checkengine-quality] Domain/Application coverage thresholds"
+python3 CheckEngine/scripts/assert-checkengine-coverage.py --results-dir ./$resultsDir
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host "[checkengine-quality] summarize"

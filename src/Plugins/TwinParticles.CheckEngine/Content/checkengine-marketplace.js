@@ -10,10 +10,13 @@
   }
 
   function errorMessage(err, fallback) {
+    if (window.CheckEngineAdmin && typeof CheckEngineAdmin.errorMessage === 'function')
+      return CheckEngineAdmin.errorMessage(err, fallback);
+    var i18n = (window.CheckEngineAdmin && CheckEngineAdmin.i18n) || {};
     var code = pick(err, 'reasonCode', 'ReasonCode') || pick(err, 'errorCode', 'ErrorCode') || '';
     if (code === 'licence.read_only')
-      return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
-    return code || fallback || 'Request failed.';
+      return i18n.licenceReadOnly || 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+    return code || fallback || i18n.requestFailed || 'Request failed.';
   }
 
   function headers(token, json) {

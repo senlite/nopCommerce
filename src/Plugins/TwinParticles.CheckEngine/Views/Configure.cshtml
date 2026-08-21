@@ -76,9 +76,9 @@
                     </div>
                     <div class="col-md-9">
                         <select asp-for="AiProviderKind" class="form-control">
-                            <option value="1">OpenAI-compatible</option>
-                            <option value="2">Azure OpenAI</option>
-                            <option value="3">Anthropic</option>
+                            <option value="1">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.OpenAiCompatible")</option>
+                            <option value="2">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.AzureOpenAi")</option>
+                            <option value="3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.Anthropic")</option>
                         </select>
                     </div>
                 </div>
@@ -101,8 +101,8 @@
                     <div class="col-md-9">
                         <select asp-for="AiEmbeddingProviderKind" class="form-control">
                             <option value="0">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.SameAsCompletion")</option>
-                            <option value="1">OpenAI-compatible</option>
-                            <option value="2">Azure OpenAI</option>
+                            <option value="1">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.OpenAiCompatible")</option>
+                            <option value="2">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.AzureOpenAi")</option>
                             <option value="3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Deterministic")</option>
                         </select>
                         <small class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Hint")</small>
@@ -145,7 +145,7 @@
                     <div class="col-md-9">
                         <nop-editor asp-for="AiPerFeatureDailyTokenCeilings" />
                         <span asp-validation-for="AiPerFeatureDailyTokenCeilings"></span>
-                        <small class="form-text text-muted">import.ai.enrichment=50000;assistant.customer=20000</small>
+                        <small class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiPerFeatureDailyTokenCeilings.Hint")</small>
                     </div>
                 </div>
                 <div class="form-group row">
@@ -154,6 +154,10 @@
                         <nop-editor asp-for="AiDisclosureAcknowledged" />
                         <span asp-validation-for="AiDisclosureAcknowledged"></span>
                         <p class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Ai.DisclosureSummary")</p>
+                        <script type="application/json" data-ce-disclosure-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+                            loading = T("Plugins.TwinParticles.CheckEngine.Configuration.Ai.DisclosureLoading").Text,
+                            loadFailed = T("Plugins.TwinParticles.CheckEngine.Configuration.Ai.DisclosureLoadFailed").Text
+                        }))</script>
                         <div id="ce-ai-disclosure-panel" class="border rounded p-3 bg-light small"></div>
                     </div>
                 </div>
@@ -195,6 +199,24 @@
   var panel = document.getElementById('ce-ai-disclosure-panel');
   var ack = document.getElementById('AiDisclosureAcknowledged');
   var toggleRoot = document.getElementById('ce-ai-feature-toggles');
+  var disclosureI18n = {};
+  var i18nNode = document.querySelector('[data-ce-disclosure-i18n]');
+  if (i18nNode) {
+    try { disclosureI18n = JSON.parse(i18nNode.textContent || '{}'); } catch (e) { disclosureI18n = {}; }
+  }
+
+  function pick(obj, camel, pascal) {
+    if (!obj) return undefined;
+    if (obj[camel] !== undefined) return obj[camel];
+    if (obj[pascal] !== undefined) return obj[pascal];
+    return undefined;
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  }
 
   function setFeatureInputsEnabled(enabled) {
     if (!toggleRoot) return;
@@ -205,22 +227,29 @@
 
   function renderDisclosure() {
     if (!panel) return;
-    panel.innerHTML = '<p>Loading disclosure categories…</p>';
+    panel.innerHTML = '<p>' + escapeHtml(disclosureI18n.loading || 'Loading disclosure categories…') + '</p>';
     Promise.all(features.map(function (featureKey) {
       return fetch('/Admin/CheckEngine/AiAdmin/Disclosure?featureKey=' + encodeURIComponent(featureKey), {
-        headers: { 'Accept': 'application/json' }
-      }).then(function (r) { return r.json(); }).then(function (items) {
-        return { featureKey: featureKey, items: items || [] };
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+      }).then(function (r) {
+        if (!r.ok) throw new Error('disclosure');
+        return r.json();
+      }).then(function (payload) {
+        var items = Array.isArray(payload) ? payload : (payload && (payload.items || payload.Items)) || [];
+        return { featureKey: featureKey, items: items };
       });
     })).then(function (rows) {
       panel.innerHTML = rows.map(function (row) {
         var items = row.items.map(function (item) {
-          return '<li><strong>' + item.category + ':</strong> ' + item.description + '</li>';
+          var category = pick(item, 'category', 'Category');
+          var description = pick(item, 'description', 'Description');
+          if (!category && !description) return '';
+          return '<li><strong>' + escapeHtml(category || '') + ':</strong> ' + escapeHtml(description || '') + '</li>';
         }).join('');
-        return '<div class="mb-2"><code>' + row.featureKey + '</code><ul class="mb-0">' + items + '</ul></div>';
+        return '<div class="mb-2"><code>' + escapeHtml(row.featureKey) + '</code><ul class="mb-0">' + items + '</ul></div>';
       }).join('');
     }).catch(function () {
-      panel.textContent = 'Unable to load disclosure catalog.';
+      panel.textContent = disclosureI18n.loadFailed || 'Unable to load disclosure catalog.';
     });
   }
 

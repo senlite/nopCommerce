@@ -286,6 +286,8 @@ public class JsonHtmlBoardConventionsTests
             .Should().Contain("CheckEngineAdmin.errorMessage");
         ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml")
             .Should().Contain("Licence.Panel.LastHeartbeat");
+        ReadPluginFile("Views", "Shared", "_LicencePanel.cshtml")
+            .Should().Contain("data-ce-i18n");
         ReadPluginFile("Controllers", "GarageController.cs")
             .Should().Contain("WantsJsonResponse");
         ReadPluginFile("Controllers", "GarageController.cs")

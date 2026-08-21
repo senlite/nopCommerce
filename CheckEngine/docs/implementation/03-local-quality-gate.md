@@ -12,8 +12,10 @@ Use this script to run the same quality-gate flow locally as CI.
 2. Build (Release by default): `dotnet build --no-restore`
 3. Test with outputs:
    - TRX log: `checkengine-tests.trx`
-   - Coverage: `XPlat Code Coverage`
+   - Coverage: `XPlat Code Coverage` scoped to Domain + Application via `coverage.runsettings`
    - Results directory: `./TestResults`
+   - Hard fail when Domain line coverage &lt; 80% (`NFR-058`) or Application &lt; 70% (`NFR-059`)
+     (`CheckEngine/scripts/assert-checkengine-coverage.py`)
 4. Summary generation:
    - Markdown summary: `./TestResults/checkengine-quality-summary.md`
    - Includes total/passed/failed/skipped, duration, line coverage, branch coverage

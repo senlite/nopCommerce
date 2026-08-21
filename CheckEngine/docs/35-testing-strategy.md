@@ -236,7 +236,7 @@ Never commit production customer VINs.
 
 | Job | Tests |
 |---|---|
-| PR | Unit + Architecture + fast Integration subset + format + secret + docs |
+| PR | Architecture suite + Domain ≥ 80% / Application ≥ 70% coverlet gate (`NFR-058`/`NFR-059`) + format + secret + docs |
 | Nightly | Full Integration + contract + corpus + vulnerable pkgs |
 | RC | + PostgreSQL-backed Playwright smoke (install/home/search/sample PDP); axe/RTL/keyboard remain future |
 
