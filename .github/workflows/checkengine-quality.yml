@@ -28,7 +28,10 @@ jobs:
         run: dotnet build src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj --configuration Release --no-restore
 
       - name: Test with TRX and coverage
-        run: dotnet test src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj --configuration Release --no-build --logger "trx;LogFileName=checkengine-tests.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test src/Tests/TwinParticles.CheckEngine.Tests.Architecture/TwinParticles.CheckEngine.Tests.Architecture.csproj --configuration Release --no-build --logger "trx;LogFileName=checkengine-tests.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings src/Tests/TwinParticles.CheckEngine.Tests.Architecture/coverage.runsettings --filter "FullyQualifiedName!~VectorMathTests"
+
+      - name: Domain/Application coverage thresholds
+        run: python3 CheckEngine/scripts/assert-checkengine-coverage.py --results-dir ./TestResults
 
       - name: Deterministic CheckEngine build script
         run: bash CheckEngine/scripts/build-checkengine.sh

@@ -42,6 +42,9 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Engineering — G2 coverage gate:** architecture tests collect coverlet cobertura for
+  `TwinParticles.CheckEngine.Domain` / `.Application` only. CI and `build-checkengine.sh` fail when
+  Domain line coverage is below 80% (`NFR-058`) or Application below 70% (`NFR-059`).
 - **Software — portal/dashboard licence-read-only chrome (v0.95.0):** workshop/fleet/dealer portal
   JS and the Check Engine dashboard import uploader map `licence.read_only` through
   `Licence.ReadOnly.Message`; dashboard choose-file/uploading/started toasts use locale resources.

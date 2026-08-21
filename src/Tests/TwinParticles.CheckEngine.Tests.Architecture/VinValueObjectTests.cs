@@ -78,4 +78,25 @@ public class VinValueObjectTests
         segments.Vds.Should().Be("CM8263");
         segments.Vis.Should().Be("3A004352");
     }
+
+    [Test]
+    public void VinSegments_Should_Equal_By_Value_And_Reject_Null()
+    {
+        var vin = Vin.Create("1HGCM82633A004352");
+        var left = VinSegments.FromVin(vin);
+        var right = VinSegments.FromVin(vin);
+
+        left.Equals(right).Should().BeTrue();
+        left.Equals((VinSegments?)null).Should().BeFalse();
+        left.Equals((object?)right).Should().BeTrue();
+        left.Equals((object?)"not-segments").Should().BeFalse();
+        left.GetHashCode().Should().Be(right.GetHashCode());
+    }
+
+    [Test]
+    public void VinSegments_FromVin_Should_Reject_Null_Vin()
+    {
+        var act = () => VinSegments.FromVin(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
 }

@@ -303,7 +303,7 @@ The following are **not missing implementation** and must not be counted as defe
 | ID | Gate | Status |
 |---|---|---|
 | G1 | Legacy scaffold build and architecture suite green | done |
-| G2 | Real line coverage thresholds (not convention/name checks) | pending |
+| G2 | Real line coverage thresholds (not convention/name checks) | done |
 | G3 | Fitment accuracy corpus Must set at 100% | done |
 | G4 | Search, import and fitment performance at reference scale | partial |
 | G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | done |
@@ -324,12 +324,12 @@ Work follows dependency order rather than skipping to later roadmap features.
 
 **Autonomously completable (code + local/live verification):**
 
-- Remaining operator/storefront localization of hardcoded JS/view English (plugin 0.95.0): portal
-  and dashboard `licence.read_only` copy, plus dashboard import choose-file/uploading/started toasts.
-  0.94.0 shipped licence state/reason codes and Configure AI disclosure PascalCase bind. 0.93.0
-  shipped licence toasts, AI provider labels, storefront unmatched/mode names, and admin
-  `licence.read_only` copy.
-- G2 coverage thresholds; G6 a11y/RTL/CWV evidence; G4 remaining performance evidence.
+- Remaining operator/storefront localization of hardcoded JS/view English is at plugin 0.95.0
+  (portal/dashboard `licence.read_only`, import choose-file/uploading/started). 0.94.0 shipped
+  licence state/reason codes and Configure AI disclosure PascalCase bind.
+- **G2 coverage gate is in tree:** coverlet scoped to Domain/Application with a hard fail below
+  80%/70%. Remaining autonomously completable: G6 a11y/RTL/CWV evidence; G4 remaining performance
+  evidence.
 - All H1 code items are `done` except **H1.35** (external security assessment). Operator-run
   evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP field-mapping sign-off) is documented
   in the scripts above but does not block closing the implementation gap.
