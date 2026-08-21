@@ -42,6 +42,9 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — portal/dashboard licence-read-only chrome (v0.95.0):** workshop/fleet/dealer portal
+  JS and the Check Engine dashboard import uploader map `licence.read_only` through
+  `Licence.ReadOnly.Message`; dashboard choose-file/uploading/started toasts use locale resources.
 - **Software — licence reason/state + disclosure chrome (v0.94.0):** Configure licence panel maps
   `inactive` / `licence.not_activated` (and the other signed-bundle reason codes) through EN/AR
   resources, and the AI disclosure catalog binds PascalCase `Category`/`Description` so the panel

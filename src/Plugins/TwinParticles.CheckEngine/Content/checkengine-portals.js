@@ -36,24 +36,43 @@
     el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
   }
 
+  function pageRoot(from) {
+    if (from && from.closest) {
+      var scoped = from.closest('[data-ce-page]');
+      if (scoped) return scoped;
+    }
+    return document.querySelector('[data-ce-page]');
+  }
+
+  function licenceReadOnlyText(root) {
+    var i18n = readI18n(root) || {};
+    return i18n.licenceReadOnly
+      || (root && root.getAttribute('data-ce-error-readonly'))
+      || (window.CheckEngineAdmin && CheckEngineAdmin.i18n && CheckEngineAdmin.i18n.licenceReadOnly)
+      || 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+  }
+
   function portalErrorMessage(root, err) {
     var code = pick(err, 'errorCode', 'ErrorCode') || pick(err, 'reasonCode', 'ReasonCode') || '';
     var map = {
-      'licence.read_only': 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.',
+      'licence.read_only': licenceReadOnlyText(root),
       'portal.access_unauthenticated': root.getAttribute('data-ce-error-login'),
       'portal.account_not_provisioned': root.getAttribute('data-ce-error-provision'),
       'workshop.not_found': root.getAttribute('data-ce-error-provision'),
       'fleet.not_found': root.getAttribute('data-ce-error-provision'),
       'dealer.not_found': root.getAttribute('data-ce-error-provision')
     };
-    return (code && map[code]) || code || root.getAttribute('data-ce-error-generic') || 'Request failed.';
+    var i18n = readI18n(root);
+    return (code && map[code]) || code || root.getAttribute('data-ce-error-generic') || i18n.requestFailed || 'Request failed.';
   }
 
   function adminError(err, fallback) {
     var code = pick(err, 'reasonCode', 'ReasonCode') || pick(err, 'errorCode', 'ErrorCode') || '';
+    var root = pageRoot();
+    var i18n = readI18n(root);
     if (code === 'licence.read_only')
-      return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
-    return code || fallback || 'Request failed.';
+      return licenceReadOnlyText(root);
+    return code || fallback || i18n.requestFailed || 'Request failed.';
   }
 
   function apiGet(url, token) {

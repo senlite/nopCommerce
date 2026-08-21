@@ -17,6 +17,12 @@
 <section class="content">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            chooseFile = T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.ChooseFile").Text,
+            uploading = T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Uploading").Text,
+            started = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Started").Text,
+            failed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Failed").Text
+        }))</script>
         @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
 
         <div class="row ce-marketplace-admin">
@@ -159,6 +165,12 @@
   var link = document.getElementById('ce-import-result-link');
   var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
 
+  var i18n = {};
+  var i18nNode = document.querySelector('[data-ce-i18n]');
+  if (i18nNode) {
+    try { i18n = JSON.parse(i18nNode.textContent || '{}'); } catch (e) { i18n = {}; }
+  }
+
   function pick(obj, camel, pascal) {
     if (!obj) return undefined;
     if (obj[camel] !== undefined) return obj[camel];
@@ -198,19 +210,22 @@
   }
 
   function importError(body, fallback) {
-    var code = body && (body.reasonCode || body.errorCode);
+    if (window.CheckEngineAdmin && typeof CheckEngineAdmin.errorMessage === 'function')
+      return CheckEngineAdmin.errorMessage(body, fallback);
+    var code = body && (pick(body, 'reasonCode', 'ReasonCode') || pick(body, 'errorCode', 'ErrorCode'));
     if (code === 'licence.read_only')
-      return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+      return (window.CheckEngineAdmin && CheckEngineAdmin.i18n && CheckEngineAdmin.i18n.licenceReadOnly)
+        || 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
     return code || fallback;
   }
 
   submit.addEventListener('click', function () {
     var file = fileInput.files && fileInput.files[0];
     if (!file) {
-      showImport('error', 'Choose a file first.');
+      showImport('error', i18n.chooseFile || 'Choose a file first.');
       return;
     }
-    showImport('info', 'Uploading…');
+    showImport('info', i18n.uploading || 'Uploading…');
     toBase64(file).then(function (base64) {
       var headers = {
         'Content-Type': 'application/json',
@@ -236,12 +251,12 @@
           showImport('error', importError(body, response.status + ' ' + response.statusText));
           return;
         }
-        showImport('success', 'Import pipeline started.', body);
+        showImport('success', i18n.started || 'Import pipeline started.', body);
       }).catch(function () {
-        showImport('error', response.status + ' ' + response.statusText);
+        showImport('error', importError(null, i18n.failed || (response.status + ' ' + response.statusText)));
       });
     }).catch(function (err) {
-      showImport('error', 'Import failed: ' + (err && err.message ? err.message : err));
+      showImport('error', importError(err, (i18n.failed || 'Import failed.') + (err && err.message ? ': ' + err.message : '')));
     });
   });
 })();

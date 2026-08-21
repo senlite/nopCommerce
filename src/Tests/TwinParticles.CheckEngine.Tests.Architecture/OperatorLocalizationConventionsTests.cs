@@ -89,6 +89,37 @@ public class OperatorLocalizationConventionsTests
             .Should().Contain("CheckEngineAdmin.errorMessage");
     }
 
+    [Test]
+    public void Portal_And_Dashboard_Should_Localize_Licence_Read_Only_Errors()
+    {
+        ReadPluginFile("Views", "Shared", "_PortalI18n.cshtml")
+            .Should().Contain("Licence.ReadOnly.Message");
+        ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml")
+            .Should().Contain("checkengine-portals.js?v=0.95.0");
+        ReadPluginFile("Views", "Workshop", "Index.cshtml")
+            .Should().Contain("data-ce-error-readonly");
+        ReadPluginFile("Views", "Fleet", "Index.cshtml")
+            .Should().Contain("data-ce-error-readonly");
+        ReadPluginFile("Views", "Dealer", "Index.cshtml")
+            .Should().Contain("data-ce-error-readonly");
+        ReadPluginFile("Views", "Admin", "PortalAccounts.cshtml")
+            .Should().Contain("Licence.ReadOnly.Message");
+
+        var portals = ReadPluginFile("Content", "checkengine-portals.js");
+        portals.Should().Contain("i18n.licenceReadOnly");
+        portals.Should().Contain("data-ce-error-readonly");
+        portals.Should().Contain("function licenceReadOnlyText");
+        portals.Should().NotContain("'licence.read_only': 'Check Engine is in licence read-only mode");
+        portals.Should().NotContain("return 'Check Engine is in licence read-only mode");
+
+        var dashboard = ReadPluginFile("Views", "Admin", "Dashboard.cshtml");
+        dashboard.Should().Contain("CheckEngineAdmin.errorMessage");
+        dashboard.Should().Contain("ImportUpload.ChooseFile");
+        dashboard.Should().Contain("Import.Batch.Started");
+        dashboard.Should().NotContain("showImport('error', 'Choose a file first.')");
+        dashboard.Should().NotContain("return 'Check Engine is in licence read-only mode");
+    }
+
     private static string ReadPluginFile(params string[] relativePath)
     {
         var start = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
