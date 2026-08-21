@@ -292,6 +292,54 @@ public sealed class ManufacturerReferenceVehicleSeedLoader
                 await AddAliasIfMissingAsync("generation", generationId, "en", generation.Code, existingNormalized, result, cancellationToken);
             }
         }
+
+        await SeedConfigurationAliasesAsync(makeId, existingNormalized, result, cancellationToken);
+    }
+
+    private async Task SeedConfigurationAliasesAsync(
+        int makeId,
+        HashSet<(string NodeType, string NormalizedAlias)> existingNormalized,
+        VehicleSeedLoadResult result,
+        CancellationToken cancellationToken)
+    {
+        var models = (await _repository.GetModelsAsync(cancellationToken))
+            .Where(model => model.MakeId == makeId)
+            .ToDictionary(model => model.Id);
+        var generations = (await _repository.GetGenerationsAsync(cancellationToken))
+            .Where(generation => models.ContainsKey(generation.ModelId))
+            .ToDictionary(generation => generation.Id);
+        var bodies = (await _repository.GetBodiesAsync(cancellationToken)).ToDictionary(body => body.Id);
+        var engines = (await _repository.GetEnginesAsync(cancellationToken)).ToDictionary(engine => engine.Id);
+        var markets = (await _repository.GetMarketsAsync(cancellationToken)).ToDictionary(market => market.Id);
+
+        var modelArabicByCode = _catalog.Models
+            .ToDictionary(model => model.Code, model => model.ArabicAlias);
+        var marketArabicByCode = DefaultMarkets.ToDictionary(market => market.Code, market => market.ArabicAlias);
+
+        foreach (var configuration in (await _repository.GetConfigurationsAsync(cancellationToken))
+                     .Where(configuration => generations.ContainsKey(configuration.GenerationId)))
+        {
+            var generation = generations[configuration.GenerationId];
+            var model = models[generation.ModelId];
+            var bodyCode = configuration.BodyId.HasValue && bodies.TryGetValue(configuration.BodyId.Value, out var body)
+                ? body.Code
+                : "ANY";
+            var engineCode = configuration.EngineId.HasValue && engines.TryGetValue(configuration.EngineId.Value, out var engine)
+                ? engine.Code
+                : "ANY";
+            var marketCode = configuration.MarketId.HasValue && markets.TryGetValue(configuration.MarketId.Value, out var market)
+                ? market.Code
+                : "ALL";
+            var modelArabic = modelArabicByCode.GetValueOrDefault(model.Code, model.Name);
+            var marketArabic = marketArabicByCode.GetValueOrDefault(marketCode, marketCode);
+            var trim = string.IsNullOrWhiteSpace(configuration.TrimName) ? bodyCode : configuration.TrimName;
+
+            var en = $"{_catalog.MakeName} {model.Name} {generation.Code} {trim} {bodyCode} {engineCode} {marketCode}";
+            var ar = $"{_catalog.MakeArabicAlias} {modelArabic} {generation.Code} {trim} {bodyCode} {engineCode} {marketArabic}";
+
+            await AddAliasIfMissingAsync("configuration", configuration.Id, "en", en, existingNormalized, result, cancellationToken);
+            await AddAliasIfMissingAsync("configuration", configuration.Id, "ar", ar, existingNormalized, result, cancellationToken);
+        }
     }
 
     private async Task AddAliasIfMissingAsync(

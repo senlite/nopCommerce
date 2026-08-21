@@ -3,10 +3,36 @@
   "makeCode": "NISSAN",
   "description": "H1.6a Nissan WMIs from NHTSA GetWMIsForManufacturer/nissan. VDS prefixes only from DecodeVinValues.",
   "wmis": [
-    { "wmi": "JN1", "manufacturerName": "NISSAN MOTOR COMPANY, LTD", "regionCode": "JP" },
-    { "wmi": "1N4", "manufacturerName": "NISSAN NORTH AMERICA, INC.", "regionCode": "US" },
-    { "wmi": "1N6", "manufacturerName": "NISSAN NORTH AMERICA, INC.", "regionCode": "US" },
-    { "wmi": "3N1", "manufacturerName": "NISSAN MEXICANA, S.A. DE C.V.", "regionCode": "MX" }
+    {
+      "wmi": "JN1",
+      "manufacturerName": "NISSAN MOTOR COMPANY, LTD",
+      "regionCode": "JP"
+    },
+    {
+      "wmi": "JN8",
+      "manufacturerName": "NISSAN MOTOR COMPANY, LTD",
+      "regionCode": "JP"
+    },
+    {
+      "wmi": "1N4",
+      "manufacturerName": "NISSAN NORTH AMERICA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1N6",
+      "manufacturerName": "NISSAN NORTH AMERICA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "5N1",
+      "manufacturerName": "NISSAN NORTH AMERICA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "3N1",
+      "manufacturerName": "NISSAN MEXICANA, S.A. DE C.V.",
+      "regionCode": "MX"
+    }
   ],
   "patterns": [
     {
@@ -19,6 +45,15 @@
       "provenance": "nhtsa-vpic:1N4AL3AP1DC000001;make=NISSAN;model=Altima;year=2013"
     },
     {
+      "pattern": "BL4",
+      "modelCode": "ALTIMA",
+      "generationCode": "L34",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1N4BL4BV0LN000001;make=NISSAN;model=Altima;year=2020"
+    },
+    {
       "pattern": "AZ4",
       "modelCode": "Z370",
       "generationCode": "Z34",
@@ -26,6 +61,51 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:JN1AZ4EH8DM000001;make=NISSAN;model=370Z;year=2013"
+    },
+    {
+      "pattern": "AT2",
+      "modelCode": "ROGUE",
+      "generationCode": "T32",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5N1AT2MV8HC000001;make=NISSAN;model=Rogue;year=2017"
+    },
+    {
+      "pattern": "AS5",
+      "modelCode": "ROGUE",
+      "generationCode": "S35",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN8AS5MT0CW000001;make=NISSAN;model=Rogue;year=2012"
+    },
+    {
+      "pattern": "DR2",
+      "modelCode": "PATHFINDER",
+      "generationCode": "R52",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5N1DR2MN0KC000001;make=NISSAN;model=Pathfinder;year=2019"
+    },
+    {
+      "pattern": "AB8",
+      "modelCode": "SENTRA",
+      "generationCode": "B18",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3N1AB8CV0LY000001;make=NISSAN;model=Sentra;year=2020"
+    },
+    {
+      "pattern": "AY2",
+      "modelCode": "ARMADA",
+      "generationCode": "Y62",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN8AY2ND0K9000001;make=NISSAN;model=Armada;year=2019"
     }
   ]
 }

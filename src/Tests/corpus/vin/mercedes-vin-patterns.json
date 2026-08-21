@@ -3,10 +3,36 @@
   "makeCode": "MERCEDES",
   "description": "H1.6a Mercedes-Benz WMIs from NHTSA GetWMIsForManufacturer/mercedes-benz. VDS prefixes only from DecodeVinValues.",
   "wmis": [
-    { "wmi": "WDD", "manufacturerName": "MERCEDES-BENZ CARS", "regionCode": "DE" },
-    { "wmi": "WDC", "manufacturerName": "MERCEDES-BENZ CARS", "regionCode": "DE" },
-    { "wmi": "W1K", "manufacturerName": "MERCEDES-BENZ CARS", "regionCode": "DE" },
-    { "wmi": "4JG", "manufacturerName": "MERCEDES-BENZ OF NORTH AMERICA, INC.", "regionCode": "US" }
+    {
+      "wmi": "WDD",
+      "manufacturerName": "MERCEDES-BENZ CARS",
+      "regionCode": "DE"
+    },
+    {
+      "wmi": "WDC",
+      "manufacturerName": "MERCEDES-BENZ CARS",
+      "regionCode": "DE"
+    },
+    {
+      "wmi": "W1K",
+      "manufacturerName": "MERCEDES-BENZ CARS",
+      "regionCode": "DE"
+    },
+    {
+      "wmi": "W1N",
+      "manufacturerName": "MERCEDES-BENZ, AG",
+      "regionCode": "DE"
+    },
+    {
+      "wmi": "4JG",
+      "manufacturerName": "MERCEDES-BENZ OF NORTH AMERICA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "55S",
+      "manufacturerName": "MERCEDES-BENZ CARS",
+      "regionCode": "US"
+    }
   ],
   "patterns": [
     {
@@ -26,6 +52,51 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:W1KZF8DB5MA000001;make=MERCEDES-BENZ;model=E-Class;year=2021"
+    },
+    {
+      "pattern": "ZF4",
+      "modelCode": "ECLASS",
+      "generationCode": "W213",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDDZF4KB0HA000001;make=MERCEDES-BENZ;model=E-Class;year=2017"
+    },
+    {
+      "pattern": "WF4",
+      "modelCode": "CCLASS",
+      "generationCode": "W205",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:55SWF4KB0FU000001;make=MERCEDES-BENZ;model=C-Class;year=2015"
+    },
+    {
+      "pattern": "AF4",
+      "modelCode": "CCLASS",
+      "generationCode": "W206",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1KAF4GB0NR000001;make=MERCEDES-BENZ;model=C-Class;year=2022"
+    },
+    {
+      "pattern": "0G4",
+      "modelCode": "GLC",
+      "generationCode": "X253",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDC0G4KB0JF000001;make=MERCEDES-BENZ;model=GLC-Class;year=2018"
+    },
+    {
+      "pattern": "0G8",
+      "modelCode": "GLC",
+      "generationCode": "X253",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1N0G8DB0MA000001;make=MERCEDES-BENZ;model=GLC-Class;year=2021"
     }
   ]
 }

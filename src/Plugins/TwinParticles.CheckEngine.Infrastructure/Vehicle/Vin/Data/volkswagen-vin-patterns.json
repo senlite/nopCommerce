@@ -3,10 +3,36 @@
   "makeCode": "VOLKSWAGEN",
   "description": "H1.6a Volkswagen WMIs from NHTSA GetWMIsForManufacturer/volkswagen. VDS prefixes only from DecodeVinValues.",
   "wmis": [
-    { "wmi": "WVW", "manufacturerName": "VOLKSWAGEN AG", "regionCode": "DE" },
-    { "wmi": "WVG", "manufacturerName": "VOLKSWAGEN AG", "regionCode": "DE" },
-    { "wmi": "1VW", "manufacturerName": "VOLKSWAGEN GROUP OF AMERICA, INC.", "regionCode": "US" },
-    { "wmi": "3VW", "manufacturerName": "VOLKSWAGEN DE MEXICO SA DE CV", "regionCode": "MX" }
+    {
+      "wmi": "WVW",
+      "manufacturerName": "VOLKSWAGEN AG",
+      "regionCode": "DE"
+    },
+    {
+      "wmi": "WVG",
+      "manufacturerName": "VOLKSWAGEN AG",
+      "regionCode": "DE"
+    },
+    {
+      "wmi": "1VW",
+      "manufacturerName": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1V2",
+      "manufacturerName": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "3VW",
+      "manufacturerName": "VOLKSWAGEN DE MEXICO SA DE CV",
+      "regionCode": "MX"
+    },
+    {
+      "wmi": "3VV",
+      "manufacturerName": "VOLKSWAGEN DE MEXICO SA DE CV",
+      "regionCode": "MX"
+    }
   ],
   "patterns": [
     {
@@ -17,6 +43,42 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:3VW2B7AJ9EM000001;make=VOLKSWAGEN;model=Jetta;year=2014"
+    },
+    {
+      "pattern": "2K7",
+      "modelCode": "JETTA",
+      "generationCode": "MK6",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VW2K7AJ4EM000001;make=VOLKSWAGEN;model=Jetta;year=2014"
+    },
+    {
+      "pattern": "0B7",
+      "modelCode": "TIGUAN",
+      "generationCode": "MK2",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VV0B7AX0KM000001;make=VOLKSWAGEN;model=Tiguan;year=2019"
+    },
+    {
+      "pattern": "3B7",
+      "modelCode": "TIGUAN",
+      "generationCode": "MK2",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VV3B7AX0LM000001;make=VOLKSWAGEN;model=Tiguan;year=2020"
+    },
+    {
+      "pattern": "BR2",
+      "modelCode": "ATLAS",
+      "generationCode": "CA1",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1V2BR2CA0KC000001;make=VOLKSWAGEN;model=Atlas;year=2019"
     }
   ]
 }

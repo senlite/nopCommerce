@@ -42,6 +42,9 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — top-10 brands slice 2 (H1.6a, v0.97.0):** deeper flagship trees (Camry/RAV4/CR-V/
+  Explorer/C-Class and peers), EN/AR configuration aliases for VIN labels, extra NHTSA WMIs,
+  and 73 documented non-BMW VDS prefixes. Same-VDS generations disambiguate on model year.
 - **Software — top-10 brands besides BMW (H1.6a, v0.96.0):** Toyota, Volkswagen, Honda,
   Hyundai, Ford, Mercedes-Benz, Nissan, Kia and Chevrolet seed as catalog data (WMIs from
   NHTSA vPIC `GetWMIsForManufacturer`, minimal vehicle trees, VDS prefixes only when

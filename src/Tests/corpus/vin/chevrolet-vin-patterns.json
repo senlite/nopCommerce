@@ -3,11 +3,36 @@
   "makeCode": "CHEVROLET",
   "description": "H1.6a Chevrolet-relevant GM WMIs from NHTSA GetWMIsForManufacturer/general motors plus the documented 3GN sample VIN. VDS prefixes only from DecodeVinValues.",
   "wmis": [
-    { "wmi": "1G1", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "US" },
-    { "wmi": "1GC", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "US" },
-    { "wmi": "1GN", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "US" },
-    { "wmi": "2G1", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "CA" },
-    { "wmi": "3GN", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "MX" }
+    {
+      "wmi": "1G1",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1GC",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1GN",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "2G1",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "CA"
+    },
+    {
+      "wmi": "2GN",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "CA"
+    },
+    {
+      "wmi": "3GN",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "MX"
+    }
   ],
   "patterns": [
     {
@@ -24,7 +49,7 @@
       "modelCode": "MALIBU",
       "generationCode": "MALIBU9",
       "engineCode": null,
-      "confidence": 0.90,
+      "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:1G1ZD5ST1JF000001;make=CHEVROLET;model=Malibu;year=2018"
     },
@@ -36,6 +61,51 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:1GNSKCKC0HR000001;make=CHEVROLET;model=Tahoe;year=2017"
+    },
+    {
+      "pattern": "VKR",
+      "modelCode": "SILVERADO",
+      "generationCode": "K2XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCVKREC7EZ000001;make=CHEVROLET;model=Silverado;year=2014"
+    },
+    {
+      "pattern": "AXK",
+      "modelCode": "EQUINOX",
+      "generationCode": "D2XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2GNAXKEV4J6000001;make=CHEVROLET;model=Equinox;year=2018"
+    },
+    {
+      "pattern": "BE5",
+      "modelCode": "CRUZE",
+      "generationCode": "D2JC",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1BE5SM9H7000001;make=CHEVROLET;model=Cruze;year=2017"
+    },
+    {
+      "pattern": "CJN",
+      "modelCode": "TRAX",
+      "generationCode": "T300",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3GNCJNSB0JL000001;make=CHEVROLET;model=Trax;year=2018"
+    },
+    {
+      "pattern": "FY6",
+      "modelCode": "BOLT",
+      "generationCode": "BEV2",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1FY6S07K4000001;make=CHEVROLET;model=Bolt EV;year=2019"
     }
   ]
 }
