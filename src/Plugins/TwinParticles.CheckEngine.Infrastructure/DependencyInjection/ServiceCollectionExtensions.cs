@@ -107,6 +107,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVehicleAdminRepository, SqlVehicleAdminRepository>();
         services.AddScoped<IVinSupportRepository, SqlVinSupportRepository>();
         services.AddScoped<BmwVinConfigurationResolver>();
+        services.AddScoped<VinPatternSeedLoader>();
         services.AddScoped<BmwVinPatternSeedLoader>();
         services.AddSingleton<IVinPrivacyService, VinPrivacyService>();
         services.AddSingleton(_ => VinDecodeOptions.Current);
@@ -115,9 +116,21 @@ public static class ServiceCollectionExtensions
             var catalog = BmwVinPatternCatalog.LoadAsync(CancellationToken.None).GetAwaiter().GetResult();
             return new BmwVinWmiAllowList(catalog.Wmis.Select(wmi => wmi.Wmi));
         });
-        services.AddScoped<IVehicleSeedLoader, BmwReferenceVehicleSeedLoader>();
+        services.AddSingleton(provider =>
+        {
+            var catalogs = VinPatternCatalog.LoadAllAsync(CancellationToken.None).GetAwaiter().GetResult();
+            var wmis = catalogs
+                .Where(catalog => !VinPatternCatalog.IsBmw(catalog))
+                .SelectMany(catalog => catalog.Wmis)
+                .Select(wmi => wmi.Wmi);
+            return new CatalogVinWmiAllowList(wmis);
+        });
+        services.AddScoped<BmwReferenceVehicleSeedLoader>();
+        services.AddScoped<TopBrandReferenceVehicleSeedLoader>();
+        services.AddScoped<IVehicleSeedLoader, CompositeVehicleSeedLoader>();
 
         services.AddScoped<IManufacturerVinDecoder, BmwVinDecoder>();
+        services.AddScoped<IManufacturerVinDecoder, CatalogVinDecoder>();
         services.AddScoped<IVinDecoderRegistry, VinDecoderRegistry>();
         services.AddSingleton<IVinDecodeRateLimiter, InMemoryVinDecodeRateLimiter>();
 

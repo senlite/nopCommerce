@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "makeCode": "TOYOTA",
+  "description": "H1.6a Toyota WMIs from NHTSA GetWMIsForManufacturer/toyota. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "JTD", "manufacturerName": "TOYOTA MOTOR CORPORATION", "regionCode": "JP" },
+    { "wmi": "JTE", "manufacturerName": "TOYOTA MOTOR CORPORATION", "regionCode": "JP" },
+    { "wmi": "4T1", "manufacturerName": "TOYOTA MOTOR MANUFACTURING, KENTUCKY, INC.", "regionCode": "US" },
+    { "wmi": "4T3", "manufacturerName": "TOYOTA MOTOR MANUFACTURING, KENTUCKY, INC.", "regionCode": "US" },
+    { "wmi": "5TD", "manufacturerName": "TOYOTA MOTOR MANUFACTURING, INDIANA, INC.", "regionCode": "US" },
+    { "wmi": "2T1", "manufacturerName": "TOYOTA MOTOR MANUFACTURING CANADA", "regionCode": "CA" }
+  ],
+  "patterns": [
+    {
+      "pattern": "B11",
+      "modelCode": "CAMRY",
+      "generationCode": "XV70",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1B11HK5JU000001;make=TOYOTA;model=Camry;year=2018"
+    },
+    {
+      "pattern": "KN3",
+      "modelCode": "PRIUS",
+      "generationCode": "XW30",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDKN3DU0A0000001;make=TOYOTA;model=Prius;year=2010"
+    }
+  ]
+}

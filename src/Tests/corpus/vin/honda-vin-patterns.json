@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "makeCode": "HONDA",
+  "description": "H1.6a Honda passenger WMIs from NHTSA GetWMIsForManufacturer/honda (motorcycles omitted). VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "JHM", "manufacturerName": "HONDA MOTOR CO., LTD.", "regionCode": "JP" },
+    { "wmi": "1HG", "manufacturerName": "AMERICAN HONDA MOTOR CO., INC.", "regionCode": "US" },
+    { "wmi": "2HG", "manufacturerName": "HONDA OF CANADA MFG.", "regionCode": "CA" },
+    { "wmi": "19X", "manufacturerName": "AMERICAN HONDA MOTOR CO., INC.", "regionCode": "US" }
+  ],
+  "patterns": [
+    {
+      "pattern": "FC2",
+      "modelCode": "CIVIC",
+      "generationCode": "FK",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:19XFC2F59KE000001;make=HONDA;model=Civic;year=2019"
+    },
+    {
+      "pattern": "CM8",
+      "modelCode": "ACCORD",
+      "generationCode": "CM",
+      "engineCode": null,
+      "confidence": 0.90,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1HGCM82633A004352;make=HONDA;model=Accord;year=2003"
+    }
+  ]
+}

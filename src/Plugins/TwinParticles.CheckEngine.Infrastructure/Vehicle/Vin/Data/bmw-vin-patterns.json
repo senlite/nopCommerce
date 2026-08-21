@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "makeCode": "BMW",
   "description": "Curated BMW VDS prefix corpus for Horizon 1 (H1.6). Only NHTSA vPIC- or Check Engine-documented mappings belong here.",
   "wmis": [
     { "wmi": "WBA", "manufacturerName": "BMW AG", "regionCode": "DE" },

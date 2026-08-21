@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "makeCode": "FORD",
+  "description": "H1.6a Ford WMIs from NHTSA GetWMIsForManufacturer/ford. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "1FA", "manufacturerName": "FORD MOTOR COMPANY", "regionCode": "US" },
+    { "wmi": "1FM", "manufacturerName": "FORD MOTOR COMPANY", "regionCode": "US" },
+    { "wmi": "1FT", "manufacturerName": "FORD MOTOR COMPANY", "regionCode": "US" },
+    { "wmi": "3FA", "manufacturerName": "FORD MOTOR COMPANY, MEXICO", "regionCode": "MX" }
+  ],
+  "patterns": [
+    {
+      "pattern": "6P8",
+      "modelCode": "MUSTANG",
+      "generationCode": "S550",
+      "engineCode": null,
+      "confidence": 0.90,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FA6P8TD5M5100001;make=FORD;model=Mustang;year=2021"
+    },
+    {
+      "pattern": "MW1",
+      "modelCode": "F150",
+      "generationCode": "P702",
+      "engineCode": null,
+      "confidence": 0.90,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FTMW1T88MFA00001;make=FORD;model=F-150;year=2021"
+    }
+  ]
+}

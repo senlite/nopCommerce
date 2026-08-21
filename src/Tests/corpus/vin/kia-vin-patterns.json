@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "makeCode": "KIA",
+  "description": "H1.6a Kia WMIs from NHTSA GetWMIsForManufacturer/kia. Shared HATCI passenger WMI 5NP is assigned to Hyundai, not Kia. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "KNA", "manufacturerName": "KIA CORPORATION", "regionCode": "KR" },
+    { "wmi": "KND", "manufacturerName": "KIA CORPORATION", "regionCode": "KR" },
+    { "wmi": "5XY", "manufacturerName": "KIA GEORGIA, INC", "regionCode": "US" },
+    { "wmi": "5XX", "manufacturerName": "KIA GEORGIA, INC", "regionCode": "US" }
+  ],
+  "patterns": [
+    {
+      "pattern": "KT3",
+      "modelCode": "SORENTO",
+      "generationCode": "XM",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XYKT3A12CG000000;make=KIA;model=Sorento;year=2012"
+    },
+    {
+      "pattern": "FX4",
+      "modelCode": "FORTE",
+      "generationCode": "YD",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNAFX4A64E5000001;make=KIA;model=Forte;year=2014"
+    }
+  ]
+}

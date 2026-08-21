@@ -167,6 +167,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | done | Incremental priority seed covers 10 models / 32 generations / 284 current configurations; live upgrade preserved 10 legacy leaves for 294 total, all with unique fingerprints and EN/AR aliases. Idempotency and operator preservation are proven. The reference-scale SQL rehearsal successfully loaded 40,000 fully qualified configurations alongside 2,000,000 claims with required indexes and no schema redesign, then rolled back to zero synthetic rows |
 | H1.5 | Support make/model merge and archive while preserving fitment and audit history | done | Make/model/generation archive + atomic merge are implemented with stable descendant ids, aliases/cache/audit and guarded hard delete. Generation merge reparents bodies and configurations onto the survivor, so fitment claims (keyed on stable configuration ids) reassign to the survivor per FR-112/AC-012.1; body-code conflicts and cross-model merges are rejected atomically |
 | H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | done | `TP_CE_VinWmi` / `TP_CE_VinPattern` schema, `IVinSupportRepository`, embedded curated BMW corpus (`bmw-vin-patterns.json`: 5 WMIs, 9 NHTSA/Check Engine-documented VDS prefixes), ISO position-10 model-year decode, and fingerprint-based configuration resolver replace the two-entry hard-coded map. `BmwVinDecoder` loads patterns from SQL/seed data only; corpus contract tests prove every pattern resolves against the H1.4 reference hierarchy. OEM-complete VDS coverage for all 32 generations still depends on externally verified patterns — none are fabricated |
+| H1.6a | Support the other top-10 passenger brands besides BMW (WMI, hierarchy, documented VDS only) | in-progress | **Brands (BMW already shipped in H1.4/H1.6):** Toyota, Volkswagen, Honda, Hyundai, Ford, Mercedes-Benz, Nissan, Kia, Chevrolet. Domain stays brand-agnostic (`FR-204`, `INV-013`); each make is catalog JSON plus the existing `TP_CE_*` tables. **Slice 1 (this change):** NHTSA vPIC `GetWMIsForManufacturer` WMI allow-lists; a data-driven `CatalogVinDecoder` so a known non-BMW WMI fails closed as `vin.decode_failed` instead of `vin.wmi_unknown`; a minimal Make/Model/Generation/Config tree per make (enough leaves for any curated VDS row to resolve); VDS 3-char prefixes **only** when NHTSA `DecodeVinValues` returned Make+Model+ModelYear for that VIN. **Later slices:** deeper trees and more provenanced VDS rows — never fabricated OEM-complete maps |
 | H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | done | Storefront picker modal handles HTTP 409 and guest `/check-engine/vin/decode` disambiguation with configuration labels. `VinDecodeApplicationService` enforces the 0.85 auto-accept confidence threshold (single low-confidence candidates require disambiguation). Telemetry and `ICheckEngineAuditService` entries record `vinLast4`/`vinHash` only — never the full 17-character VIN (`FR-212`). VIN search lane requires `SingleMatch` before fitment projection |
 | H1.8 | Validate OEM normalization/supersession against 500,000 entries | done | Write-time supersession safety now enforces FR-224/225 (directed, single-successor, never bidirectional or cyclic) with conflict responses; bulk upsert keys on (ManufacturerId, NormalizedNumber) via SQL MERGE per FR-236. Live SQL Server benchmark at 500,000 synthetic entries: manufacturer-qualified normalized lookup avg 0.016 ms / max 4.07 ms, and MERGE upsert proven insert+update with unique-key idempotency |
 | H1.9 | Build and pass the fitment accuracy corpus Must set at 100% | done | 209 cases in `src/Tests/corpus/fitment`; Must set passes at 100% and runs in the Check Engine suite |
@@ -324,18 +325,23 @@ Work follows dependency order rather than skipping to later roadmap features.
 
 **Autonomously completable (code + local/live verification):**
 
+- **H1.6a top-10 brands besides BMW** is the active vehicle/VIN workstream (plugin 0.96.0 slice:
+  documented WMIs, minimal hierarchies, NHTSA-provenanced VDS prefixes only). Expand catalogs
+  the same way — add JSON, never manufacturer literals in Domain.
 - Remaining operator/storefront localization of hardcoded JS/view English is at plugin 0.95.0
   (portal/dashboard `licence.read_only`, import choose-file/uploading/started). 0.94.0 shipped
   licence state/reason codes and Configure AI disclosure PascalCase bind.
 - **G2 coverage gate is in tree:** coverlet scoped to Domain/Application with a hard fail below
-  80%/70%. Remaining autonomously completable: G6 a11y/RTL/CWV evidence; G4 remaining performance
-  evidence.
-- All H1 code items are `done` except **H1.35** (external security assessment). Operator-run
-  evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP field-mapping sign-off) is documented
-  in the scripts above but does not block closing the implementation gap.
+  80%/70%. Remaining autonomously completable after H1.6a slice 1: G6 a11y/RTL/CWV evidence;
+  G4 remaining performance evidence.
+- All other H1 code items are `done` except **H1.35** (external security assessment) and **H1.6a**
+  (in progress). Operator-run evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP
+  field-mapping sign-off) is documented in the scripts above but does not block closing the
+  implementation gap.
 
 **Blocked on external authorities (cannot be closed by code alone):**
 
 - H1.35 / G8 security assessment sign-off; G11 production licence vendor signing key; G7
   product-owner sign-off; G12 Marketplace submission.
-- H1.6 / H1.7 further BMW VDS→generation patterns beyond the curated NHTSA/Check Engine corpus (must not be fabricated for a safety-relevant decode).
+- H1.6 / H1.6a / H1.7 further VDS→generation patterns beyond the curated NHTSA/Check Engine
+  corpus (must not be fabricated for a safety-relevant decode).

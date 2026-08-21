@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "makeCode": "NISSAN",
+  "description": "H1.6a Nissan WMIs from NHTSA GetWMIsForManufacturer/nissan. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "JN1", "manufacturerName": "NISSAN MOTOR COMPANY, LTD", "regionCode": "JP" },
+    { "wmi": "1N4", "manufacturerName": "NISSAN NORTH AMERICA, INC.", "regionCode": "US" },
+    { "wmi": "1N6", "manufacturerName": "NISSAN NORTH AMERICA, INC.", "regionCode": "US" },
+    { "wmi": "3N1", "manufacturerName": "NISSAN MEXICANA, S.A. DE C.V.", "regionCode": "MX" }
+  ],
+  "patterns": [
+    {
+      "pattern": "AL3",
+      "modelCode": "ALTIMA",
+      "generationCode": "L33",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1N4AL3AP1DC000001;make=NISSAN;model=Altima;year=2013"
+    },
+    {
+      "pattern": "AZ4",
+      "modelCode": "Z370",
+      "generationCode": "Z34",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN1AZ4EH8DM000001;make=NISSAN;model=370Z;year=2013"
+    }
+  ]
+}

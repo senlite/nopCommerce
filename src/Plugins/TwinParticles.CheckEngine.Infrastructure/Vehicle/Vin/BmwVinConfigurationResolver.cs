@@ -24,12 +24,13 @@ public sealed class BmwVinConfigurationResolver
         CancellationToken cancellationToken)
     {
         var makes = await _vehicleRepository.GetMakesAsync(cancellationToken);
-        var bmwMake = makes.FirstOrDefault(make => make.Code == BmwReferenceCatalog.MakeCode && make.IsActive);
-        if (bmwMake is null)
+        var make = makes.FirstOrDefault(candidate => candidate.IsActive && candidate.Id == pattern.MakeId)
+                   ?? makes.FirstOrDefault(candidate => candidate.IsActive && candidate.Code == BmwReferenceCatalog.MakeCode);
+        if (make is null)
             return [];
 
         var models = (await _vehicleRepository.GetModelsAsync(cancellationToken))
-            .Where(model => model.MakeId == bmwMake.Id && model.IsActive && model.Code == pattern.ModelCode)
+            .Where(model => model.MakeId == make.Id && model.IsActive && model.Code == pattern.ModelCode)
             .ToList();
         if (models.Count == 0)
             return [];

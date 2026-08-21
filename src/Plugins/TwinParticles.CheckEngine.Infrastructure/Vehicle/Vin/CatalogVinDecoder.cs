@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,14 +9,14 @@ using VinInfrastructure = TwinParticles.CheckEngine.Infrastructure.Vehicle.Vin;
 
 namespace TwinParticles.CheckEngine.Infrastructure.Vehicle.VinDecoders;
 
-public sealed class BmwVinDecoder : IManufacturerVinDecoder
+public sealed class CatalogVinDecoder : IManufacturerVinDecoder
 {
-    private readonly VinInfrastructure.BmwVinWmiAllowList _wmiAllowList;
+    private readonly VinInfrastructure.CatalogVinWmiAllowList _wmiAllowList;
     private readonly IVinSupportRepository _vinRepository;
     private readonly VinInfrastructure.BmwVinConfigurationResolver _configurationResolver;
 
-    public BmwVinDecoder(
-        VinInfrastructure.BmwVinWmiAllowList wmiAllowList,
+    public CatalogVinDecoder(
+        VinInfrastructure.CatalogVinWmiAllowList wmiAllowList,
         IVinSupportRepository vinRepository,
         VinInfrastructure.BmwVinConfigurationResolver configurationResolver)
     {

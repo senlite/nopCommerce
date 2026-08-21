@@ -1,0 +1,350 @@
+{
+  "version": 1,
+  "description": "Minimal H1.6a vehicle trees for the top-10 passenger brands besides BMW. Generations exist so NHTSA-documented VDS rows can resolve; they are not an OEM-complete catalogue.",
+  "catalogs": [
+    {
+      "makeCode": "TOYOTA",
+      "makeName": "Toyota",
+      "makeArabicAlias": "تويوتا",
+      "models": [
+        {
+          "code": "CAMRY",
+          "name": "Camry",
+          "arabicAlias": "كامري",
+          "generations": [
+            {
+              "code": "XV70",
+              "name": "XV70",
+              "startYear": 2018,
+              "endYear": 2024,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2500", "name": "2.5L Petrol", "fuelType": "Petrol", "displacementCc": 2487, "powerHp": 203 }],
+              "trims": [{ "trimName": "LE", "bodyCode": "SEDAN", "engineCode": "I4-2500" }]
+            }
+          ]
+        },
+        {
+          "code": "PRIUS",
+          "name": "Prius",
+          "arabicAlias": "بريوس",
+          "generations": [
+            {
+              "code": "XW30",
+              "name": "XW30",
+              "startYear": 2010,
+              "endYear": 2015,
+              "bodies": [{ "code": "HATCH", "name": "Hatchback", "doors": 5 }],
+              "engines": [{ "code": "I4-1800-HYB", "name": "1.8L Hybrid", "fuelType": "Hybrid", "displacementCc": 1798, "powerHp": 134 }],
+              "trims": [{ "trimName": "Base", "bodyCode": "HATCH", "engineCode": "I4-1800-HYB" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "VOLKSWAGEN",
+      "makeName": "Volkswagen",
+      "makeArabicAlias": "فولكسفاغن",
+      "models": [
+        {
+          "code": "JETTA",
+          "name": "Jetta",
+          "arabicAlias": "جيتا",
+          "generations": [
+            {
+              "code": "MK6",
+              "name": "Mk6",
+              "startYear": 2011,
+              "endYear": 2018,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2000", "name": "2.0L Petrol", "fuelType": "Petrol", "displacementCc": 1984, "powerHp": 170 }],
+              "trims": [{ "trimName": "SE", "bodyCode": "SEDAN", "engineCode": "I4-2000" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "HONDA",
+      "makeName": "Honda",
+      "makeArabicAlias": "هوندا",
+      "models": [
+        {
+          "code": "CIVIC",
+          "name": "Civic",
+          "arabicAlias": "سيفيك",
+          "generations": [
+            {
+              "code": "FK",
+              "name": "10th generation",
+              "startYear": 2016,
+              "endYear": 2021,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2000", "name": "2.0L Petrol", "fuelType": "Petrol", "displacementCc": 1996, "powerHp": 158 }],
+              "trims": [{ "trimName": "LX", "bodyCode": "SEDAN", "engineCode": "I4-2000" }]
+            }
+          ]
+        },
+        {
+          "code": "ACCORD",
+          "name": "Accord",
+          "arabicAlias": "أكورد",
+          "generations": [
+            {
+              "code": "CM",
+              "name": "7th generation",
+              "startYear": 2003,
+              "endYear": 2007,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2400", "name": "2.4L Petrol", "fuelType": "Petrol", "displacementCc": 2354, "powerHp": 160 }],
+              "trims": [{ "trimName": "LX", "bodyCode": "SEDAN", "engineCode": "I4-2400" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "HYUNDAI",
+      "makeName": "Hyundai",
+      "makeArabicAlias": "هيونداي",
+      "models": [
+        {
+          "code": "ELANTRA",
+          "name": "Elantra",
+          "arabicAlias": "النترا",
+          "generations": [
+            {
+              "code": "AD",
+              "name": "AD",
+              "startYear": 2016,
+              "endYear": 2020,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2000", "name": "2.0L Petrol", "fuelType": "Petrol", "displacementCc": 1999, "powerHp": 147 }],
+              "trims": [{ "trimName": "SE", "bodyCode": "SEDAN", "engineCode": "I4-2000" }]
+            }
+          ]
+        },
+        {
+          "code": "SONATA",
+          "name": "Sonata",
+          "arabicAlias": "سوناتا",
+          "generations": [
+            {
+              "code": "LF",
+              "name": "LF",
+              "startYear": 2015,
+              "endYear": 2019,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2400", "name": "2.4L Petrol", "fuelType": "Petrol", "displacementCc": 2359, "powerHp": 185 }],
+              "trims": [{ "trimName": "SE", "bodyCode": "SEDAN", "engineCode": "I4-2400" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "FORD",
+      "makeName": "Ford",
+      "makeArabicAlias": "فورد",
+      "models": [
+        {
+          "code": "MUSTANG",
+          "name": "Mustang",
+          "arabicAlias": "موستانج",
+          "generations": [
+            {
+              "code": "S550",
+              "name": "S550",
+              "startYear": 2015,
+              "endYear": 2023,
+              "bodies": [{ "code": "COUPE", "name": "Coupe", "doors": 2 }],
+              "engines": [{ "code": "I4-2300", "name": "2.3L EcoBoost", "fuelType": "Petrol", "displacementCc": 2300, "powerHp": 310 }],
+              "trims": [{ "trimName": "EcoBoost", "bodyCode": "COUPE", "engineCode": "I4-2300" }]
+            }
+          ]
+        },
+        {
+          "code": "F150",
+          "name": "F-150",
+          "arabicAlias": "إف-150",
+          "generations": [
+            {
+              "code": "P702",
+              "name": "P702",
+              "startYear": 2021,
+              "endYear": null,
+              "bodies": [{ "code": "PICKUP", "name": "Pickup", "doors": 4 }],
+              "engines": [{ "code": "V6-3500", "name": "3.5L EcoBoost", "fuelType": "Petrol", "displacementCc": 3496, "powerHp": 375 }],
+              "trims": [{ "trimName": "XLT", "bodyCode": "PICKUP", "engineCode": "V6-3500" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "MERCEDES",
+      "makeName": "Mercedes-Benz",
+      "makeArabicAlias": "مرسيدس-بنز",
+      "models": [
+        {
+          "code": "ECLASS",
+          "name": "E-Class",
+          "arabicAlias": "الفئة E",
+          "generations": [
+            {
+              "code": "W212",
+              "name": "W212",
+              "startYear": 2010,
+              "endYear": 2016,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2000", "name": "2.0L Petrol", "fuelType": "Petrol", "displacementCc": 1991, "powerHp": 211 }],
+              "trims": [{ "trimName": "E350", "bodyCode": "SEDAN", "engineCode": "I4-2000" }]
+            },
+            {
+              "code": "W213",
+              "name": "W213",
+              "startYear": 2017,
+              "endYear": 2023,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2000", "name": "2.0L Petrol", "fuelType": "Petrol", "displacementCc": 1991, "powerHp": 255 }],
+              "trims": [{ "trimName": "E350", "bodyCode": "SEDAN", "engineCode": "I4-2000" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "NISSAN",
+      "makeName": "Nissan",
+      "makeArabicAlias": "نيسان",
+      "models": [
+        {
+          "code": "ALTIMA",
+          "name": "Altima",
+          "arabicAlias": "التيما",
+          "generations": [
+            {
+              "code": "L33",
+              "name": "L33",
+              "startYear": 2013,
+              "endYear": 2018,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2500", "name": "2.5L Petrol", "fuelType": "Petrol", "displacementCc": 2488, "powerHp": 182 }],
+              "trims": [{ "trimName": "S", "bodyCode": "SEDAN", "engineCode": "I4-2500" }]
+            }
+          ]
+        },
+        {
+          "code": "Z370",
+          "name": "370Z",
+          "arabicAlias": "370 زد",
+          "generations": [
+            {
+              "code": "Z34",
+              "name": "Z34",
+              "startYear": 2009,
+              "endYear": 2020,
+              "bodies": [{ "code": "COUPE", "name": "Coupe", "doors": 2 }],
+              "engines": [{ "code": "V6-3700", "name": "3.7L Petrol", "fuelType": "Petrol", "displacementCc": 3696, "powerHp": 332 }],
+              "trims": [{ "trimName": "Sport", "bodyCode": "COUPE", "engineCode": "V6-3700" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "KIA",
+      "makeName": "Kia",
+      "makeArabicAlias": "كيا",
+      "models": [
+        {
+          "code": "SORENTO",
+          "name": "Sorento",
+          "arabicAlias": "سورينتو",
+          "generations": [
+            {
+              "code": "XM",
+              "name": "XM",
+              "startYear": 2010,
+              "endYear": 2015,
+              "bodies": [{ "code": "SAV", "name": "SUV", "doors": 5 }],
+              "engines": [{ "code": "I4-2400", "name": "2.4L Petrol", "fuelType": "Petrol", "displacementCc": 2359, "powerHp": 175 }],
+              "trims": [{ "trimName": "LX", "bodyCode": "SAV", "engineCode": "I4-2400" }]
+            }
+          ]
+        },
+        {
+          "code": "FORTE",
+          "name": "Forte",
+          "arabicAlias": "فورتي",
+          "generations": [
+            {
+              "code": "YD",
+              "name": "YD",
+              "startYear": 2014,
+              "endYear": 2018,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-2000", "name": "2.0L Petrol", "fuelType": "Petrol", "displacementCc": 1999, "powerHp": 145 }],
+              "trims": [{ "trimName": "LX", "bodyCode": "SEDAN", "engineCode": "I4-2000" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "makeCode": "CHEVROLET",
+      "makeName": "Chevrolet",
+      "makeArabicAlias": "شيفروليه",
+      "models": [
+        {
+          "code": "HHR",
+          "name": "HHR",
+          "arabicAlias": "إتش إتش آر",
+          "generations": [
+            {
+              "code": "HHR1",
+              "name": "First generation",
+              "startYear": 2006,
+              "endYear": 2011,
+              "bodies": [{ "code": "SAV", "name": "Wagon", "doors": 5 }],
+              "engines": [{ "code": "I4-2200", "name": "2.2L Petrol", "fuelType": "Petrol", "displacementCc": 2198, "powerHp": 143 }],
+              "trims": [{ "trimName": "LS", "bodyCode": "SAV", "engineCode": "I4-2200" }]
+            }
+          ]
+        },
+        {
+          "code": "MALIBU",
+          "name": "Malibu",
+          "arabicAlias": "ماليبو",
+          "generations": [
+            {
+              "code": "MALIBU9",
+              "name": "Ninth generation",
+              "startYear": 2016,
+              "endYear": 2023,
+              "bodies": [{ "code": "SEDAN", "name": "Sedan", "doors": 4 }],
+              "engines": [{ "code": "I4-1500", "name": "1.5L Turbo Petrol", "fuelType": "Petrol", "displacementCc": 1490, "powerHp": 160 }],
+              "trims": [{ "trimName": "LT", "bodyCode": "SEDAN", "engineCode": "I4-1500" }]
+            }
+          ]
+        },
+        {
+          "code": "TAHOE",
+          "name": "Tahoe",
+          "arabicAlias": "تاهو",
+          "generations": [
+            {
+              "code": "K2XX",
+              "name": "K2XX",
+              "startYear": 2015,
+              "endYear": 2020,
+              "bodies": [{ "code": "SAV", "name": "SUV", "doors": 5 }],
+              "engines": [{ "code": "V8-5300", "name": "5.3L Petrol", "fuelType": "Petrol", "displacementCc": 5328, "powerHp": 355 }],
+              "trims": [{ "trimName": "LT", "bodyCode": "SAV", "engineCode": "V8-5300" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

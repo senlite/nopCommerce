@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "makeCode": "HYUNDAI",
+  "description": "H1.6a Hyundai WMIs from NHTSA GetWMIsForManufacturer/hyundai. VDS prefixes only from DecodeVinValues. Shared HATCI codes used for Hyundai passenger cars are assigned here, not to Kia.",
+  "wmis": [
+    { "wmi": "KMH", "manufacturerName": "HYUNDAI MOTOR CO", "regionCode": "KR" },
+    { "wmi": "5NM", "manufacturerName": "HYUNDAI MOTOR MANUFACTURING ALABAMA LLC (HMMA)", "regionCode": "US" },
+    { "wmi": "5NP", "manufacturerName": "HYUNDAI-KIA AMERICA TECHNICAL CENTER INC (HATCI)", "regionCode": "US" }
+  ],
+  "patterns": [
+    {
+      "pattern": "D84",
+      "modelCode": "ELANTRA",
+      "generationCode": "AD",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHD84LF5HU000001;make=HYUNDAI;model=Elantra;year=2017"
+    },
+    {
+      "pattern": "E34",
+      "modelCode": "SONATA",
+      "generationCode": "LF",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NPE34AF4HH000001;make=HYUNDAI;model=Sonata;year=2017"
+    }
+  ]
+}

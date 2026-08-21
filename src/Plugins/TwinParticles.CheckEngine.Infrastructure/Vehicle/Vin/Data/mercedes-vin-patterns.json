@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "makeCode": "MERCEDES",
+  "description": "H1.6a Mercedes-Benz WMIs from NHTSA GetWMIsForManufacturer/mercedes-benz. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "WDD", "manufacturerName": "MERCEDES-BENZ CARS", "regionCode": "DE" },
+    { "wmi": "WDC", "manufacturerName": "MERCEDES-BENZ CARS", "regionCode": "DE" },
+    { "wmi": "W1K", "manufacturerName": "MERCEDES-BENZ CARS", "regionCode": "DE" },
+    { "wmi": "4JG", "manufacturerName": "MERCEDES-BENZ OF NORTH AMERICA, INC.", "regionCode": "US" }
+  ],
+  "patterns": [
+    {
+      "pattern": "HF8",
+      "modelCode": "ECLASS",
+      "generationCode": "W212",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDDHF8HB6AA000001;make=MERCEDES-BENZ;model=E-Class;year=2010"
+    },
+    {
+      "pattern": "ZF8",
+      "modelCode": "ECLASS",
+      "generationCode": "W213",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1KZF8DB5MA000001;make=MERCEDES-BENZ;model=E-Class;year=2021"
+    }
+  ]
+}

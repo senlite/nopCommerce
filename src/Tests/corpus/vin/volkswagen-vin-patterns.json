@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "makeCode": "VOLKSWAGEN",
+  "description": "H1.6a Volkswagen WMIs from NHTSA GetWMIsForManufacturer/volkswagen. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "WVW", "manufacturerName": "VOLKSWAGEN AG", "regionCode": "DE" },
+    { "wmi": "WVG", "manufacturerName": "VOLKSWAGEN AG", "regionCode": "DE" },
+    { "wmi": "1VW", "manufacturerName": "VOLKSWAGEN GROUP OF AMERICA, INC.", "regionCode": "US" },
+    { "wmi": "3VW", "manufacturerName": "VOLKSWAGEN DE MEXICO SA DE CV", "regionCode": "MX" }
+  ],
+  "patterns": [
+    {
+      "pattern": "2B7",
+      "modelCode": "JETTA",
+      "generationCode": "MK6",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3VW2B7AJ9EM000001;make=VOLKSWAGEN;model=Jetta;year=2014"
+    }
+  ]
+}

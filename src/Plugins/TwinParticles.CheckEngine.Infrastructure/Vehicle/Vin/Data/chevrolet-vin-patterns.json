@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "makeCode": "CHEVROLET",
+  "description": "H1.6a Chevrolet-relevant GM WMIs from NHTSA GetWMIsForManufacturer/general motors plus the documented 3GN sample VIN. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    { "wmi": "1G1", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "US" },
+    { "wmi": "1GC", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "US" },
+    { "wmi": "1GN", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "US" },
+    { "wmi": "2G1", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "CA" },
+    { "wmi": "3GN", "manufacturerName": "GENERAL MOTORS LLC", "regionCode": "MX" }
+  ],
+  "patterns": [
+    {
+      "pattern": "DA1",
+      "modelCode": "HHR",
+      "generationCode": "HHR1",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3GNDA13D76S000000;make=CHEVROLET;model=HHR;year=2006"
+    },
+    {
+      "pattern": "ZD5",
+      "modelCode": "MALIBU",
+      "generationCode": "MALIBU9",
+      "engineCode": null,
+      "confidence": 0.90,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1ZD5ST1JF000001;make=CHEVROLET;model=Malibu;year=2018"
+    },
+    {
+      "pattern": "SKC",
+      "modelCode": "TAHOE",
+      "generationCode": "K2XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSKCKC0HR000001;make=CHEVROLET;model=Tahoe;year=2017"
+    }
+  ]
+}

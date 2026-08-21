@@ -42,6 +42,12 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — top-10 brands besides BMW (H1.6a, v0.96.0):** Toyota, Volkswagen, Honda,
+  Hyundai, Ford, Mercedes-Benz, Nissan, Kia and Chevrolet seed as catalog data (WMIs from
+  NHTSA vPIC `GetWMIsForManufacturer`, minimal vehicle trees, VDS prefixes only when
+  `DecodeVinValues` returned Make+Model+year). A data-driven `CatalogVinDecoder` covers
+  those WMIs so they fail closed as `vin.decode_failed` instead of `vin.wmi_unknown`. BMW
+  remains the Horizon 1 exemplar decoder (`FR-204`, `FR-211`).
 - **Engineering — G2 coverage gate:** architecture tests collect coverlet cobertura for
   `TwinParticles.CheckEngine.Domain` / `.Application` only. CI and `build-checkengine.sh` fail when
   Domain line coverage is below 80% (`NFR-058`) or Application below 70% (`NFR-059`).
