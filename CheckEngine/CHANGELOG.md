@@ -42,6 +42,10 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — remaining operator/storefront localization (v0.93.0):** licence panel toasts, Yes/No
+  entitlement cells, Configure AI provider option labels, storefront unmatched/mode/degraded copy,
+  and admin `licence.read_only` errors now flow through EN/AR locale resources. Remaining Horizon 5
+  billing/OAuth2/legal/.NET 10 work is parked in [EXECUTION-PLAN.md](EXECUTION-PLAN.md).
 - **Software — Horizon 5 control plane (v0.92.0):** tenant registry (database-per-tenant, implicit
   `self` tenant), tenant-qualified fitment cache keys (`FR-1312`), `/api/v1` REST with API keys
   (`FR-1331`, unauthenticated → 401), HMAC webhooks, usage ledger + billing adapter port (`FR-1320`–

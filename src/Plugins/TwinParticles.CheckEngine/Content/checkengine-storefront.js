@@ -44,6 +44,15 @@
     selectHint: 'Choose a vehicle to check whether this part fits.',
     unmatchedLabel: 'VIN not matched yet',
     unmatchedHint: 'We could not map this VIN to a vehicle configuration, so fitment cannot be checked yet.',
+    modeAuto: 'Auto',
+    modeVin: 'VIN',
+    modeOem: 'OEM',
+    modeVehicle: 'Vehicle',
+    modeCategory: 'Category',
+    modeKeyword: 'Keyword',
+    modeNaturalLanguage: 'Natural language',
+    modeSemantic: 'Semantic',
+    searchDegraded: 'degraded',
     fitmentCta: 'Add your vehicle',
     facetsTitle: 'Refine',
     facetCategory: 'Category',
@@ -70,9 +79,18 @@
     recommendFitmentBadge: 'Fits your vehicle'
   };
 
-  var MODE_NAMES = {
-    1: 'Auto', 2: 'VIN', 3: 'OEM', 4: 'Vehicle', 5: 'Category', 6: 'Keyword', 7: 'Natural language', 8: 'Semantic'
-  };
+  function modeNames() {
+    return {
+      1: TEXT.modeAuto,
+      2: TEXT.modeVin,
+      3: TEXT.modeOem,
+      4: TEXT.modeVehicle,
+      5: TEXT.modeCategory,
+      6: TEXT.modeKeyword,
+      7: TEXT.modeNaturalLanguage,
+      8: TEXT.modeSemantic
+    };
+  }
 
   var ICONS = {
     fits: '<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -430,8 +448,8 @@
     var header = '<div class="ce-results__header">' +
       '<span>' + escapeHtml(String(total)) + ' ' + escapeHtml(TEXT.searchResultsCount) + '</span>' +
       '<span class="ce-results__mode">' + escapeHtml(TEXT.searchMode) + ': ' +
-      escapeHtml(MODE_NAMES[modeUsed] || String(modeUsed || '')) +
-      (degraded ? ' · degraded' : '') +
+      escapeHtml(modeNames()[modeUsed] || String(modeUsed || '')) +
+      (degraded ? ' · ' + escapeHtml(TEXT.searchDegraded) : '') +
       '</span></div>';
 
     if (parsedIntentText) {

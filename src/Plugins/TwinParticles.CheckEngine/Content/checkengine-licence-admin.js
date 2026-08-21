@@ -9,15 +9,23 @@
     return undefined;
   }
 
+  function readI18n(root) {
+    if (window.CheckEngineAdmin && typeof CheckEngineAdmin.readI18n === 'function')
+      return CheckEngineAdmin.readI18n(root);
+    var node = root && root.querySelector('[data-ce-i18n]');
+    if (!node) return {};
+    try { return JSON.parse(node.textContent || '{}'); } catch (e) { return {}; }
+  }
+
   function licenceHeaders(token) {
     var headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
     if (token && token.value) headers.RequestVerificationToken = token.value;
     return headers;
   }
 
-  function yn(value) {
-    if (value === true || value === 'true') return 'Yes';
-    if (value === false || value === 'false') return 'No';
+  function yn(value, i18n) {
+    if (value === true || value === 'true') return i18n.yes || 'Yes';
+    if (value === false || value === 'false') return i18n.no || 'No';
     return value == null || value === '' ? '—' : String(value);
   }
 
@@ -26,21 +34,22 @@
     if (el) el.textContent = value == null || value === '' ? '—' : String(value);
   }
 
-  function renderLicence(root, data) {
+  function renderLicence(root, data, i18n) {
     if (!root) return;
     var licence = (data && (data.licence || data.Licence)) || data || {};
     setCell(root, '[data-ce-licence-state]', pick(licence, 'state', 'State'));
-    setCell(root, '[data-ce-licence-active]', yn(pick(licence, 'isActive', 'IsActive')));
+    setCell(root, '[data-ce-licence-active]', yn(pick(licence, 'isActive', 'IsActive'), i18n));
     setCell(root, '[data-ce-licence-tier]', pick(licence, 'tier', 'Tier'));
-    setCell(root, '[data-ce-licence-marketplace]', yn(pick(licence, 'marketplaceModuleEntitlement', 'MarketplaceModuleEntitlement')));
-    setCell(root, '[data-ce-licence-workshop]', yn(pick(licence, 'workshopPortalEntitlement', 'WorkshopPortalEntitlement')));
-    setCell(root, '[data-ce-licence-fleet]', yn(pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement')));
-    setCell(root, '[data-ce-licence-dealer]', yn(pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement')));
+    setCell(root, '[data-ce-licence-marketplace]', yn(pick(licence, 'marketplaceModuleEntitlement', 'MarketplaceModuleEntitlement'), i18n));
+    setCell(root, '[data-ce-licence-workshop]', yn(pick(licence, 'workshopPortalEntitlement', 'WorkshopPortalEntitlement'), i18n));
+    setCell(root, '[data-ce-licence-fleet]', yn(pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement'), i18n));
+    setCell(root, '[data-ce-licence-dealer]', yn(pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement'), i18n));
     setCell(root, '[data-ce-licence-heartbeat]', pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'));
     setCell(root, '[data-ce-licence-reason]', pick(licence, 'reasonCode', 'ReasonCode'));
   }
 
   function initLicencePanel(root) {
+    var i18n = readI18n(root);
     var token = document.querySelector('input[name="__RequestVerificationToken"]');
     var keyEl = root.querySelector('[data-ce-licence-key]');
     var activateBtn = root.querySelector('[data-ce-licence-activate]');
@@ -60,10 +69,10 @@
           return r.json();
         })
         .then(function (data) {
-          renderLicence(root, data);
+          renderLicence(root, data, i18n);
         })
         .catch(function () {
-          setCell(root, '[data-ce-licence-state]', 'Unable to load licence status.');
+          setCell(root, '[data-ce-licence-state]', i18n.loadFailed || 'Unable to load licence status.');
         });
     }
 
@@ -82,11 +91,11 @@
             });
           })
           .then(function (status) {
-            renderLicence(root, status);
-            showAlert('success', 'Licence activated.');
+            renderLicence(root, status, i18n);
+            showAlert('success', i18n.activated || 'Licence activated.');
           })
           .catch(function (err) {
-            showAlert('error', (err && (err.reasonCode || err.errorCode)) || 'Activation failed.');
+            showAlert('error', (err && (err.reasonCode || err.errorCode)) || i18n.activationFailed || 'Activation failed.');
             refreshLicence();
           });
       });
@@ -102,8 +111,8 @@
             return r.json();
           })
           .then(function (status) {
-            renderLicence(root, status);
-            showAlert('success', 'Heartbeat recorded.');
+            renderLicence(root, status, i18n);
+            showAlert('success', i18n.heartbeatRecorded || 'Heartbeat recorded.');
           })
           .catch(refreshLicence);
       });

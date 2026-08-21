@@ -76,9 +76,9 @@
                     </div>
                     <div class="col-md-9">
                         <select asp-for="AiProviderKind" class="form-control">
-                            <option value="1">OpenAI-compatible</option>
-                            <option value="2">Azure OpenAI</option>
-                            <option value="3">Anthropic</option>
+                            <option value="1">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.OpenAiCompatible")</option>
+                            <option value="2">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.AzureOpenAi")</option>
+                            <option value="3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.Anthropic")</option>
                         </select>
                     </div>
                 </div>
@@ -101,8 +101,8 @@
                     <div class="col-md-9">
                         <select asp-for="AiEmbeddingProviderKind" class="form-control">
                             <option value="0">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.SameAsCompletion")</option>
-                            <option value="1">OpenAI-compatible</option>
-                            <option value="2">Azure OpenAI</option>
+                            <option value="1">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.OpenAiCompatible")</option>
+                            <option value="2">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiProviderKind.AzureOpenAi")</option>
                             <option value="3">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Deterministic")</option>
                         </select>
                         <small class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiEmbeddingProviderKind.Hint")</small>
@@ -145,7 +145,7 @@
                     <div class="col-md-9">
                         <nop-editor asp-for="AiPerFeatureDailyTokenCeilings" />
                         <span asp-validation-for="AiPerFeatureDailyTokenCeilings"></span>
-                        <small class="form-text text-muted">import.ai.enrichment=50000;assistant.customer=20000</small>
+                        <small class="form-text text-muted">@T("Plugins.TwinParticles.CheckEngine.Configuration.Fields.AiPerFeatureDailyTokenCeilings.Hint")</small>
                     </div>
                 </div>
                 <div class="form-group row">

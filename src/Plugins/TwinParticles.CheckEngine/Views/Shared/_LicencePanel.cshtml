@@ -1,5 +1,5 @@
 @{
-    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js?v=0.83.0\" defer></script>");
+    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js?v=0.93.0\" defer></script>");
 }
 
 <div class="card card-default" data-ce-licence-panel>
@@ -8,6 +8,14 @@
     </div>
     <div class="card-body">
         <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint")</p>
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            yes = T("Plugins.TwinParticles.CheckEngine.Common.Yes").Text,
+            no = T("Plugins.TwinParticles.CheckEngine.Common.No").Text,
+            activated = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Activated").Text,
+            heartbeatRecorded = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.HeartbeatRecorded").Text,
+            activationFailed = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.ActivationFailed").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Licence.Panel.LoadFailed").Text
+        }))</script>
         <div class="alert alert-info" data-ce-licence-alert hidden role="status"></div>
         <p class="font-weight-bold mb-1">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Status")</p>
         <table class="table table-bordered table-sm">

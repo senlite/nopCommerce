@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-20
+**Last updated:** 2026-08-21
 
 ## Status legend
 - `pending` = not started
@@ -10,6 +10,7 @@
 - `in-progress` = currently being implemented
 - `done` = implemented and validated
 - `blocked` = cannot proceed without prerequisite/decision
+- `deferred` = remaining work is parked; do not expand until un-parked
 - `not-committed` = evaluated in the larger vision but deliberately outside the committed roadmap
 
 ## Current overall progress
@@ -272,13 +273,17 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 ### Horizon 5 — Platform / v2.0 (`EP-28`)
 
+**Current scope: parked.** H5.1 (tenant control plane) and the shipped `/api/v1` + usage-ledger
+slice remain in tree at plugin 0.92. Remaining H5.2–H5.5 work is deferred and must not expand until
+operator localization and Horizon 1 evidence gates resume.
+
 | ID | Task | Status | Dependency |
 |---|---|---|---|
 | H5.1 | Multi-tenant data/configuration isolation | done | Control-plane `TP_CE_Tenant*` (no `TenantId` on Horizon 1 `Ce*` tables); database-per-tenant routing; request middleware; cache/job isolation tests |
-| H5.2 | Metered billing and per-tenant operations | partial | Usage ledger + `ITenantBillingAdapter` port; optional `usage.limit.{metric}` throttle; no billing vendor or invoicing |
-| H5.3 | Versioned public REST API and webhooks | partial | `/api/v1/*` with API keys (401 unauthenticated); HMAC webhooks; OAuth2 client-credentials not shipped |
-| H5.4 | Vehicle data as a service with the documented ethics/licensing guardrails | partial | Public vehicles/VIN/OEM/fitment payloads include confidence/provenance; bulk data marketplace and legal pack not shipped |
-| H5.5 | Retarget to .NET 10 | blocked | nopCommerce release supporting .NET 10 |
+| H5.2 | Metered billing and per-tenant operations | deferred | Usage ledger + `ITenantBillingAdapter` port shipped; billing vendor / invoicing parked |
+| H5.3 | Versioned public REST API and webhooks | deferred | `/api/v1/*` with API keys (401 unauthenticated) + HMAC webhooks shipped; OAuth2 client-credentials parked |
+| H5.4 | Vehicle data as a service with the documented ethics/licensing guardrails | deferred | Public vehicles/VIN/OEM/fitment payloads include confidence/provenance; bulk data marketplace and legal pack parked |
+| H5.5 | Retarget to .NET 10 | deferred | nopCommerce release supporting .NET 10 |
 
 ### Evaluated but not committed
 
@@ -312,18 +317,23 @@ The following are **not missing implementation** and must not be counted as defe
 
 ## Immediate next actions
 
-Work follows dependency order rather than skipping to later roadmap features. Remaining Horizon 1
-items fall into two classes:
+Work follows dependency order rather than skipping to later roadmap features.
+
+**Parked (do not expand):** remaining Horizon 5.2–H5.5 (billing vendor, OAuth2, bulk data legal pack,
+.NET 10). H5.1 control plane and the shipped `/api/v1` slice stay in tree.
 
 **Autonomously completable (code + local/live verification):**
 
-All H1 code items are now `done` except **H1.35** (external security assessment). Operator-run
-evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP field-mapping sign-off) is documented
-in the scripts above but does not block closing the implementation gap.
+- Remaining operator/storefront localization of hardcoded JS/view English (plugin 0.93.0): licence
+  panel toasts, Configure AI provider labels, storefront unmatched/mode names, admin
+  `licence.read_only` copy.
+- G2 coverage thresholds; G6 a11y/RTL/CWV evidence; G4 remaining performance evidence.
+- All H1 code items are `done` except **H1.35** (external security assessment). Operator-run
+  evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP field-mapping sign-off) is documented
+  in the scripts above but does not block closing the implementation gap.
 
 **Blocked on external authorities (cannot be closed by code alone):**
 
 - H1.35 / G8 security assessment sign-off; G11 production licence vendor signing key; G7
   product-owner sign-off; G12 Marketplace submission.
 - H1.6 / H1.7 further BMW VDS→generation patterns beyond the curated NHTSA/Check Engine corpus (must not be fabricated for a safety-relevant decode).
-- H5.4 legal/ethics approval for vehicle data as a service; H5.5 nopCommerce .NET 10 host.
