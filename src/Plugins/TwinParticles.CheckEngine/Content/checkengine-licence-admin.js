@@ -44,7 +44,7 @@
     setCell(root, '[data-ce-licence-workshop]', yn(pick(licence, 'workshopPortalEntitlement', 'WorkshopPortalEntitlement'), i18n));
     setCell(root, '[data-ce-licence-fleet]', yn(pick(licence, 'fleetPortalEntitlement', 'FleetPortalEntitlement'), i18n));
     setCell(root, '[data-ce-licence-dealer]', yn(pick(licence, 'dealerPortalEntitlement', 'DealerPortalEntitlement'), i18n));
-    setCell(root, '[data-ce-licence-heartbeat]', pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'));
+    setCell(root, '[data-ce-licence-last-heartbeat]', pick(licence, 'lastHeartbeatUtc', 'LastHeartbeatUtc'));
     setCell(root, '[data-ce-licence-reason]', pick(licence, 'reasonCode', 'ReasonCode'));
   }
 

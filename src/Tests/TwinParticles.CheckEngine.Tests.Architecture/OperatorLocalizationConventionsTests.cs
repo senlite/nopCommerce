@@ -16,13 +16,17 @@ public class OperatorLocalizationConventionsTests
         view.Should().Contain("Licence.Panel.HeartbeatRecorded");
         view.Should().Contain("Licence.Panel.ActivationFailed");
         view.Should().Contain("Licence.Panel.LoadFailed");
-        view.Should().Contain("checkengine-licence-admin.js?v=");
+        view.Should().Contain("data-ce-licence-last-heartbeat");
+        view.Should().Contain("data-ce-licence-heartbeat>");
+        view.Should().NotContain("<td data-ce-licence-heartbeat");
 
         var js = ReadPluginFile("Content", "checkengine-licence-admin.js");
         js.Should().Contain("i18n.activated");
         js.Should().Contain("i18n.heartbeatRecorded");
         js.Should().Contain("i18n.loadFailed");
         js.Should().Contain("i18n.yes");
+        js.Should().Contain("[data-ce-licence-last-heartbeat]");
+        js.Should().Contain("[data-ce-licence-heartbeat]");
         js.Should().NotContain("return 'Yes';");
     }
 
