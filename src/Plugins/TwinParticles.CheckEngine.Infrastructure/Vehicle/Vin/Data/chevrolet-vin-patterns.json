@@ -242,6 +242,69 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:KL79MSSL3MB000001;make=CHEVROLET;model=Trailblazer;year=2021"
+    },
+    {
+      "pattern": "YB2",
+      "modelCode": "CORVETTE",
+      "generationCode": "C7",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1YB2D79K5100001;make=CHEVROLET;model=Corvette;year=2019"
+    },
+    {
+      "pattern": "YA2",
+      "modelCode": "CORVETTE",
+      "generationCode": "C7",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1YA2D75K5100001;make=CHEVROLET;model=Corvette;year=2019"
+    },
+    {
+      "pattern": "RA6",
+      "modelCode": "VOLT",
+      "generationCode": "VOLT2",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1RA6S57JU000001;make=CHEVROLET;model=Volt;year=2018"
+    },
+    {
+      "pattern": "JE6",
+      "modelCode": "SONIC",
+      "generationCode": "T250",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1JE6SH1E4100001;make=CHEVROLET;model=Sonic;year=2014"
+    },
+    {
+      "pattern": "JA6",
+      "modelCode": "SONIC",
+      "generationCode": "T250",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1JA6SH7E4100001;make=CHEVROLET;model=Sonic;year=2014"
+    },
+    {
+      "pattern": "WGA",
+      "modelCode": "EXPRESS",
+      "generationCode": "GMT610",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCWGAFG0K1100001;make=CHEVROLET;model=Express;year=2019"
+    },
+    {
+      "pattern": "SKN",
+      "modelCode": "TAHOE",
+      "generationCode": "T1XX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSKNKDXMR000001;make=CHEVROLET;model=Tahoe;year=2021"
     }
   ]
 }

@@ -169,6 +169,69 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:1N4AZ1CP9LC000001;make=NISSAN;model=Leaf;year=2020"
+    },
+    {
+      "pattern": "AF5",
+      "modelCode": "JUKE",
+      "generationCode": "F15",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN8AF5MV4CT000001;make=NISSAN;model=Juke;year=2012"
+    },
+    {
+      "pattern": "BJ1",
+      "modelCode": "ROGUESPORT",
+      "generationCode": "J11",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN1BJ1CR8LW000001;make=NISSAN;model=Rogue Sport;year=2020"
+    },
+    {
+      "pattern": "AZ3",
+      "modelCode": "Z350",
+      "generationCode": "Z33",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN1AZ34D04T000001;make=NISSAN;model=350Z;year=2004"
+    },
+    {
+      "pattern": "AN0",
+      "modelCode": "XTERRA",
+      "generationCode": "N50",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5N1AN08W96C000001;make=NISSAN;model=Xterra;year=2006"
+    },
+    {
+      "pattern": "CE2",
+      "modelCode": "VERSANOT",
+      "generationCode": "E12",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3N1CE2CP8JL000001;make=NISSAN;model=Versa Note;year=2018"
+    },
+    {
+      "pattern": "AL2",
+      "modelCode": "ALTIMA",
+      "generationCode": "L32",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1N4AL2AP0CN000001;make=NISSAN;model=Altima;year=2012"
+    },
+    {
+      "pattern": "AB7",
+      "modelCode": "SENTRA",
+      "generationCode": "B17",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3N1AB7AP5FY000001;make=NISSAN;model=Sentra;year=2015"
     }
   ]
 }

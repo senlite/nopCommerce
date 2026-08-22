@@ -42,6 +42,12 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — top-10 brands slice 6 (H1.6a, v0.101.0):** 26 more NHTSA-documented models
+  (Corolla Cross, Atlas Cross Sport/Beetle/Touareg, Bronco Sport/Taurus/Flex/F-250,
+  Venue/Veloster/Ioniq 5/6, Rio/EV6, Corvette/Volt/Sonic/Express, GLK/GL/EQS,
+  Juke/Rogue Sport/350Z/Xterra/Versa Note) plus extra generations (Civic FE,
+  Accord CP/CR, CR-V RS, Highlander XU70, Corolla E210). Non-BMW VDS prefixes
+  are now 190. New WMIs `7MU`, `7FA`, `3FM` come from NHTSA manufacturer lists.
 - **Software — top-10 brands slice 5 (H1.6a, v0.100.0):** 28 more NHTSA-documented flagships
   (Ridgeline/Passport/Insight, C-HR/Venza/Land Cruiser, Passat/Taos/Arteon,
   Expedition/Maverick/EcoSport, Santa Cruz/Accent, Optima/K5/Carnival,

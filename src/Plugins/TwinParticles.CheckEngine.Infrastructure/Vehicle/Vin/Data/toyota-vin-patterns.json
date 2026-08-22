@@ -52,6 +52,11 @@
       "wmi": "NMT",
       "manufacturerName": "TOYOTA MOTOR MANUFACTURING,TURKEY ,INC.",
       "regionCode": "TR"
+    },
+    {
+      "wmi": "7MU",
+      "manufacturerName": "MAZDA TOYOTA MANUFACTURING, USA, INC.",
+      "regionCode": "US"
     }
   ],
   "patterns": [
@@ -243,6 +248,60 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:JTMCY7AJ5M4000001;make=TOYOTA;model=Land Cruiser;year=2021"
+    },
+    {
+      "pattern": "BAA",
+      "modelCode": "COROLLACROSS",
+      "generationCode": "XG10",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:7MUBAABG0NV000001;make=TOYOTA;model=Corolla Cross;year=2022"
+    },
+    {
+      "pattern": "GZR",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDGZRBH4LS000001;make=TOYOTA;model=Highlander;year=2020"
+    },
+    {
+      "pattern": "DZR",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDDZRBH0LS000001;make=TOYOTA;model=Highlander;year=2020"
+    },
+    {
+      "pattern": "EPR",
+      "modelCode": "COROLLA",
+      "generationCode": "E210",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDEPRAE2LJ000001;make=TOYOTA;model=Corolla;year=2020"
+    },
+    {
+      "pattern": "BF1",
+      "modelCode": "CAMRY",
+      "generationCode": "XV50",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1BF1FK2CU000001;make=TOYOTA;model=Camry;year=2012"
+    },
+    {
+      "pattern": "KAR",
+      "modelCode": "PRIUS",
+      "generationCode": "XW50",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDKARFU5J3000001;make=TOYOTA;model=Prius;year=2018"
     }
   ]
 }

@@ -222,6 +222,116 @@
       "provenance": "nhtsa-vpic:5NTJDDAF2NH000001;make=HYUNDAI;model=Santa Cruz;year=2022"
     },
     {
+      "vin": "7MUBAABG0NV000001",
+      "checkDigitValid": true,
+      "wmi": "7MU",
+      "vdsPrefix": "BAA",
+      "makeCode": "TOYOTA",
+      "modelCode": "COROLLACROSS",
+      "generationCode": "XG10",
+      "modelYear": 2022,
+      "provenance": "nhtsa-vpic:7MUBAABG0NV000001;make=TOYOTA;model=Corolla Cross;year=2022"
+    },
+    {
+      "vin": "3FMCR9B68MRA00001",
+      "checkDigitValid": true,
+      "wmi": "3FM",
+      "vdsPrefix": "CR9",
+      "makeCode": "FORD",
+      "modelCode": "BRONCOSPORT",
+      "generationCode": "CX430",
+      "modelYear": 2021,
+      "provenance": "nhtsa-vpic:3FMCR9B68MRA00001;make=FORD;model=Bronco Sport;year=2021"
+    },
+    {
+      "vin": "KMHRC8A32LU000001",
+      "checkDigitValid": true,
+      "wmi": "KMH",
+      "vdsPrefix": "RC8",
+      "makeCode": "HYUNDAI",
+      "modelCode": "VENUE",
+      "generationCode": "QX",
+      "modelYear": 2020,
+      "provenance": "nhtsa-vpic:KMHRC8A32LU000001;make=HYUNDAI;model=Venue;year=2020"
+    },
+    {
+      "vin": "KM8KNDAF0NU000001",
+      "checkDigitValid": true,
+      "wmi": "KM8",
+      "vdsPrefix": "KND",
+      "makeCode": "HYUNDAI",
+      "modelCode": "IONIQ5",
+      "generationCode": "NE",
+      "modelYear": 2022,
+      "provenance": "nhtsa-vpic:KM8KNDAF0NU000001;make=HYUNDAI;model=Ioniq 5;year=2022"
+    },
+    {
+      "vin": "3KPA24AB9LE000001",
+      "checkDigitValid": true,
+      "wmi": "3KP",
+      "vdsPrefix": "A24",
+      "makeCode": "KIA",
+      "modelCode": "RIO",
+      "generationCode": "YB",
+      "modelYear": 2020,
+      "provenance": "nhtsa-vpic:3KPA24AB9LE000001;make=KIA;model=Rio;year=2020"
+    },
+    {
+      "vin": "1G1YB2D79K5100001",
+      "checkDigitValid": true,
+      "wmi": "1G1",
+      "vdsPrefix": "YB2",
+      "makeCode": "CHEVROLET",
+      "modelCode": "CORVETTE",
+      "generationCode": "C7",
+      "modelYear": 2019,
+      "provenance": "nhtsa-vpic:1G1YB2D79K5100001;make=CHEVROLET;model=Corvette;year=2019"
+    },
+    {
+      "vin": "WDCGG8JB3DF000001",
+      "checkDigitValid": true,
+      "wmi": "WDC",
+      "vdsPrefix": "GG8",
+      "makeCode": "MERCEDES",
+      "modelCode": "GLK",
+      "generationCode": "X204",
+      "modelYear": 2013,
+      "provenance": "nhtsa-vpic:WDCGG8JB3DF000001;make=MERCEDES-BENZ;model=GLK-Class;year=2013"
+    },
+    {
+      "vin": "JN1AZ34D04T000001",
+      "checkDigitValid": true,
+      "wmi": "JN1",
+      "vdsPrefix": "AZ3",
+      "makeCode": "NISSAN",
+      "modelCode": "Z350",
+      "generationCode": "Z33",
+      "modelYear": 2004,
+      "provenance": "nhtsa-vpic:JN1AZ34D04T000001;make=NISSAN;model=350Z;year=2004"
+    },
+    {
+      "vin": "JTDEPRAE2LJ000001",
+      "checkDigitValid": true,
+      "wmi": "JTD",
+      "vdsPrefix": "EPR",
+      "makeCode": "TOYOTA",
+      "modelCode": "COROLLA",
+      "generationCode": "E210",
+      "modelYear": 2020,
+      "provenance": "nhtsa-vpic:JTDEPRAE2LJ000001;make=TOYOTA;model=Corolla;year=2020"
+    },
+    {
+      "vin": "7FARS6H91PE000001",
+      "checkDigitValid": true,
+      "wmi": "7FA",
+      "vdsPrefix": "RS6",
+      "makeCode": "HONDA",
+      "modelCode": "CRV",
+      "generationCode": "RS",
+      "modelYear": 2023,
+      "provenance": "nhtsa-vpic:7FARS6H91PE000001;make=HONDA;model=CR-V;year=2023"
+    },
+    {
       "vin": "1HGBH41JXMN109186",
       "checkDigitValid": true,
       "wmi": "1HG",

@@ -50,6 +50,9 @@ public class TopBrandVinDecoderTests
         decoder.CanDecode("NMT").Should().BeTrue();
         decoder.CanDecode("5NT").Should().BeTrue();
         decoder.CanDecode("KL8").Should().BeTrue();
+        decoder.CanDecode("7MU").Should().BeTrue();
+        decoder.CanDecode("7FA").Should().BeTrue();
+        decoder.CanDecode("3FM").Should().BeTrue();
         decoder.CanDecode("WBA").Should().BeFalse();
         decoder.CanDecode("ZZZ").Should().BeFalse();
     }
@@ -151,6 +154,32 @@ public class TopBrandVinDecoderTests
     {
         var decoder = await CreateDecoderAsync(seed: true);
         var vin = Vin.Create("3VVLX7B23NM000001", enforceCheckDigit: false);
+
+        var contribution = decoder.Decode(vin);
+
+        contribution.ReasonCode.Should().BeNull();
+        contribution.Candidates.Should().NotBeEmpty();
+        contribution.Candidates[0].ModelYear.Should().Be(2022);
+    }
+
+    [Test]
+    public async Task Decode_Should_Resolve_Nhtsa_Documented_Hyundai_Venue()
+    {
+        var decoder = await CreateDecoderAsync(seed: true);
+        var vin = Vin.Create("KMHRC8A32LU000001", enforceCheckDigit: false);
+
+        var contribution = decoder.Decode(vin);
+
+        contribution.ReasonCode.Should().BeNull();
+        contribution.Candidates.Should().NotBeEmpty();
+        contribution.Candidates[0].ModelYear.Should().Be(2020);
+    }
+
+    [Test]
+    public async Task Decode_Should_Resolve_Nhtsa_Documented_Toyota_Corolla_Cross()
+    {
+        var decoder = await CreateDecoderAsync(seed: true);
+        var vin = Vin.Create("7MUBAABG0NV000001", enforceCheckDigit: false);
 
         var contribution = decoder.Decode(vin);
 
@@ -269,7 +298,7 @@ public class TopBrandVinDecoderTests
         makeCodes.Should().BeEquivalentTo(ExpectedMakeCodes.Append("BMW"));
 
         var wmis = await vinRepository.GetWmisAsync(CancellationToken.None);
-        wmis.Select(wmi => wmi.Wmi).Should().Contain(["WBA", "1FA", "1HG", "JTD", "5XY", "3GN", "WDD", "KMH", "5FP", "3FT", "NMT", "5NT", "KL8"]);
+        wmis.Select(wmi => wmi.Wmi).Should().Contain(["WBA", "1FA", "1HG", "JTD", "5XY", "3GN", "WDD", "KMH", "5FP", "3FT", "NMT", "5NT", "KL8", "7MU", "7FA", "3FM"]);
     }
 
     [Test]

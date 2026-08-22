@@ -37,6 +37,11 @@
       "wmi": "MAJ",
       "manufacturerName": "FORD INDIA LTD",
       "regionCode": "IN"
+    },
+    {
+      "wmi": "3FM",
+      "manufacturerName": "FORD MOTOR COMPANY, MEXICO",
+      "regionCode": "MX"
     }
   ],
   "patterns": [
@@ -174,6 +179,42 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:MAJ6P1CL1JC000001;make=FORD;model=EcoSport;year=2018"
+    },
+    {
+      "pattern": "CR9",
+      "modelCode": "BRONCOSPORT",
+      "generationCode": "CX430",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3FMCR9B68MRA00001;make=FORD;model=Bronco Sport;year=2021"
+    },
+    {
+      "pattern": "HP2",
+      "modelCode": "TAURUS",
+      "generationCode": "D6",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FAHP2E86DG000001;make=FORD;model=Taurus;year=2013"
+    },
+    {
+      "pattern": "GK5",
+      "modelCode": "FLEX",
+      "generationCode": "D471",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2FMGK5C89EBD00001;make=FORD;model=Flex;year=2014"
+    },
+    {
+      "pattern": "7W2",
+      "modelCode": "F250",
+      "generationCode": "P558",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FT7W2B60KEA00001;make=FORD;model=F-250;year=2019"
     }
   ]
 }

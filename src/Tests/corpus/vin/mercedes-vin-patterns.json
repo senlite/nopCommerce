@@ -178,6 +178,33 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:W1N4M4HB4LW000001;make=MERCEDES-BENZ;model=GLB-Class;year=2020"
+    },
+    {
+      "pattern": "GG8",
+      "modelCode": "GLK",
+      "generationCode": "X204",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDCGG8JB3DF000001;make=MERCEDES-BENZ;model=GLK-Class;year=2013"
+    },
+    {
+      "pattern": "BF7",
+      "modelCode": "GL",
+      "generationCode": "X164",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4JGBF7BE7CA000001;make=MERCEDES-BENZ;model=GL-Class;year=2012"
+    },
+    {
+      "pattern": "CG2",
+      "modelCode": "EQS",
+      "generationCode": "V297",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1KCG2DB1NA000001;make=MERCEDES-BENZ;model=EQS-Class Sedan;year=2022"
     }
   ]
 }
