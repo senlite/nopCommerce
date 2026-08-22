@@ -142,6 +142,33 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:1N6AA1E50KN000001;make=NISSAN;model=Titan;year=2019"
+    },
+    {
+      "pattern": "CN8",
+      "modelCode": "VERSA",
+      "generationCode": "N18",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3N1CN8EV6LL000001;make=NISSAN;model=Versa;year=2020"
+    },
+    {
+      "pattern": "CP5",
+      "modelCode": "KICKS",
+      "generationCode": "P15",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3N1CP5CU4KL000001;make=NISSAN;model=Kicks;year=2019"
+    },
+    {
+      "pattern": "AZ1",
+      "modelCode": "LEAF",
+      "generationCode": "ZE1",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1N4AZ1CP9LC000001;make=NISSAN;model=Leaf;year=2020"
     }
   ]
 }

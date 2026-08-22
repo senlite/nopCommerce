@@ -42,6 +42,12 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — top-10 brands slice 5 (H1.6a, v0.100.0):** 28 more NHTSA-documented flagships
+  (Ridgeline/Passport/Insight, C-HR/Venza/Land Cruiser, Passat/Taos/Arteon,
+  Expedition/Maverick/EcoSport, Santa Cruz/Accent, Optima/K5/Carnival,
+  Suburban/Impala/Spark/Trailblazer, GLA/GLS/CLA/GLB, Versa/Kicks/Leaf).
+  Non-BMW VDS prefixes are now 143. New WMIs are only those NHTSA listed for
+  the manufacturer (`5FP`, `NMT`, `3FT`, `MAJ`, `5NT`, `KL7`, `KL8`).
 - **Software — top-10 brands slice 4 (H1.6a, v0.99.0):** VIN disambiguation labels now include
   market name and production years (`Honda Accord CM LX (Europe, 2003-2007)` vs
   `(Gulf, 2003-2007)`), so ECE/GCC candidates are distinguishable in the picker

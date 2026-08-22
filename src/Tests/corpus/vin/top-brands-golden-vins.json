@@ -123,6 +123,105 @@
       "provenance": "nhtsa-vpic:4JGDA5HB0FA000001;make=MERCEDES-BENZ;model=ML-Class;year=2015"
     },
     {
+      "vin": "5FPYK3F53HB000001",
+      "checkDigitValid": true,
+      "wmi": "5FP",
+      "vdsPrefix": "YK3",
+      "makeCode": "HONDA",
+      "modelCode": "RIDGELINE",
+      "generationCode": "YK2",
+      "modelYear": 2017,
+      "provenance": "nhtsa-vpic:5FPYK3F53HB000001;make=HONDA;model=Ridgeline;year=2017"
+    },
+    {
+      "vin": "NMTKHMBX0JR000001",
+      "checkDigitValid": true,
+      "wmi": "NMT",
+      "vdsPrefix": "KHM",
+      "makeCode": "TOYOTA",
+      "modelCode": "CHR",
+      "generationCode": "AX10",
+      "modelYear": 2018,
+      "provenance": "nhtsa-vpic:NMTKHMBX0JR000001;make=TOYOTA;model=C-HR;year=2018"
+    },
+    {
+      "vin": "3VVLX7B23NM000001",
+      "checkDigitValid": true,
+      "wmi": "3VV",
+      "vdsPrefix": "LX7",
+      "makeCode": "VOLKSWAGEN",
+      "modelCode": "TAOS",
+      "generationCode": "B1",
+      "modelYear": 2022,
+      "provenance": "nhtsa-vpic:3VVLX7B23NM000001;make=VOLKSWAGEN;model=Taos;year=2022"
+    },
+    {
+      "vin": "3FTTW8E9XNRA00001",
+      "checkDigitValid": true,
+      "wmi": "3FT",
+      "vdsPrefix": "TW8",
+      "makeCode": "FORD",
+      "modelCode": "MAVERICK",
+      "generationCode": "P758",
+      "modelYear": 2022,
+      "provenance": "nhtsa-vpic:3FTTW8E9XNRA00001;make=FORD;model=Maverick;year=2022"
+    },
+    {
+      "vin": "5XXGT4L35KG000001",
+      "checkDigitValid": true,
+      "wmi": "5XX",
+      "vdsPrefix": "GT4",
+      "makeCode": "KIA",
+      "modelCode": "OPTIMA",
+      "generationCode": "JF",
+      "modelYear": 2019,
+      "provenance": "nhtsa-vpic:5XXGT4L35KG000001;make=KIA;model=Optima;year=2019"
+    },
+    {
+      "vin": "1GNSKJKC3KR000001",
+      "checkDigitValid": true,
+      "wmi": "1GN",
+      "vdsPrefix": "SKJ",
+      "makeCode": "CHEVROLET",
+      "modelCode": "SUBURBAN",
+      "generationCode": "K2XX",
+      "modelYear": 2019,
+      "provenance": "nhtsa-vpic:1GNSKJKC3KR000001;make=CHEVROLET;model=Suburban;year=2019"
+    },
+    {
+      "vin": "WDCTG4EB7LJ000001",
+      "checkDigitValid": true,
+      "wmi": "WDC",
+      "vdsPrefix": "TG4",
+      "makeCode": "MERCEDES",
+      "modelCode": "GLA",
+      "generationCode": "H247",
+      "modelYear": 2020,
+      "provenance": "nhtsa-vpic:WDCTG4EB7LJ000001;make=MERCEDES-BENZ;model=GLA-Class;year=2020"
+    },
+    {
+      "vin": "3N1CN8EV6LL000001",
+      "checkDigitValid": true,
+      "wmi": "3N1",
+      "vdsPrefix": "CN8",
+      "makeCode": "NISSAN",
+      "modelCode": "VERSA",
+      "generationCode": "N18",
+      "modelYear": 2020,
+      "provenance": "nhtsa-vpic:3N1CN8EV6LL000001;make=NISSAN;model=Versa;year=2020"
+    },
+    {
+      "vin": "5NTJDDAF2NH000001",
+      "checkDigitValid": true,
+      "wmi": "5NT",
+      "vdsPrefix": "JDD",
+      "makeCode": "HYUNDAI",
+      "modelCode": "SANTACRUZ",
+      "generationCode": "NX4",
+      "modelYear": 2022,
+      "provenance": "nhtsa-vpic:5NTJDDAF2NH000001;make=HYUNDAI;model=Santa Cruz;year=2022"
+    },
+    {
       "vin": "1HGBH41JXMN109186",
       "checkDigitValid": true,
       "wmi": "1HG",

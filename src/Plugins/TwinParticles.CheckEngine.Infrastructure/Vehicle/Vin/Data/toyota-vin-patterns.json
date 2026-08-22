@@ -47,6 +47,11 @@
       "wmi": "2T3",
       "manufacturerName": "TOYOTA MOTOR MANUFACTURING CANADA",
       "regionCode": "CA"
+    },
+    {
+      "wmi": "NMT",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING,TURKEY ,INC.",
+      "regionCode": "TR"
     }
   ],
   "patterns": [
@@ -211,6 +216,33 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:4T1B21HK5KU000001;make=TOYOTA;model=Camry;year=2019"
+    },
+    {
+      "pattern": "KHM",
+      "modelCode": "CHR",
+      "generationCode": "AX10",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:NMTKHMBX0JR000001;make=TOYOTA;model=C-HR;year=2018"
+    },
+    {
+      "pattern": "AAA",
+      "modelCode": "VENZA",
+      "generationCode": "XU80",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTEAAAAH1MJ000001;make=TOYOTA;model=Venza;year=2021"
+    },
+    {
+      "pattern": "CY7",
+      "modelCode": "LANDCRUISER",
+      "generationCode": "J200",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTMCY7AJ5M4000001;make=TOYOTA;model=Land Cruiser;year=2021"
     }
   ]
 }

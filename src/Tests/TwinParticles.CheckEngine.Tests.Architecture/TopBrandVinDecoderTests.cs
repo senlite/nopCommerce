@@ -45,6 +45,11 @@ public class TopBrandVinDecoderTests
         decoder.CanDecode("5N1").Should().BeTrue();
         decoder.CanDecode("2GN").Should().BeTrue();
         decoder.CanDecode("5XY").Should().BeTrue();
+        decoder.CanDecode("5FP").Should().BeTrue();
+        decoder.CanDecode("3FT").Should().BeTrue();
+        decoder.CanDecode("NMT").Should().BeTrue();
+        decoder.CanDecode("5NT").Should().BeTrue();
+        decoder.CanDecode("KL8").Should().BeTrue();
         decoder.CanDecode("WBA").Should().BeFalse();
         decoder.CanDecode("ZZZ").Should().BeFalse();
     }
@@ -113,6 +118,45 @@ public class TopBrandVinDecoderTests
         contribution.ReasonCode.Should().BeNull();
         contribution.Candidates.Should().NotBeEmpty();
         contribution.Candidates[0].ModelYear.Should().Be(2019);
+    }
+
+    [Test]
+    public async Task Decode_Should_Resolve_Nhtsa_Documented_Honda_Ridgeline()
+    {
+        var decoder = await CreateDecoderAsync(seed: true);
+        var vin = Vin.Create("5FPYK3F53HB000001", enforceCheckDigit: false);
+
+        var contribution = decoder.Decode(vin);
+
+        contribution.ReasonCode.Should().BeNull();
+        contribution.Candidates.Should().NotBeEmpty();
+        contribution.Candidates[0].ModelYear.Should().Be(2017);
+    }
+
+    [Test]
+    public async Task Decode_Should_Resolve_Nhtsa_Documented_Ford_Maverick()
+    {
+        var decoder = await CreateDecoderAsync(seed: true);
+        var vin = Vin.Create("3FTTW8E9XNRA00001", enforceCheckDigit: false);
+
+        var contribution = decoder.Decode(vin);
+
+        contribution.ReasonCode.Should().BeNull();
+        contribution.Candidates.Should().NotBeEmpty();
+        contribution.Candidates[0].ModelYear.Should().Be(2022);
+    }
+
+    [Test]
+    public async Task Decode_Should_Resolve_Nhtsa_Documented_Volkswagen_Taos()
+    {
+        var decoder = await CreateDecoderAsync(seed: true);
+        var vin = Vin.Create("3VVLX7B23NM000001", enforceCheckDigit: false);
+
+        var contribution = decoder.Decode(vin);
+
+        contribution.ReasonCode.Should().BeNull();
+        contribution.Candidates.Should().NotBeEmpty();
+        contribution.Candidates[0].ModelYear.Should().Be(2022);
     }
 
     [Test]
@@ -225,7 +269,7 @@ public class TopBrandVinDecoderTests
         makeCodes.Should().BeEquivalentTo(ExpectedMakeCodes.Append("BMW"));
 
         var wmis = await vinRepository.GetWmisAsync(CancellationToken.None);
-        wmis.Select(wmi => wmi.Wmi).Should().Contain(["WBA", "1FA", "1HG", "JTD", "5XY", "3GN", "WDD", "KMH"]);
+        wmis.Select(wmi => wmi.Wmi).Should().Contain(["WBA", "1FA", "1HG", "JTD", "5XY", "3GN", "WDD", "KMH", "5FP", "3FT", "NMT", "5NT", "KL8"]);
     }
 
     [Test]

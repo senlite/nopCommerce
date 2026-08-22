@@ -133,6 +133,51 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:W1K3G4EB0NN000001;make=MERCEDES-BENZ;model=A-Class;year=2022"
+    },
+    {
+      "pattern": "TG4",
+      "modelCode": "GLA",
+      "generationCode": "H247",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDCTG4EB7LJ000001;make=MERCEDES-BENZ;model=GLA-Class;year=2020"
+    },
+    {
+      "pattern": "FF5",
+      "modelCode": "GLS",
+      "generationCode": "X167",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4JGFF5KEXLA000001;make=MERCEDES-BENZ;model=GLS-Class;year=2020"
+    },
+    {
+      "pattern": "SJ4",
+      "modelCode": "CLA",
+      "generationCode": "C118",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDDSJ4EB7KN000001;make=MERCEDES-BENZ;model=CLA-Class;year=2019"
+    },
+    {
+      "pattern": "5J4",
+      "modelCode": "CLA",
+      "generationCode": "C118",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1K5J4GB2LN000001;make=MERCEDES-BENZ;model=CLA-Class;year=2020"
+    },
+    {
+      "pattern": "4M4",
+      "modelCode": "GLB",
+      "generationCode": "X247",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1N4M4HB4LW000001;make=MERCEDES-BENZ;model=GLB-Class;year=2020"
     }
   ]
 }

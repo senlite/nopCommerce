@@ -119,6 +119,42 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:KNDCC3LD0J5000001;make=KIA;model=Niro;year=2018"
+    },
+    {
+      "pattern": "GT4",
+      "modelCode": "OPTIMA",
+      "generationCode": "JF",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XXGT4L35KG000001;make=KIA;model=Optima;year=2019"
+    },
+    {
+      "pattern": "G64",
+      "modelCode": "K5",
+      "generationCode": "DL3",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XXG64J2XMG000001;make=KIA;model=K5;year=2021"
+    },
+    {
+      "pattern": "G34",
+      "modelCode": "K5",
+      "generationCode": "DL3",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XXG34J29MG000001;make=KIA;model=K5;year=2021"
+    },
+    {
+      "pattern": "NC5",
+      "modelCode": "CARNIVAL",
+      "generationCode": "KA4",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDNC5H34N6000001;make=KIA;model=Carnival;year=2022"
     }
   ]
 }

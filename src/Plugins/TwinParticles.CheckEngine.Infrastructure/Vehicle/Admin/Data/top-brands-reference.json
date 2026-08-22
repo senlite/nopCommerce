@@ -453,6 +453,114 @@
               ]
             }
           ]
+        },
+        {
+          "code": "CHR",
+          "name": "C-HR",
+          "arabicAlias": "سي-اتش آر",
+          "generations": [
+            {
+              "code": "AX10",
+              "name": "AX10",
+              "startYear": 2018,
+              "endYear": 2022,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2000",
+                  "name": "2.0L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1987,
+                  "powerHp": 144
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LE",
+                  "bodyCode": "SAV",
+                  "engineCode": "I4-2000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "VENZA",
+          "name": "Venza",
+          "arabicAlias": "فينزا",
+          "generations": [
+            {
+              "code": "XU80",
+              "name": "XU80",
+              "startYear": 2021,
+              "endYear": 2024,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2500-HYB",
+                  "name": "2.5L Hybrid",
+                  "fuelType": "Hybrid",
+                  "displacementCc": 2487,
+                  "powerHp": 219
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LE",
+                  "bodyCode": "SAV",
+                  "engineCode": "I4-2500-HYB"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "LANDCRUISER",
+          "name": "Land Cruiser",
+          "arabicAlias": "لاند كروزر",
+          "generations": [
+            {
+              "code": "J200",
+              "name": "J200",
+              "startYear": 2008,
+              "endYear": 2021,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "V8-5700",
+                  "name": "5.7L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 5663,
+                  "powerHp": 381
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "Heritage",
+                  "bodyCode": "SAV",
+                  "engineCode": "V8-5700"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -628,6 +736,114 @@
                 {
                   "trimName": "SE",
                   "bodyCode": "HATCH",
+                  "engineCode": "I4-2000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "PASSAT",
+          "name": "Passat",
+          "arabicAlias": "باسات",
+          "generations": [
+            {
+              "code": "NMS",
+              "name": "NMS",
+              "startYear": 2012,
+              "endYear": 2019,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1800",
+                  "name": "1.8L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1798,
+                  "powerHp": 170
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "S",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-1800"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "TAOS",
+          "name": "Taos",
+          "arabicAlias": "تاوس",
+          "generations": [
+            {
+              "code": "B1",
+              "name": "B1",
+              "startYear": 2022,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1500",
+                  "name": "1.5L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1498,
+                  "powerHp": 158
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "S",
+                  "bodyCode": "SAV",
+                  "engineCode": "I4-1500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "ARTEON",
+          "name": "Arteon",
+          "arabicAlias": "أرتيون",
+          "generations": [
+            {
+              "code": "3H7",
+              "name": "3H7",
+              "startYear": 2019,
+              "endYear": 2023,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2000",
+                  "name": "2.0L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1984,
+                  "powerHp": 268
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "SE",
+                  "bodyCode": "SEDAN",
                   "engineCode": "I4-2000"
                 }
               ]
@@ -1037,6 +1253,114 @@
               ]
             }
           ]
+        },
+        {
+          "code": "RIDGELINE",
+          "name": "Ridgeline",
+          "arabicAlias": "ريدجلاين",
+          "generations": [
+            {
+              "code": "YK2",
+              "name": "2nd generation",
+              "startYear": 2017,
+              "endYear": 2024,
+              "bodies": [
+                {
+                  "code": "PICKUP",
+                  "name": "Pickup",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "V6-3500",
+                  "name": "3.5L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 3471,
+                  "powerHp": 280
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "RT",
+                  "bodyCode": "PICKUP",
+                  "engineCode": "V6-3500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "PASSPORT",
+          "name": "Passport",
+          "arabicAlias": "باسبورت",
+          "generations": [
+            {
+              "code": "YF8",
+              "name": "3rd generation",
+              "startYear": 2019,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "V6-3500",
+                  "name": "3.5L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 3471,
+                  "powerHp": 280
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "Sport",
+                  "bodyCode": "SAV",
+                  "engineCode": "V6-3500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "INSIGHT",
+          "name": "Insight",
+          "arabicAlias": "إنسايت",
+          "generations": [
+            {
+              "code": "ZE4",
+              "name": "3rd generation",
+              "startYear": 2019,
+              "endYear": 2022,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1500-HYB",
+                  "name": "1.5L Hybrid",
+                  "fuelType": "Hybrid",
+                  "displacementCc": 1498,
+                  "powerHp": 151
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "EX",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-1500-HYB"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1321,6 +1645,78 @@
                   "trimName": "Blue",
                   "bodyCode": "HATCH",
                   "engineCode": "I4-1600-HYB"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "SANTACRUZ",
+          "name": "Santa Cruz",
+          "arabicAlias": "سانتا كروز",
+          "generations": [
+            {
+              "code": "NX4",
+              "name": "NX4",
+              "startYear": 2022,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "PICKUP",
+                  "name": "Pickup",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2500",
+                  "name": "2.5L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 2497,
+                  "powerHp": 191
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "SE",
+                  "bodyCode": "PICKUP",
+                  "engineCode": "I4-2500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "ACCENT",
+          "name": "Accent",
+          "arabicAlias": "أكسنت",
+          "generations": [
+            {
+              "code": "HC",
+              "name": "HC",
+              "startYear": 2018,
+              "endYear": 2022,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1600",
+                  "name": "1.6L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1591,
+                  "powerHp": 120
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "SE",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-1600"
                 }
               ]
             }
@@ -1714,6 +2110,114 @@
               ]
             }
           ]
+        },
+        {
+          "code": "EXPEDITION",
+          "name": "Expedition",
+          "arabicAlias": "إكسبيديشن",
+          "generations": [
+            {
+              "code": "U553",
+              "name": "U553",
+              "startYear": 2018,
+              "endYear": 2024,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "V6-3500",
+                  "name": "3.5L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 3496,
+                  "powerHp": 375
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "XLT",
+                  "bodyCode": "SAV",
+                  "engineCode": "V6-3500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "MAVERICK",
+          "name": "Maverick",
+          "arabicAlias": "مافريك",
+          "generations": [
+            {
+              "code": "P758",
+              "name": "P758",
+              "startYear": 2022,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "PICKUP",
+                  "name": "Pickup",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2000-HYB",
+                  "name": "2.0L Hybrid",
+                  "fuelType": "Hybrid",
+                  "displacementCc": 1999,
+                  "powerHp": 191
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "XL",
+                  "bodyCode": "PICKUP",
+                  "engineCode": "I4-2000-HYB"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "ECOSPORT",
+          "name": "EcoSport",
+          "arabicAlias": "إيكوسبورت",
+          "generations": [
+            {
+              "code": "B515",
+              "name": "B515",
+              "startYear": 2018,
+              "endYear": 2022,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I3-1000",
+                  "name": "1.0L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 999,
+                  "powerHp": 123
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "SE",
+                  "bodyCode": "SAV",
+                  "engineCode": "I3-1000"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -2026,6 +2530,150 @@
                 {
                   "trimName": "A220",
                   "bodyCode": "SEDAN",
+                  "engineCode": "I4-2000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "GLA",
+          "name": "GLA",
+          "arabicAlias": "جي إل إيه",
+          "generations": [
+            {
+              "code": "H247",
+              "name": "H247",
+              "startYear": 2020,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2000",
+                  "name": "2.0L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1991,
+                  "powerHp": 221
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "GLA 250",
+                  "bodyCode": "SAV",
+                  "engineCode": "I4-2000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "GLS",
+          "name": "GLS",
+          "arabicAlias": "جي إل إس",
+          "generations": [
+            {
+              "code": "X167",
+              "name": "X167",
+              "startYear": 2020,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I6-3000",
+                  "name": "3.0L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 2999,
+                  "powerHp": 362
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "GLS 450",
+                  "bodyCode": "SAV",
+                  "engineCode": "I6-3000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "CLA",
+          "name": "CLA",
+          "arabicAlias": "سي إل إيه",
+          "generations": [
+            {
+              "code": "C118",
+              "name": "C118",
+              "startYear": 2019,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2000",
+                  "name": "2.0L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1991,
+                  "powerHp": 221
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "CLA 250",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-2000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "GLB",
+          "name": "GLB",
+          "arabicAlias": "جي إل بي",
+          "generations": [
+            {
+              "code": "X247",
+              "name": "X247",
+              "startYear": 2020,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2000",
+                  "name": "2.0L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1991,
+                  "powerHp": 221
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "GLB 250",
+                  "bodyCode": "SAV",
                   "engineCode": "I4-2000"
                 }
               ]
@@ -2456,6 +3104,114 @@
               ]
             }
           ]
+        },
+        {
+          "code": "VERSA",
+          "name": "Versa",
+          "arabicAlias": "فيرسا",
+          "generations": [
+            {
+              "code": "N18",
+              "name": "N18",
+              "startYear": 2020,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1600",
+                  "name": "1.6L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1598,
+                  "powerHp": 122
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "S",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-1600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "KICKS",
+          "name": "Kicks",
+          "arabicAlias": "كيكس",
+          "generations": [
+            {
+              "code": "P15",
+              "name": "P15",
+              "startYear": 2018,
+              "endYear": 2024,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1600",
+                  "name": "1.6L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1598,
+                  "powerHp": 122
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "S",
+                  "bodyCode": "SAV",
+                  "engineCode": "I4-1600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "LEAF",
+          "name": "Leaf",
+          "arabicAlias": "ليف",
+          "generations": [
+            {
+              "code": "ZE1",
+              "name": "ZE1",
+              "startYear": 2018,
+              "endYear": 2024,
+              "bodies": [
+                {
+                  "code": "HATCH",
+                  "name": "Hatchback",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "EV-150",
+                  "name": "Electric",
+                  "fuelType": "Electric",
+                  "displacementCc": 0,
+                  "powerHp": 147
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "S",
+                  "bodyCode": "HATCH",
+                  "engineCode": "EV-150"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -2805,6 +3561,114 @@
                   "trimName": "LX",
                   "bodyCode": "SAV",
                   "engineCode": "I4-1600-HYB"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "OPTIMA",
+          "name": "Optima",
+          "arabicAlias": "أوبتيما",
+          "generations": [
+            {
+              "code": "JF",
+              "name": "JF",
+              "startYear": 2016,
+              "endYear": 2020,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2400",
+                  "name": "2.4L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 2359,
+                  "powerHp": 185
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LX",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-2400"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "K5",
+          "name": "K5",
+          "arabicAlias": "كي5",
+          "generations": [
+            {
+              "code": "DL3",
+              "name": "DL3",
+              "startYear": 2021,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1500",
+                  "name": "1.5L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1497,
+                  "powerHp": 180
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LXS",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-1500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "CARNIVAL",
+          "name": "Carnival",
+          "arabicAlias": "كارنيفال",
+          "generations": [
+            {
+              "code": "KA4",
+              "name": "KA4",
+              "startYear": 2022,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "V6-3700",
+                  "name": "3.7L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 3470,
+                  "powerHp": 290
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LX",
+                  "bodyCode": "SAV",
+                  "engineCode": "V6-3700"
                 }
               ]
             }
@@ -3244,6 +4108,150 @@
                   "trimName": "LT",
                   "bodyCode": "COUPE",
                   "engineCode": "I4-2000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "SUBURBAN",
+          "name": "Suburban",
+          "arabicAlias": "سوبربان",
+          "generations": [
+            {
+              "code": "K2XX",
+              "name": "K2XX",
+              "startYear": 2015,
+              "endYear": 2020,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "V8-5300",
+                  "name": "5.3L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 5328,
+                  "powerHp": 355
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LT",
+                  "bodyCode": "SAV",
+                  "engineCode": "V8-5300"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "IMPALA",
+          "name": "Impala",
+          "arabicAlias": "إمبالا",
+          "generations": [
+            {
+              "code": "IMP10",
+              "name": "Tenth generation",
+              "startYear": 2014,
+              "endYear": 2020,
+              "bodies": [
+                {
+                  "code": "SEDAN",
+                  "name": "Sedan",
+                  "doors": 4
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-2500",
+                  "name": "2.5L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 2457,
+                  "powerHp": 197
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LS",
+                  "bodyCode": "SEDAN",
+                  "engineCode": "I4-2500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "SPARK",
+          "name": "Spark",
+          "arabicAlias": "سبارك",
+          "generations": [
+            {
+              "code": "M400",
+              "name": "M400",
+              "startYear": 2016,
+              "endYear": 2022,
+              "bodies": [
+                {
+                  "code": "HATCH",
+                  "name": "Hatchback",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I4-1400",
+                  "name": "1.4L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1399,
+                  "powerHp": 98
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LS",
+                  "bodyCode": "HATCH",
+                  "engineCode": "I4-1400"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "TRAILBLAZER",
+          "name": "Trailblazer",
+          "arabicAlias": "تريل بليزر",
+          "generations": [
+            {
+              "code": "TB1",
+              "name": "TB1",
+              "startYear": 2021,
+              "endYear": 2025,
+              "bodies": [
+                {
+                  "code": "SAV",
+                  "name": "SUV",
+                  "doors": 5
+                }
+              ],
+              "engines": [
+                {
+                  "code": "I3-1200",
+                  "name": "1.2L Petrol",
+                  "fuelType": "Petrol",
+                  "displacementCc": 1199,
+                  "powerHp": 137
+                }
+              ],
+              "trims": [
+                {
+                  "trimName": "LS",
+                  "bodyCode": "SAV",
+                  "engineCode": "I3-1200"
                 }
               ]
             }

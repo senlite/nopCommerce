@@ -22,6 +22,11 @@
       "wmi": "5NP",
       "manufacturerName": "HYUNDAI-KIA AMERICA TECHNICAL CENTER INC (HATCI)",
       "regionCode": "US"
+    },
+    {
+      "wmi": "5NT",
+      "manufacturerName": "HYUNDAI MOTOR MANUFACTURING ALABAMA LLC (HMMA)",
+      "regionCode": "US"
     }
   ],
   "patterns": [
@@ -105,6 +110,24 @@
       "confidence": 0.84,
       "priority": 100,
       "provenance": "nhtsa-vpic:KMHC75LC0KU000001;make=HYUNDAI;model=Ioniq;year=2019"
+    },
+    {
+      "pattern": "JDD",
+      "modelCode": "SANTACRUZ",
+      "generationCode": "NX4",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NTJDDAF2NH000001;make=HYUNDAI;model=Santa Cruz;year=2022"
+    },
+    {
+      "pattern": "CT4",
+      "modelCode": "ACCENT",
+      "generationCode": "HC",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHCT4AE6JU000001;make=HYUNDAI;model=Accent;year=2018"
     }
   ]
 }
