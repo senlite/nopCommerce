@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-22
 
 ## Status legend
 - `pending` = not started
