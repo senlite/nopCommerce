@@ -57,6 +57,11 @@
       "wmi": "7MU",
       "manufacturerName": "MAZDA TOYOTA MANUFACTURING, USA, INC.",
       "regionCode": "US"
+    },
+    {
+      "wmi": "JTN",
+      "manufacturerName": "TOYOTA MOTOR CORPORATION",
+      "regionCode": "JP"
     }
   ],
   "patterns": [
@@ -302,6 +307,78 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:JTDKARFU5J3000001;make=TOYOTA;model=Prius;year=2018"
+    },
+    {
+      "pattern": "LZR",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDLZRBH2NS000001;make=TOYOTA;model=Highlander;year=2022"
+    },
+    {
+      "pattern": "AB3",
+      "modelCode": "RAV4PRIME",
+      "generationCode": "XA50P",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTMAB3FV3PD000001;make=TOYOTA;model=RAV4 Prime (PHEV);year=2023"
+    },
+    {
+      "pattern": "JA5",
+      "modelCode": "TUNDRA",
+      "generationCode": "XK70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TFJA5DA0NX000001;make=TOYOTA;model=Tundra;year=2022"
+    },
+    {
+      "pattern": "LA5",
+      "modelCode": "TUNDRA",
+      "generationCode": "XK70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TFLA5DB9NX000001;make=TOYOTA;model=Tundra;year=2022"
+    },
+    {
+      "pattern": "YRK",
+      "modelCode": "SIENNA",
+      "generationCode": "XL40",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDYRKEC2PS000001;make=TOYOTA;model=Sienna;year=2023"
+    },
+    {
+      "pattern": "DSK",
+      "modelCode": "SIENNA",
+      "generationCode": "XL40",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDDSKFC0PS000001;make=TOYOTA;model=Sienna;year=2023"
+    },
+    {
+      "pattern": "D4M",
+      "modelCode": "COROLLA",
+      "generationCode": "E210",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTND4MBE8P3000001;make=TOYOTA;model=Corolla;year=2023"
+    },
+    {
+      "pattern": "KAM",
+      "modelCode": "PRIUSPRIME",
+      "generationCode": "XW50P",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDKAMFP1N3000001;make=TOYOTA;model=Prius Prime (PHEV);year=2022"
     }
   ]
 }

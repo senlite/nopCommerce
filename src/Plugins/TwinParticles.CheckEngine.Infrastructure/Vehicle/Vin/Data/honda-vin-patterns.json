@@ -243,6 +243,24 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:7FARS6H91PE000001;make=HONDA;model=CR-V;year=2023"
+    },
+    {
+      "pattern": "RZ1",
+      "modelCode": "HRV",
+      "generationCode": "RV",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3CZRZ1H55PM000001;make=HONDA;model=HR-V;year=2023"
+    },
+    {
+      "pattern": "RZ2",
+      "modelCode": "HRV",
+      "generationCode": "RV",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3CZRZ2H58PM000001;make=HONDA;model=HR-V;year=2023"
     }
   ]
 }

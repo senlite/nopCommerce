@@ -305,6 +305,51 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:1GNSKNKDXMR000001;make=CHEVROLET;model=Tahoe;year=2021"
+    },
+    {
+      "pattern": "FX6",
+      "modelCode": "BOLT",
+      "generationCode": "BEV2",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1FX6S05P4100001;make=CHEVROLET;model=Bolt EV;year=2023"
+    },
+    {
+      "pattern": "4YU",
+      "modelCode": "SILVERADOHD",
+      "generationCode": "T1XXHD",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GC4YUEY1PF000001;make=CHEVROLET;model=Silverado HD;year=2023"
+    },
+    {
+      "pattern": "UDE",
+      "modelCode": "SILVERADO",
+      "generationCode": "T1XX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCUDEED5PZ000001;make=CHEVROLET;model=Silverado;year=2023"
+    },
+    {
+      "pattern": "7LJ",
+      "modelCode": "TRAX",
+      "generationCode": "A100",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KL77LJE22RC000001;make=CHEVROLET;model=Trax;year=2024"
+    },
+    {
+      "pattern": "SKT",
+      "modelCode": "TAHOE",
+      "generationCode": "T1XX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSKTKLXPR000001;make=CHEVROLET;model=Tahoe;year=2023"
     }
   ]
 }

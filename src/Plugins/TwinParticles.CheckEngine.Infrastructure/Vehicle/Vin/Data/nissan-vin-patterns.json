@@ -232,6 +232,42 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:3N1AB7AP5FY000001;make=NISSAN;model=Sentra;year=2015"
+    },
+    {
+      "pattern": "BZ4",
+      "modelCode": "Z",
+      "generationCode": "RZ34",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN1BZ4BH2PM000001;make=NISSAN;model=Nissan Z;year=2023"
+    },
+    {
+      "pattern": "BT3",
+      "modelCode": "ROGUE",
+      "generationCode": "T33",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JN8BT3BB6PW000001;make=NISSAN;model=Rogue;year=2023"
+    },
+    {
+      "pattern": "DR3",
+      "modelCode": "PATHFINDER",
+      "generationCode": "R53",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5N1DR3AC3PC000001;make=NISSAN;model=Pathfinder;year=2023"
+    },
+    {
+      "pattern": "ED1",
+      "modelCode": "FRONTIER",
+      "generationCode": "D41",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1N6ED1EK5PN000001;make=NISSAN;model=Frontier;year=2023"
     }
   ]
 }

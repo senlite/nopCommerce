@@ -205,6 +205,33 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:W1KCG2DB1NA000001;make=MERCEDES-BENZ;model=EQS-Class Sedan;year=2022"
+    },
+    {
+      "pattern": "YC7",
+      "modelCode": "GCLASS",
+      "generationCode": "W463",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDCYC7HH9KX000001;make=MERCEDES-BENZ;model=G-Class;year=2019"
+    },
+    {
+      "pattern": "6G7",
+      "modelCode": "SCLASS",
+      "generationCode": "W223",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:W1K6G7GBXPN000001;make=MERCEDES-BENZ;model=S-Class;year=2023"
+    },
+    {
+      "pattern": "GF4",
+      "modelCode": "CCLASS",
+      "generationCode": "W204",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:WDDGF4HB0CR000001;make=MERCEDES-BENZ;model=C-Class;year=2012"
     }
   ]
 }

@@ -191,6 +191,51 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:5NPDH4AE5DH000001;make=HYUNDAI;model=Elantra;year=2013"
+    },
+    {
+      "pattern": "S3D",
+      "modelCode": "SANTAFE",
+      "generationCode": "TM",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NMS3DAJ3NH000001;make=HYUNDAI;model=Santa Fe;year=2022"
+    },
+    {
+      "pattern": "S5D",
+      "modelCode": "SANTAFE",
+      "generationCode": "TM",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NMS5DAJ0NH000001;make=HYUNDAI;model=Santa Fe;year=2022"
+    },
+    {
+      "pattern": "L14",
+      "modelCode": "SONATA",
+      "generationCode": "DN8",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHL14JAXPA000001;make=HYUNDAI;model=Sonata;year=2023"
+    },
+    {
+      "pattern": "L34",
+      "modelCode": "SONATA",
+      "generationCode": "DN8",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHL34JA0NA000001;make=HYUNDAI;model=Sonata;year=2022"
+    },
+    {
+      "pattern": "EH4",
+      "modelCode": "SONATA",
+      "generationCode": "DN8",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NPEH4J22MH000001;make=HYUNDAI;model=Sonata;year=2021"
     }
   ]
 }

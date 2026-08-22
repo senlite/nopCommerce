@@ -215,6 +215,51 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:1FT7W2B60KEA00001;make=FORD;model=F-250;year=2019"
+    },
+    {
+      "pattern": "TK3",
+      "modelCode": "MACHE",
+      "generationCode": "CX727",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3FMTK3SU1MMA00001;make=FORD;model=Mustang Mach-E;year=2021"
+    },
+    {
+      "pattern": "BF2",
+      "modelCode": "F250",
+      "generationCode": "P558",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FTBF2B68KEA00001;make=FORD;model=F-250;year=2019"
+    },
+    {
+      "pattern": "8W3",
+      "modelCode": "F350",
+      "generationCode": "P558",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FT8W3BT0KEA00001;make=FORD;model=F-350;year=2019"
+    },
+    {
+      "pattern": "JK1",
+      "modelCode": "EXPEDITION",
+      "generationCode": "U553",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FMJK1KT2LEA00001;make=FORD;model=Expedition MAX;year=2020"
+    },
+    {
+      "pattern": "HP3",
+      "modelCode": "FOCUS",
+      "generationCode": "MK3",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FAHP3F29CL000001;make=FORD;model=Focus;year=2012"
     }
   ]
 }

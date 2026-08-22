@@ -42,6 +42,12 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — top-10 brands close-out (H1.6a, v0.102.0):** remaining NHTSA-documented
+  flagships and generations (RAV4/Prius Prime, Mustang Mach-E, F-350, Seltos,
+  Silverado HD, G-Class, Nissan Z, Tundra XK70, Sienna XL40, HR-V RV, Sonata DN8,
+  Rogue T33). Non-BMW VDS prefixes are now 224. WMI `JTN` is from Toyota’s
+  NHTSA manufacturer list. H1.6a is closed at documented-corpus scope — same
+  bar as H1.6; OEM-complete VDS maps stay un-fabricated.
 - **Software — top-10 brands slice 6 (H1.6a, v0.101.0):** 26 more NHTSA-documented models
   (Corolla Cross, Atlas Cross Sport/Beetle/Touareg, Bronco Sport/Taurus/Flex/F-250,
   Venue/Veloster/Ioniq 5/6, Rio/EV6, Corvette/Volt/Sonic/Express, GLK/GL/EQS,

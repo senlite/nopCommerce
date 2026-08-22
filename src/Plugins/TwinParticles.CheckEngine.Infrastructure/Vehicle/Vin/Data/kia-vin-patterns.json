@@ -182,6 +182,24 @@
       "confidence": 0.9,
       "priority": 100,
       "provenance": "nhtsa-vpic:KNDC3DLC6N5000001;make=KIA;model=EV6;year=2022"
+    },
+    {
+      "pattern": "EUC",
+      "modelCode": "SELTOS",
+      "generationCode": "SP2",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDEUCAA0M7000001;make=KIA;model=Seltos;year=2021"
+    },
+    {
+      "pattern": "J23",
+      "modelCode": "SOUL",
+      "generationCode": "SK3",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDJ23AU1N7123001;make=KIA;model=Soul;year=2022"
     }
   ]
 }
