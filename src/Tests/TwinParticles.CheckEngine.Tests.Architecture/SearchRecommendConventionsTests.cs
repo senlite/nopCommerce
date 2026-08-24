@@ -14,8 +14,8 @@ public class SearchRecommendConventionsTests
         controller.Should().Contain("Task<IActionResult> Recommend(");
         controller.Should().Contain("AiFeatureKeys.Recommendations");
         controller.Should().Contain("_searchRateLimiter.TryAcquire");
-        controller.Should().Contain("recommend:ip:");
         controller.Should().Contain("recommend:customer:");
+        controller.Should().NotContain("recommend:ip:");
         controller.Should().Contain("search.rate_limited");
         controller.Should().Contain("seedProductId");
         controller.Should().Contain("_garageService.GetAsync");

@@ -42,6 +42,13 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Engineering — G4 NFR-017 search load rehearsal (v0.104.0):** 2,000 concurrent first-page
+  searches are gated in CI (`SearchConcurrentSessionBudgetTests`) and by operator scripts
+  `run-search-load-gate.sh|.ps1` plus `tests/perf/search-nfr017.js`. Search/suggest/recommend
+  rate limits key guests by customer id rather than shared NAT IP (`NFR-017`, `NFR-001`).
+  Live rehearsal on this single node: 2,000 unique guest shoppers, 0 × 429, first-page
+  p95 245 ms / p99 279 ms at 25 in-flight searches. A synchronized 2,000-POST herd exceeds
+  this host's thread pool (not the 4-node Redis reference in `NFR-016`).
 - **Engineering — G6 a11y/RTL/CWV evidence (v0.103.0):** operator `run-a11y-gate.sh|.ps1`
   plus Playwright `AccessibilityAxeSpecs` scan Check Engine widgets only and fail on
   serious/critical axe findings (`NFR-046`). Search is a labelled `combobox`; the garage

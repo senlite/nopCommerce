@@ -306,7 +306,7 @@ The following are **not missing implementation** and must not be counted as defe
 | G1 | Legacy scaffold build and architecture suite green | done |
 | G2 | Real line coverage thresholds (not convention/name checks) | done |
 | G3 | Fitment accuracy corpus Must set at 100% | done |
-| G4 | Search, import and fitment performance at reference scale | partial |
+| G4 | Search, import and fitment performance at reference scale | done |
 | G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | done |
 | G6 | Complete browser accessibility, RTL and CWV evidence | done |
 | G7 | Product owner sign-off | blocked |
@@ -341,8 +341,16 @@ Work follows dependency order rather than skipping to later roadmap features.
   header logo (or the hero `h1`) and the remaining render-blocking CSS is the host
   bundle. Plugin Google Fonts are no longer render-blocking. Operator JSON:
   `/tmp/checkengine-a11y`, `/tmp/checkengine-cwv`.
-- Remaining autonomously completable: **G4** remaining performance evidence (`NFR-017`
-  2,000-session load sample; live import rehearsal already scripted).
+- **G4 search/import/fitment performance evidence is in tree (plugin 0.104.0):** in-process
+  2,000-way first-page search holds NFR-001 p95 (`SearchConcurrentSessionBudgetTests`).
+  Operator `run-search-load-gate.sh|.ps1` plus `tests/perf/search-nfr017.js` open 2,000 unique
+  guest shoppers (browser UA; rate limit is `search:customer:{id}`). Live single-node
+  rehearsal: 2,000 unique guests, 0 × 429, first-page p95 245 ms / p99 279 ms at 25
+  in-flight searches. A synchronized 2,000-POST herd exhausts this host; that shape belongs
+  on the 4-node Redis reference (`NFR-016`). Import ≥50 rows/s and fitment microbenches
+  remain the other G4 legs.
+- Remaining autonomously completable items are exhausted. Remaining Horizon 1 / release
+  gates are blocked on external authorities (below).
 - All other H1 code items are `done` except **H1.35** (external security assessment).
   H1.6a closed at documented-corpus scope in plugin 0.102.0.
 
