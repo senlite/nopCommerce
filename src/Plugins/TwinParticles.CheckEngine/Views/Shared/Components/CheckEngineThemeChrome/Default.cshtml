@@ -14,14 +14,15 @@
     NopHtml.AddCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-theme.css");
     NopHtml.AddHeadCustomParts("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">");
     NopHtml.AddHeadCustomParts("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>");
-    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap\">");
+    @* Load webfonts after first paint so they are not render-blocking (NFR-054 / NFR-002). *@
+    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap\" media=\"print\" onload=\"this.media='all'\">");
 
     <script src="~/Plugins/TwinParticles.CheckEngine/Content/checkengine-storefront.js" asp-append-version="true"></script>
 }
 else if (zone == "header_after")
 {
-    @* Keyboard-native mega menu: details/summary provides Enter/Space toggle, focus order and
-       Escape-free progressive enhancement without a JavaScript dependency. *@
+    @* Keyboard-native mega menu: details/summary provides Enter/Space toggle and focus order.
+       Storefront JS adds Escape/outside-click dismissal and aria-expanded mirroring. *@
     <nav class="ce-root ce-mega-nav" aria-label="@Model.MenuText.AriaLabel">
         <details class="ce-mega">
             <summary class="ce-mega__trigger" tabindex="0" aria-expanded="false">
@@ -91,8 +92,7 @@ else if (zone == "header_after")
                     id="ce-garage-chip"
                     data-ce-theme="garage-widget"
                     data-ce-state="empty"
-                    aria-haspopup="dialog"
-                    aria-expanded="false">
+                    aria-controls="ce-vehicle-selector">
                 <svg class="ce-icon ce-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
                     <path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M4 13h16v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4z" stroke-linecap="round" stroke-linejoin="round" />
@@ -120,6 +120,8 @@ else if (zone == "header_after")
                            class="ce-search__input"
                            name="rawText"
                            type="search"
+                           role="combobox"
+                           aria-autocomplete="list"
                            autocomplete="off"
                            enterkeyhint="search"
                            placeholder="@T("Plugins.TwinParticles.CheckEngine.Search.Placeholder")"

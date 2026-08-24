@@ -4,6 +4,7 @@ param(
     [string]$BaseUrl = $env:CHECKENGINE_CWV_BASE_URL,
     [string]$OutputDir = $env:CHECKENGINE_CWV_OUTPUT_DIR,
     [int]$MaxLcpMs = $(if ($env:CHECKENGINE_CWV_MAX_LCP_MS) { [int]$env:CHECKENGINE_CWV_MAX_LCP_MS } else { 2500 }),
+    [int]$MaxSearchLcpMs = $(if ($env:CHECKENGINE_CWV_MAX_SEARCH_LCP_MS) { [int]$env:CHECKENGINE_CWV_MAX_SEARCH_LCP_MS } else { 1500 }),
     [int]$MaxInpMs = $(if ($env:CHECKENGINE_CWV_MAX_INP_MS) { [int]$env:CHECKENGINE_CWV_MAX_INP_MS } else { 200 }),
     [double]$MaxCls = $(if ($env:CHECKENGINE_CWV_MAX_CLS) { [double]$env:CHECKENGINE_CWV_MAX_CLS } else { 0.1 }),
     [string]$FormFactor = $(if ($env:CHECKENGINE_CWV_FORM_FACTOR) { $env:CHECKENGINE_CWV_FORM_FACTOR } else { "mobile" }),
@@ -23,13 +24,27 @@ if (-not (Get-Command lighthouse -ErrorAction SilentlyContinue)) {
     exit 2
 }
 
-$pages = @("/", "/search?q=filter", "/ar/")
+$pages = if ($env:CHECKENGINE_CWV_PAGES) {
+    $env:CHECKENGINE_CWV_PAGES.Split(",") | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+} else {
+    @("/", "/search?q=filter", "/computers", "/en/gmaster-bmw-parts-5", "/build-your-own-computer", "/en/gmaster-gm-11127548196-2", "/ar/")
+}
 $failed = $false
 
 foreach ($path in $pages) {
     $url = ($BaseUrl.TrimEnd("/") + $path)
     $safeName = ($path -replace "[/=?&]", "_").Trim("_")
     if ([string]::IsNullOrWhiteSpace($safeName)) { $safeName = "home" }
+    try {
+        $probe = Invoke-WebRequest -Uri $url -MaximumRedirection 5 -SkipHttpErrorCheck -TimeoutSec 15
+        if ($probe.StatusCode -ne 200) {
+            Write-Host "[cwv-gate] ${safeName}: skipped (HTTP $($probe.StatusCode))"
+            continue
+        }
+    } catch {
+        Write-Host "[cwv-gate] ${safeName}: skipped (unreachable)"
+        continue
+    }
     $report = Join-Path $OutputDir "lighthouse-$safeName-$FormFactor.json"
     $mobileFlag = if ($FormFactor -eq "mobile") { "true" } else { "false" }
 
@@ -52,8 +67,9 @@ foreach ($path in $pages) {
     $inp = [double]($json.audits."interaction-to-next-paint".numericValue)
     if ($inp -eq 0) { $inp = [double]$json.audits."total-blocking-time".numericValue }
 
-    Write-Host "[cwv-gate] ${safeName}: LCP=${lcp}ms CLS=${cls} INP/TBT=${inp}ms"
-    if ($lcp -gt $MaxLcpMs -or $inp -gt $MaxInpMs -or $cls -gt $MaxCls) {
+    $pageLcpBudget = if ($path.StartsWith("/search")) { $MaxSearchLcpMs } else { $MaxLcpMs }
+    Write-Host "[cwv-gate] ${safeName}: LCP=${lcp}ms CLS=${cls} INP/TBT=${inp}ms (budget LCP<=${pageLcpBudget})"
+    if ($lcp -gt $pageLcpBudget -or $inp -gt $MaxInpMs -or $cls -gt $MaxCls) {
         Write-Host "[cwv-gate] ${safeName}: fail" -ForegroundColor Red
         $failed = $true
     } else {

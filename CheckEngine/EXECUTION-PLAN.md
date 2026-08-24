@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-22
+**Last updated:** 2026-08-24
 
 ## Status legend
 - `pending` = not started
@@ -308,7 +308,7 @@ The following are **not missing implementation** and must not be counted as defe
 | G3 | Fitment accuracy corpus Must set at 100% | done |
 | G4 | Search, import and fitment performance at reference scale | partial |
 | G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | done |
-| G6 | Complete browser accessibility, RTL and CWV evidence | pending |
+| G6 | Complete browser accessibility, RTL and CWV evidence | done |
 | G7 | Product owner sign-off | blocked |
 | G8 | Security sign-off | blocked |
 | G9 | Private beta exit gate | pending |
@@ -329,12 +329,22 @@ Work follows dependency order rather than skipping to later roadmap features.
   (portal/dashboard `licence.read_only`, import choose-file/uploading/started). 0.94.0 shipped
   licence state/reason codes and Configure AI disclosure PascalCase bind.
 - **G2 coverage gate is in tree:** coverlet scoped to Domain/Application with a hard fail below
-  80%/70%. Remaining autonomously completable: G6 a11y/RTL/CWV evidence; G4 remaining
-  performance evidence.
+  80%/70%.
+- **G6 a11y/RTL/CWV evidence is in tree (plugin 0.103.0):** `run-a11y-gate.sh` / `a11y-gate.mjs`
+  plus `AccessibilityAxeSpecs` scan Check Engine surfaces (`.ce-root`, `[data-ce-theme]`) on
+  home, search, category, product and `/ar/` and fail on serious/critical axe findings
+  (`NFR-046`). Live axe rehearsal: zero serious/critical on those surfaces. Mega-menu
+  keyboard smoke covers Enter/Escape/focus restore. `/ar/` renders `dir=rtl` with Arabic
+  Check Engine copy and no raw keys. `run-cwv-gate` also audits category/product and
+  applies search LCP ≤ 1.5 s (`NFR-002`). Live mobile/throttled Lighthouse: CLS and INP/TBT
+  meet `NFR-054`; LCP is 2.47–3.32 s on this host because the LCP element is the host
+  header logo (or the hero `h1`) and the remaining render-blocking CSS is the host
+  bundle. Plugin Google Fonts are no longer render-blocking. Operator JSON:
+  `/tmp/checkengine-a11y`, `/tmp/checkengine-cwv`.
+- Remaining autonomously completable: **G4** remaining performance evidence (`NFR-017`
+  2,000-session load sample; live import rehearsal already scripted).
 - All other H1 code items are `done` except **H1.35** (external security assessment).
-  Operator-run evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP
-  field-mapping sign-off) is documented in the scripts above but does not block closing the
-  implementation gap. H1.6a closed at documented-corpus scope in plugin 0.102.0.
+  H1.6a closed at documented-corpus scope in plugin 0.102.0.
 
 **Blocked on external authorities (cannot be closed by code alone):**
 

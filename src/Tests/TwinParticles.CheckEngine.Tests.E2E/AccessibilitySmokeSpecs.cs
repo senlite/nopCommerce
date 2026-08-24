@@ -57,13 +57,28 @@ public class AccessibilitySmokeSpecs
         else
             TestContext.Progress.WriteLine("Garage widget absent — soft pass.");
 
-        var searchInput = page.Locator("input[type='search'], input[name*='q' i], input[placeholder*='search' i], #small-searchterms");
+        var searchInput = page.Locator("#ce-sticky-search-input");
         if (await searchInput.CountAsync() > 0)
         {
-            await page.Keyboard.PressAsync("Tab");
             await searchInput.First.FocusAsync();
             (await searchInput.First.EvaluateAsync<bool>("el => document.activeElement === el")).Should().BeTrue();
         }
+
+        var mega = page.Locator("details.ce-mega");
+        if (await mega.CountAsync() == 0)
+        {
+            TestContext.Progress.WriteLine("Mega menu absent — keyboard smoke skipped.");
+            return;
+        }
+
+        var trigger = mega.Locator(".ce-mega__trigger").First;
+        await trigger.FocusAsync();
+        await page.Keyboard.PressAsync("Enter");
+        (await mega.First.GetAttributeAsync("open")).Should().NotBeNull("Enter on the mega-menu trigger should open the panel");
+        await page.Keyboard.PressAsync("Escape");
+        (await mega.First.GetAttributeAsync("open")).Should().BeNull("Escape should close the mega menu");
+        (await trigger.EvaluateAsync<bool>("el => document.activeElement === el")).Should().BeTrue(
+            "Escape should restore focus to the mega-menu trigger");
     }
 
     private static async Task<bool> IsServerReachableAsync()

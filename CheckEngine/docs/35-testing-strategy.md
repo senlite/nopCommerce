@@ -196,7 +196,7 @@ Corpus is product IP; versioned under `tests/corpus/fitment/`.
 | RTL visual | Protocol in [23](23-ux-guidelines.md) |
 | Keyboard | Garage + search + selector (`NFR-047`) |
 
-Implemented Playwright E2E currently runs against a PostgreSQL-backed local stack. The runner scripts are `e2e/start-manual-stack.ps1` for manual inspection and `e2e/run-regressions.ps1` for automated smoke checks. Local Chromium can be supplied via `PLAYWRIGHT_BROWSER_PATH`. Staging-theme a11y/RTL/keyboard coverage remains defined but is not yet automated.
+Implemented Playwright E2E currently runs against a PostgreSQL-backed local stack. The runner scripts are `e2e/start-manual-stack.ps1` for manual inspection and `e2e/run-regressions.ps1` for automated smoke checks. Local Chromium can be supplied via `PLAYWRIGHT_BROWSER_PATH`. Check Engine axe/RTL/keyboard coverage is automated in `AccessibilityAxeSpecs`, `AccessibilityViewportMatrixSpecs` and `AccessibilitySmokeSpecs`; operators also run `CheckEngine/scripts/run-a11y-gate.sh` (`NFR-046`) and `run-cwv-gate.sh` (`NFR-054`, `NFR-002`).
 
 ### Performance tests
 
@@ -238,7 +238,7 @@ Never commit production customer VINs.
 |---|---|
 | PR | Architecture suite + Domain ≥ 80% / Application ≥ 70% coverlet gate (`NFR-058`/`NFR-059`) + format + secret + docs |
 | Nightly | Full Integration + contract + corpus + vulnerable pkgs |
-| RC | + PostgreSQL-backed Playwright smoke (install/home/search/sample PDP); axe/RTL/keyboard remain future |
+| RC | + PostgreSQL-backed Playwright smoke (install/home/search/sample PDP) plus axe/RTL/keyboard gates on Check Engine surfaces |
 
 ---
 

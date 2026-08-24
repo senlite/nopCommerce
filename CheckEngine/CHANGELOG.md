@@ -42,6 +42,12 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Engineering — G6 a11y/RTL/CWV evidence (v0.103.0):** operator `run-a11y-gate.sh|.ps1`
+  plus Playwright `AccessibilityAxeSpecs` scan Check Engine widgets only and fail on
+  serious/critical axe findings (`NFR-046`). Search is a labelled `combobox`; the garage
+  chip no longer claims a dialog it does not open; Google Fonts load after first paint.
+  Mega-menu keyboard smoke covers Enter/Escape/focus restore. The CWV rehearsal now
+  includes category and product templates and applies search LCP ≤ 1.5 s (`NFR-002`).
 - **Software — top-10 brands close-out (H1.6a, v0.102.0):** remaining NHTSA-documented
   flagships and generations (RAV4/Prius Prime, Mustang Mach-E, F-350, Seltos,
   Silverado HD, G-Class, Nissan Z, Tundra XK70, Sienna XL40, HR-V RV, Sonata DN8,

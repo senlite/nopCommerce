@@ -31,6 +31,22 @@ public class CoreWebVitalsGateConventionsTests
         contents.Should().Contain("NFR-054");
         contents.Should().Contain("form-factor");
         contents.Should().Contain("cpuSlowdownMultiplier");
+        contents.Should().Contain("/computers");
+        contents.Should().Contain("/build-your-own-computer");
+        contents.Should().Contain("MAX_SEARCH_LCP_MS");
+    }
+
+    [Test]
+    public void Theme_Chrome_Should_Load_Google_Fonts_Without_Blocking_Render()
+    {
+        var view = LocateRepoFile(
+            "src", "Plugins", "TwinParticles.CheckEngine", "Views", "Shared",
+            "Components", "CheckEngineThemeChrome", "Default.cshtml");
+        var contents = File.ReadAllText(view);
+        contents.Should().Contain("fonts.googleapis.com");
+        contents.Should().Contain("media=\\\"print\\\"");
+        contents.Should().Contain("onload=");
+        contents.Should().NotContain("<noscript>");
     }
 
     [Test]
