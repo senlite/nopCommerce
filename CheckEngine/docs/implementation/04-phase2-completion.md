@@ -2,6 +2,10 @@
 
 Status: Completed
 
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. The 44/44 count below is the
+historical Phase 2 snapshot; the current architecture suite is recorded in
+[05 Current Status](05-current-status.md) and [EXECUTION-PLAN.md](../../EXECUTION-PLAN.md).
+
 ## Scope implemented
 
 - Vehicle foundation schema and entities

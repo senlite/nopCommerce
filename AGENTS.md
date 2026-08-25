@@ -54,7 +54,8 @@ only cloud-specific caveats.
 
 ### Test notes (flaky/expected failures)
 - `Nop.Tests` uses SQLite in-memory and needs no web server or external database.
-- Architecture tests are hermetic and should be fully green (212 pass).
+- Architecture tests are hermetic and should be fully green (1061 pass as of plugin 0.104.0,
+  excluding `VectorMathTests`). Coverlet: Domain ≥ 80% / Application ≥ 70%.
 - GMaster tests should be fully green (19 pass).
 - Check Engine health is intentionally `degraded` when its commercial licence is inactive even when
   database, search-index and ERP probes all report `ok`.

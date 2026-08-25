@@ -2,7 +2,9 @@
 
 > A practical, screenshot-led guide to installing, configuring, and using the Check Engine plugin for nopCommerce.
 
-**Status:** Draft · **Applies to:** Check Engine `0.1.0` on nopCommerce `4.70` · **Last revised:** 2026-08-09
+**Status:** Draft · **Applies to:** Check Engine `0.104.0` on nopCommerce `4.90.6` · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](EXECUTION-PLAN.md). This document remains the specification baseline.
 
 All screenshots in this guide were captured from a live store running the plugin.
 
@@ -51,8 +53,8 @@ Core capabilities:
 
 | Requirement | Value |
 |---|---|
-| nopCommerce | 4.70 (`SupportedVersions` in `plugin.json`) |
-| .NET runtime | .NET 8 (the host and plugin target `net8.0`) |
+| nopCommerce | 4.90.6 (`SupportedVersions` in `plugin.json` is `4.90`) |
+| .NET runtime | .NET 9 (the host and plugin target `net9.0`) |
 | Database | **SQL Server** is the supported production database for Check Engine tables (see [Known limitations](#13-known-limitations)) |
 | Permissions | An admin account with the **Manage Check Engine** permission for admin endpoints |
 
@@ -70,6 +72,12 @@ From a clone of the repository, build the plugin (its post-build step copies the
 
 ```bash
 dotnet build src/Plugins/TwinParticles.CheckEngine/TwinParticles.CheckEngine.csproj -c Release
+```
+
+To produce an unsigned drop-in zip (excludes host `Nop.Web`, `App_Data`, and `runtimes`):
+
+```bash
+bash CheckEngine/scripts/pack-checkengine.sh
 ```
 
 Or run the bundled convenience script, which also builds and runs the test suite:

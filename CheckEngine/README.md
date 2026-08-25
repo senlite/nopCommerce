@@ -18,10 +18,11 @@ that lets a customer arrive with nothing but a chassis number and leave with the
 > 📘 **New here?** The [Check Engine User Guide](USER-GUIDE.md) is a screenshot-led walkthrough of
 > installing, configuring, and using the plugin end to end.
 
-> **Status:** Specification phase. This repository is the documentation baseline and single source of
-> truth for the product. It is implementation-ready: every document is written to the level of detail
-> a development team needs to begin work without further discovery. See [ROADMAP.md](ROADMAP.md) for
-> the delivery sequence and [CHANGELOG.md](CHANGELOG.md) for the document revision history.
+> **Status:** Specification baseline plus in-tree plugin implementation. Check Engine remains
+> **pre-release**: Horizon 1 is not gated until H1.35/G8 (independent security assessment), G7
+> (product-owner sign-off), G11 vendor signing, and G12 Marketplace submission. Current plugin
+> SemVer is `0.104.0` on nopCommerce 4.90.6 / .NET 9. See [EXECUTION-PLAN.md](EXECUTION-PLAN.md)
+> and [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -500,7 +501,7 @@ upload time and refuses to install on mismatch:
   "Group": "Misc",
   "FriendlyName": "Check Engine",
   "SystemName": "TwinParticles.CheckEngine",
-  "Version": "0.12.0",
+  "Version": "0.104.0",
   "SupportedVersions": [ "4.90" ],
   "Author": "Twin Particles",
   "DisplayOrder": 1,

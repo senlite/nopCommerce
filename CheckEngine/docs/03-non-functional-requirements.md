@@ -3,7 +3,9 @@
 > Quality attributes Check Engine must meet — performance, scalability, availability, security,
 > accessibility, localisation, and maintainability — each with a measurement method.
 
-**Status:** Review · **Owner:** Architecture Owner · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Architecture Owner · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -163,6 +165,14 @@ All performance NFRs are measured against this baseline unless an NFR states oth
 | `NFR-023` | Import batch concurrency | ≥ 2 batches parallel without cross-corruption | Integration | Must |
 | `NFR-024` | Garage sync fan-out | 50 devices/account soft limit; graceful error beyond | API test | Could |
 | `NFR-025` | Multi-store | 5 stores on one instance within Multi Store licence, budgets held | Load test | Should |
+
+Operator rehearsal for `NFR-017` (plugin 0.104.0): `CheckEngine/scripts/run-search-load-gate.sh|.ps1`
+and `tests/perf/search-nfr017.js`. Rate limits are per shopper (`search:customer:{id}`). Load scripts
+must send a browser User-Agent. Default in-flight cap is 25 on a single node; a synchronized
+2,000-POST herd needs the 4-node Redis reference in `NFR-016`. See [29](29-performance.md).
+
+The `NFR-002` 1.5 s search LCP target is unchanged. G6 CWV rehearsal on this host does **not**
+claim it is met (measured LCP is bound by host logo/CSS, which the plugin must not patch).
 
 ### Availability and resilience (`NFR-026`–`NFR-032`)
 

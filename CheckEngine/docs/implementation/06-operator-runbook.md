@@ -2,11 +2,29 @@
 
 > How to install, operate, and recover Check Engine on a nopCommerce host.
 
-**Status:** Approved · **Owner:** platform · **Last revised:** 2026-08-05
+**Status:** Approved · **Owner:** platform · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../../EXECUTION-PLAN.md). This document is the operator runbook, not a v1.0 sign-off.
 
 ## Executive Summary
 
-This runbook covers plugin install/uninstall, index rebuild, import operations, ERP sync, health probes, and SQL migration forward/rollback expectations for release dry-runs.
+This runbook covers plugin packing, install/uninstall, index rebuild, import operations, ERP sync,
+health probes, SQL migration forward/rollback, and the operator rehearsal gates for search load,
+accessibility, and unsigned packaging.
+
+## Pack (unsigned drop-in zip)
+
+From the repository root:
+
+```bash
+bash CheckEngine/scripts/pack-checkengine.sh
+# or
+pwsh CheckEngine/scripts/pack-checkengine.ps1
+```
+
+The script emits `TwinParticles.CheckEngine.{version}.zip` plus a SHA-256 sidecar. Zip root is
+`TwinParticles.CheckEngine/`. It excludes host `Nop.Web` binaries, `App_Data`, native `runtimes`,
+and symbols. Authenticode / licence-vendor signing is **not** performed here (G11 remainder).
 
 ## Install
 
@@ -18,15 +36,21 @@ This runbook covers plugin install/uninstall, index rebuild, import operations, 
 
 ## Uninstall
 
-1. Export any custom vehicle/OEM/fitment data before uninstall (SQL backup of `TP_CE_*` tables)
+1. Open `/Admin/CheckEngine/UninstallAdmin/Status`. Destructive uninstall is blocked until
+   `/Admin/CheckEngine/UninstallAdmin/Export` has produced a fresh (&lt;24h) JSON export of
+   vehicle/OEM/fitment provenance.
 2. Uninstall from Local plugins
-3. Confirm `TP_CE_*` tables are dropped by reverse migrations (AutoReversingMigration). If residual tables remain, drop `TP_CE_%` explicitly after backup
+3. Confirm `TP_CE_*` tables are dropped by reverse migrations (AutoReversingMigration). If residual
+   tables remain, drop `TP_CE_%` explicitly after backup
 
 ## Search index
 
 - Admin action: `POST Admin/CheckEngine/SearchAdmin/Rebuild`
 - Public search: `POST /check-engine/search/query`
 - When the external index is unhealthy, unified search sets `isDegraded: true` and falls back to SQL/keyword paths
+- Search/suggest/recommend rate limits are per shopper (`search:customer:{id}`), not per NAT IP
+  (`NFR-017`). Load tests must send a browser User-Agent; curl/k6/undici default UAs map onto
+  nopCommerce's crawler customer and collapse guests.
 
 ## Import workflow
 
@@ -77,3 +101,6 @@ bash CheckEngine/scripts/build-checkengine.sh
 # or
 pwsh CheckEngine/scripts/build-checkengine.ps1
 ```
+
+See [03 Local Quality Gate](03-local-quality-gate.md) for coverage, axe, CWV, search-load, and pack
+scripts. CWV rehearsal does **not** claim `NFR-002` 1.5 s search LCP is met.

@@ -3,7 +3,9 @@
 > Normalisation, ISO 3779 check-digit validation, WMI resolution, pluggable manufacturer decoders,
 > confidence scoring, and privacy-aware logging for Vehicle Identification Numbers.
 
-**Status:** Review · **Owner:** Domain Architect · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Domain Architect · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -19,6 +21,7 @@
   - [Decoder plugin model](#decoder-plugin-model)
   - [Decode results and confidence](#decode-results-and-confidence)
   - [BMW Horizon 1 decoder](#bmw-horizon-1-decoder)
+  - [Catalog VIN decoder (H1.6a)](#catalog-vin-decoder-h16a)
   - [Caching and rate limiting](#caching-and-rate-limiting)
   - [Privacy and logging](#privacy-and-logging)
   - [Integration points](#integration-points)
@@ -42,8 +45,9 @@ Takeaways:
 1. **Core is brand-agnostic.** Position maps live in pluggable decoders + data (`FR-204`).
 2. **Check-digit failure ≠ decode failure** — distinct reason codes (`FR-202`).
 3. **Multiple candidates require disambiguation UI**, never silent pick (`FR-206`).
-4. **BMW decoder ships in Horizon 1** for supported WMI ranges (`FR-211`).
+4. **BMW decoder ships in Horizon 1** for supported WMI ranges (`FR-211`). The H1.6a catalog decoder covers the other top-10 passenger brands with **documented VDS only**.
 5. **Full VIN is not logged by default** (`FR-212`, `FR-213`).
+6. **Unknown VDS fails closed** (`vin.decode_failed`). Do not fabricate VDS→generation maps.
 
 Budget: ≤ 40 ms local decode excluding external calls ([03](03-non-functional-requirements.md)).
 
@@ -136,9 +140,11 @@ flowchart TB
     CORE --> WMI["WMI lookup"]
     WMI --> REG["Decoder registry"]
     REG --> D1["BmwVinDecoder"]
-    REG --> D2["Future Make decoder"]
+    REG --> D2["CatalogVinDecoder"]
+    REG --> D3["Future Make decoder"]
     D1 --> OUT["Candidates + confidence"]
     D2 --> OUT
+    D3 --> OUT
 
     style CORE fill:#0066B1,color:#fff
 ```
@@ -147,7 +153,7 @@ flowchart TB
 |---|---|
 | Port | `IManufacturerVinDecoder` with `CanDecode(wmi)`, `Decode(vin) → DecodeContribution` |
 | Registration | DI + admin enable flags (`FR-210`); data-driven patterns in `CeVinPattern` |
-| Core | Must not contain BMW position switch statements (`FR-204`) |
+| Core | Must not contain manufacturer position switch statements (`FR-204`) |
 | Disable | Disabled decoder skipped; falls through to structured failure if none apply |
 
 ### Decode results and confidence
@@ -177,6 +183,24 @@ Auto-accept threshold is a setting (default 0.85). Below threshold → always di
 | Depth | Resolve to **Generation and Engine** where data allows; Body/Market when patterned |
 | Delivery | Separate class library or feature folder implementing `IManufacturerVinDecoder` + seed patterns |
 | Gaps | Undocumented VIS variants → candidates or failure, never guess publish |
+
+### Catalog VIN decoder (H1.6a)
+
+Horizon 1 also ships a data-driven `CatalogVinDecoder` for the other top-10 passenger brands besides
+BMW. It is a **catalog**, not a second manufacturer-specific engine: WMI allow-lists and VDS prefixes
+live in seed JSON; the Domain stays brand-agnostic (`FR-204`, `INV-013`).
+
+| Commitment | Detail |
+|---|---|
+| Brands | Toyota, Volkswagen, Honda, Hyundai, Ford, Mercedes-Benz, Nissan, Kia, Chevrolet (BMW remains the `BmwVinDecoder` exemplar) |
+| Depth | WMI → Make, then documented VDS prefix → generation/model when the prefix is in the curated table |
+| Provenance | NHTSA manufacturer lists and documented VDS only. Plugin 0.104.0 ships 224 non-BMW VDS prefixes |
+| Fail-closed | Unknown or shared/skipped WMI, or undocumented VDS, returns `vin.decode_failed` with partial WMI hints — never a guessed configuration |
+| Shared WMI skips | No Kia `5NP`; no Hyundai `3KP`; skip `3MY`, `1ZV`, `3GP`, Crown/`AAA`, CC/`HP7` |
+| Forbidden | Fabricating VDS→generation patterns to “complete” a brand |
+
+Engineering evidence for H1.6a is recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). OEM-complete
+VDS maps remain un-fabricated.
 
 ### Caching and rate limiting
 

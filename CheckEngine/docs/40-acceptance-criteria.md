@@ -4,7 +4,9 @@
 > Horizon 0 platform-upgrade epic), each mapped to a test category and, where relevant, to a domain
 > invariant or non-functional requirement.
 
-**Status:** Review · **Owner:** QA Lead · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** QA Lead · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -376,6 +378,10 @@ no code path left using the unmasked value.
 | `AC-078.1` | A customer's data-export or erasure request | it is processed | garage entries, order history subject to retention holds, and account data are all handled per the request | Integration | `FR-960`–`961` |
 | `AC-079.1` | A support diagnostic package | it is generated | it contains no plaintext secret and no unredacted personal data | Unit | `FR-992` |
 | `AC-080.1` | The Horizon 1 release candidate | the security review is conducted | zero open high- or critical-severity findings remain | Manual | `NFR-033`, [ROADMAP.md](../ROADMAP.md#horizon-1--foundation) |
+
+`AC-080.1` is the independent assessment (H1.35 / G8). Engineering controls for `AC-076`–`AC-079`
+exist in plugin `0.104.0`; they do not close this row. Sign-off is recorded in
+[07 Acceptance Go/No-Go](implementation/07-acceptance-go-no-go.md).
 
 #### `EP-16` Licence activation
 

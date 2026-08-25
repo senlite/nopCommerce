@@ -4,7 +4,9 @@
 > the purpose and dependencies of each.
 
 **Product:** Check Engine™ by Twin Particles · **Platform:** nopCommerce 4.90.6 on .NET 9
-**Baseline:** 0.1.0 · **Last revised:** 2026-07-28
+**Baseline:** 0.1.0 (specification) · **Plugin:** 0.104.0 · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). Numbered documents in this folder remain the specification baseline unless a section is explicitly labelled as engineering evidence.
 
 Start at [README.md](../README.md) for the product overview, or pick a
 [reading path](#reading-paths) for your role.

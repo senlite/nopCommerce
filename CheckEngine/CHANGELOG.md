@@ -42,6 +42,13 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Documentation — sync with plugin 0.104.0:** numbered specs, README, USER-GUIDE, ROADMAP,
+  CONTRIBUTING, AGENTS.md, and implementation status docs now point at
+  [EXECUTION-PLAN.md](EXECUTION-PLAN.md). Stale facts (plugin `0.12.0`, 556/212 tests, nopCommerce
+  4.70 / .NET 8 in the user guide) are corrected. VIN/search/security/deployment/testing/release
+  specs record H1.6a catalog VIN, per-shopper search rate limits, unsigned pack rehearsal, and the
+  split between engineering evidence and Horizon 1 sign-off (H1.35/G8, G7, G11 vendor signing, G12,
+  `NFR-002` LCP). Plugin SemVer stays `0.104.0`.
 - **Engineering — G11 unsigned plugin pack rehearsal:** operator `pack-checkengine.sh|.ps1`
   plus `pack-checkengine.py` emit `TwinParticles.CheckEngine.{version}.zip` with SHA-256,
   excluding host `Nop.Web` binaries, `App_Data`, and native `runtimes`. The artefact is

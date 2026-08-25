@@ -3,7 +3,9 @@
 > Platform upgrade from nopCommerce 4.60 to 4.90, environment topology, Check Engine install/upgrade
 > /rollback, web farm operation, and containerisation guidance.
 
-**Status:** Review · **Owner:** DevOps Architect · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** DevOps Architect · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -139,7 +141,10 @@ restore.
 ### Fresh install
 
 1. Deploy host 4.90.6 on empty or existing commerce DB.  
-2. Copy `Plugins/TwinParticles.CheckEngine` package (all layer DLLs).  
+2. Copy `Plugins/TwinParticles.CheckEngine` from a drop-in zip produced by
+   `CheckEngine/scripts/pack-checkengine.sh` (or `.ps1`). The zip root is
+   `TwinParticles.CheckEngine/` and must not contain host `Nop.Web` binaries, `App_Data`, or
+   native `runtimes`. Building the plugin project also copies layer DLLs into the host Plugins folder.  
 3. Restart app; install from Admin → Local plugins.  
 4. Confirm migrations applied; open configuration.  
 5. Set theme `CheckEngine`; configure search/ERP/AI as needed (AI default off).  

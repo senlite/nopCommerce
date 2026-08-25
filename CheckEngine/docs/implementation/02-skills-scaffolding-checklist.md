@@ -2,6 +2,10 @@
 
 Status: Completed (scaffolding baseline)
 
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. The 41/41 count below is the
+historical scaffolding snapshot; the current architecture suite is recorded in
+[05 Current Status](05-current-status.md) and [EXECUTION-PLAN.md](../../EXECUTION-PLAN.md).
+
 ## Implemented skills
 
 - [x] DDD layering extension with Domain-first contracts and strict layer boundaries

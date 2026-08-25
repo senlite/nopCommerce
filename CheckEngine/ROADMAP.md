@@ -1,6 +1,8 @@
 # Check Engine™ Roadmap
 
-**Status:** Specification phase · **Platform target:** nopCommerce 4.90.6 on .NET 9 · **Last revised:** 2026-07-28
+**Status:** Specification baseline; Horizon 1 engineering is in tree and pre-release · **Platform target:** nopCommerce 4.90.6 on .NET 9 · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](EXECUTION-PLAN.md). This document remains the specification baseline.
 
 This roadmap states what Check Engine will deliver, in what order, and why that order. It covers two
 tracks: the **documentation phases** that produce the specification baseline, and the **product

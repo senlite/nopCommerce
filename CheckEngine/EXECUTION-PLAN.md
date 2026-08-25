@@ -23,8 +23,12 @@ This plan has three accounting levels. They must not be conflated:
 2. **Documented product vision (`EP-01`–`EP-28`): 1 / 28 epics closed, 19 partial, 8 pending.**
    An epic is only closed when every exit criterion in
    [38 Epics](docs/38-epics.md) is evidenced.
-3. **Horizon 1 / v1.0 release gate: 0 / 12 checklist items fully evidenced.** See
-   [41 Release Plan](docs/41-release-plan.md#v10--foundation). Check Engine remains **pre-release**.
+3. **Horizon 1 / v1.0 release gate:** engineering evidence exists for most of the
+   [41 Release Plan](docs/41-release-plan.md#v10--foundation) checklist (import, VIN/fitment,
+   corpus, search budgets, RTL/a11y widgets, coverage, install/uninstall). **Not** fully
+   evidenced: host-limited search LCP (`NFR-002`), live ERP partner reconciliation, independent
+   security assessment (**H1.35** / G8), product-owner sign-off (G7), and the public beta exit
+   gate. Check Engine remains **pre-release**.
 
 The previous “52 / 52 complete” headline was both unauditable from the listed tasks and misleading when
 read as completion of Horizon 1 or the full roadmap. This revision uses only enumerated tasks and makes
@@ -156,7 +160,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 |---|---|---|---|
 | H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | done | Live SQL Server rehearsal left zero `TP_CE_*` tables, migration versions and permissions |
 | H1.2 | Add uninstall confirmation and export-before-drop workflow | done | Authenticated status warns of all destructive domains, export downloads complete vehicle/OEM/fitment JSON with claim provenance/qualifiers, and uninstall is blocked unless export was prepared within 24h. Plugin-list confirmation modal, configure/dashboard warnings, and EN/AR locale strings ship via `UninstallPreparationViewComponent`. Guarded disposable uninstall rehearsal remains an operator SQL Server dry-run per runbook |
-| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | done | `plugin.json`, assembly/file/package version, architecture source of truth and public packaging table now agree on `TwinParticles.CheckEngine` / `0.12.0` / nopCommerce 4.90; architecture test prevents drift |
+| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | done | `plugin.json`, assembly/file/package version and the public packaging table agree on `TwinParticles.CheckEngine` / current SemVer (0.104.0 as of 2026-08-25) / nopCommerce 4.90; `PluginMetadataContractTests` prevents drift |
 | H1.3b | Bind plugin admin routes to the Admin area | done | Admin `{action}` routes omitted the area value and 404'd; every admin route now sets `area = Admin`, verified live via the vehicle seed endpoint |
 | H1.3a | Deliver migrations and locale resources on plugin update, not only on install | done | `UpdateAsync` applies pending migrations and re-applies locale resources; verified by a live `0.2.0`→`0.3.0` upgrade |
 

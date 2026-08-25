@@ -3,7 +3,9 @@
 > Six search modes over one query contract: VIN, OEM, vehicle tree, category, keyword, and natural
 > language — with fitment filtering, bilingual indexing, faceting, fallback, and analytics.
 
-**Status:** Review · **Owner:** Search Architect · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Search Architect · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -242,8 +244,14 @@ Admin search preview (`FR-445` Should) hits live index.
 |---|---|
 | Record query, mode, result count, CTR | `FR-413` |
 | No raw VIN by default | `FR-413` |
-| Rate limit scraping / abuse | `FR-450` |
+| Rate limit scraping / abuse | `FR-450`, `NFR-017` |
 | Shareable result URLs restore context | `FR-442` Should |
+
+Search/suggest/recommend rate limits are **per shopper** (`search:customer:{id}`), not per NAT IP.
+Anonymous guests are keyed by nopCommerce customer id so a NAT or load-generator host can represent
+many shoppers. Load scripts must send a browser `User-Agent`; curl/k6/undici default UAs map onto
+nopCommerce's crawler customer and collapse guests onto one budget. Operator rehearsal:
+`CheckEngine/scripts/run-search-load-gate.sh` ([29](29-performance.md), [03](03-non-functional-requirements.md)).
 
 ### Landing pages note
 

@@ -3,7 +3,9 @@
 > The brand-agnostic vehicle hierarchy, configuration model, curation methodology, and read APIs that
 > every other automotive engine depends on.
 
-**Status:** Review · **Owner:** Domain Architect · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Domain Architect · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -218,10 +220,16 @@ its ancestors/descendants in the cached slice. Web farm uses distributed cache (
 
 | Scope | Horizon 1 commitment |
 |---|---|
-| Make | BMW (and optionally MINI if commercially required — still separate Make rows) |
-| Coverage | Generations with active spare-parts demand in launch region |
+| Make | BMW is the launch exemplar (`FR-119`). H1.6a also seeds catalog JSON for Toyota, Volkswagen, Honda, Hyundai, Ford, Mercedes-Benz, Nissan, Kia, and Chevrolet |
+| Schema | Brand-agnostic (`FR-204` / `INV-013`): new Make = data entry + optional VIN decoder pack ([13](13-vin-engine.md)); zero core schema change |
+| Coverage | Generations with active spare-parts demand in launch region; VIN depth is documented VDS only |
 | Quality bar | Every customer-selectable configuration has at least one path to sellable fitment or is hidden |
 | Seed | Optional sample slice for demo installs; production operators load curated data via import/admin |
+
+The BMW structural reference seed defines 10 models, 32 generations and 284 ECE/GCC configuration
+leaves. H1.6a catalog JSON adds flagship trees and EN/AR aliases for the other top-10 brands. Both
+seeds are incrementally idempotent: upgrades add missing natural keys and bilingual leaf aliases
+without overwriting operator edits or deleting preserved legacy configurations.
 
 #### BMW launch generation priority
 
@@ -236,10 +244,6 @@ part fits a configuration. Fitment remains a separate provenanced claim.
 | 1 — highest launch demand | X5 | E70, F15, G05 |
 | 2 — supporting passenger range | 1 / 2 / 4 / 7 Series | E87, F20, F40; F22, G42; F32, G22; E65, F01, G11, G70 |
 | 2 — supporting SAV range | X1 / X3 / X6 | E84, F48, U11; E83, F25, G01; E71, F16, G06 |
-
-The current seed defines 10 models, 32 generations and 284 ECE/GCC configuration leaves. It is
-incrementally idempotent: upgrades add missing natural keys and bilingual leaf aliases without
-overwriting operator edits or deleting preserved legacy configurations.
 
 ### Health and scale
 
