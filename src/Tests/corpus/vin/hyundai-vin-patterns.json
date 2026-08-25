@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "makeCode": "HYUNDAI",
+  "description": "H1.6a Hyundai WMIs from NHTSA GetWMIsForManufacturer/hyundai. VDS prefixes only from DecodeVinValues. Shared HATCI passenger WMI 5NP is assigned here, not to Kia.",
+  "wmis": [
+    {
+      "wmi": "KMH",
+      "manufacturerName": "HYUNDAI MOTOR CO",
+      "regionCode": "KR"
+    },
+    {
+      "wmi": "KM8",
+      "manufacturerName": "HYUNDAI MOTOR CO",
+      "regionCode": "KR"
+    },
+    {
+      "wmi": "5NM",
+      "manufacturerName": "HYUNDAI MOTOR MANUFACTURING ALABAMA LLC (HMMA)",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "5NP",
+      "manufacturerName": "HYUNDAI-KIA AMERICA TECHNICAL CENTER INC (HATCI)",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "5NT",
+      "manufacturerName": "HYUNDAI MOTOR MANUFACTURING ALABAMA LLC (HMMA)",
+      "regionCode": "US"
+    }
+  ],
+  "patterns": [
+    {
+      "pattern": "D84",
+      "modelCode": "ELANTRA",
+      "generationCode": "AD",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHD84LF5HU000001;make=HYUNDAI;model=Elantra;year=2017"
+    },
+    {
+      "pattern": "E34",
+      "modelCode": "SONATA",
+      "generationCode": "LF",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NPE34AF4HH000001;make=HYUNDAI;model=Sonata;year=2017"
+    },
+    {
+      "pattern": "EB4",
+      "modelCode": "SONATA",
+      "generationCode": "YF",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NPEB4AC4EH000001;make=HYUNDAI;model=Sonata;year=2014"
+    },
+    {
+      "pattern": "J3C",
+      "modelCode": "TUCSON",
+      "generationCode": "TL",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8J3CA46JU000001;make=HYUNDAI;model=Tucson;year=2018"
+    },
+    {
+      "pattern": "S2C",
+      "modelCode": "SANTAFE",
+      "generationCode": "TM",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NMS2CAD1LH000001;make=HYUNDAI;model=Santa Fe;year=2020"
+    },
+    {
+      "pattern": "R74",
+      "modelCode": "PALISADE",
+      "generationCode": "LX2",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8R74HE0MU000001;make=HYUNDAI;model=Palisade;year=2021"
+    },
+    {
+      "pattern": "K33",
+      "modelCode": "KONA",
+      "generationCode": "OS",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8K33AG0LU000001;make=HYUNDAI;model=Kona;year=2020"
+    },
+    {
+      "pattern": "K2C",
+      "modelCode": "KONA",
+      "generationCode": "OS",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8K2CAA0LU000001;make=HYUNDAI;model=Kona;year=2020"
+    },
+    {
+      "pattern": "C75",
+      "modelCode": "IONIQ",
+      "generationCode": "AE",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHC75LC0KU000001;make=HYUNDAI;model=Ioniq;year=2019"
+    },
+    {
+      "pattern": "JDD",
+      "modelCode": "SANTACRUZ",
+      "generationCode": "NX4",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NTJDDAF2NH000001;make=HYUNDAI;model=Santa Cruz;year=2022"
+    },
+    {
+      "pattern": "CT4",
+      "modelCode": "ACCENT",
+      "generationCode": "HC",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHCT4AE6JU000001;make=HYUNDAI;model=Accent;year=2018"
+    },
+    {
+      "pattern": "RC8",
+      "modelCode": "VENUE",
+      "generationCode": "QX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHRC8A32LU000001;make=HYUNDAI;model=Venue;year=2020"
+    },
+    {
+      "pattern": "RB8",
+      "modelCode": "VENUE",
+      "generationCode": "QX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHRB8A39LU000001;make=HYUNDAI;model=Venue;year=2020"
+    },
+    {
+      "pattern": "TC6",
+      "modelCode": "VELOSTER",
+      "generationCode": "FS",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHTC6AD5EU000001;make=HYUNDAI;model=Veloster;year=2014"
+    },
+    {
+      "pattern": "KRD",
+      "modelCode": "IONIQ5",
+      "generationCode": "NE",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8KRDAF5NU000001;make=HYUNDAI;model=Ioniq 5;year=2022"
+    },
+    {
+      "pattern": "KND",
+      "modelCode": "IONIQ5",
+      "generationCode": "NE",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KM8KNDAF0NU000001;make=HYUNDAI;model=Ioniq 5;year=2022"
+    },
+    {
+      "pattern": "M54",
+      "modelCode": "IONIQ6",
+      "generationCode": "CE",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHM54AC7PA000001;make=HYUNDAI;model=Ioniq 6;year=2023"
+    },
+    {
+      "pattern": "DH4",
+      "modelCode": "ELANTRA",
+      "generationCode": "MD",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NPDH4AE5DH000001;make=HYUNDAI;model=Elantra;year=2013"
+    },
+    {
+      "pattern": "S3D",
+      "modelCode": "SANTAFE",
+      "generationCode": "TM",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NMS3DAJ3NH000001;make=HYUNDAI;model=Santa Fe;year=2022"
+    },
+    {
+      "pattern": "S5D",
+      "modelCode": "SANTAFE",
+      "generationCode": "TM",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NMS5DAJ0NH000001;make=HYUNDAI;model=Santa Fe;year=2022"
+    },
+    {
+      "pattern": "L14",
+      "modelCode": "SONATA",
+      "generationCode": "DN8",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHL14JAXPA000001;make=HYUNDAI;model=Sonata;year=2023"
+    },
+    {
+      "pattern": "L34",
+      "modelCode": "SONATA",
+      "generationCode": "DN8",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KMHL34JA0NA000001;make=HYUNDAI;model=Sonata;year=2022"
+    },
+    {
+      "pattern": "EH4",
+      "modelCode": "SONATA",
+      "generationCode": "DN8",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5NPEH4J22MH000001;make=HYUNDAI;model=Sonata;year=2021"
+    }
+  ]
+}

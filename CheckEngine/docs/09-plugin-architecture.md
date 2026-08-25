@@ -3,7 +3,9 @@
 > How Check Engine packages itself as a nopCommerce 4.90.6 plugin: projects, folders, DI, migrations,
 > routes, widgets, consumers, tasks, and the install/uninstall lifecycle.
 
-**Status:** Review · **Owner:** Architecture Owner · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Architecture Owner · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -16,6 +18,7 @@
   - [Solution and project structure](#solution-and-project-structure)
   - [Feature folder layout](#feature-folder-layout)
   - [plugin.json and assembly identity](#pluginjson-and-assembly-identity)
+  - [Release packing](#release-packing)
   - [Dependency injection](#dependency-injection)
   - [Database migrations](#database-migrations)
   - [Routing](#routing)
@@ -212,7 +215,7 @@ services that live in the matching feature folder.
 | `Group` | `Misc` |
 | `FriendlyName` | `Check Engine` |
 | `SystemName` | `TwinParticles.CheckEngine` |
-| `Version` | SemVer aligned with [CHANGELOG.md](../CHANGELOG.md) (e.g. `1.0.0`) |
+| `Version` | SemVer aligned with assembly metadata (`PluginMetadataContractTests`). In-tree engineering builds use `0.104.0`; GA begins at `1.0.0` |
 | `SupportedVersions` | `[ "4.90" ]` |
 | `Author` | `Twin Particles` |
 | `DisplayOrder` | `1` |
@@ -221,6 +224,15 @@ services that live in the matching feature folder.
 
 Assembly version, file version, and `plugin.json` Version **must match** on release builds. CI fails
 the build if they diverge.
+
+### Release packing
+
+Operator rehearsal: `CheckEngine/scripts/pack-checkengine.sh|.ps1` (Python `pack-checkengine.py`)
+emits `TwinParticles.CheckEngine.{version}.zip` plus SHA-256. Zip root is
+`TwinParticles.CheckEngine/`. The allow-list is Check Engine layer DLLs, `plugin.json`, `Content/`,
+and `Views/` — not host `Nop.Web`, `App_Data`, native `runtimes`, or symbols. The artefact is
+unsigned; production licence vendor signing remains the external G11 remainder ([33](33-ci-cd.md),
+[42](42-marketplace-publishing.md)).
 
 Namespace root: `TwinParticles.CheckEngine` with layer suffixes `.Domain`, `.Application`,
 `.Infrastructure`.

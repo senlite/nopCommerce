@@ -42,6 +42,65 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Documentation — sync with plugin 0.104.0:** numbered specs, README, USER-GUIDE, ROADMAP,
+  CONTRIBUTING, AGENTS.md, and implementation status docs now point at
+  [EXECUTION-PLAN.md](EXECUTION-PLAN.md). Stale facts (plugin `0.12.0`, 556/212 tests, nopCommerce
+  4.70 / .NET 8 in the user guide) are corrected. VIN/search/security/deployment/testing/release
+  specs record H1.6a catalog VIN, per-shopper search rate limits, unsigned pack rehearsal, and the
+  split between engineering evidence and Horizon 1 sign-off (H1.35/G8, G7, G11 vendor signing, G12,
+  `NFR-002` LCP). Plugin SemVer stays `0.104.0`.
+- **Engineering — G11 unsigned plugin pack rehearsal:** operator `pack-checkengine.sh|.ps1`
+  plus `pack-checkengine.py` emit `TwinParticles.CheckEngine.{version}.zip` with SHA-256,
+  excluding host `Nop.Web` binaries, `App_Data`, and native `runtimes`. The artefact is
+  unsigned; production licence vendor signing remains an external G11 gate (`AC-33.4`).
+- **Engineering — G4 NFR-017 search load rehearsal (v0.104.0):** 2,000 concurrent first-page
+  searches are gated in CI (`SearchConcurrentSessionBudgetTests`) and by operator scripts
+  `run-search-load-gate.sh|.ps1` plus `tests/perf/search-nfr017.js`. Search/suggest/recommend
+  rate limits key guests by customer id rather than shared NAT IP (`NFR-017`, `NFR-001`).
+  Live rehearsal on this single node: 2,000 unique guest shoppers, 0 × 429, first-page
+  p95 245 ms / p99 279 ms at 25 in-flight searches. A synchronized 2,000-POST herd exceeds
+  this host's thread pool (not the 4-node Redis reference in `NFR-016`).
+- **Engineering — G6 a11y/RTL/CWV evidence (v0.103.0):** operator `run-a11y-gate.sh|.ps1`
+  plus Playwright `AccessibilityAxeSpecs` scan Check Engine widgets only and fail on
+  serious/critical axe findings (`NFR-046`). Search is a labelled `combobox`; the garage
+  chip no longer claims a dialog it does not open; Google Fonts load after first paint.
+  Mega-menu keyboard smoke covers Enter/Escape/focus restore. The CWV rehearsal now
+  includes category and product templates and applies search LCP ≤ 1.5 s (`NFR-002`).
+- **Software — top-10 brands close-out (H1.6a, v0.102.0):** remaining NHTSA-documented
+  flagships and generations (RAV4/Prius Prime, Mustang Mach-E, F-350, Seltos,
+  Silverado HD, G-Class, Nissan Z, Tundra XK70, Sienna XL40, HR-V RV, Sonata DN8,
+  Rogue T33). Non-BMW VDS prefixes are now 224. WMI `JTN` is from Toyota’s
+  NHTSA manufacturer list. H1.6a is closed at documented-corpus scope — same
+  bar as H1.6; OEM-complete VDS maps stay un-fabricated.
+- **Software — top-10 brands slice 6 (H1.6a, v0.101.0):** 26 more NHTSA-documented models
+  (Corolla Cross, Atlas Cross Sport/Beetle/Touareg, Bronco Sport/Taurus/Flex/F-250,
+  Venue/Veloster/Ioniq 5/6, Rio/EV6, Corvette/Volt/Sonic/Express, GLK/GL/EQS,
+  Juke/Rogue Sport/350Z/Xterra/Versa Note) plus extra generations (Civic FE,
+  Accord CP/CR, CR-V RS, Highlander XU70, Corolla E210). Non-BMW VDS prefixes
+  are now 190. New WMIs `7MU`, `7FA`, `3FM` come from NHTSA manufacturer lists.
+- **Software — top-10 brands slice 5 (H1.6a, v0.100.0):** 28 more NHTSA-documented flagships
+  (Ridgeline/Passport/Insight, C-HR/Venza/Land Cruiser, Passat/Taos/Arteon,
+  Expedition/Maverick/EcoSport, Santa Cruz/Accent, Optima/K5/Carnival,
+  Suburban/Impala/Spark/Trailblazer, GLA/GLS/CLA/GLB, Versa/Kicks/Leaf).
+  Non-BMW VDS prefixes are now 143. New WMIs are only those NHTSA listed for
+  the manufacturer (`5FP`, `NMT`, `3FT`, `MAJ`, `5NT`, `KL7`, `KL8`).
+- **Software — top-10 brands slice 4 (H1.6a, v0.99.0):** VIN disambiguation labels now include
+  market name and production years (`Honda Accord CM LX (Europe, 2003-2007)` vs
+  `(Gulf, 2003-2007)`), so ECE/GCC candidates are distinguishable in the picker
+  (`FR-204`, H1.7).
+- **Software — top-10 brands slice 3 (H1.6a, v0.98.0):** more NHTSA-documented flagships
+  (Golf, Odyssey, GLE, Sienna, Ranger/Bronco, Kona, Colorado/Traverse and peers), 107
+  non-BMW VDS prefixes, and a check-digit-valid golden VIN corpus decoded through
+  `VinDecodeApplicationService`.
+- **Software — top-10 brands slice 2 (H1.6a, v0.97.0):** deeper flagship trees (Camry/RAV4/CR-V/
+  Explorer/C-Class and peers), EN/AR configuration aliases for VIN labels, extra NHTSA WMIs,
+  and 73 documented non-BMW VDS prefixes. Same-VDS generations disambiguate on model year.
+- **Software — top-10 brands besides BMW (H1.6a, v0.96.0):** Toyota, Volkswagen, Honda,
+  Hyundai, Ford, Mercedes-Benz, Nissan, Kia and Chevrolet seed as catalog data (WMIs from
+  NHTSA vPIC `GetWMIsForManufacturer`, minimal vehicle trees, VDS prefixes only when
+  `DecodeVinValues` returned Make+Model+year). A data-driven `CatalogVinDecoder` covers
+  those WMIs so they fail closed as `vin.decode_failed` instead of `vin.wmi_unknown`. BMW
+  remains the Horizon 1 exemplar decoder (`FR-204`, `FR-211`).
 - **Engineering — G2 coverage gate:** architecture tests collect coverlet cobertura for
   `TwinParticles.CheckEngine.Domain` / `.Application` only. CI and `build-checkengine.sh` fail when
   Domain line coverage is below 80% (`NFR-058`) or Application below 70% (`NFR-059`).

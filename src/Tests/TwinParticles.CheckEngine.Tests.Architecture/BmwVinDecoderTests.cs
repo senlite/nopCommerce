@@ -56,10 +56,12 @@ public class BmwVinDecoderTests
         var source = ReadInfrastructureFile("DependencyInjection", "ServiceCollectionExtensions.cs");
 
         source.Should().Contain("AddScoped<IManufacturerVinDecoder, BmwVinDecoder>");
+        source.Should().Contain("AddScoped<IManufacturerVinDecoder, CatalogVinDecoder>");
         source.Should().Contain("AddScoped<IVinDecoderRegistry, VinDecoderRegistry>");
         source.Should().Contain("AddScoped<IVinSupportRepository, SqlVinSupportRepository>");
         source.Should().Contain("BmwVinConfigurationResolver");
         source.Should().Contain("BmwVinPatternSeedLoader");
+        source.Should().Contain("AddScoped<IVehicleSeedLoader, CompositeVehicleSeedLoader>");
     }
 
     private static string ReadInfrastructureFile(params string[] relativePath)

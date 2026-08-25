@@ -3,7 +3,9 @@
 > Authentication, authorisation, permissions, audit, OWASP Top Ten controls, rate limiting, secrets,
 > data protection, upload hardening, and vulnerability disclosure for Check Engine.
 
-**Status:** Review · **Owner:** Security Reviewer · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Security Reviewer · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -48,6 +50,10 @@ Takeaways:
 3. **No secrets in repo**; CI secret scan clean (`NFR-037`).
 4. **Raw VIN/PII absent from default logs** (`NFR-044`).
 5. **Licence channel never carries catalog/customer/order data** (`FR-983`).
+6. **Independent assessment is a human gate.** Engineering controls (T5.1, H1.34, `AC-080`) can be
+   green while H1.35 / G8 / `AC-080.1` stays open until an independent reviewer signs off. Coding
+   agents cannot close that gate. Record the sign-off in
+   [07 Acceptance Go/No-Go](implementation/07-acceptance-go-no-go.md).
 
 ---
 
@@ -172,7 +178,7 @@ Takeaways:
 | Endpoint class | Default policy (`NFR-040`) |
 |---|---|
 | Public VIN decode (`FR-215`) | Per IP + per customer; e.g. 30/min IP, 60/min authenticated (configurable) |
-| Search (`FR-450`) | Per IP; stricter on anonymous |
+| Search / suggest / recommend (`FR-450`, `NFR-017`) | Per shopper (`search:customer:{id}`), not per NAT IP. Load tests must send a browser User-Agent |
 | Login | Host policy |
 | Admin import | Permission + concurrent batch limits |
 
@@ -284,6 +290,11 @@ Given licence heartbeat traffic, when payload is inspected, then no product/cust
 
 **`AC-28.6`** — Upload SSRF
 Given import image URL to link-local IP, when fetch is attempted, then it is blocked (`NFR-036`).
+
+**`AC-28.7`** — Independent assessment
+Given Horizon 1 release sign-off, when `AC-080.1` / H1.35 / G8 is considered, then an independent
+security assessment with no open high/critical findings is recorded. Engineering controls in this
+document are necessary but not sufficient.
 
 ---
 

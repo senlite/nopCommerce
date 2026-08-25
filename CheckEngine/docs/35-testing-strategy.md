@@ -3,7 +3,9 @@
 > Test categories, TDD practice, coverage thresholds, fitment accuracy corpus, fixtures, performance
 > and accessibility testing, and manual verification protocols for Check Engine.
 
-**Status:** Review · **Owner:** Engineering Lead · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Engineering Lead · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -154,7 +156,11 @@ Project: `TwinParticles.CheckEngine.Tests.Unit`.
 | Application | No Infrastructure ref |
 | No manufacturer literals | Prefer custom analyser / banned words list in Domain |
 
-Project: `TwinParticles.CheckEngine.Tests.Architecture`.
+Project: `TwinParticles.CheckEngine.Tests.Architecture`. As of plugin `0.104.0` the hermetic
+architecture suite reports **1061** passing tests when filtered
+`FullyQualifiedName!~VectorMathTests`. Additional convention tests cover packaging
+(`PluginPackagingConventionsTests`), search load-gate scripts
+(`SearchLoadGateConventionsTests`), and metadata alignment (`PluginMetadataContractTests`).
 
 ### Integration tests
 
@@ -196,11 +202,17 @@ Corpus is product IP; versioned under `tests/corpus/fitment/`.
 | RTL visual | Protocol in [23](23-ux-guidelines.md) |
 | Keyboard | Garage + search + selector (`NFR-047`) |
 
-Implemented Playwright E2E currently runs against a PostgreSQL-backed local stack. The runner scripts are `e2e/start-manual-stack.ps1` for manual inspection and `e2e/run-regressions.ps1` for automated smoke checks. Local Chromium can be supplied via `PLAYWRIGHT_BROWSER_PATH`. Staging-theme a11y/RTL/keyboard coverage remains defined but is not yet automated.
+Implemented Playwright E2E currently runs against a PostgreSQL-backed local stack. The runner scripts are `e2e/start-manual-stack.ps1` for manual inspection and `e2e/run-regressions.ps1` for automated smoke checks. Local Chromium can be supplied via `PLAYWRIGHT_BROWSER_PATH`. Check Engine axe/RTL/keyboard coverage is automated in `AccessibilityAxeSpecs`, `AccessibilityViewportMatrixSpecs` and `AccessibilitySmokeSpecs`; operators also run `CheckEngine/scripts/run-a11y-gate.sh` (`NFR-046`) and `run-cwv-gate.sh` (`NFR-054`). The CWV rehearsal does **not** claim `NFR-002` 1.5 s search LCP is met: measured search LCP on this host is bound by the nopCommerce logo/CSS, which this plugin must not patch.
 
 ### Performance tests
 
 Per [29](29-performance.md): microbench fitment/VIN; load search; Lighthouse CI. RC gate on Must NFRs.
+
+Operator search-load rehearsal (`NFR-017`): `CheckEngine/scripts/run-search-load-gate.sh|.ps1` plus
+`tests/perf/search-nfr017.js`. Scripts must send a browser User-Agent. Default in-flight cap is 25
+on this class of host. In-process CI: `SearchConcurrentSessionBudgetTests`.
+
+Unsigned pack rehearsal: `CheckEngine/scripts/pack-checkengine.sh` (`PluginPackagingConventionsTests`).
 
 ### Security tests
 
@@ -238,7 +250,7 @@ Never commit production customer VINs.
 |---|---|
 | PR | Architecture suite + Domain ≥ 80% / Application ≥ 70% coverlet gate (`NFR-058`/`NFR-059`) + format + secret + docs |
 | Nightly | Full Integration + contract + corpus + vulnerable pkgs |
-| RC | + PostgreSQL-backed Playwright smoke (install/home/search/sample PDP); axe/RTL/keyboard remain future |
+| RC | + PostgreSQL-backed Playwright smoke (install/home/search/sample PDP) plus axe/RTL/keyboard gates on Check Engine surfaces |
 
 ---
 

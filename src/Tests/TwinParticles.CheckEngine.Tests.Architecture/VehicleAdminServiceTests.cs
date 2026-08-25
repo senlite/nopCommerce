@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -133,6 +134,123 @@ public class VehicleAdminServiceTests
 
         repository.LastCreatedMake.Should().NotBeNull();
         repository.LastCreatedMake!.Code.Should().Be("BMW");
+    }
+
+    [Test]
+    public async Task GetConfigurationDisplayLabelAsync_Should_Include_Market_And_Years_So_Candidates_Are_Distinct()
+    {
+        var repository = new InMemoryVehicleAdminRepository();
+        var service = new VehicleAdminService(repository, new FakeVehicleSeedLoader());
+        var (europeId, gulfId) = await SeedAccordConfigurationsAsync(repository);
+
+        var europe = await service.GetConfigurationDisplayLabelAsync(europeId, CancellationToken.None);
+        var gulf = await service.GetConfigurationDisplayLabelAsync(gulfId, CancellationToken.None);
+
+        europe.Should().Be("Honda Accord CM LX (Europe, 2003-2007)");
+        gulf.Should().Be("Honda Accord CM LX (Gulf, 2003-2007)");
+        europe.Should().NotBe(gulf);
+    }
+
+    [Test]
+    public async Task GetConfigurationDisplayLabelAsync_Should_Fall_Back_To_Generation_Years_And_Open_Windows()
+    {
+        var repository = new InMemoryVehicleAdminRepository();
+        var service = new VehicleAdminService(repository, new FakeVehicleSeedLoader());
+        var generationId = await SeedHondaAccordGenerationAsync(repository);
+
+        await repository.CreateGenerationAsync(new VehicleGeneration
+        {
+            ModelId = (await repository.GetModelsAsync(CancellationToken.None)).Single().Id,
+            Code = "CY",
+            Name = "11th generation",
+            StartYear = 2023,
+            EndYear = null,
+            IsActive = true
+        }, CancellationToken.None);
+        var ongoingId = (await repository.GetGenerationsAsync(CancellationToken.None))
+            .Single(generation => generation.Code == "CY").Id;
+
+        await repository.CreateConfigurationAsync(new VehicleConfiguration
+        {
+            GenerationId = generationId,
+            TrimName = "Base",
+            Fingerprint = "HONDA-ACCORD-CM-BASE",
+            IsActive = true
+        }, CancellationToken.None);
+        await repository.CreateConfigurationAsync(new VehicleConfiguration
+        {
+            GenerationId = ongoingId,
+            TrimName = "EX",
+            Fingerprint = "HONDA-ACCORD-CY-EX",
+            IsActive = true
+        }, CancellationToken.None);
+
+        var configs = await repository.GetConfigurationsAsync(CancellationToken.None);
+        var labels = await service.GetConfigurationDisplayLabelsAsync(
+            configs.Select(configuration => configuration.Id), CancellationToken.None);
+
+        labels.Values.Should().Contain("Honda Accord CM Base (2003-2007)");
+        labels.Values.Should().Contain("Honda Accord CY EX (2023-)");
+    }
+
+    private static async Task<(int EuropeId, int GulfId)> SeedAccordConfigurationsAsync(
+        InMemoryVehicleAdminRepository repository)
+    {
+        var generationId = await SeedHondaAccordGenerationAsync(repository);
+        await repository.CreateMarketAsync(
+            new VehicleMarket { Code = "ECE", Name = "Europe", IsActive = true }, CancellationToken.None);
+        await repository.CreateMarketAsync(
+            new VehicleMarket { Code = "GCC", Name = "Gulf", IsActive = true }, CancellationToken.None);
+        var markets = await repository.GetMarketsAsync(CancellationToken.None);
+        var europe = markets.Single(market => market.Code == "ECE");
+        var gulf = markets.Single(market => market.Code == "GCC");
+
+        await repository.CreateConfigurationAsync(new VehicleConfiguration
+        {
+            GenerationId = generationId,
+            MarketId = europe.Id,
+            TrimName = "LX",
+            ProductionFromYear = 2003,
+            ProductionToYear = 2007,
+            Fingerprint = "HONDA-ACCORD-CM-LX-ECE",
+            IsActive = true
+        }, CancellationToken.None);
+        await repository.CreateConfigurationAsync(new VehicleConfiguration
+        {
+            GenerationId = generationId,
+            MarketId = gulf.Id,
+            TrimName = "LX",
+            ProductionFromYear = 2003,
+            ProductionToYear = 2007,
+            Fingerprint = "HONDA-ACCORD-CM-LX-GCC",
+            IsActive = true
+        }, CancellationToken.None);
+
+        var configs = await repository.GetConfigurationsAsync(CancellationToken.None);
+        return (
+            configs.Single(configuration => configuration.MarketId == europe.Id).Id,
+            configs.Single(configuration => configuration.MarketId == gulf.Id).Id);
+    }
+
+    private static async Task<int> SeedHondaAccordGenerationAsync(InMemoryVehicleAdminRepository repository)
+    {
+        await repository.CreateMakeAsync(
+            new VehicleMake { Code = "HONDA", Name = "Honda", IsActive = true }, CancellationToken.None);
+        var make = (await repository.GetMakesAsync(CancellationToken.None)).Single();
+        await repository.CreateModelAsync(
+            new VehicleModel { MakeId = make.Id, Code = "ACCORD", Name = "Accord", IsActive = true },
+            CancellationToken.None);
+        var model = (await repository.GetModelsAsync(CancellationToken.None)).Single();
+        await repository.CreateGenerationAsync(new VehicleGeneration
+        {
+            ModelId = model.Id,
+            Code = "CM",
+            Name = "7th generation",
+            StartYear = 2003,
+            EndYear = 2007,
+            IsActive = true
+        }, CancellationToken.None);
+        return (await repository.GetGenerationsAsync(CancellationToken.None)).Single().Id;
     }
 
     private static VehicleAdminService CreateService()

@@ -3,7 +3,9 @@
 > Performance budgets, reference dataset, caching, query optimisation, Core Web Vitals, and load
 > testing methodology for Check Engine on nopCommerce 4.90.
 
-**Status:** Review · **Owner:** Architecture Owner · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Architecture Owner · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -71,7 +73,6 @@ Takeaways:
 |---|---|
 | Full host tuning guide | Operator DBA |
 | CDN vendor config detail | Operator |
-| Exact k6 scripts | Repo under `tests/perf` when implemented |
 
 ### Assumptions
 
@@ -109,6 +110,10 @@ All Must budgets cite this baseline unless stated otherwise.
 | `NFR-009` | Import ≥ 50 rows/s structured | Pipeline bench |
 | `NFR-014` | No N+1 top 20 routes | Profiler gate |
 | `NFR-054` | LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1 | RUM + CI |
+
+G6 CWV rehearsal (`run-cwv-gate.sh`) measures LCP/INP/CLS on Check Engine surfaces. It does **not**
+claim `NFR-002` is met: search LCP on this host is 2.47–3.32 s and is bound by nopCommerce logo/CSS,
+which the plugin must not patch.
 
 Should/Could NFRs tracked but not release-blocking unless promoted.
 
@@ -189,6 +194,21 @@ flowchart TB
 | Chaos | Kill app node mid-order (`NFR-032`); index down (`NFR-027`) |
 
 Tools: k6/JMeter/NBomber acceptable; scripts versioned with product.
+
+Versioned `NFR-017` rehearsal (plugin 0.104.0):
+
+- `CheckEngine/tests/perf/search-nfr017.js` — k6, 2,000 VUs, one first-page search each.
+- `CheckEngine/scripts/run-search-load-gate.sh|.ps1` — prefers k6; falls back to
+  `search-nfr017-sample.mjs` when k6 is not installed.
+- In-process CI microbench: `SearchConcurrentSessionBudgetTests` (same p95/p99 budgets on the
+  orchestration path).
+- Search/suggest/recommend rate limits are per shopper (`search:customer:{id}`), not per NAT IP,
+  so one load-generator host can represent 2,000 guests. Load scripts must send a browser
+  `User-Agent`; nopCommerce maps crawler UAs onto one built-in customer.
+- Default Node in-flight cap is 25 (`CHECKENGINE_LOAD_CONCURRENCY`) — the measured single-node
+  HTTP ceiling that still holds p95 ≤ 300 ms for 2,000 unique shoppers. Set the cap equal to
+  `CHECKENGINE_LOAD_VUS` for a synchronized herd; that shape needs the 4-node Redis reference
+  in `NFR-016`, not this class of host.
 
 ### Profiling gates
 

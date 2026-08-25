@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "makeCode": "CHEVROLET",
+  "description": "H1.6a Chevrolet-relevant GM WMIs from NHTSA GetWMIsForManufacturer/general motors plus the documented 3GN sample VIN. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    {
+      "wmi": "1G1",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1GC",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1GN",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "2G1",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "CA"
+    },
+    {
+      "wmi": "2GN",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "CA"
+    },
+    {
+      "wmi": "3GN",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "MX"
+    },
+    {
+      "wmi": "KL8",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "KR"
+    },
+    {
+      "wmi": "KL7",
+      "manufacturerName": "GENERAL MOTORS LLC",
+      "regionCode": "KR"
+    }
+  ],
+  "patterns": [
+    {
+      "pattern": "DA1",
+      "modelCode": "HHR",
+      "generationCode": "HHR1",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3GNDA13D76S000000;make=CHEVROLET;model=HHR;year=2006"
+    },
+    {
+      "pattern": "ZD5",
+      "modelCode": "MALIBU",
+      "generationCode": "MALIBU9",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1ZD5ST1JF000001;make=CHEVROLET;model=Malibu;year=2018"
+    },
+    {
+      "pattern": "SKC",
+      "modelCode": "TAHOE",
+      "generationCode": "K2XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSKCKC0HR000001;make=CHEVROLET;model=Tahoe;year=2017"
+    },
+    {
+      "pattern": "VKR",
+      "modelCode": "SILVERADO",
+      "generationCode": "K2XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCVKREC7EZ000001;make=CHEVROLET;model=Silverado;year=2014"
+    },
+    {
+      "pattern": "AXK",
+      "modelCode": "EQUINOX",
+      "generationCode": "D2XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2GNAXKEV4J6000001;make=CHEVROLET;model=Equinox;year=2018"
+    },
+    {
+      "pattern": "BE5",
+      "modelCode": "CRUZE",
+      "generationCode": "D2JC",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1BE5SM9H7000001;make=CHEVROLET;model=Cruze;year=2017"
+    },
+    {
+      "pattern": "CJN",
+      "modelCode": "TRAX",
+      "generationCode": "T300",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3GNCJNSB0JL000001;make=CHEVROLET;model=Trax;year=2018"
+    },
+    {
+      "pattern": "FY6",
+      "modelCode": "BOLT",
+      "generationCode": "BEV2",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1FY6S07K4000001;make=CHEVROLET;model=Bolt EV;year=2019"
+    },
+    {
+      "pattern": "GTB",
+      "modelCode": "COLORADO",
+      "generationCode": "GMT31XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCGTBEN0L1100001;make=CHEVROLET;model=Colorado;year=2020"
+    },
+    {
+      "pattern": "GTE",
+      "modelCode": "COLORADO",
+      "generationCode": "GMT31XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCGTEEN0L1100001;make=CHEVROLET;model=Colorado;year=2020"
+    },
+    {
+      "pattern": "ERG",
+      "modelCode": "TRAVERSE",
+      "generationCode": "C1XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNERGKW0JJ000001;make=CHEVROLET;model=Traverse;year=2018"
+    },
+    {
+      "pattern": "ERF",
+      "modelCode": "TRAVERSE",
+      "generationCode": "C1XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNERFKW0KJ000001;make=CHEVROLET;model=Traverse;year=2019"
+    },
+    {
+      "pattern": "KBC",
+      "modelCode": "BLAZER",
+      "generationCode": "C1UL",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3GNKBCRS0KS000001;make=CHEVROLET;model=Blazer;year=2019"
+    },
+    {
+      "pattern": "FB1",
+      "modelCode": "CAMARO",
+      "generationCode": "A1XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1FB1RX0L0100001;make=CHEVROLET;model=Camaro;year=2020"
+    },
+    {
+      "pattern": "SKJ",
+      "modelCode": "SUBURBAN",
+      "generationCode": "K2XX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSKJKC3KR000001;make=CHEVROLET;model=Suburban;year=2019"
+    },
+    {
+      "pattern": "SCJ",
+      "modelCode": "SUBURBAN",
+      "generationCode": "K2XX",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSCJKC7KR000001;make=CHEVROLET;model=Suburban;year=2019"
+    },
+    {
+      "pattern": "1Z5",
+      "modelCode": "IMPALA",
+      "generationCode": "IMP10",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2G11Z5S39J9100001;make=CHEVROLET;model=Impala;year=2018"
+    },
+    {
+      "pattern": "105",
+      "modelCode": "IMPALA",
+      "generationCode": "IMP10",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2G1105S36J9100001;make=CHEVROLET;model=Impala;year=2018"
+    },
+    {
+      "pattern": "CB6",
+      "modelCode": "SPARK",
+      "generationCode": "M400",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KL8CB6SA8KC000001;make=CHEVROLET;model=Spark;year=2019"
+    },
+    {
+      "pattern": "CD6",
+      "modelCode": "SPARK",
+      "generationCode": "M400",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KL8CD6SA5KC000001;make=CHEVROLET;model=Spark;year=2019"
+    },
+    {
+      "pattern": "9MM",
+      "modelCode": "TRAILBLAZER",
+      "generationCode": "TB1",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KL79MMSL9MB000001;make=CHEVROLET;model=Trailblazer;year=2021"
+    },
+    {
+      "pattern": "9MS",
+      "modelCode": "TRAILBLAZER",
+      "generationCode": "TB1",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KL79MSSL3MB000001;make=CHEVROLET;model=Trailblazer;year=2021"
+    },
+    {
+      "pattern": "YB2",
+      "modelCode": "CORVETTE",
+      "generationCode": "C7",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1YB2D79K5100001;make=CHEVROLET;model=Corvette;year=2019"
+    },
+    {
+      "pattern": "YA2",
+      "modelCode": "CORVETTE",
+      "generationCode": "C7",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1YA2D75K5100001;make=CHEVROLET;model=Corvette;year=2019"
+    },
+    {
+      "pattern": "RA6",
+      "modelCode": "VOLT",
+      "generationCode": "VOLT2",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1RA6S57JU000001;make=CHEVROLET;model=Volt;year=2018"
+    },
+    {
+      "pattern": "JE6",
+      "modelCode": "SONIC",
+      "generationCode": "T250",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1JE6SH1E4100001;make=CHEVROLET;model=Sonic;year=2014"
+    },
+    {
+      "pattern": "JA6",
+      "modelCode": "SONIC",
+      "generationCode": "T250",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1JA6SH7E4100001;make=CHEVROLET;model=Sonic;year=2014"
+    },
+    {
+      "pattern": "WGA",
+      "modelCode": "EXPRESS",
+      "generationCode": "GMT610",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCWGAFG0K1100001;make=CHEVROLET;model=Express;year=2019"
+    },
+    {
+      "pattern": "SKN",
+      "modelCode": "TAHOE",
+      "generationCode": "T1XX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSKNKDXMR000001;make=CHEVROLET;model=Tahoe;year=2021"
+    },
+    {
+      "pattern": "FX6",
+      "modelCode": "BOLT",
+      "generationCode": "BEV2",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1G1FX6S05P4100001;make=CHEVROLET;model=Bolt EV;year=2023"
+    },
+    {
+      "pattern": "4YU",
+      "modelCode": "SILVERADOHD",
+      "generationCode": "T1XXHD",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GC4YUEY1PF000001;make=CHEVROLET;model=Silverado HD;year=2023"
+    },
+    {
+      "pattern": "UDE",
+      "modelCode": "SILVERADO",
+      "generationCode": "T1XX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GCUDEED5PZ000001;make=CHEVROLET;model=Silverado;year=2023"
+    },
+    {
+      "pattern": "7LJ",
+      "modelCode": "TRAX",
+      "generationCode": "A100",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KL77LJE22RC000001;make=CHEVROLET;model=Trax;year=2024"
+    },
+    {
+      "pattern": "SKT",
+      "modelCode": "TAHOE",
+      "generationCode": "T1XX",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1GNSKTKLXPR000001;make=CHEVROLET;model=Tahoe;year=2023"
+    }
+  ]
+}

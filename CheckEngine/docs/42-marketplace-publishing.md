@@ -4,7 +4,9 @@
 > copy, review criteria, the version update process, companion-plugin listings, and trademark-safe
 > listing language.
 
-**Status:** Review · **Owner:** Product Owner / DevOps Architect · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Product Owner / DevOps Architect · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -138,12 +140,13 @@ channel.
 
 | Rule | Detail | Enforced by |
 |---|---|---|
-| One package, one plugin | The submitted artefact is `TwinParticles.CheckEngine` only | [33 CI-CD](33-ci-cd.md#packaging-and-artefacts) |
+| One package, one plugin | The submitted artefact is `TwinParticles.CheckEngine` only. Operator rehearsal: `pack-checkengine.sh` emits an unsigned zip; Marketplace submission is G12 and still pending | [33 CI-CD](33-ci-cd.md#packaging-and-artefacts) |
 | Theme ships inside the plugin | Theme assets are part of the Check Engine `Software` definition (`LICENSE.md § 1`) and install with the plugin; there is no separate nopCommerce Theme Marketplace listing | See [Rejected alternatives](#rejected-alternatives) |
 | No core modification | The package contains no patched host file; it operates through documented extension points only | `FR-910`–`FR-918`, `ADR-007` |
 | No bundled licensed third-party data | The artefact contains no TecDoc, ACES, PIES, or equivalent licensed fitment dataset | `LICENSE.md § 9.2` |
 | No credentials or keys | The artefact contains no connection string, API key, or licence key | [CONTRIBUTING.md](../CONTRIBUTING.md#local-configuration) |
-| No customer or catalog data | The artefact ships with no seeded customer, order, or third-party catalog record beyond the documented BMW-first reference vehicle dataset | `LICENSE.md § 9.1` |
+| No customer or catalog data | The artefact ships with no seeded customer, order, or third-party catalog record beyond the documented BMW-first structural seed and H1.6a top-10 catalog JSON | `LICENSE.md § 9.1` |
+| Host binaries excluded | The zip must not contain `Nop.Web`, `App_Data`, or native `runtimes` copied from a local host build | `PluginPackagingConventionsTests` |
 | Version alignment | `plugin.json` `Version` equals the `AssemblyInformationalVersion` of the submitted build | `AC-33.4` |
 | `SupportedVersions` accuracy | `plugin.json` declares exactly the nopCommerce minor range validated in CI for that release | `FR-917` |
 
@@ -277,7 +280,7 @@ create an expectation the lowest tier does not carry.
 
 | # | Check |
 |---|---|
-| 1 | Release artefact built and checksummed by the tagged CI pipeline |
+| 1 | Release artefact built and checksummed by the tagged CI pipeline (or `pack-checkengine.sh` for unsigned rehearsal). Vendor signing and Marketplace upload remain G11 remainder / G12 |
 | 2 | `CHANGELOG.md` entry exists for the version being submitted |
 | 3 | `plugin.json` `Version` equals the build's informational version |
 | 4 | `plugin.json` `SupportedVersions` matches the CI-validated nopCommerce range |

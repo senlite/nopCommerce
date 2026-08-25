@@ -25,7 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Vehicle\Vin\Data\bmw-vin-patterns.json" />
+    <EmbeddedResource Include="Vehicle\Vin\Data\*.json" />
+    <EmbeddedResource Include="Vehicle\Admin\Data\*.json" />
   </ItemGroup>
 
 </Project>

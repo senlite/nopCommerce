@@ -38,8 +38,12 @@ public sealed class BmwVinDecoder : IManufacturerVinDecoder
             return VinDecodeContribution.Failed("vin.wmi_unknown");
 
         var vdsPrefix = segments.Vds[..3];
+        var wmiRow = (await _vinRepository.GetWmisAsync(cancellationToken))
+            .FirstOrDefault(row => row.IsActive && string.Equals(row.Wmi, segments.Wmi, StringComparison.OrdinalIgnoreCase));
         var patterns = (await _vinRepository.GetPatternsAsync(cancellationToken))
-            .Where(pattern => pattern.IsActive && string.Equals(pattern.Pattern, vdsPrefix, StringComparison.Ordinal))
+            .Where(pattern => pattern.IsActive
+                              && string.Equals(pattern.Pattern, vdsPrefix, StringComparison.Ordinal)
+                              && (wmiRow?.MakeId is not int makeId || pattern.MakeId == makeId))
             .OrderByDescending(pattern => pattern.Priority)
             .ToList();
 

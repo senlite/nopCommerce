@@ -1,5 +1,9 @@
 # Check Engine Development Plan
 
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. This plan records the original
+scaffold sequence; live progress, G1–G6 evidence, and remaining Horizon 1 blockers are in
+[EXECUTION-PLAN.md](../../EXECUTION-PLAN.md).
+
 ## Objective
 Start implementation with the first Horizon 1 slice defined by the product backlog: `EP-02 Scaffolding`.
 

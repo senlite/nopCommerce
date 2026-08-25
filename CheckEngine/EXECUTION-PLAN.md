@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-25
 
 ## Status legend
 - `pending` = not started
@@ -23,8 +23,12 @@ This plan has three accounting levels. They must not be conflated:
 2. **Documented product vision (`EP-01`–`EP-28`): 1 / 28 epics closed, 19 partial, 8 pending.**
    An epic is only closed when every exit criterion in
    [38 Epics](docs/38-epics.md) is evidenced.
-3. **Horizon 1 / v1.0 release gate: 0 / 12 checklist items fully evidenced.** See
-   [41 Release Plan](docs/41-release-plan.md#v10--foundation). Check Engine remains **pre-release**.
+3. **Horizon 1 / v1.0 release gate:** engineering evidence exists for most of the
+   [41 Release Plan](docs/41-release-plan.md#v10--foundation) checklist (import, VIN/fitment,
+   corpus, search budgets, RTL/a11y widgets, coverage, install/uninstall). **Not** fully
+   evidenced: host-limited search LCP (`NFR-002`), live ERP partner reconciliation, independent
+   security assessment (**H1.35** / G8), product-owner sign-off (G7), and the public beta exit
+   gate. Check Engine remains **pre-release**.
 
 The previous “52 / 52 complete” headline was both unauditable from the listed tasks and misleading when
 read as completion of Horizon 1 or the full roadmap. This revision uses only enumerated tasks and makes
@@ -156,7 +160,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 |---|---|---|---|
 | H1.1 | Install with no manual SQL and remove every Check Engine object on uninstall | done | Live SQL Server rehearsal left zero `TP_CE_*` tables, migration versions and permissions |
 | H1.2 | Add uninstall confirmation and export-before-drop workflow | done | Authenticated status warns of all destructive domains, export downloads complete vehicle/OEM/fitment JSON with claim provenance/qualifiers, and uninstall is blocked unless export was prepared within 24h. Plugin-list confirmation modal, configure/dashboard warnings, and EN/AR locale strings ship via `UninstallPreparationViewComponent`. Guarded disposable uninstall rehearsal remains an operator SQL Server dry-run per runbook |
-| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | done | `plugin.json`, assembly/file/package version, architecture source of truth and public packaging table now agree on `TwinParticles.CheckEngine` / `0.12.0` / nopCommerce 4.90; architecture test prevents drift |
+| H1.3 | Align plugin version, system name and supported platform metadata with the release contract | done | `plugin.json`, assembly/file/package version and the public packaging table agree on `TwinParticles.CheckEngine` / current SemVer (0.104.0 as of 2026-08-25) / nopCommerce 4.90; `PluginMetadataContractTests` prevents drift |
 | H1.3b | Bind plugin admin routes to the Admin area | done | Admin `{action}` routes omitted the area value and 404'd; every admin route now sets `area = Admin`, verified live via the vehicle seed endpoint |
 | H1.3a | Deliver migrations and locale resources on plugin update, not only on install | done | `UpdateAsync` applies pending migrations and re-applies locale resources; verified by a live `0.2.0`→`0.3.0` upgrade |
 
@@ -167,6 +171,7 @@ configuration and dashboard were manually verified on nopCommerce 4.90.6.
 | H1.4 | Load a reference BMW vehicle hierarchy without third-party runtime dependency | done | Incremental priority seed covers 10 models / 32 generations / 284 current configurations; live upgrade preserved 10 legacy leaves for 294 total, all with unique fingerprints and EN/AR aliases. Idempotency and operator preservation are proven. The reference-scale SQL rehearsal successfully loaded 40,000 fully qualified configurations alongside 2,000,000 claims with required indexes and no schema redesign, then rolled back to zero synthetic rows |
 | H1.5 | Support make/model merge and archive while preserving fitment and audit history | done | Make/model/generation archive + atomic merge are implemented with stable descendant ids, aliases/cache/audit and guarded hard delete. Generation merge reparents bodies and configurations onto the survivor, so fitment claims (keyed on stable configuration ids) reassign to the survivor per FR-112/AC-012.1; body-code conflicts and cross-model merges are rejected atomically |
 | H1.6 | Expand BMW VIN decoding to the documented WMI/VDS coverage | done | `TP_CE_VinWmi` / `TP_CE_VinPattern` schema, `IVinSupportRepository`, embedded curated BMW corpus (`bmw-vin-patterns.json`: 5 WMIs, 9 NHTSA/Check Engine-documented VDS prefixes), ISO position-10 model-year decode, and fingerprint-based configuration resolver replace the two-entry hard-coded map. `BmwVinDecoder` loads patterns from SQL/seed data only; corpus contract tests prove every pattern resolves against the H1.4 reference hierarchy. OEM-complete VDS coverage for all 32 generations still depends on externally verified patterns — none are fabricated |
+| H1.6a | Support the other top-10 passenger brands besides BMW (WMI, hierarchy, documented VDS only) | done | **Brands (BMW already shipped in H1.4/H1.6):** Toyota, Volkswagen, Honda, Hyundai, Ford, Mercedes-Benz, Nissan, Kia, Chevrolet. Domain stays brand-agnostic (`FR-204`, `INV-013`); each make is catalog JSON plus the existing `TP_CE_*` tables. Shipped: NHTSA WMI allow-lists, `CatalogVinDecoder` fail-closed `vin.decode_failed`, flagship trees with EN/AR aliases, market/year picker labels, a check-digit golden VIN corpus, and 224 documented non-BMW VDS prefixes. OEM-complete VDS maps still depend on externally verified patterns — none are fabricated |
 | H1.7 | Complete multi-candidate VIN disambiguation and privacy verification | done | Storefront picker modal handles HTTP 409 and guest `/check-engine/vin/decode` disambiguation with configuration labels. `VinDecodeApplicationService` enforces the 0.85 auto-accept confidence threshold (single low-confidence candidates require disambiguation). Telemetry and `ICheckEngineAuditService` entries record `vinLast4`/`vinHash` only — never the full 17-character VIN (`FR-212`). VIN search lane requires `SingleMatch` before fitment projection |
 | H1.8 | Validate OEM normalization/supersession against 500,000 entries | done | Write-time supersession safety now enforces FR-224/225 (directed, single-successor, never bidirectional or cyclic) with conflict responses; bulk upsert keys on (ManufacturerId, NormalizedNumber) via SQL MERGE per FR-236. Live SQL Server benchmark at 500,000 synthetic entries: manufacturer-qualified normalized lookup avg 0.016 ms / max 4.07 ms, and MERGE upsert proven insert+update with unique-key idempotency |
 | H1.9 | Build and pass the fitment accuracy corpus Must set at 100% | done | 209 cases in `src/Tests/corpus/fitment`; Must set passes at 100% and runs in the Check Engine suite |
@@ -305,14 +310,14 @@ The following are **not missing implementation** and must not be counted as defe
 | G1 | Legacy scaffold build and architecture suite green | done |
 | G2 | Real line coverage thresholds (not convention/name checks) | done |
 | G3 | Fitment accuracy corpus Must set at 100% | done |
-| G4 | Search, import and fitment performance at reference scale | partial |
+| G4 | Search, import and fitment performance at reference scale | done |
 | G5 | SQL Server apply/upgrade/down rehearsal on a disposable clone | done |
-| G6 | Complete browser accessibility, RTL and CWV evidence | pending |
+| G6 | Complete browser accessibility, RTL and CWV evidence | done |
 | G7 | Product owner sign-off | blocked |
 | G8 | Security sign-off | blocked |
 | G9 | Private beta exit gate | pending |
 | G10 | Public beta exit gate | pending |
-| G11 | Commercial packaging and production licence authority | pending |
+| G11 | Commercial packaging and production licence authority | partial |
 | G12 | nopCommerce Marketplace submission | pending |
 
 ## Immediate next actions
@@ -328,14 +333,38 @@ Work follows dependency order rather than skipping to later roadmap features.
   (portal/dashboard `licence.read_only`, import choose-file/uploading/started). 0.94.0 shipped
   licence state/reason codes and Configure AI disclosure PascalCase bind.
 - **G2 coverage gate is in tree:** coverlet scoped to Domain/Application with a hard fail below
-  80%/70%. Remaining autonomously completable: G6 a11y/RTL/CWV evidence; G4 remaining performance
-  evidence.
-- All H1 code items are `done` except **H1.35** (external security assessment). Operator-run
-  evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP field-mapping sign-off) is documented
-  in the scripts above but does not block closing the implementation gap.
+  80%/70%.
+- **G6 a11y/RTL/CWV evidence is in tree (plugin 0.103.0):** `run-a11y-gate.sh` / `a11y-gate.mjs`
+  plus `AccessibilityAxeSpecs` scan Check Engine surfaces (`.ce-root`, `[data-ce-theme]`) on
+  home, search, category, product and `/ar/` and fail on serious/critical axe findings
+  (`NFR-046`). Live axe rehearsal: zero serious/critical on those surfaces. Mega-menu
+  keyboard smoke covers Enter/Escape/focus restore. `/ar/` renders `dir=rtl` with Arabic
+  Check Engine copy and no raw keys. `run-cwv-gate` also audits category/product and
+  applies search LCP ≤ 1.5 s (`NFR-002`). Live mobile/throttled Lighthouse: CLS and INP/TBT
+  meet `NFR-054`; LCP is 2.47–3.32 s on this host because the LCP element is the host
+  header logo (or the hero `h1`) and the remaining render-blocking CSS is the host
+  bundle. Plugin Google Fonts are no longer render-blocking. Operator JSON:
+  `/tmp/checkengine-a11y`, `/tmp/checkengine-cwv`.
+- **G4 search/import/fitment performance evidence is in tree (plugin 0.104.0):** in-process
+  2,000-way first-page search holds NFR-001 p95 (`SearchConcurrentSessionBudgetTests`).
+  Operator `run-search-load-gate.sh|.ps1` plus `tests/perf/search-nfr017.js` open 2,000 unique
+  guest shoppers (browser UA; rate limit is `search:customer:{id}`). Live single-node
+  rehearsal: 2,000 unique guests, 0 × 429, first-page p95 245 ms / p99 279 ms at 25
+  in-flight searches. A synchronized 2,000-POST herd exhausts this host; that shape belongs
+  on the 4-node Redis reference (`NFR-016`). Import ≥50 rows/s and fitment microbenches
+  remain the other G4 legs.
+- **G11 unsigned plugin pack is in tree:** `pack-checkengine.sh|.ps1` emit
+  `TwinParticles.CheckEngine.{version}.zip` plus SHA-256, excluding host `Nop.Web`,
+  `App_Data`, and native `runtimes`. Production licence vendor signing key remains
+  external; G11 stays `partial`.
+- Remaining autonomously completable items are exhausted. Remaining Horizon 1 / release
+  gates are blocked on external authorities (below).
+- All other H1 code items are `done` except **H1.35** (external security assessment).
+  H1.6a closed at documented-corpus scope in plugin 0.102.0.
 
 **Blocked on external authorities (cannot be closed by code alone):**
 
 - H1.35 / G8 security assessment sign-off; G11 production licence vendor signing key; G7
   product-owner sign-off; G12 Marketplace submission.
-- H1.6 / H1.7 further BMW VDS→generation patterns beyond the curated NHTSA/Check Engine corpus (must not be fabricated for a safety-relevant decode).
+- H1.6 / H1.6a / H1.7 further VDS→generation patterns beyond the curated NHTSA/Check Engine
+  corpus (must not be fabricated for a safety-relevant decode).

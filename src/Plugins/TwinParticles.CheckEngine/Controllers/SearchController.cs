@@ -57,10 +57,8 @@ public sealed class SearchController : BasePublicController
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         var isGuest = await _customerService.IsGuestAsync(customer);
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var rateLimitKey = isGuest
-            ? $"search:ip:{ipAddress}"
-            : $"search:customer:{customer.Id}";
+        // NFR-017: one shopper = one guest/authenticated customer, not one NAT IP.
+        var rateLimitKey = $"search:customer:{customer.Id}";
 
         if (!_searchRateLimiter.TryAcquire(rateLimitKey, out var retryAfterSeconds))
         {
@@ -102,11 +100,7 @@ public sealed class SearchController : BasePublicController
     public async Task<IActionResult> Suggest(string? term, string? locale, int take = 6, CancellationToken cancellationToken = default)
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
-        var isGuest = await _customerService.IsGuestAsync(customer);
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var rateLimitKey = isGuest
-            ? $"suggest:ip:{ipAddress}"
-            : $"suggest:customer:{customer.Id}";
+        var rateLimitKey = $"suggest:customer:{customer.Id}";
 
         if (!_searchRateLimiter.TryAcquire(rateLimitKey, out var retryAfterSeconds))
             return StatusCode(429, new { reasonCode = "search.rate_limited", retryAfterSeconds });
@@ -143,10 +137,7 @@ public sealed class SearchController : BasePublicController
 
         var customer = await _workContext.GetCurrentCustomerAsync();
         var isGuest = await _customerService.IsGuestAsync(customer);
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var rateLimitKey = isGuest
-            ? $"recommend:ip:{ipAddress}"
-            : $"recommend:customer:{customer.Id}";
+        var rateLimitKey = $"recommend:customer:{customer.Id}";
 
         if (!_searchRateLimiter.TryAcquire(rateLimitKey, out var retryAfterSeconds))
             return StatusCode(429, new { reasonCode = "search.rate_limited", retryAfterSeconds });

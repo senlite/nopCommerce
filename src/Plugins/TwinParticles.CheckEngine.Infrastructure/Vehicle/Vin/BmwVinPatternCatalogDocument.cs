@@ -8,6 +8,9 @@ public sealed class BmwVinPatternCatalogDocument
     [JsonPropertyName("version")]
     public int Version { get; init; }
 
+    [JsonPropertyName("makeCode")]
+    public string MakeCode { get; init; } = string.Empty;
+
     [JsonPropertyName("wmis")]
     public IReadOnlyList<BmwVinWmiDocumentEntry> Wmis { get; init; } = [];
 

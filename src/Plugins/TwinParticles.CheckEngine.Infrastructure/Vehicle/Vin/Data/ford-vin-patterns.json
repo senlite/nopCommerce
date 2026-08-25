@@ -1,0 +1,265 @@
+{
+  "version": 1,
+  "makeCode": "FORD",
+  "description": "H1.6a Ford WMIs from NHTSA GetWMIsForManufacturer/ford. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    {
+      "wmi": "1FA",
+      "manufacturerName": "FORD MOTOR COMPANY",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1FM",
+      "manufacturerName": "FORD MOTOR COMPANY",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "1FT",
+      "manufacturerName": "FORD MOTOR COMPANY",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "3FA",
+      "manufacturerName": "FORD MOTOR COMPANY, MEXICO",
+      "regionCode": "MX"
+    },
+    {
+      "wmi": "2FM",
+      "manufacturerName": "FORD MOTOR COMPANY OF CANADA, LTD.",
+      "regionCode": "CA"
+    },
+    {
+      "wmi": "3FT",
+      "manufacturerName": "FORD MOTOR COMPANY, MEXICO",
+      "regionCode": "MX"
+    },
+    {
+      "wmi": "MAJ",
+      "manufacturerName": "FORD INDIA LTD",
+      "regionCode": "IN"
+    },
+    {
+      "wmi": "3FM",
+      "manufacturerName": "FORD MOTOR COMPANY, MEXICO",
+      "regionCode": "MX"
+    }
+  ],
+  "patterns": [
+    {
+      "pattern": "6P8",
+      "modelCode": "MUSTANG",
+      "generationCode": "S550",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FA6P8TD5M5100001;make=FORD;model=Mustang;year=2021"
+    },
+    {
+      "pattern": "MW1",
+      "modelCode": "F150",
+      "generationCode": "P702",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FTMW1T88MFA00001;make=FORD;model=F-150;year=2021"
+    },
+    {
+      "pattern": "EW1",
+      "modelCode": "F150",
+      "generationCode": "P552",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FTEW1EP4LFA00001;make=FORD;model=F-150;year=2020"
+    },
+    {
+      "pattern": "5K8",
+      "modelCode": "EXPLORER",
+      "generationCode": "U502",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 90,
+      "provenance": "nhtsa-vpic:1FM5K8D81JGA00001;make=FORD;model=Explorer;year=2018"
+    },
+    {
+      "pattern": "5K8",
+      "modelCode": "EXPLORER",
+      "generationCode": "U625",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 90,
+      "provenance": "nhtsa-vpic:1FM5K8GC0LGA00001;make=FORD;model=Explorer;year=2020"
+    },
+    {
+      "pattern": "CU0",
+      "modelCode": "ESCAPE",
+      "generationCode": "C520",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FMCU0GD0JUA00001;make=FORD;model=Escape;year=2018"
+    },
+    {
+      "pattern": "CU9",
+      "modelCode": "ESCAPE",
+      "generationCode": "C520",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FMCU9GD0KUA00001;make=FORD;model=Escape;year=2019"
+    },
+    {
+      "pattern": "DP3",
+      "modelCode": "FOCUS",
+      "generationCode": "MK3",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FADP3F20EL000001;make=FORD;model=Focus;year=2014"
+    },
+    {
+      "pattern": "6P0",
+      "modelCode": "FUSION",
+      "generationCode": "CD391",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3FA6P0H76HR000001;make=FORD;model=Fusion;year=2017"
+    },
+    {
+      "pattern": "ER4",
+      "modelCode": "RANGER",
+      "generationCode": "P375",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FTER4FH0LLA00001;make=FORD;model=Ranger;year=2020"
+    },
+    {
+      "pattern": "DE5",
+      "modelCode": "BRONCO",
+      "generationCode": "U725",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FMDE5BH0MLA00001;make=FORD;model=Bronco;year=2021"
+    },
+    {
+      "pattern": "PK4",
+      "modelCode": "EDGE",
+      "generationCode": "CD539",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2FMPK4J90HBB00001;make=FORD;model=Edge;year=2017"
+    },
+    {
+      "pattern": "JU1",
+      "modelCode": "EXPEDITION",
+      "generationCode": "U553",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FMJU1HT0LEA00001;make=FORD;model=Expedition;year=2020"
+    },
+    {
+      "pattern": "TW8",
+      "modelCode": "MAVERICK",
+      "generationCode": "P758",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3FTTW8E9XNRA00001;make=FORD;model=Maverick;year=2022"
+    },
+    {
+      "pattern": "6P1",
+      "modelCode": "ECOSPORT",
+      "generationCode": "B515",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:MAJ6P1CL1JC000001;make=FORD;model=EcoSport;year=2018"
+    },
+    {
+      "pattern": "CR9",
+      "modelCode": "BRONCOSPORT",
+      "generationCode": "CX430",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3FMCR9B68MRA00001;make=FORD;model=Bronco Sport;year=2021"
+    },
+    {
+      "pattern": "HP2",
+      "modelCode": "TAURUS",
+      "generationCode": "D6",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FAHP2E86DG000001;make=FORD;model=Taurus;year=2013"
+    },
+    {
+      "pattern": "GK5",
+      "modelCode": "FLEX",
+      "generationCode": "D471",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2FMGK5C89EBD00001;make=FORD;model=Flex;year=2014"
+    },
+    {
+      "pattern": "7W2",
+      "modelCode": "F250",
+      "generationCode": "P558",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FT7W2B60KEA00001;make=FORD;model=F-250;year=2019"
+    },
+    {
+      "pattern": "TK3",
+      "modelCode": "MACHE",
+      "generationCode": "CX727",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3FMTK3SU1MMA00001;make=FORD;model=Mustang Mach-E;year=2021"
+    },
+    {
+      "pattern": "BF2",
+      "modelCode": "F250",
+      "generationCode": "P558",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FTBF2B68KEA00001;make=FORD;model=F-250;year=2019"
+    },
+    {
+      "pattern": "8W3",
+      "modelCode": "F350",
+      "generationCode": "P558",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FT8W3BT0KEA00001;make=FORD;model=F-350;year=2019"
+    },
+    {
+      "pattern": "JK1",
+      "modelCode": "EXPEDITION",
+      "generationCode": "U553",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FMJK1KT2LEA00001;make=FORD;model=Expedition MAX;year=2020"
+    },
+    {
+      "pattern": "HP3",
+      "modelCode": "FOCUS",
+      "generationCode": "MK3",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:1FAHP3F29CL000001;make=FORD;model=Focus;year=2012"
+    }
+  ]
+}

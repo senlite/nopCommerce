@@ -3,7 +3,9 @@
 > The epic inventory `EP-01`–`EP-28`, each mapped to a delivery horizon, the business requirements it
 > discharges, its functional requirement range, and the criteria that close it.
 
-**Status:** Review · **Owner:** Product Owner · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Product Owner · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -51,6 +53,11 @@ Three things a reader should take from this document:
 3. **Every Must-priority business requirement has an epic.** The coverage check in
    [Coverage check](#coverage-check) is not decorative — it is what [33 CI-CD](33-ci-cd.md) validates
    before a documentation phase is marked complete.
+
+Engineering implementations of Horizon 1 slices exist in plugin `0.104.0`, but **epic close remains
+the Horizon 1 gate**. `EP-01` is closed; `EP-02`–`EP-17` stay open. The inventory count is **1/28
+closed**. Do not close Horizon 1 epics from engineering evidence alone. See
+[EXECUTION-PLAN.md](../EXECUTION-PLAN.md).
 
 ---
 

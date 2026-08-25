@@ -8,15 +8,10 @@ namespace TwinParticles.CheckEngine.Tests.E2E;
 [NonParallelizable]
 public class AccessibilityViewportMatrixSpecs
 {
-    public static IEnumerable<(int Width, int Height)> Viewports =>
-    [
-        (320, 568),
-        (768, 1024),
-        (1440, 900),
-        (2560, 1440)
-    ];
-
-    [TestCaseSource(nameof(Viewports))]
+    [TestCase(320, 568)]
+    [TestCase(768, 1024)]
+    [TestCase(1440, 900)]
+    [TestCase(2560, 1440)]
     public async Task Home_Should_Expose_Main_Landmark_At_Viewport(int width, int height)
     {
         if (!await IsServerReachableAsync())
@@ -42,7 +37,10 @@ public class AccessibilityViewportMatrixSpecs
         overflowX.Should().Be(0, $"home at {width}x{height} should not horizontally overflow");
     }
 
-    [TestCaseSource(nameof(Viewports))]
+    [TestCase(320, 568)]
+    [TestCase(768, 1024)]
+    [TestCase(1440, 900)]
+    [TestCase(2560, 1440)]
     public async Task Arabic_Storefront_Should_Use_Rtl_And_Labelled_Search_At_Viewport(int width, int height)
     {
         if (!await IsServerReachableAsync())
@@ -66,14 +64,16 @@ public class AccessibilityViewportMatrixSpecs
             "document.documentElement.getAttribute('dir') || document.body?.getAttribute('dir') || getComputedStyle(document.documentElement).direction");
         dir.Should().Be("rtl", $"Arabic storefront at {width}x{height} should render RTL");
 
-        var labelledSearch = page.Locator(
-            "input[type='search'][aria-label], input[type='search'][id], label[for] + input[type='search'], input[name*='q' i]");
+        var labelledSearch = page.Locator("#ce-sticky-search-input, input[type='search'][aria-label], input[type='search'][id]");
         if (await labelledSearch.CountAsync() > 0)
         {
             var ariaLabel = await labelledSearch.First.GetAttributeAsync("aria-label");
             var id = await labelledSearch.First.GetAttributeAsync("id");
-            (string.IsNullOrWhiteSpace(ariaLabel) && string.IsNullOrWhiteSpace(id)).Should().BeFalse(
-                "search input should expose an accessible name for screen readers");
+            var labelledBy = await labelledSearch.First.GetAttributeAsync("aria-labelledby");
+            var hasName = !string.IsNullOrWhiteSpace(ariaLabel)
+                || !string.IsNullOrWhiteSpace(id)
+                || !string.IsNullOrWhiteSpace(labelledBy);
+            hasName.Should().BeTrue("Check Engine search should expose an accessible name for screen readers");
         }
         else
         {

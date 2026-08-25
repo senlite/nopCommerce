@@ -4,7 +4,9 @@
 > v1.0 beta programme, go-to-market sequencing, the externally gated .NET 10 milestone, hotfix and
 > SemVer policy, and rollback criteria.
 
-**Status:** Review · **Owner:** Product Owner · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** Product Owner · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -17,6 +19,7 @@
   - [Release train overview](#release-train-overview)
   - [Dates policy](#dates-policy)
   - [Gating criteria per release](#gating-criteria-per-release)
+  - [Engineering evidence vs release sign-off](#engineering-evidence-vs-release-sign-off)
   - [Beta programme for v1.0](#beta-programme-for-v10)
   - [Go-to-market sequencing](#go-to-market-sequencing)
   - [The .NET 10 milestone](#the-net-10-milestone)
@@ -150,6 +153,27 @@ Each checklist adapts the corresponding horizon's exit criteria from ROADMAP.md 
 checklist. A release is not tagged until every box is checked; a partially met checklist is a reason to
 extend the hardening sprint in [36 Sprint Planning](36-sprint-planning.md#feature-freeze-policy), not a
 reason to relabel the release "beta" and ship anyway.
+
+### Engineering evidence vs release sign-off
+
+Plugin `0.104.0` contains **engineering evidence** for most of the v1.0 checklist (import, VIN/fitment,
+corpus tests, search latency microbench and NFR-017 rehearsal, RTL/a11y widgets, coverage,
+install/uninstall, unsigned pack). Checking a box in this document means **release sign-off**, not
+"code exists in tree."
+
+Still open before any v1.0 box may be checked:
+
+| Gate | Why it stays open |
+|---|---|
+| Search first-page LCP ≤ 1.5 s (`NFR-002`) | Host logo/CSS bound; G6 axe/CWV does not claim this met |
+| Live ERP partner reconciliation | Adapter exists; partner cutover is external |
+| Independent security assessment (H1.35 / G8 / `AC-080.1`) | Human reviewer; engineering controls are not a substitute |
+| Product-owner sign-off (G7) | External |
+| Public beta exit gate | Not started |
+| Production licence vendor signing (G11 remainder) and Marketplace submission (G12) | Pack script is unsigned-only |
+
+Do **not** check the v1.0 boxes until those gates pass. Progress is tracked in
+[EXECUTION-PLAN.md](../EXECUTION-PLAN.md).
 
 #### v1.0 — Foundation
 

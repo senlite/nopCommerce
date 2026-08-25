@@ -224,10 +224,39 @@ public sealed class VehicleAdminService
         if (make is null || !make.IsActive)
             return null;
 
-        return string.Join(
-            " ",
-            new[] { make.Name, model.Name, generation.Code, configuration.TrimName }
-                .Where(part => !string.IsNullOrWhiteSpace(part)));
+        var parts = new List<string> { make.Name, model.Name, generation.Code };
+        if (!string.IsNullOrWhiteSpace(configuration.TrimName))
+            parts.Add(configuration.TrimName);
+
+        var qualifiers = new List<string>();
+        if (configuration.MarketId is int marketId)
+        {
+            var market = await _repository.GetMarketByIdAsync(marketId, cancellationToken);
+            if (market is not null && market.IsActive && !string.IsNullOrWhiteSpace(market.Name))
+                qualifiers.Add(market.Name);
+        }
+
+        var years = FormatProductionWindow(
+            configuration.ProductionFromYear ?? generation.StartYear,
+            configuration.ProductionToYear ?? generation.EndYear);
+        if (!string.IsNullOrWhiteSpace(years))
+            qualifiers.Add(years);
+
+        if (qualifiers.Count > 0)
+            parts.Add($"({string.Join(", ", qualifiers)})");
+
+        return string.Join(" ", parts);
+    }
+
+    private static string? FormatProductionWindow(int? fromYear, int? toYear)
+    {
+        if (fromYear is int from && toYear is int to)
+            return $"{from}-{to}";
+        if (fromYear is int openFrom)
+            return $"{openFrom}-";
+        if (toYear is int openTo)
+            return $"-{openTo}";
+        return null;
     }
 
     public async Task<VehicleLifecycleResult> ArchiveMakeAsync(

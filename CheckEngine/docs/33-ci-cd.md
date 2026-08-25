@@ -3,7 +3,9 @@
 > GitHub Actions pipelines, build and test matrix, quality gates (including TDD evidence and Mermaid
 > lint), packaging, signing, and release automation for Check Engine.
 
-**Status:** Review · **Owner:** DevOps Architect · **Last revised:** 2026-07-28
+**Status:** Review · **Owner:** DevOps Architect · **Last revised:** 2026-08-25
+
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
 
 ---
 
@@ -164,8 +166,14 @@ against base SHA (advanced).
 | Artefact | Content |
 |---|---|
 | `TwinParticles.CheckEngine.{version}.zip` | Plugin folder layout for drop-in install |
+| SHA-256 sidecar | `TwinParticles.CheckEngine.{version}.zip.sha256` |
 | Symbols | Optional snupkg for internal |
 | SBOM | Should Horizon 2 |
+
+Operator rehearsal: `CheckEngine/scripts/pack-checkengine.sh|.ps1` (Python `pack-checkengine.py`).
+The zip root is `TwinParticles.CheckEngine/` and excludes host `Nop.Web` binaries, `App_Data`,
+native `runtimes`, and symbols. Authenticode / licence-vendor signing is **not** performed by
+this script.
 
 Version alignment: `plugin.json` Version == InformationalVersion (`AC-09.6`).
 

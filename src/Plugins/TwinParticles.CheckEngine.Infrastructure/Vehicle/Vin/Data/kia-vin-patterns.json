@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "makeCode": "KIA",
+  "description": "H1.6a Kia WMIs from NHTSA GetWMIsForManufacturer/kia. Shared HATCI passenger WMI 5NP is assigned to Hyundai, not Kia. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    {
+      "wmi": "KNA",
+      "manufacturerName": "KIA CORPORATION",
+      "regionCode": "KR"
+    },
+    {
+      "wmi": "KND",
+      "manufacturerName": "KIA CORPORATION",
+      "regionCode": "KR"
+    },
+    {
+      "wmi": "5XY",
+      "manufacturerName": "KIA GEORGIA, INC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "5XX",
+      "manufacturerName": "KIA GEORGIA, INC",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "3KP",
+      "manufacturerName": "KIA MEXICO S.A. DE C.V.",
+      "regionCode": "MX"
+    }
+  ],
+  "patterns": [
+    {
+      "pattern": "KT3",
+      "modelCode": "SORENTO",
+      "generationCode": "XM",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XYKT3A12CG000000;make=KIA;model=Sorento;year=2012"
+    },
+    {
+      "pattern": "PG4",
+      "modelCode": "SORENTO",
+      "generationCode": "UM",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XYPG4A31KG000001;make=KIA;model=Sorento;year=2019"
+    },
+    {
+      "pattern": "FX4",
+      "modelCode": "FORTE",
+      "generationCode": "YD",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNAFX4A64E5000001;make=KIA;model=Forte;year=2014"
+    },
+    {
+      "pattern": "F24",
+      "modelCode": "FORTE",
+      "generationCode": "BD",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3KPF24AD4LE000001;make=KIA;model=Forte;year=2020"
+    },
+    {
+      "pattern": "PMC",
+      "modelCode": "SPORTAGE",
+      "generationCode": "QL",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDPMCAC8L7000001;make=KIA;model=Sportage;year=2020"
+    },
+    {
+      "pattern": "JP3",
+      "modelCode": "SOUL",
+      "generationCode": "PS",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDJP3A59H7000001;make=KIA;model=Soul;year=2017"
+    },
+    {
+      "pattern": "P64",
+      "modelCode": "TELLURIDE",
+      "generationCode": "ON",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XYP64HC0NG000001;make=KIA;model=Telluride;year=2022"
+    },
+    {
+      "pattern": "MB5",
+      "modelCode": "SEDONA",
+      "generationCode": "YP",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDMB5C15H6000001;make=KIA;model=Sedona;year=2017"
+    },
+    {
+      "pattern": "E55",
+      "modelCode": "STINGER",
+      "generationCode": "CK",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNAE55LC0L6000001;make=KIA;model=Stinger;year=2020"
+    },
+    {
+      "pattern": "CC3",
+      "modelCode": "NIRO",
+      "generationCode": "DE",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDCC3LD0J5000001;make=KIA;model=Niro;year=2018"
+    },
+    {
+      "pattern": "GT4",
+      "modelCode": "OPTIMA",
+      "generationCode": "JF",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XXGT4L35KG000001;make=KIA;model=Optima;year=2019"
+    },
+    {
+      "pattern": "G64",
+      "modelCode": "K5",
+      "generationCode": "DL3",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XXG64J2XMG000001;make=KIA;model=K5;year=2021"
+    },
+    {
+      "pattern": "G34",
+      "modelCode": "K5",
+      "generationCode": "DL3",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5XXG34J29MG000001;make=KIA;model=K5;year=2021"
+    },
+    {
+      "pattern": "NC5",
+      "modelCode": "CARNIVAL",
+      "generationCode": "KA4",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDNC5H34N6000001;make=KIA;model=Carnival;year=2022"
+    },
+    {
+      "pattern": "A24",
+      "modelCode": "RIO",
+      "generationCode": "YB",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:3KPA24AB9LE000001;make=KIA;model=Rio;year=2020"
+    },
+    {
+      "pattern": "C34",
+      "modelCode": "EV6",
+      "generationCode": "CV",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDC34LA8N5000001;make=KIA;model=EV6;year=2022"
+    },
+    {
+      "pattern": "C3D",
+      "modelCode": "EV6",
+      "generationCode": "CV",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDC3DLC6N5000001;make=KIA;model=EV6;year=2022"
+    },
+    {
+      "pattern": "EUC",
+      "modelCode": "SELTOS",
+      "generationCode": "SP2",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDEUCAA0M7000001;make=KIA;model=Seltos;year=2021"
+    },
+    {
+      "pattern": "J23",
+      "modelCode": "SOUL",
+      "generationCode": "SK3",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:KNDJ23AU1N7123001;make=KIA;model=Soul;year=2022"
+    }
+  ]
+}

@@ -6,6 +6,8 @@ work enters the codebase and the documentation set, and the standard it must mee
 **Who this applies to:** Twin Particles engineers, contracted implementation partners, and licensed
 customers submitting fixes under [LICENSE.md § 5.3](LICENSE.md#53-contributions).
 
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](EXECUTION-PLAN.md). This document remains the contribution process, not a release sign-off.
+
 **Before you write anything:** read [34 Coding Standards](docs/34-coding-standards.md) for code — including
 **Test-Driven Development (`ADR-015`)** — and the [document template](#document-template) below for
 documentation. Both are enforced at review, and a pull request that ignores them will be returned rather
@@ -490,6 +492,10 @@ section is indistinguishable from an oversight.
 > One-sentence statement of what this document governs.
 
 **Status:** Draft | Review | Approved · **Owner:** role · **Last revised:** YYYY-MM-DD
+
+Numbered specifications also carry a one-line **Engineering status** pointer to
+[EXECUTION-PLAN.md](EXECUTION-PLAN.md) after **Last revised**. Do not treat that pointer as a
+v1.0 sign-off.
 
 ## Contents
 [Table of contents for documents over roughly 300 lines]

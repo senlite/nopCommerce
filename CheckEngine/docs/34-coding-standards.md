@@ -6,6 +6,8 @@
 
 **Status:** Review · **Owner:** Engineering Lead · **Last revised:** 2026-07-28
 
+**Engineering status (2026-08-25):** Plugin `0.104.0` is in tree. Progress, evidence gates (G1–G6 done; G11 packing partial), and remaining blockers (H1.35/G8, G7, G11 vendor signing, G12) are recorded in [EXECUTION-PLAN.md](../EXECUTION-PLAN.md). This document remains the specification baseline.
+
 ---
 
 ## Contents

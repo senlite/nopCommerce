@@ -1,0 +1,384 @@
+{
+  "version": 1,
+  "makeCode": "TOYOTA",
+  "description": "H1.6a Toyota WMIs from NHTSA GetWMIsForManufacturer/toyota. VDS prefixes only from DecodeVinValues.",
+  "wmis": [
+    {
+      "wmi": "JTD",
+      "manufacturerName": "TOYOTA MOTOR CORPORATION",
+      "regionCode": "JP"
+    },
+    {
+      "wmi": "JTE",
+      "manufacturerName": "TOYOTA MOTOR CORPORATION",
+      "regionCode": "JP"
+    },
+    {
+      "wmi": "JTM",
+      "manufacturerName": "TOYOTA MOTOR CORPORATION",
+      "regionCode": "JP"
+    },
+    {
+      "wmi": "4T1",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING, KENTUCKY, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "4T3",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING, KENTUCKY, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "5TD",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING, INDIANA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "5TF",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING, TEXAS, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "2T1",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING CANADA",
+      "regionCode": "CA"
+    },
+    {
+      "wmi": "2T3",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING CANADA",
+      "regionCode": "CA"
+    },
+    {
+      "wmi": "NMT",
+      "manufacturerName": "TOYOTA MOTOR MANUFACTURING,TURKEY ,INC.",
+      "regionCode": "TR"
+    },
+    {
+      "wmi": "7MU",
+      "manufacturerName": "MAZDA TOYOTA MANUFACTURING, USA, INC.",
+      "regionCode": "US"
+    },
+    {
+      "wmi": "JTN",
+      "manufacturerName": "TOYOTA MOTOR CORPORATION",
+      "regionCode": "JP"
+    }
+  ],
+  "patterns": [
+    {
+      "pattern": "B11",
+      "modelCode": "CAMRY",
+      "generationCode": "XV70",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1B11HK5JU000001;make=TOYOTA;model=Camry;year=2018"
+    },
+    {
+      "pattern": "K61",
+      "modelCode": "CAMRY",
+      "generationCode": "XV70",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1K61AK0NU000001;make=TOYOTA;model=Camry;year=2022"
+    },
+    {
+      "pattern": "BE4",
+      "modelCode": "CAMRY",
+      "generationCode": "XV40",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1BE46K19U000001;make=TOYOTA;model=Camry;year=2009"
+    },
+    {
+      "pattern": "BU4",
+      "modelCode": "COROLLA",
+      "generationCode": "E150",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2T1BU4EE4AC000001;make=TOYOTA;model=Corolla;year=2010"
+    },
+    {
+      "pattern": "KN3",
+      "modelCode": "PRIUS",
+      "generationCode": "XW30",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDKN3DU0A0000001;make=TOYOTA;model=Prius;year=2010"
+    },
+    {
+      "pattern": "KB2",
+      "modelCode": "PRIUS",
+      "generationCode": "XW20",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDKB20U177000001;make=TOYOTA;model=Prius;year=2007"
+    },
+    {
+      "pattern": "P1R",
+      "modelCode": "RAV4",
+      "generationCode": "XA50",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2T3P1RFV8LW000001;make=TOYOTA;model=RAV4;year=2020"
+    },
+    {
+      "pattern": "W1R",
+      "modelCode": "RAV4",
+      "generationCode": "XA50",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:2T3W1RFV0MW000001;make=TOYOTA;model=RAV4;year=2021"
+    },
+    {
+      "pattern": "RJR",
+      "modelCode": "RAV4",
+      "generationCode": "XA40",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTMRJREV0JD000001;make=TOYOTA;model=RAV4;year=2018"
+    },
+    {
+      "pattern": "ZK3",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU40",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDZK3EH0DS000001;make=TOYOTA;model=Highlander;year=2013"
+    },
+    {
+      "pattern": "BK3",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU40",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDBK3EH0CS000001;make=TOYOTA;model=Highlander;year=2012"
+    },
+    {
+      "pattern": "AZ5",
+      "modelCode": "TACOMA",
+      "generationCode": "N300",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TFAZ5CN7HX000001;make=TOYOTA;model=Tacoma;year=2017"
+    },
+    {
+      "pattern": "BU5",
+      "modelCode": "4RUNNER",
+      "generationCode": "N280",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTEBU5JR7H5000001;make=TOYOTA;model=4Runner;year=2017"
+    },
+    {
+      "pattern": "YZ3",
+      "modelCode": "SIENNA",
+      "generationCode": "XL30",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDYZ3DC0HS000001;make=TOYOTA;model=Sienna;year=2017"
+    },
+    {
+      "pattern": "KZ3",
+      "modelCode": "SIENNA",
+      "generationCode": "XL30",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDKZ3DC4HS000001;make=TOYOTA;model=Sienna;year=2017"
+    },
+    {
+      "pattern": "BY5",
+      "modelCode": "SEQUOIA",
+      "generationCode": "XK60",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDBY5G16HS000001;make=TOYOTA;model=Sequoia;year=2017"
+    },
+    {
+      "pattern": "DY5",
+      "modelCode": "TUNDRA",
+      "generationCode": "XK50",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TFDY5F19HX000001;make=TOYOTA;model=Tundra;year=2017"
+    },
+    {
+      "pattern": "B21",
+      "modelCode": "CAMRY",
+      "generationCode": "XV70",
+      "engineCode": null,
+      "confidence": 0.84,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1B21HK5KU000001;make=TOYOTA;model=Camry;year=2019"
+    },
+    {
+      "pattern": "KHM",
+      "modelCode": "CHR",
+      "generationCode": "AX10",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:NMTKHMBX0JR000001;make=TOYOTA;model=C-HR;year=2018"
+    },
+    {
+      "pattern": "AAA",
+      "modelCode": "VENZA",
+      "generationCode": "XU80",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTEAAAAH1MJ000001;make=TOYOTA;model=Venza;year=2021"
+    },
+    {
+      "pattern": "CY7",
+      "modelCode": "LANDCRUISER",
+      "generationCode": "J200",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTMCY7AJ5M4000001;make=TOYOTA;model=Land Cruiser;year=2021"
+    },
+    {
+      "pattern": "BAA",
+      "modelCode": "COROLLACROSS",
+      "generationCode": "XG10",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:7MUBAABG0NV000001;make=TOYOTA;model=Corolla Cross;year=2022"
+    },
+    {
+      "pattern": "GZR",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDGZRBH4LS000001;make=TOYOTA;model=Highlander;year=2020"
+    },
+    {
+      "pattern": "DZR",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDDZRBH0LS000001;make=TOYOTA;model=Highlander;year=2020"
+    },
+    {
+      "pattern": "EPR",
+      "modelCode": "COROLLA",
+      "generationCode": "E210",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDEPRAE2LJ000001;make=TOYOTA;model=Corolla;year=2020"
+    },
+    {
+      "pattern": "BF1",
+      "modelCode": "CAMRY",
+      "generationCode": "XV50",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:4T1BF1FK2CU000001;make=TOYOTA;model=Camry;year=2012"
+    },
+    {
+      "pattern": "KAR",
+      "modelCode": "PRIUS",
+      "generationCode": "XW50",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDKARFU5J3000001;make=TOYOTA;model=Prius;year=2018"
+    },
+    {
+      "pattern": "LZR",
+      "modelCode": "HIGHLANDER",
+      "generationCode": "XU70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDLZRBH2NS000001;make=TOYOTA;model=Highlander;year=2022"
+    },
+    {
+      "pattern": "AB3",
+      "modelCode": "RAV4PRIME",
+      "generationCode": "XA50P",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTMAB3FV3PD000001;make=TOYOTA;model=RAV4 Prime (PHEV);year=2023"
+    },
+    {
+      "pattern": "JA5",
+      "modelCode": "TUNDRA",
+      "generationCode": "XK70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TFJA5DA0NX000001;make=TOYOTA;model=Tundra;year=2022"
+    },
+    {
+      "pattern": "LA5",
+      "modelCode": "TUNDRA",
+      "generationCode": "XK70",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TFLA5DB9NX000001;make=TOYOTA;model=Tundra;year=2022"
+    },
+    {
+      "pattern": "YRK",
+      "modelCode": "SIENNA",
+      "generationCode": "XL40",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDYRKEC2PS000001;make=TOYOTA;model=Sienna;year=2023"
+    },
+    {
+      "pattern": "DSK",
+      "modelCode": "SIENNA",
+      "generationCode": "XL40",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:5TDDSKFC0PS000001;make=TOYOTA;model=Sienna;year=2023"
+    },
+    {
+      "pattern": "D4M",
+      "modelCode": "COROLLA",
+      "generationCode": "E210",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTND4MBE8P3000001;make=TOYOTA;model=Corolla;year=2023"
+    },
+    {
+      "pattern": "KAM",
+      "modelCode": "PRIUSPRIME",
+      "generationCode": "XW50P",
+      "engineCode": null,
+      "confidence": 0.9,
+      "priority": 100,
+      "provenance": "nhtsa-vpic:JTDKAMFP1N3000001;make=TOYOTA;model=Prius Prime (PHEV);year=2022"
+    }
+  ]
+}
