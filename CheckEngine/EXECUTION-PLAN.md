@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-24
+**Last updated:** 2026-08-25
 
 ## Status legend
 - `pending` = not started
@@ -313,7 +313,7 @@ The following are **not missing implementation** and must not be counted as defe
 | G8 | Security sign-off | blocked |
 | G9 | Private beta exit gate | pending |
 | G10 | Public beta exit gate | pending |
-| G11 | Commercial packaging and production licence authority | pending |
+| G11 | Commercial packaging and production licence authority | partial |
 | G12 | nopCommerce Marketplace submission | pending |
 
 ## Immediate next actions
@@ -349,6 +349,10 @@ Work follows dependency order rather than skipping to later roadmap features.
   in-flight searches. A synchronized 2,000-POST herd exhausts this host; that shape belongs
   on the 4-node Redis reference (`NFR-016`). Import ≥50 rows/s and fitment microbenches
   remain the other G4 legs.
+- **G11 unsigned plugin pack is in tree:** `pack-checkengine.sh|.ps1` emit
+  `TwinParticles.CheckEngine.{version}.zip` plus SHA-256, excluding host `Nop.Web`,
+  `App_Data`, and native `runtimes`. Production licence vendor signing key remains
+  external; G11 stays `partial`.
 - Remaining autonomously completable items are exhausted. Remaining Horizon 1 / release
   gates are blocked on external authorities (below).
 - All other H1 code items are `done` except **H1.35** (external security assessment).

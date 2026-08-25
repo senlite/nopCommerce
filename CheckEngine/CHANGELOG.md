@@ -42,6 +42,10 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Engineering — G11 unsigned plugin pack rehearsal:** operator `pack-checkengine.sh|.ps1`
+  plus `pack-checkengine.py` emit `TwinParticles.CheckEngine.{version}.zip` with SHA-256,
+  excluding host `Nop.Web` binaries, `App_Data`, and native `runtimes`. The artefact is
+  unsigned; production licence vendor signing remains an external G11 gate (`AC-33.4`).
 - **Engineering — G4 NFR-017 search load rehearsal (v0.104.0):** 2,000 concurrent first-page
   searches are gated in CI (`SearchConcurrentSessionBudgetTests`) and by operator scripts
   `run-search-load-gate.sh|.ps1` plus `tests/perf/search-nfr017.js`. Search/suggest/recommend
