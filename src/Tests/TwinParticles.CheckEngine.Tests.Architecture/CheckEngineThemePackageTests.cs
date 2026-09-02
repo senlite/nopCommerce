@@ -74,7 +74,44 @@ public class CheckEngineThemePackageTests
         var chrome = ReadPluginFile("Views", "Shared", "Components", "CheckEngineThemeChrome", "Default.cshtml");
         chrome.Should().Contain("zone == \"footer\"");
         chrome.Should().Contain("Theme.Affiliation");
+        chrome.Should().Contain("checkengine-fonts.css");
         chrome.Should().NotContain("fonts.googleapis.com");
+    }
+
+    [Test]
+    public void Plugin_Should_Self_Host_Ibm_Plex_And_Outfit()
+    {
+        var fontsCss = ReadPluginFile("Content", "checkengine-fonts.css");
+        fontsCss.Should().Contain("@font-face");
+        fontsCss.Should().Contain("IBM Plex Sans");
+        fontsCss.Should().Contain("IBM Plex Sans Arabic");
+        fontsCss.Should().Contain("IBM Plex Mono");
+        fontsCss.Should().Contain("Outfit");
+        fontsCss.Should().NotContain("fonts.googleapis.com");
+
+        var required = new[]
+        {
+            "outfit-latin-600.woff2",
+            "outfit-latin-700.woff2",
+            "ibm-plex-sans-latin-400.woff2",
+            "ibm-plex-sans-latin-500.woff2",
+            "ibm-plex-sans-latin-600.woff2",
+            "ibm-plex-sans-arabic-400.woff2",
+            "ibm-plex-sans-arabic-600.woff2",
+            "ibm-plex-mono-latin-400.woff2",
+            "ibm-plex-mono-latin-500.woff2"
+        };
+        foreach (var file in required)
+        {
+            File.Exists(Path.Combine(FindRepositoryRoot(), "src", "Plugins", "TwinParticles.CheckEngine", "Content", "fonts", file))
+                .Should().BeTrue(file);
+        }
+
+        ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml").Should().NotContain("fonts.googleapis.com");
+        ReadPluginFile("Views", "Shared", "_MarketplaceAssets.cshtml").Should().NotContain("fonts.googleapis.com");
+        ReadPluginFile("Views", "Shared", "_PortalAssets.cshtml").Should().Contain("checkengine-fonts.css");
+        ReadThemeFile("Views", "Shared", "Head.cshtml").Should().Contain("checkengine-fonts.css");
+        ReadPluginFile("TwinParticles.CheckEngine.csproj").Should().Contain("Content\\fonts\\**\\*");
     }
 
     [Test]

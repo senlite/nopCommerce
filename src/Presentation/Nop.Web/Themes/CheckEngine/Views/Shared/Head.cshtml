@@ -12,6 +12,7 @@
     var supportRtl = await Html.ShouldUseRtlThemeAsync();
 
     // Structural layout stays with DefaultClean; this theme overlays the dark automotive shell.
+    NopHtml.AppendCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-fonts.css");
     NopHtml.AppendCssFileParts($"~/Themes/DefaultClean/Content/css/styles{(supportRtl ? ".rtl" : "")}.css");
     NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/styles.css");
 

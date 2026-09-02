@@ -42,6 +42,10 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — plugin `0.95.0` self-hosted fonts (UX.9):** Outfit and IBM Plex
+  Sans / Sans Arabic / Mono ship as woff2 under `Content/fonts`. Storefront
+  chrome, theme head, portals, and marketplace no longer call
+  `fonts.googleapis.com`. Lighthouse CWV evidence still open.
 - **Software — plugin `0.94.0` / theme templates (UX.9):** Check Engine theme
   overrides category, catalog search, simple and grouped PDP, and cart. Fitment
   band renders inside the buy box; aftermarket label on PDP (`FR-904`). Storefront

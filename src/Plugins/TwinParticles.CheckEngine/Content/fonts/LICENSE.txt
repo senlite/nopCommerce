@@ -1,0 +1,12 @@
+IBM Plex Sans, IBM Plex Sans Arabic, and IBM Plex Mono
+Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
+Licensed under the SIL Open Font License, Version 1.1
+https://github.com/IBM/plex
+
+Outfit
+Copyright 2021 The Outfit Project Authors
+Licensed under the SIL Open Font License, Version 1.1
+https://github.com/Outfitio/Outfit-Fonts
+
+These files are subset woff2 slices used only for Check Engine storefront
+and portal chrome. They are served from this plugin, not a remote CDN.
