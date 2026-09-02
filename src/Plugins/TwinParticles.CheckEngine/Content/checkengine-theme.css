@@ -659,6 +659,12 @@
               border-color var(--ce-duration-status) var(--ce-ease-standard);
 }
 
+.ce-pdp .overview > .ce-fitment,
+.overview > .ce-fitment {
+  margin-block: var(--ce-space-3) var(--ce-space-2);
+  padding: var(--ce-space-3);
+}
+
 .ce-fitment__icon {
   flex: none;
   inline-size: 1.5rem;

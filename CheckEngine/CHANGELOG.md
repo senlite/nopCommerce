@@ -42,6 +42,10 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — plugin `0.94.0` / theme templates (UX.9):** Check Engine theme
+  overrides category, catalog search, simple and grouped PDP, and cart. Fitment
+  band renders inside the buy box; aftermarket label on PDP (`FR-904`). Storefront
+  chrome no longer loads Google Fonts CDN (LCP). CWV evidence still open.
 - **Software — plugin `0.93.0` / theme `CheckEngine` (UX.9 partial):** nopCommerce
   theme package at `src/Presentation/Nop.Web/Themes/CheckEngine`. Dark graphite
   shell over DefaultClean structure, Check Engine wordmark, homepage drops

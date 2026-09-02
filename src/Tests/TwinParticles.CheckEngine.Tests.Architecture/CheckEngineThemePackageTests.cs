@@ -74,6 +74,38 @@ public class CheckEngineThemePackageTests
         var chrome = ReadPluginFile("Views", "Shared", "Components", "CheckEngineThemeChrome", "Default.cshtml");
         chrome.Should().Contain("zone == \"footer\"");
         chrome.Should().Contain("Theme.Affiliation");
+        chrome.Should().NotContain("fonts.googleapis.com");
+    }
+
+    [Test]
+    public void Theme_Should_Own_Category_Product_And_Cart_Templates()
+    {
+        var category = ReadThemeFile("Views", "Catalog", "CategoryTemplate.ProductsInGridOrLines.cshtml");
+        var search = ReadThemeFile("Views", "Catalog", "Search.cshtml");
+        var simple = ReadThemeFile("Views", "Product", "ProductTemplate.Simple.cshtml");
+        var grouped = ReadThemeFile("Views", "Product", "ProductTemplate.Grouped.cshtml");
+        var cart = ReadThemeFile("Views", "ShoppingCart", "Cart.cshtml");
+        var css = ReadThemeFile("Content", "css", "styles.css");
+
+        category.Should().Contain("ce-catalog");
+        category.Should().Contain("Theme.CatalogHint");
+        search.Should().Contain("ce-catalog-search");
+        cart.Should().Contain("ce-cart");
+
+        foreach (var pdp in new[] { simple, grouped })
+        {
+            pdp.Should().Contain("ce-pdp");
+            pdp.Should().Contain("Theme.Aftermarket");
+            var overview = pdp.IndexOf("class=\"overview\"", System.StringComparison.Ordinal);
+            var fitment = pdp.IndexOf("PublicWidgetZones.ProductDetailsTop", System.StringComparison.Ordinal);
+            overview.Should().BeGreaterThan(0);
+            fitment.Should().BeGreaterThan(overview);
+        }
+
+        css.Should().Contain(".ce-catalog");
+        css.Should().Contain(".ce-pdp");
+        css.Should().Contain(".ce-cart");
+        css.Should().Contain(".ce-pdp__aftermarket");
     }
 
     private static string ReadThemeFile(params string[] segments) => File.ReadAllText(ThemePath(segments));
