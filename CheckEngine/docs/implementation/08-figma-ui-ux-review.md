@@ -1,6 +1,6 @@
 # 08 Figma-style UI/UX review — plugin + theme
 
-**Date:** 2026-09-02 · **Plugin at review:** `TwinParticles.CheckEngine` `0.91.0` · **Implementation:** `0.92.0`–`0.95.0` (UX.1–UX.8 plus theme shell, templates, self-hosted fonts) · **Host theme:** DefaultClean structure under a Check Engine dark shell
+**Date:** 2026-09-02 · **Plugin at review:** `TwinParticles.CheckEngine` `0.91.0` · **Implementation:** `0.92.0`–`0.96.0` (UX.1–UX.9) · **Theme:** `CheckEngine` dark shell over DefaultClean structure
 
 **Engineering status:** Design review plus the first implementation slice. Spec baselines are [21 Theme Design](../21-theme-design.md), [22 UI Design System](../22-ui-design-system.md), and [23 UX Guidelines](../23-ux-guidelines.md). Live progress is in [EXECUTION-PLAN.md](../../EXECUTION-PLAN.md). UX.9 (full theme) and UX.10 (host Arabic keys) remain pending / blocked.
 
@@ -240,4 +240,4 @@ Items 1–4 shipped in plugin `0.92.0` (UX.1–UX.8). Item 5 remains a product d
 2. Done — chip opens the sheet; rail `<select>` is visually hidden.
 3. Done — plugin CSS hides host DefaultClean search when `.ce-rail` is present.
 4. Done — Order Inspector deep-links `#ce-order-inspector`; uninstall sits below portals.
-5. Partial (UX.9, plugin `0.95.0`) — dark shell, category/PDP/cart templates, and self-hosted Outfit/IBM Plex. Remaining: Lighthouse CWV evidence vs [21].
+5. Done (UX.9, plugin `0.96.0`) — Check Engine theme package: dark shell, wordmark, shopper templates, self-hosted fonts, host menu removed. Lighthouse CWV (`AC-21.3`) remains G6.

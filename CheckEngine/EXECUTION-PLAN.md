@@ -325,7 +325,7 @@ do not edit the nopCommerce host. A full Check Engine theme package is a later s
 | UX.6 | Progressive disclosure for “Include unverified fit” | done | `details` / More filters |
 | UX.7 | Admin: Order Inspector deep-link; uninstall off the dashboard hero | done | `#ce-order-inspector` |
 | UX.8 | Token `--ce-radius-pill` + mega uses `--ce-shadow-raised` | done | Spec [22] |
-| UX.9 | Full Check Engine theme package (dark shell, not DefaultClean) | partial | `0.95.0` self-hosted Outfit/IBM Plex (EN+AR). Lighthouse CWV evidence still open |
+| UX.9 | Full Check Engine theme package (dark shell, not DefaultClean) | done | `0.96.0` manufacturer/vendor/wishlist/login/checkout, product tiles, host menu removed. Lighthouse CWV remains G6 / `AC-21.3` |
 | UX.10 | Host Arabic header raw keys (`ACCOUNT.LOGIN`, `SEARCH.BUTTON`) | blocked | Host language pack; plugin must not patch `Nop.Web` |
 
 ## Immediate next actions
@@ -335,10 +335,9 @@ items fall into two classes:
 
 **Autonomously completable (code + local/live verification):**
 
-UX.1–UX.8 shipped in plugin `0.92.0`. UX.9 theme package: `0.93.0` dark shell; `0.94.0`
-category/PDP/cart templates; `0.95.0` self-hosted Outfit and IBM Plex (Latin + Arabic).
-Remaining H1 code item is **H1.35**. UX.9 stays `partial` until Lighthouse CWV evidence
-matches [21].
+UX.1–UX.9 shipped through plugin `0.96.0`. The Check Engine theme covers home, catalog,
+PDP, cart, wishlist, manufacturer, vendor, login, and checkout. Lighthouse CWV (`AC-21.3`,
+`NFR-054`) remains **G6**, not a UX.9 code gap. Remaining H1 code item is **H1.35**.
 
 **Blocked on external authorities (cannot be closed by code alone):**
 

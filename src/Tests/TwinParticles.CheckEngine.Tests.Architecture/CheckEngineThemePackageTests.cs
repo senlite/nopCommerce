@@ -145,6 +145,27 @@ public class CheckEngineThemePackageTests
         css.Should().Contain(".ce-pdp__aftermarket");
     }
 
+    [Test]
+    public void Theme_Should_Cover_Remaining_Shopper_Templates_And_Hide_Host_Menu()
+    {
+        ReadThemeFile("Views", "Shared", "_Root.cshtml").Should().NotContain("MainMenuViewComponent");
+        ReadThemeFile("Views", "Shared", "_ColumnsTwo.cshtml").Should().NotContain("PollBlockViewComponent");
+        ReadThemeFile("Views", "Shared", "_ProductBox.cshtml").Should().Contain("ce-product-tile");
+        ReadThemeFile("Views", "Shared", "_ProductBox.cshtml").Should().Contain("Theme.Aftermarket");
+        ReadThemeFile("Views", "Catalog", "ManufacturerTemplate.ProductsInGridOrLines.cshtml").Should().Contain("ce-catalog");
+        ReadThemeFile("Views", "Catalog", "Vendor.cshtml").Should().Contain("ce-catalog");
+        ReadThemeFile("Views", "ShoppingCart", "Wishlist.cshtml").Should().Contain("ce-cart");
+        ReadThemeFile("Views", "Customer", "Login.cshtml").Should().Contain("ce-account");
+        ReadThemeFile("Views", "Checkout", "OnePageCheckout.cshtml").Should().Contain("ce-checkout");
+        ReadThemeFile("Views", "Checkout", "Confirm.cshtml").Should().Contain("ce-checkout");
+
+        var css = ReadThemeFile("Content", "css", "styles.css");
+        css.Should().Contain(".header-menu");
+        css.Should().Contain("min-block-size: 72vh");
+        css.Should().Contain(".ce-product-tile__aftermarket");
+        css.Should().Contain(".ce-checkout");
+    }
+
     private static string ReadThemeFile(params string[] segments) => File.ReadAllText(ThemePath(segments));
 
     private static string ThemePath(params string[] segments)

@@ -42,6 +42,11 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — plugin `0.96.0` Check Engine theme complete (UX.9):** manufacturer,
+  vendor, wishlist, login, one-page checkout and confirm templates; product tiles
+  carry the aftermarket label; host main menu is removed so mega + rail are the
+  navigation; home hero is first-viewport only (`AC-21.5`). Lighthouse CWV stays
+  on G6 (`AC-21.3`).
 - **Software — plugin `0.95.0` self-hosted fonts (UX.9):** Outfit and IBM Plex
   Sans / Sans Arabic / Mono ship as woff2 under `Content/fonts`. Storefront
   chrome, theme head, portals, and marketplace no longer call
