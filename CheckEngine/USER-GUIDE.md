@@ -169,7 +169,7 @@ Results render in a dropdown directly under the search field. The panel header s
 the **mode that was actually used** (and flags `degraded` when the search index is unavailable). Each row
 shows the product name plus brand and product id:
 
-![Check Engine search for "oil filter" returning a matching part](docs/user-guide/images/02-search-results.webp)
+![Check Engine search for "computer" returning a matching part](docs/user-guide/images/02-search-results.webp)
 
 Behaviour worth knowing:
 
