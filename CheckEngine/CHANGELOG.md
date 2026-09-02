@@ -42,6 +42,13 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Documentation — Figma-style UI/UX review:**
+  [08 Figma-style UI/UX review](docs/implementation/08-figma-ui-ux-review.md)
+  scores the in-tree plugin chrome and DefaultClean host against docs 21–23.
+  Top gaps: no Check Engine theme package, dual search, `window.prompt` VIN add,
+  false `aria-haspopup="dialog"`, full VIN in the selector, Arabic host raw keys.
+  Figma MCP was unauthenticated in the review environment. Plugin SemVer stays
+  `0.104.0`.
 - **Software — EXECUTION-PLAN Tracks 0–7 complete (engineering):**
   - Deterministic build scripts (`CheckEngine/scripts/build-checkengine.sh|.ps1`) and CI wiring
   - SQL product search, storefront widgets (search/fitment/garage), admin dashboard
