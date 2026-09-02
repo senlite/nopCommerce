@@ -747,6 +747,7 @@
     if (!chip || !value) {
       return;
     }
+    chip.classList.add('is-switching');
     var active = activeVehicleOf(ctx.garage);
     if (active) {
       value.textContent = vinDisplayLabel(active.vin || active.Vin, active.label || active.Label || TEXT.garageSelect);
@@ -755,6 +756,30 @@
       value.textContent = TEXT.garageSelect;
       chip.setAttribute('data-ce-state', 'empty');
     }
+    window.setTimeout(function () {
+      chip.classList.remove('is-switching');
+    }, 180);
+  }
+
+  function bindRailSettle() {
+    var rail = document.querySelector('[data-ce-theme="sticky-search"]');
+    if (!rail || rail.getAttribute('data-ce-rail-settle') === '1') {
+      return;
+    }
+    rail.setAttribute('data-ce-rail-settle', '1');
+    if (!('IntersectionObserver' in window) || !rail.parentNode) {
+      return;
+    }
+    var sentinel = document.createElement('div');
+    sentinel.setAttribute('data-ce-rail-sentinel', '');
+    sentinel.setAttribute('aria-hidden', 'true');
+    sentinel.style.cssText = 'position:relative;block-size:1px;inline-size:1px;margin:0;padding:0;pointer-events:none;';
+    rail.parentNode.insertBefore(sentinel, rail);
+    var observer = new IntersectionObserver(function (entries) {
+      var entry = entries[0];
+      rail.classList.toggle('is-stuck', !!(entry && !entry.isIntersecting));
+    }, { threshold: [0] });
+    observer.observe(sentinel);
   }
 
   function populateVehicleSelector() {
@@ -1752,6 +1777,7 @@
     loadText();
     ensureGuestKey();
     bindSearch();
+    bindRailSettle();
     bindGarage();
     bindVinDisambiguationModal();
     bindHero();

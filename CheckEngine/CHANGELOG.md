@@ -42,6 +42,12 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — plugin `0.97.0` Check Engine theme finished (UX.9):** header has no
+  host search box; topic, register, password recovery, manufacturer/vendor lists, and
+  checkout completed use theme templates; vehicle/part landings use a first-viewport
+  hero and locale strings (`FR-430`, `FR-431`, `FR-930`); sticky rail settle and garage
+  chip switch motions ship with `prefers-reduced-motion`; display fonts are preloaded.
+  Lighthouse CWV stays on G6 (`AC-21.3`).
 - **Software — plugin `0.96.0` Check Engine theme complete (UX.9):** manufacturer,
   vendor, wishlist, login, one-page checkout and confirm templates; product tiles
   carry the aftermarket label; host main menu is removed so mega + rail are the

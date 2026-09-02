@@ -298,12 +298,45 @@ a {
 
 .ce-account,
 .ce-checkout,
+.ce-topic,
+.ce-landing,
 .login-page,
 .checkout-page,
 .wishlist-page,
 .customer-pages,
-.address-list-page {
+.address-list-page,
+.registration-page,
+.topic-page {
   color: var(--ce-text-primary);
+}
+
+.ce-landing__hero {
+  min-block-size: 72vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--ce-space-4);
+  padding: var(--ce-space-5) 0 var(--ce-space-4);
+}
+
+.ce-landing__lead {
+  max-inline-size: 40rem;
+  color: var(--ce-text-muted);
+  font-size: 1.05rem;
+}
+
+.ce-topic .page-body,
+.ce-account .fieldset,
+.ce-account .returning-wrapper,
+.ce-account .new-wrapper {
+  background: var(--ce-surface-canvas);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-md);
+  padding: var(--ce-space-5);
+}
+
+.ce-topic .page-body {
+  color: var(--ce-text-muted);
 }
 
 .login-page .title,

@@ -12,6 +12,8 @@
     var supportRtl = await Html.ShouldUseRtlThemeAsync();
 
     // Structural layout stays with DefaultClean; this theme overlays the dark automotive shell.
+    NopHtml.AddHeadCustomParts("<link rel=\"preload\" href=\"/Plugins/TwinParticles.CheckEngine/Content/fonts/outfit-latin-700.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>");
+    NopHtml.AddHeadCustomParts("<link rel=\"preload\" href=\"/Plugins/TwinParticles.CheckEngine/Content/fonts/ibm-plex-sans-latin-400.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>");
     NopHtml.AppendCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-fonts.css");
     NopHtml.AppendCssFileParts($"~/Themes/DefaultClean/Content/css/styles{(supportRtl ? ".rtl" : "")}.css");
     NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/styles.css");

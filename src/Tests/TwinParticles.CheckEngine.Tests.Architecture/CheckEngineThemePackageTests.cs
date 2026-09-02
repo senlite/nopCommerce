@@ -166,6 +166,48 @@ public class CheckEngineThemePackageTests
         css.Should().Contain(".ce-checkout");
     }
 
+    [Test]
+    public void Theme_Should_Finish_Header_Account_Topic_Landing_And_Motion()
+    {
+        ReadThemeFile("Views", "Shared", "_Header.cshtml").Should().NotContain("SearchBoxViewComponent");
+        ReadThemeFile("Views", "Shared", "_Header.cshtml").Should().Contain("LogoViewComponent");
+        ReadThemeFile("Views", "Shared", "Head.cshtml").Should().Contain("preload");
+        ReadThemeFile("Views", "Shared", "Head.cshtml").Should().Contain("as=\\\"font\\\"");
+        ReadThemeFile("Views", "Shared", "Head.cshtml").Should().Contain("outfit-latin-700.woff2");
+        ReadThemeFile("Views", "Topic", "TopicDetails.cshtml").Should().Contain("ce-topic");
+        ReadThemeFile("Views", "Customer", "Register.cshtml").Should().Contain("ce-account");
+        ReadThemeFile("Views", "Customer", "PasswordRecovery.cshtml").Should().Contain("ce-account");
+        ReadThemeFile("Views", "Customer", "RegisterResult.cshtml").Should().Contain("ce-account");
+        ReadThemeFile("Views", "Catalog", "ManufacturerAll.cshtml").Should().Contain("ce-catalog");
+        ReadThemeFile("Views", "Catalog", "VendorAll.cshtml").Should().Contain("ce-catalog");
+        ReadThemeFile("Views", "Checkout", "Completed.cshtml").Should().Contain("ce-checkout");
+
+        var landing = ReadPluginFile("Views", "Seo", "Landing.cshtml");
+        landing.Should().Contain("data-ce-theme=\"landing-template\"");
+        landing.Should().Contain("ce-landing");
+        landing.Should().Contain("Theme.Landing.VerifiedFit");
+        landing.Should().Contain("Theme.Landing.Empty");
+        landing.Should().Contain("Theme.Aftermarket");
+        landing.Should().NotContain("Verified fitment for this vehicle.");
+
+        var css = ReadThemeFile("Content", "css", "styles.css");
+        css.Should().Contain(".ce-topic");
+        css.Should().Contain(".ce-landing__hero");
+
+        var theme = ReadPluginFile("Content", "checkengine-theme.css");
+        theme.Should().Contain(".ce-rail.is-stuck");
+        theme.Should().Contain(".ce-chip.is-switching");
+
+        var script = ReadPluginFile("Content", "checkengine-storefront.js");
+        script.Should().Contain("function bindRailSettle");
+        script.Should().Contain("is-stuck");
+        script.Should().Contain("is-switching");
+
+        var plugin = ReadPluginFile("CheckEnginePlugin.cs");
+        plugin.Should().Contain("Plugins.TwinParticles.CheckEngine.Theme.Landing.VerifiedFit");
+        plugin.Should().Contain("Plugins.TwinParticles.CheckEngine.Theme.Landing.Empty");
+    }
+
     private static string ReadThemeFile(params string[] segments) => File.ReadAllText(ThemePath(segments));
 
     private static string ThemePath(params string[] segments)

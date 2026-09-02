@@ -215,6 +215,12 @@
   /* Lifts the dark rail off the host theme's light content area. */
   box-shadow: 0 1px 0 color-mix(in srgb, var(--ce-action-primary) 35%, transparent),
               0 6px 18px rgba(11, 14, 19, 0.28);
+  transition: box-shadow var(--ce-duration-status) var(--ce-ease-standard),
+              background-color var(--ce-duration-status) var(--ce-ease-standard);
+}
+
+.ce-rail.is-stuck {
+  box-shadow: var(--ce-shadow-raised);
 }
 
 @supports (backdrop-filter: blur(8px)) {
@@ -272,8 +278,14 @@
 
 .ce-chip__text {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--ce-space-2);
   line-height: 1.2;
+}
+
+.ce-chip.is-switching .ce-chip__value {
+  opacity: 0.55;
 }
 
 .ce-chip__label {
@@ -289,6 +301,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-inline-size: 18ch;
+  transition: opacity var(--ce-duration-status) var(--ce-ease-standard);
 }
 
 /* ============================================================

@@ -1,8 +1,8 @@
 # 08 Figma-style UI/UX review — plugin + theme
 
-**Date:** 2026-09-02 · **Plugin at review:** `TwinParticles.CheckEngine` `0.91.0` · **Implementation:** `0.92.0`–`0.96.0` (UX.1–UX.9) · **Theme:** `CheckEngine` dark shell over DefaultClean structure
+**Date:** 2026-09-02 · **Plugin at review:** `TwinParticles.CheckEngine` `0.91.0` · **Implementation:** `0.92.0`–`0.97.0` (UX.1–UX.9) · **Theme:** `CheckEngine` dark shell over DefaultClean structure
 
-**Engineering status:** Design review plus the first implementation slice. Spec baselines are [21 Theme Design](../21-theme-design.md), [22 UI Design System](../22-ui-design-system.md), and [23 UX Guidelines](../23-ux-guidelines.md). Live progress is in [EXECUTION-PLAN.md](../../EXECUTION-PLAN.md). UX.9 (full theme) and UX.10 (host Arabic keys) remain pending / blocked.
+**Engineering status:** Design review plus implementation. Spec baselines are [21 Theme Design](../21-theme-design.md), [22 UI Design System](../22-ui-design-system.md), and [23 UX Guidelines](../23-ux-guidelines.md). Live progress is in [EXECUTION-PLAN.md](../../EXECUTION-PLAN.md). UX.9 (full theme) shipped in `0.97.0`. UX.10 (host Arabic keys) remains blocked.
 
 **Figma MCP:** the Figma integration in this cloud session is `needsAuth`. This review was produced from live storefront/admin captures and the in-tree chrome, not from a Figma file. Authenticate Figma in Cursor Desktop and re-run if you want the same findings written onto FigJam / a file.
 
@@ -10,7 +10,9 @@
 
 ## Verdict
 
-Check Engine’s **own chrome is a coherent dark automotive kit** (tokens, logical properties, 44 px targets, honest fitment copy, zero-result recovery). It is **not yet a theme**. Shoppers still see DefaultClean + the nopCommerce logo. Plugin `0.92.0` replaces `window.prompt` VIN add with a garage sheet, hides the host search when the CE rail is present, and deep-links Order Inspector. Admin remains a host AdminLTE link board, not an operator product. UX.9 (full theme) is still the remaining Horizon 1 visual gap.
+**Review-time (0.91.0):** Check Engine’s **own chrome is a coherent dark automotive kit** (tokens, logical properties, 44 px targets, honest fitment copy, zero-result recovery). It was **not yet a theme**. Shoppers still saw DefaultClean + the nopCommerce logo.
+
+**Implementation (0.97.0):** the `CheckEngine` theme package is the storefront. Plugin `0.92.0` replaced `window.prompt` VIN add with a garage sheet, hides the host search when the CE rail is present, and deep-links Order Inspector. Admin remains a host AdminLTE link board, not an operator product. UX.9 is closed; Lighthouse CWV stays G6.
 
 **Ship-readiness for Horizon 1 storefront UX:** not gated. Fitment honesty and EN chrome are the strongest parts. The product still looks like a plugin dropped onto a demo store.
 
@@ -240,4 +242,4 @@ Items 1–4 shipped in plugin `0.92.0` (UX.1–UX.8). Item 5 remains a product d
 2. Done — chip opens the sheet; rail `<select>` is visually hidden.
 3. Done — plugin CSS hides host DefaultClean search when `.ce-rail` is present.
 4. Done — Order Inspector deep-links `#ce-order-inspector`; uninstall sits below portals.
-5. Done (UX.9, plugin `0.96.0`) — Check Engine theme package: dark shell, wordmark, shopper templates, self-hosted fonts, host menu removed. Lighthouse CWV (`AC-21.3`) remains G6.
+5. Done (UX.9, plugin `0.97.0`) — Check Engine theme package: dark shell, wordmark, shopper templates including topic/register/checkout completed, vehicle landing hero, header without host search, self-hosted + preloaded fonts, host menu removed, rail/chip motion. Lighthouse CWV (`AC-21.3`) remains G6.

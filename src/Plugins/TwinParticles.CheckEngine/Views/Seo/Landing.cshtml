@@ -3,7 +3,6 @@
 
 @{
     Layout = "_ColumnsOne";
-    var isArabic = Model.CanonicalUrl.Contains("/ar/", StringComparison.OrdinalIgnoreCase);
 
     NopHtml.AddTitleParts(Model.Title);
     NopHtml.AddCanonicalUrlParts(Model.CanonicalUrl, withQueryString: false);
@@ -18,15 +17,12 @@
         NopHtml.AddJsonLdParts(Model.StructuredDataJsonLd);
 }
 
-<div class="page category-page ce-root ce-seo-landing" dir="@(isArabic ? "rtl" : "ltr")">
-    <div class="page-title">
+<div class="page category-page ce-root ce-seo-landing ce-landing" data-ce-theme="landing-template">
+    <header class="ce-landing__hero">
         <h1>@Model.Heading</h1>
-    </div>
+        <p class="ce-landing__lead">@Model.Description</p>
+    </header>
     <div class="page-body">
-        <div class="category-description">
-            <p>@Model.Description</p>
-        </div>
-
         @if (Model.Products.Count > 0)
         {
             <div class="product-grid">
@@ -34,13 +30,14 @@
                     @foreach (var product in Model.Products)
                     {
                         <div class="item-box">
-                            <div class="product-item" data-productid="@product.Id">
+                            <div class="product-item ce-product-tile" data-productid="@product.Id">
                                 <div class="details">
                                     <h2 class="product-title">
                                         <a href="@product.Url">@product.Name</a>
                                     </h2>
+                                    <p class="ce-product-tile__aftermarket">@T("Plugins.TwinParticles.CheckEngine.Theme.Aftermarket")</p>
                                     <div class="description">
-                                        @(isArabic ? "تم التحقق من توافق القطعة مع السيارة." : "Verified fitment for this vehicle.")
+                                        @T("Plugins.TwinParticles.CheckEngine.Theme.Landing.VerifiedFit")
                                     </div>
                                 </div>
                             </div>
@@ -52,9 +49,7 @@
         else
         {
             <div class="no-result">
-                @(isArabic
-                    ? "لا توجد قطع منشورة بتوافق مؤكد لهذه السيارة بعد."
-                    : "No published parts with verified fitment are available for this vehicle yet.")
+                @T("Plugins.TwinParticles.CheckEngine.Theme.Landing.Empty")
             </div>
         }
     </div>
