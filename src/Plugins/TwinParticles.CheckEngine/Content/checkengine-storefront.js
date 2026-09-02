@@ -20,6 +20,14 @@
     garageEmpty: 'No vehicle selected',
     garageAdd: 'Add vehicle (VIN)…',
     garageVinPrompt: 'Enter a VIN to add a vehicle',
+    garageVinLabel: 'VIN',
+    garageVinPreview: 'Preview: VIN …{0}',
+    garageAddSubmit: 'Add vehicle',
+    garageSheetTitle: 'Your garage',
+    garageSheetLead: 'Add a VIN or choose a saved vehicle.',
+    garageSheetClose: 'Close',
+    garageRemove: 'Remove vehicle',
+    garageRemoveConfirm: 'Remove this vehicle?',
     garageAddFailed: 'Unable to add that vehicle.',
     garageVinDisambiguationTitle: 'Which vehicle is this?',
     garageVinDisambiguationLead: 'This VIN matches more than one vehicle configuration. Choose the one that matches your car.',
@@ -781,6 +789,9 @@
       select.appendChild(addOption);
 
       updateGarageChip(ctx);
+      if (isGarageSheetOpen()) {
+        renderGarageSheet(ctx);
+      }
       return ctx;
     });
   }
@@ -809,7 +820,7 @@
         return response.json().then(function (payload) {
           var candidates = (payload && (payload.candidates || payload.Candidates)) || [];
           if (!candidates.length) {
-            window.alert(TEXT.garageAddFailed);
+            notifyGarage(TEXT.garageAddFailed);
             return false;
           }
           return showVinDisambiguationPicker(vin, candidates).then(function (selectedId) {
@@ -821,7 +832,7 @@
         return addGuestVehicleByVin(vin);
       }
       if (!response.ok) {
-        window.alert(TEXT.garageAddFailed);
+        notifyGarage(TEXT.garageAddFailed);
         return false;
       }
       return true;
@@ -862,7 +873,7 @@
       body: JSON.stringify({ vin: vin })
     }).then(function (response) {
       if (!response.ok) {
-        window.alert(TEXT.garageAddFailed);
+        notifyGarage(TEXT.garageAddFailed);
         return false;
       }
       return response.json().then(function (decode) {
@@ -890,11 +901,11 @@
             match.label || match.Label);
           return true;
         }
-        window.alert(TEXT.garageAddFailed);
+        notifyGarage(TEXT.garageAddFailed);
         return false;
       });
     }).catch(function () {
-      window.alert(TEXT.garageAddFailed);
+      notifyGarage(TEXT.garageAddFailed);
       return false;
     });
   }
@@ -1001,20 +1012,264 @@
     });
   }
 
-  function promptForVin() {
-    var vin = window.prompt(TEXT.garageVinPrompt);
-    if (!vin) {
+  function notifyGarage(message) {
+    var status = document.getElementById('ce-garage-sheet-status');
+    var sheet = document.getElementById('ce-garage-sheet');
+    if (status && sheet && !sheet.hidden) {
+      status.hidden = !message;
+      status.textContent = message || '';
+      return;
+    }
+    if (message) {
+      announce(message);
+    }
+  }
+
+  function isGarageSheetOpen() {
+    var sheet = document.getElementById('ce-garage-sheet');
+    return !!(sheet && !sheet.hidden);
+  }
+
+  function setGarageChipExpanded(open) {
+    var chip = document.getElementById('ce-garage-chip');
+    if (chip) {
+      chip.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+
+  function normalizeVin(value) {
+    return String(value || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  }
+
+  function updateVinPreview(input) {
+    var preview = document.getElementById('ce-garage-vin-preview');
+    if (!preview || !input) {
+      return;
+    }
+    var raw = normalizeVin(input.value);
+    if (raw.length >= 4) {
+      preview.hidden = false;
+      preview.textContent = String(TEXT.garageVinPreview || 'Preview: VIN …{0}').replace('{0}', raw.slice(-4));
+    } else {
+      preview.hidden = true;
+      preview.textContent = '';
+    }
+  }
+
+  function renderGarageSheet(ctx) {
+    var list = document.getElementById('ce-garage-sheet-list');
+    var removeBtn = document.getElementById('ce-garage-remove');
+    var confirmBtn = document.getElementById('ce-garage-remove-confirm');
+    if (!list) {
+      return;
+    }
+
+    var vehicles = (ctx && ctx.garage && (ctx.garage.vehicles || ctx.garage.Vehicles)) || [];
+    var active = ctx ? activeVehicleOf(ctx.garage) : null;
+    list.innerHTML = '';
+    vehicles.forEach(function (vehicle) {
+      var id = vehicle.id || vehicle.Id;
+      var label = vinDisplayLabel(vehicle.vin || vehicle.Vin, vehicle.label || vehicle.Label || ('#' + id));
+      var item = document.createElement('li');
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ce-modal__option';
+      button.setAttribute('role', 'option');
+      button.setAttribute('data-ce-garage-id', String(id));
+      if (active && String(active.id || active.Id) === String(id)) {
+        button.className += ' is-active';
+        button.setAttribute('aria-selected', 'true');
+      } else {
+        button.setAttribute('aria-selected', 'false');
+      }
+      button.innerHTML = '<span class="ce-modal__option-label">' + escapeHtml(label) + '</span>';
+      button.addEventListener('click', function () {
+        setActiveVehicle(parseInt(id, 10)).then(function () {
+          return populateVehicleSelector();
+        }).then(function () {
+          evaluateFitmentBand();
+        });
+      });
+      item.appendChild(button);
+      list.appendChild(item);
+    });
+
+    if (removeBtn) {
+      removeBtn.hidden = !active;
+    }
+    if (confirmBtn) {
+      confirmBtn.hidden = true;
+    }
+  }
+
+  function openGarageSheet(options) {
+    var sheet = document.getElementById('ce-garage-sheet');
+    if (!sheet) {
       return Promise.resolve(false);
     }
-    return addVehicleByVin(vin.trim()).then(function (added) {
-      if (!added) {
+    options = options || {};
+    notifyGarage('');
+    return loadGarageContext().then(function (ctx) {
+      renderGarageSheet(ctx);
+      sheet.hidden = false;
+      document.documentElement.classList.add('ce-modal-open');
+      setGarageChipExpanded(true);
+      var input = document.getElementById('ce-garage-vin-input');
+      if (options.focusVin && input) {
+        input.focus();
+      } else {
+        var first = sheet.querySelector('#ce-garage-sheet-list button, #ce-garage-vin-input');
+        if (first) {
+          first.focus();
+        }
+      }
+      return true;
+    });
+  }
+
+  function closeGarageSheet(restoreFocus) {
+    var sheet = document.getElementById('ce-garage-sheet');
+    if (!sheet) {
+      return;
+    }
+    sheet.hidden = true;
+    var vinModal = document.getElementById('ce-vin-disambiguation');
+    if (!vinModal || vinModal.hidden) {
+      document.documentElement.classList.remove('ce-modal-open');
+    }
+    setGarageChipExpanded(false);
+    notifyGarage('');
+    var confirmBtn = document.getElementById('ce-garage-remove-confirm');
+    if (confirmBtn) {
+      confirmBtn.hidden = true;
+    }
+    if (restoreFocus) {
+      var chip = document.getElementById('ce-garage-chip');
+      if (chip) {
+        chip.focus();
+      }
+    }
+  }
+
+  function removeActiveVehicle() {
+    return loadGarageContext().then(function (ctx) {
+      var active = activeVehicleOf(ctx.garage);
+      var id = active && (active.id || active.Id);
+      if (!id) {
         return false;
       }
-      return populateVehicleSelector().then(function () {
-        return evaluateFitmentBand();
-      }).then(function () {
-        return true;
+      return jsonFetch('/check-engine/garage/RemoveVehicle', {
+        method: 'DELETE',
+        body: JSON.stringify({ garageVehicleId: parseInt(id, 10) })
+      }).then(function (response) {
+        if (response.status === 401) {
+          var payload = getGuestPayload();
+          payload.vehicles = (payload.vehicles || []).filter(function (vehicle) {
+            return String(vehicle.id || vehicle.Id) !== String(id);
+          });
+          if (String(payload.activeVehicleId) === String(id)) {
+            var next = payload.vehicles[0];
+            payload.activeVehicleId = next ? (next.id || next.Id) : null;
+            (payload.vehicles || []).forEach(function (vehicle, index) {
+              vehicle.isActive = index === 0;
+            });
+          }
+          saveGuestPayload(payload);
+          return true;
+        }
+        return response.ok;
       });
+    });
+  }
+
+  function promptForVin() {
+    return openGarageSheet({ focusVin: true });
+  }
+
+  function bindGarageSheet() {
+    var sheet = document.getElementById('ce-garage-sheet');
+    if (!sheet || sheet.dataset.ceBound === '1') {
+      return;
+    }
+    sheet.dataset.ceBound = '1';
+
+    sheet.querySelectorAll('[data-ce-garage-dismiss]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        closeGarageSheet(true);
+      });
+    });
+
+    var form = document.getElementById('ce-garage-add-form');
+    var input = document.getElementById('ce-garage-vin-input');
+    if (input) {
+      input.addEventListener('input', function () {
+        var normalized = normalizeVin(input.value);
+        if (input.value !== normalized) {
+          input.value = normalized;
+        }
+        updateVinPreview(input);
+      });
+    }
+    if (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (!input) {
+          return;
+        }
+        var vin = normalizeVin(input.value);
+        if (!vin) {
+          notifyGarage(TEXT.garageVinPrompt);
+          input.focus();
+          return;
+        }
+        addVehicleByVin(vin).then(function (added) {
+          if (!added) {
+            notifyGarage(TEXT.garageAddFailed);
+            return;
+          }
+          input.value = '';
+          updateVinPreview(input);
+          notifyGarage('');
+          return populateVehicleSelector().then(function () {
+            evaluateFitmentBand();
+          });
+        }).catch(function () {
+          /* cancelled VIN disambiguation */
+        });
+      });
+    }
+
+    var removeBtn = document.getElementById('ce-garage-remove');
+    var confirmBtn = document.getElementById('ce-garage-remove-confirm');
+    if (removeBtn && confirmBtn) {
+      removeBtn.addEventListener('click', function () {
+        removeBtn.hidden = true;
+        confirmBtn.hidden = false;
+        confirmBtn.focus();
+      });
+      confirmBtn.addEventListener('click', function () {
+        removeActiveVehicle().then(function (removed) {
+          if (!removed) {
+            notifyGarage(TEXT.garageAddFailed);
+            return;
+          }
+          return populateVehicleSelector().then(function () {
+            evaluateFitmentBand();
+          });
+        });
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape' || !isGarageSheetOpen()) {
+        return;
+      }
+      var vinModal = document.getElementById('ce-vin-disambiguation');
+      if (vinModal && !vinModal.hidden) {
+        return;
+      }
+      event.preventDefault();
+      closeGarageSheet(true);
     });
   }
 
@@ -1042,11 +1297,15 @@
     var chip = document.getElementById('ce-garage-chip');
     if (chip) {
       chip.addEventListener('click', function () {
-        if (select) {
-          select.focus();
+        if (isGarageSheetOpen()) {
+          closeGarageSheet(false);
+        } else {
+          openGarageSheet({ focusVin: false });
         }
       });
     }
+
+    bindGarageSheet();
   }
 
   /* ------------------------------------------------------------------

@@ -56,6 +56,7 @@
   --ce-radius-sm: 4px;
   --ce-radius-md: 8px;
   --ce-radius-lg: 12px;
+  --ce-radius-pill: 999px;
 
   /* ---------- Typography ---------- */
   --ce-font-display: 'Outfit', 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
