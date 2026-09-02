@@ -42,6 +42,12 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Software — plugin `0.93.0` / theme `CheckEngine` (UX.9 partial):** nopCommerce
+  theme package at `src/Presentation/Nop.Web/Themes/CheckEngine`. Dark graphite
+  shell over DefaultClean structure, Check Engine wordmark, homepage drops
+  Welcome-to-our-store / news / polls, plugin activates the theme when the store
+  is still on DefaultClean, footer affiliation disclaimer (`FR-901`). Category,
+  PDP buy-box, and cart still use DefaultClean layout under the overlay.
 - **Software — plugin `0.92.0` Figma UX.1–UX.8:** garage sheet replaces
   `window.prompt` VIN add; chip opens the sheet with real `aria-controls` /
   `aria-expanded`; rail masks VIN to last 4 (`FR-213`); in-sheet remove confirm

@@ -325,7 +325,7 @@ do not edit the nopCommerce host. A full Check Engine theme package is a later s
 | UX.6 | Progressive disclosure for “Include unverified fit” | done | `details` / More filters |
 | UX.7 | Admin: Order Inspector deep-link; uninstall off the dashboard hero | done | `#ce-order-inspector` |
 | UX.8 | Token `--ce-radius-pill` + mega uses `--ce-shadow-raised` | done | Spec [22] |
-| UX.9 | Full Check Engine theme package (dark shell, not DefaultClean) | pending | Decision vs rewrite [21]; do not start until UX.1–UX.8 ship |
+| UX.9 | Full Check Engine theme package (dark shell, not DefaultClean) | partial | `0.93.0` `Themes/CheckEngine` dark shell, wordmark, home without host lorem; cart/PDP/CWV still DefaultClean structure |
 | UX.10 | Host Arabic header raw keys (`ACCOUNT.LOGIN`, `SEARCH.BUTTON`) | blocked | Host language pack; plugin must not patch `Nop.Web` |
 
 ## Immediate next actions
@@ -335,11 +335,11 @@ items fall into two classes:
 
 **Autonomously completable (code + local/live verification):**
 
-UX.1–UX.8 from the Figma review shipped in plugin `0.92.0`. Remaining H1 code item is **H1.35**
-(external security assessment). Operator-run evidence (live SQL import rehearsal, Lighthouse CWV
-JSON, ERP field-mapping sign-off) is documented in the scripts above but does not block closing
-the implementation gap. **UX.9** (full Check Engine theme) stays pending until a decision vs
-rewrite [21].
+UX.1–UX.8 shipped in plugin `0.92.0`. UX.9 started in `0.93.0` as `Themes/CheckEngine` (dark
+shell + wordmark + home without host lorem). Remaining H1 code item is **H1.35** (external
+security assessment). Operator-run evidence (live SQL import rehearsal, Lighthouse CWV JSON,
+ERP field-mapping sign-off) does not block closing the implementation gap. UX.9 stays `partial`
+until category/PDP/cart templates and CWV evidence match [21].
 
 **Blocked on external authorities (cannot be closed by code alone):**
 

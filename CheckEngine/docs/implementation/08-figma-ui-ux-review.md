@@ -1,6 +1,6 @@
 # 08 Figma-style UI/UX review — plugin + theme
 
-**Date:** 2026-09-02 · **Plugin at review:** `TwinParticles.CheckEngine` `0.91.0` · **Implementation:** `0.92.0` ships UX.1–UX.8 · **Host theme:** nopCommerce `DefaultClean` (no Check Engine theme package)
+**Date:** 2026-09-02 · **Plugin at review:** `TwinParticles.CheckEngine` `0.91.0` · **Implementation:** `0.92.0` ships UX.1–UX.8; `0.93.0` starts UX.9 as `Themes/CheckEngine` · **Host theme:** nopCommerce `DefaultClean` structure under a Check Engine dark shell
 
 **Engineering status:** Design review plus the first implementation slice. Spec baselines are [21 Theme Design](../21-theme-design.md), [22 UI Design System](../22-ui-design-system.md), and [23 UX Guidelines](../23-ux-guidelines.md). Live progress is in [EXECUTION-PLAN.md](../../EXECUTION-PLAN.md). UX.9 (full theme) and UX.10 (host Arabic keys) remain pending / blocked.
 
@@ -240,4 +240,4 @@ Items 1–4 shipped in plugin `0.92.0` (UX.1–UX.8). Item 5 remains a product d
 2. Done — chip opens the sheet; rail `<select>` is visually hidden.
 3. Done — plugin CSS hides host DefaultClean search when `.ce-rail` is present.
 4. Done — Order Inspector deep-links `#ce-order-inspector`; uninstall sits below portals.
-5. Pending (UX.9) — decide: ship a real Check Engine theme, or rewrite [21] to “DefaultClean + CE chrome.” The current docs and the current pixels still disagree.
+5. Partial (UX.9, plugin `0.93.0`) — `Themes/CheckEngine` dark shell, wordmark, and home without host lorem. Remaining: dedicated category/PDP/cart templates, self-hosted fonts, and CWV evidence vs [21].

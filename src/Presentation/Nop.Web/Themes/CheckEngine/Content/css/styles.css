@@ -1,0 +1,274 @@
+/*
+ * Check Engine theme — dark automotive shell over DefaultClean structure.
+ * Tokens match CheckEngine/docs/22-ui-design-system.md. Logical properties only.
+ */
+
+:root {
+  --ce-raw-graphite-950: #0B0E13;
+  --ce-raw-graphite-900: #12161E;
+  --ce-raw-graphite-800: #1A2030;
+  --ce-raw-graphite-700: #243044;
+  --ce-raw-cloud-100: #E8EEF7;
+  --ce-raw-cloud-300: #A7B4C8;
+  --ce-raw-blue-600: #0066B1;
+  --ce-raw-blue-400: #3D9BE0;
+  --ce-surface-sunken: var(--ce-raw-graphite-950);
+  --ce-surface-canvas: var(--ce-raw-graphite-900);
+  --ce-surface-raised: var(--ce-raw-graphite-800);
+  --ce-border-hairline: var(--ce-raw-graphite-700);
+  --ce-text-primary: var(--ce-raw-cloud-100);
+  --ce-text-muted: var(--ce-raw-cloud-300);
+  --ce-action-primary: var(--ce-raw-blue-600);
+  --ce-action-primary-hover: var(--ce-raw-blue-400);
+  --ce-action-on-primary: var(--ce-raw-cloud-100);
+  --ce-focus-ring: var(--ce-raw-blue-400);
+  --ce-font-display: 'Outfit', 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
+  --ce-font-ui: 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
+  --ce-radius-md: 8px;
+  --ce-space-3: 12px;
+  --ce-space-4: 16px;
+  --ce-space-5: 24px;
+  --ce-max-content-width: 1280px;
+  --ce-shadow-raised: 0 12px 32px rgba(11, 14, 19, 0.55);
+}
+
+html,
+body {
+  background-color: var(--ce-surface-sunken) !important;
+  color: var(--ce-text-muted);
+  font-family: var(--ce-font-ui);
+}
+
+body {
+  background-image: radial-gradient(1200px 640px at 50% -120px, color-mix(in srgb, var(--ce-action-primary) 18%, transparent), transparent 70%);
+  background-attachment: scroll;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ce-text-primary);
+  font-family: var(--ce-font-display);
+}
+
+a {
+  color: var(--ce-text-primary);
+}
+
+.master-wrapper-page,
+.master-wrapper-content,
+.center-1,
+.center-2,
+.page {
+  background: transparent;
+}
+
+.master-wrapper-content {
+  max-width: var(--ce-max-content-width);
+}
+
+/* ---------- Header ---------- */
+
+.header,
+.header-upper,
+.header-lower {
+  background: var(--ce-surface-canvas);
+  color: var(--ce-text-primary);
+  border-block-end: 1px solid var(--ce-border-hairline);
+}
+
+.header-upper {
+  padding-block: var(--ce-space-3);
+}
+
+.header-lower {
+  padding-block: var(--ce-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ce-space-4);
+}
+
+.header-logo {
+  margin: 0;
+  text-align: start;
+}
+
+.header-links a,
+.header-selectors-wrapper,
+.header-links-wrapper {
+  color: var(--ce-text-muted);
+}
+
+.header-links a:hover,
+.header-links a:focus-visible {
+  color: var(--ce-text-primary);
+}
+
+.header-lower .store-search-box,
+.header-lower .search-box {
+  display: none !important;
+}
+
+.ce-wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  text-decoration: none;
+}
+
+.ce-wordmark__mark {
+  font-family: var(--ce-font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ce-text-primary);
+}
+
+.ce-wordmark__mark::before {
+  content: "";
+  display: inline-block;
+  inline-size: 0.55em;
+  block-size: 0.55em;
+  margin-inline-end: 0.45em;
+  border-radius: 999px;
+  background: var(--ce-action-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ce-action-primary) 25%, transparent);
+  vertical-align: 0.05em;
+}
+
+/* ---------- Home ---------- */
+
+.home-page .topic-block,
+.home-page-news,
+.home-page-polls,
+.home-page .news-list-homepage {
+  display: none !important;
+}
+
+.home-page-category-grid,
+.home-page-product-grid {
+  margin-block: var(--ce-space-5);
+}
+
+.item-box,
+.product-item,
+.category-item {
+  background: var(--ce-surface-raised);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-md);
+  color: var(--ce-text-primary);
+  box-shadow: none;
+}
+
+.item-box .title a,
+.product-title a,
+.category-item .title a {
+  color: var(--ce-text-primary);
+}
+
+.item-box .actual-price,
+.product-item .actual-price {
+  color: var(--ce-action-primary-hover);
+}
+
+/* ---------- Product ---------- */
+
+.product-details-page,
+.product-essential,
+.overview,
+.gallery {
+  color: var(--ce-text-primary);
+}
+
+.product-name h1,
+.product-name {
+  color: var(--ce-text-primary);
+}
+
+.product-essential {
+  background: var(--ce-surface-canvas);
+  border: 1px solid var(--ce-border-hairline);
+  border-radius: var(--ce-radius-md);
+  padding: var(--ce-space-5);
+}
+
+.add-to-cart-button,
+.button-1 {
+  background: var(--ce-action-primary) !important;
+  border-color: var(--ce-action-primary) !important;
+  color: var(--ce-action-on-primary) !important;
+  border-radius: var(--ce-radius-md);
+  min-block-size: 44px;
+}
+
+.add-to-cart-button:hover,
+.button-1:hover {
+  background: var(--ce-action-primary-hover) !important;
+}
+
+.button-2 {
+  background: transparent !important;
+  border: 1px solid var(--ce-border-hairline) !important;
+  color: var(--ce-text-primary) !important;
+  border-radius: var(--ce-radius-md);
+}
+
+/* ---------- Forms / cart ---------- */
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+textarea,
+select {
+  background: var(--ce-surface-raised);
+  border-color: var(--ce-border-hairline);
+  color: var(--ce-text-primary);
+}
+
+.order-summary-content,
+.shopping-cart-page,
+.checkout-page {
+  color: var(--ce-text-primary);
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+  background: var(--ce-surface-canvas);
+  color: var(--ce-text-muted);
+  border-block-start: 1px solid var(--ce-border-hairline);
+}
+
+.footer-upper {
+  border-block-end-color: var(--ce-border-hairline);
+}
+
+.footer-block .title,
+.follow-us .title {
+  background: var(--ce-surface-raised);
+  color: var(--ce-text-primary);
+}
+
+.footer a {
+  color: var(--ce-text-muted);
+}
+
+.ce-footer-disclaimer {
+  max-inline-size: var(--ce-max-content-width);
+  margin: var(--ce-space-4) auto 0;
+  padding-inline: var(--ce-space-4);
+  font-size: 0.85rem;
+  color: var(--ce-text-muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ce-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 1ms !important;
+  }
+}

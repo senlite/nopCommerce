@@ -1,0 +1,7 @@
+{
+  "SystemName": "CheckEngine",
+  "FriendlyName": "Check Engine",
+  "SupportRTL": true,
+  "PreviewImageUrl": "~/Themes/CheckEngine/preview.jpg",
+  "PreviewText": "Dark automotive storefront for Check Engine — vehicle context, sticky search, and fitment first."
+}

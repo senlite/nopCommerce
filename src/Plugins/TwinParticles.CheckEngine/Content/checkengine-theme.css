@@ -1171,6 +1171,14 @@ body:has(.ce-rail) .header-lower .search-box {
   display: none !important;
 }
 
+.ce-footer-disclaimer {
+  max-inline-size: var(--ce-max-content-width, 1280px);
+  margin: var(--ce-space-4, 1rem) auto 0;
+  padding-inline: var(--ce-space-4, 1rem);
+  font-size: var(--ce-font-size-sm, 0.875rem);
+  color: var(--ce-text-muted);
+}
+
 .ce-assistant {
   position: relative;
   margin-block-start: var(--ce-space-3, 0.75rem);

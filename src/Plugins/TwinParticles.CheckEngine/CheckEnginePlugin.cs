@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Core.Domain;
 using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.ScheduleTasks;
 using Nop.Data.Migrations;
@@ -70,7 +71,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             PublicWidgetZones.HeaderMenuAfter,
             PublicWidgetZones.BodyStartHtmlTagAfter,
             PublicWidgetZones.ProductDetailsTop,
-            PublicWidgetZones.HomepageTop
+            PublicWidgetZones.HomepageTop,
+            PublicWidgetZones.Footer
         ]);
     }
 
@@ -95,6 +97,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
 
         await AddOrUpdateLocaleResourcesAsync();
         await EnsureWidgetActiveAsync();
+        await EnsureCheckEngineThemeAsync();
         await _vehicleSeedLoader.SeedAsync(default);
 
         await base.InstallAsync();
@@ -608,6 +611,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Clicks"] = "Clicks",
             ["Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Ctr"] = "Click-through rate",
             ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Hint"] = "Select a supplier file and run the import pipeline (content is sent as Base64 JSON).",
+            ["Plugins.TwinParticles.CheckEngine.Theme.Wordmark"] = "Check Engine",
+            ["Plugins.TwinParticles.CheckEngine.Theme.Affiliation"] = "Aftermarket parts. Not affiliated with vehicle manufacturers.",
             ["Plugins.TwinParticles.CheckEngine.Garage.Label"] = "Garage",
             ["Plugins.TwinParticles.CheckEngine.Garage.SelectVehicle"] = "Select vehicle",
             ["Plugins.TwinParticles.CheckEngine.Garage.Empty"] = "No vehicle selected",
@@ -1513,6 +1518,8 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Clicks"] = "النقرات",
         ["Plugins.TwinParticles.CheckEngine.Search.Admin.Analytics.Ctr"] = "معدل النقر",
         ["Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Hint"] = "اختر ملف المورد وشغّل مسار الاستيراد.",
+        ["Plugins.TwinParticles.CheckEngine.Theme.Wordmark"] = "Check Engine",
+        ["Plugins.TwinParticles.CheckEngine.Theme.Affiliation"] = "قطع غيار ما بعد البيع. لا علاقة لنا بمصنّعي المركبات.",
         ["Plugins.TwinParticles.CheckEngine.Garage.Label"] = "مرآبي",
         ["Plugins.TwinParticles.CheckEngine.Garage.SelectVehicle"] = "اختر السيارة",
         ["Plugins.TwinParticles.CheckEngine.Garage.Empty"] = "لم يتم اختيار سيارة",
@@ -1915,6 +1922,7 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
         await EnsureScheduleTasksAsync();
         await AddOrUpdateLocaleResourcesAsync();
         await EnsureWidgetActiveAsync();
+        await EnsureCheckEngineThemeAsync();
         await _vehicleSeedLoader.SeedAsync(default);
         await base.UpdateAsync(currentVersion, targetVersion);
     }
@@ -1988,6 +1996,20 @@ public sealed class CheckEnginePlugin : BasePlugin, IMiscPlugin, IWidgetPlugin
             typeof(Tasks.SearchEmbeddingRefreshTask).FullName!,
             "Check Engine search embedding refresh",
             15 * 60);
+    }
+
+    private async Task EnsureCheckEngineThemeAsync()
+    {
+        var storeSettings = await _settingService.LoadSettingAsync<StoreInformationSettings>();
+        var current = storeSettings.DefaultStoreTheme;
+        if (!string.IsNullOrWhiteSpace(current) &&
+            !string.Equals(current, "DefaultClean", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        storeSettings.DefaultStoreTheme = "CheckEngine";
+        await _settingService.SaveSettingAsync(storeSettings);
     }
 
     private async Task EnsureWidgetActiveAsync()
