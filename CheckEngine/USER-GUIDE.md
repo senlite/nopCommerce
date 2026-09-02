@@ -2,9 +2,10 @@
 
 > A practical, screenshot-led guide to installing, configuring, and using the Check Engine plugin for nopCommerce.
 
-**Status:** Draft · **Applies to:** Check Engine `0.1.0` on nopCommerce `4.70` · **Last revised:** 2026-08-09
+**Status:** Draft · **Applies to:** Check Engine `0.97.1` on nopCommerce `4.90.6` · **Last revised:** 2026-09-02
 
-All screenshots in this guide were captured from a live store running the plugin.
+All screenshots in this guide were captured from a live store running the plugin and the
+`CheckEngine` theme. They contain only demo catalog data — no customer records.
 
 ---
 
@@ -51,8 +52,8 @@ Core capabilities:
 
 | Requirement | Value |
 |---|---|
-| nopCommerce | 4.70 (`SupportedVersions` in `plugin.json`) |
-| .NET runtime | .NET 8 (the host and plugin target `net8.0`) |
+| nopCommerce | 4.90 (`SupportedVersions` in `plugin.json`) |
+| .NET runtime | .NET 9 (the host and plugin target `net9.0`) |
 | Database | **SQL Server** is the supported production database for Check Engine tables (see [Known limitations](#13-known-limitations)) |
 | Permissions | An admin account with the **Manage Check Engine** permission for admin endpoints |
 
@@ -107,8 +108,9 @@ widget activation separately.
 
 ![Check Engine widget marked active in the Widgets list](docs/user-guide/images/05-admin-widgets.webp)
 
-Once active, the plugin injects its search bar, vehicle selector/garage chip, and product fitment band
-into the storefront widget zones.
+Once active, the plugin injects the sticky search rail, garage chip, mega menu, and product fitment
+band. Install also activates the `CheckEngine` theme when the store is still on DefaultClean, so the
+header wordmark, catalog, and cart share the same dark shell.
 
 ---
 
@@ -123,11 +125,11 @@ carries a master **Enabled** switch and a link into the operator dashboard.
 
 ### 5.2 Operator dashboard
 
-The dashboard (`/Admin/CheckEngine/Dashboard`) is the operator hub. It lists the admin JSON endpoints
-(vehicle, OEM, fitment queue, import, search rebuild, garage, ERP, SEO) and provides a file-upload panel
-for running the import pipeline.
+The dashboard (`/Admin/CheckEngine/Dashboard`) is the operator hub. It groups storefront portals,
+vehicle/OEM/fitment/import boards, and a file-upload panel for the import pipeline. Uninstall export
+sits below the portal cards, not in the hero.
 
-![Check Engine operator dashboard with admin endpoint links and the import upload panel](docs/user-guide/images/07-admin-dashboard.webp)
+![Check Engine operator dashboard with portal cards and the import upload panel](docs/user-guide/images/07-admin-dashboard.webp)
 
 ---
 
@@ -135,16 +137,22 @@ for running the import pipeline.
 
 ### 6.1 The Check Engine chrome
 
-With the widget active, the storefront gains a **sticky search rail** that sits directly below the store
-header. The rail holds, in order: the **garage context chip**, the **vehicle selector**, the unified
-**search field** ("Search parts, OEM, or VIN"), an **Include unverified fit** toggle, and the **Search**
-button. On the home page a Check Engine **hero panel** introduces the vehicle-first flow.
+The `CheckEngine` theme is the storefront: dark graphite header, Check Engine wordmark, and no second
+host search box. Below the header the **sticky search rail** stays reachable while you scroll
+(`FR-414`). The rail holds, in order: the **garage chip**, the unified **search field**, **More
+filters** (where “Include unverified fit” lives), and **Search**. The native vehicle `<select>` is
+visually hidden — the chip is the one vehicle control. Home keeps a single first-viewport composition
+(no host welcome topic, news, or polls).
 
-![Storefront home showing the Check Engine search rail and hero panel](docs/user-guide/images/01-storefront-home.webp)
+![Storefront home showing the Check Engine wordmark, search rail, and first-viewport hero](docs/user-guide/images/01-storefront-home.webp)
 
 The rail stays visible while scrolling, and on small screens it reflows so the query field always leads:
 
 ![Check Engine rail and hero stacked on a 390px mobile viewport](docs/user-guide/images/09-mobile-layout.webp)
+
+Catalog pages use the same shell. Category titles sit above the aftermarket / vehicle-scope hint:
+
+![Computers category on the Check Engine theme](docs/user-guide/images/12-category.webp)
 
 ### 6.2 Searching for parts
 
@@ -165,19 +173,27 @@ shows the product name plus brand and product id:
 
 Behaviour worth knowing:
 
-- **Include unverified fit** widens results to parts whose compatibility could not be verified. It is off
-  by default, so a vehicle-filtered search only returns verified fits.
+- **Include unverified fit** lives under **More filters**. It is off by default, so a vehicle-filtered
+  search only returns verified fits.
 - `Esc` closes the dropdown and returns focus to the field; clicking outside also dismisses it.
 - When no part matches, the panel shows a clear empty state with recovery advice rather than a wrong
   result — fitment answers are always fail-closed.
 
 ### 6.3 The garage and active vehicle
 
-- Signed-in shoppers can add vehicles to their **garage** by VIN or by picking a vehicle configuration.
-- Exactly **one** vehicle is *active* at a time; the active vehicle drives default fitment filtering in
-  search and on product pages.
+The garage chip opens an in-page **sheet** — not a browser `prompt`. The sheet has a labelled VIN
+field, a last-four preview, Cancel / Add, and an in-sheet remove confirm. The rail never shows a
+full 17-character VIN.
+
+![Garage sheet with VIN field and last-four preview](docs/user-guide/images/10-garage-sheet.webp)
+
+- Signed-in shoppers add vehicles by VIN (or later by configuration). Exactly **one** vehicle is
+  *active*; it drives default fitment filtering in search and on product pages.
 - Guests get a local (browser) garage that is **merged into their account** when they sign in or register.
-- The vehicle selector in the header lets shoppers switch the active vehicle or add a new one.
+- The login and register pages use the same dark account shell as the rest of the theme:
+
+![Check Engine theme login page](docs/user-guide/images/11-login.webp)
+
 - Signed-in VINs are encrypted with the host encryption key before SQL storage. `Garage/Export`
   returns the subject's decrypted garage data; confirmed `Garage/Erase` removes vehicles, OEM saves
   and the garage atomically. Permanent nopCommerce customer deletion invokes the same erasure path.
@@ -185,9 +201,9 @@ Behaviour worth knowing:
 
 ### 6.4 The product fitment band
 
-On a product page, Check Engine adds a **fitment band** near the top of the product details. It calls the
-fitment engine for the active vehicle and shows one of a small set of states — never a speculative
-"Fits":
+On a product page the **fitment band** sits inside the buy box (after the title), not as a banner above
+the page. It calls the fitment engine for the active vehicle and shows one of a small set of states —
+never a speculative "Fits":
 
 | State | Meaning |
 |---|---|
@@ -360,20 +376,24 @@ anchor, so integrity verification remains continuous across the retention bounda
 
 ## 12a. Theming and appearance
 
-The storefront components ship as a small design system rather than ad-hoc styles, implemented from
+Horizon 1 ships a nopCommerce theme package at `src/Presentation/Nop.Web/Themes/CheckEngine`
+(`theme.json` system name `CheckEngine`, RTL enabled). Plugin install/update sets
+`StoreInformationSettings.DefaultStoreTheme` to `CheckEngine` when the store is still empty or on
+DefaultClean.
+
+The chrome and theme share one design system from
 [docs/22-ui-design-system.md](docs/22-ui-design-system.md):
 
 | File | Role |
 |---|---|
 | `Content/checkengine-tokens.css` | Design tokens — palette, spacing scale, radius, type scale, motion. Layer 1 (primitive) and layer 2 (semantic). |
 | `Content/checkengine-theme.css` | Component styles. References only `var(--ce-*)` tokens, never raw hex. |
-| `Content/checkengine-storefront.js` | Behaviour for the rail, garage, and fitment band. |
+| `Content/checkengine-fonts.css` | Self-hosted Outfit and IBM Plex (SIL OFL). No Google Fonts CDN. |
+| `Content/checkengine-storefront.js` | Behaviour for the rail, garage sheet, and fitment band. |
+| `Themes/CheckEngine/Content/css/styles.css` | Dark shell over DefaultClean structure: header, catalog, PDP, cart, account, checkout. |
 
-Both stylesheets are registered automatically by the widget, so they are picked up by nopCommerce's CSS
-bundling — you do not need to edit the theme to include them.
-
-**To re-skin Check Engine, override the tokens** rather than the component rules. For example, in your
-theme's stylesheet:
+Widget CSS is registered automatically. **To re-skin Check Engine, override the tokens** rather than
+the component rules. For example, in your theme's stylesheet:
 
 ```css
 :root {
@@ -400,13 +420,12 @@ Accessibility and layout behaviour built into the components:
 - **Database:** Check Engine's SQL repositories use SQL Server syntax (for example `SCOPE_IDENTITY()`).
   Schema creation works on other providers, but write-heavy Check Engine features are only expected to
   work against **SQL Server**. Use SQL Server for a full evaluation.
-- **Admin UI:** admin workflows are exposed as **JSON endpoints** plus the operator dashboard, not as
-  full AdminLTE CRUD screens yet.
-- **Storefront styling:** the chrome renders below the host header and is styled from Check Engine's own
-  token set. It is designed against nopCommerce's DefaultClean theme; a heavily customised theme may need
-  token overrides (see [Theming and appearance](#12a-theming-and-appearance)).
-- **Web fonts:** the design system specifies Outfit and IBM Plex, loaded from Google Fonts. If your
-  deployment blocks external font hosts, self-host them and override `--ce-font-display` / `--ce-font-ui`.
+- **Admin UI:** most operator workflows are still JSON endpoints plus the dashboard cards, not full
+  AdminLTE CRUD screens.
+- **Storefront styling:** the `CheckEngine` theme overlays DefaultClean structure. A heavily customised
+  third-party theme may need token overrides (see [Theming and appearance](#12a-theming-and-appearance)).
+- **Web fonts:** Outfit and IBM Plex ship as woff2 under `Content/fonts`. Override `--ce-font-display`
+  / `--ce-font-ui` only if you swap the faces.
 - **Search data source:** out of the box, search resolves against fitment/OEM maps with a small seeded
   fallback, so results reflect Check Engine data rather than the full nopCommerce catalog until you link
   products.

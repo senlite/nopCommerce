@@ -169,6 +169,7 @@ public class CheckEngineThemePackageTests
     [Test]
     public void Theme_Should_Finish_Header_Account_Topic_Landing_And_Motion()
     {
+        ReadThemeFile("Views", "_ViewImports.cshtml").Should().Contain("INopUrlHelper NopUrl");
         ReadThemeFile("Views", "Shared", "_Header.cshtml").Should().NotContain("SearchBoxViewComponent");
         ReadThemeFile("Views", "Shared", "_Header.cshtml").Should().Contain("LogoViewComponent");
         ReadThemeFile("Views", "Shared", "Head.cshtml").Should().Contain("preload");

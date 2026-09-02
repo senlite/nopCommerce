@@ -42,6 +42,13 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Documentation — User Guide screenshots (`0.97.1`):** live captures of the Check
+  Engine theme home, mobile rail, search dropdown, garage sheet, category, login,
+  PDP fitment band, admin plugins/widgets/configure/dashboard, and health JSON in
+  [USER-GUIDE.md](USER-GUIDE.md). Guide metadata updated to nopCommerce 4.90.6 /
+  .NET 9 / plugin `0.97.0`.
+- **Software — plugin `0.97.1`:** theme `_ViewImports.cshtml` injects `INopUrlHelper`
+  so Check Engine Razor overrides compile with the host.
 - **Software — plugin `0.97.0` Check Engine theme finished (UX.9):** header has no
   host search box; topic, register, password recovery, manufacturer/vendor lists, and
   checkout completed use theme templates; vehicle/part landings use a first-viewport
