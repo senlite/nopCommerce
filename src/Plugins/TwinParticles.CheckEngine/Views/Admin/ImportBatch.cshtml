@@ -1,0 +1,107 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.ImportAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Import.Batch").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Import.Batch")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="import-batch">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            approve = T("Plugins.TwinParticles.CheckEngine.Common.Action.Approve").Text,
+            reject = T("Plugins.TwinParticles.CheckEngine.Common.Action.Reject").Text,
+            merge = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Action.Merge").Text,
+            link = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Action.Link").Text,
+            keep = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Action.Keep").Text,
+            needId = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NeedId").Text,
+            loading = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Loading").Text,
+            loaded = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Loaded").Text,
+            notFound = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NotFound").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text,
+            reviewUpdated = T("Plugins.TwinParticles.CheckEngine.Import.Batch.ReviewUpdated").Text,
+            decisionSaved = T("Plugins.TwinParticles.CheckEngine.Import.Batch.DecisionSaved").Text,
+            chooseFile = T("Plugins.TwinParticles.CheckEngine.Import.Batch.ChooseFile").Text,
+            batchId = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Id").Text,
+            file = T("Plugins.TwinParticles.CheckEngine.Import.Batch.File").Text,
+            status = T("Plugins.TwinParticles.CheckEngine.Common.Col.Status").Text,
+            stage = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Stat.Stage").Text,
+            totalRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Stat.TotalRows").Text,
+            published = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Published").Text,
+            failed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Stat.Failed").Text,
+            running = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Running").Text,
+            started = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Started").Text,
+            importFailed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Failed").Text,
+            publishing = T("Plugins.TwinParticles.CheckEngine.Import.Batch.Publishing").Text,
+            publishingDryRun = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishingDryRun").Text,
+            publishComplete = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishComplete").Text,
+            publishFailed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishFailed").Text,
+            actionFailed = T("Plugins.TwinParticles.CheckEngine.Import.Batch.ActionFailed").Text,
+            dryRun = T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishDryRun").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.File")</label>
+                        <input type="file" class="form-control" data-ce-import-file accept=".csv,.xlsx,.xls,.pdf,text/csv,application/pdf" />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Format")</label>
+                        <select class="form-control" data-ce-import-format>
+                            <option value="1">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Csv")</option>
+                            <option value="2">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Excel")</option>
+                            <option value="3">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Pdf")</option>
+                        </select>
+                    </div>
+                    <label class="mb-0 mr-3">
+                        <input type="checkbox" data-ce-import-run-dry-run checked="checked" />
+                        @T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishDryRun")
+                    </label>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-import-run>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Upload")</button>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Id")</label>
+                        <input class="ce-mp-input ce-code" data-ce-import-batch placeholder="batch-guid" value="@ViewBag.BatchId" />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-import-load>@T("Plugins.TwinParticles.CheckEngine.Common.View")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-import-stats></div>
+                <div class="ce-mp-toolbar mt-3">
+                    <label class="mb-0 mr-3">
+                        <input type="checkbox" data-ce-import-dry-run checked="checked" />
+                        @T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishDryRun")
+                    </label>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-import-publish>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Publish")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-import-publish-stats></div>
+                <div class="ce-mp-table-wrap mt-3">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Row")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Review")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Oem")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Vehicle")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Published")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Error")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Col.Actions")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-import-rows></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,70 +1,134 @@
 @{
     Layout = "_AdminLayout";
-    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.PayoutAdmin");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Payout.Admin").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_MarketplaceAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Payout.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Scoreboard", "VendorAdmin")">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard")</a>
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin" data-ce-page="payout">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Marketplace.Admin.Loading").Text,
+            empty = T("Plugins.TwinParticles.CheckEngine.Payout.Empty").Text,
+            view = T("Plugins.TwinParticles.CheckEngine.Payout.View").Text,
+            generating = T("Plugins.TwinParticles.CheckEngine.Payout.Generating").Text,
+            generated = T("Plugins.TwinParticles.CheckEngine.Payout.Generated").Text,
+            selectStatement = T("Plugins.TwinParticles.CheckEngine.Payout.SelectStatement").Text,
+            actionOk = T("Plugins.TwinParticles.CheckEngine.Marketplace.Admin.ActionOk").Text,
+            actionFail = T("Plugins.TwinParticles.CheckEngine.Marketplace.Admin.ActionFail").Text
+        }))</script>
+
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-payout-alert hidden role="status"></div>
+
         <div class="card card-default">
             <div class="card-body">
-                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Payout.Admin.Hint")</p>
-                <div class="form-inline mb-3">
-                    <label class="mr-2">Vendor id</label>
-                    <input id="ce-payout-vendor" class="form-control mr-2" type="number" value="1" />
-                    <button id="ce-payout-list" type="button" class="btn btn-secondary mr-2">List</button>
-                    <button id="ce-payout-generate" type="button" class="btn btn-primary">Generate (last 30 days)</button>
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Payout.Admin.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label for="ce-payout-vendor-select">@T("Plugins.TwinParticles.CheckEngine.Payout.SelectVendor")</label>
+                        <select id="ce-payout-vendor-select" class="form-control" data-ce-payout-vendor></select>
+                    </div>
+                    <div class="ce-mp-field">
+                        <label for="ce-payout-start">@T("Plugins.TwinParticles.CheckEngine.Payout.PeriodStart")</label>
+                        <input id="ce-payout-start" type="date" class="form-control" data-ce-payout-start />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label for="ce-payout-end">@T("Plugins.TwinParticles.CheckEngine.Payout.PeriodEnd")</label>
+                        <input id="ce-payout-end" type="date" class="form-control" data-ce-payout-end />
+                    </div>
+                    <button type="button" class="btn btn-primary" data-ce-payout-generate>@T("Plugins.TwinParticles.CheckEngine.Payout.Generate")</button>
+                    <button type="button" class="btn btn-secondary" data-ce-payout-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.Refresh")</button>
                 </div>
-                <div class="form-inline mb-3">
-                    <label class="mr-2">Statement id</label>
-                    <input id="ce-payout-statement" class="form-control mr-2" type="number" />
-                    <button id="ce-payout-finalize" type="button" class="btn btn-secondary mr-1">Finalize</button>
-                    <button id="ce-payout-push" type="button" class="btn btn-secondary mr-1">Push ERP</button>
-                    <button id="ce-payout-reconcile" type="button" class="btn btn-secondary">Reconcile</button>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Payout.Statements")</h3>
+            </div>
+            <div class="card-body">
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Period")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Gross")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Commission")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Statements.NetPayout")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Status")</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-payout-body></tbody>
+                    </table>
                 </div>
-                <pre id="ce-payout-result" style="white-space: pre-wrap;"></pre>
+            </div>
+        </div>
+
+        <div class="card card-default" data-ce-payout-detail hidden>
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Payout.Details") <span data-ce-payout-statement-id></span></h3>
+                <span class="float-right" data-ce-payout-status></span>
+            </div>
+            <div class="card-body">
+                <div class="ce-mp-stat-grid">
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Gross")</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-gross></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Commission")</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-commission></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Refunds")</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-refunds></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">@T("Plugins.TwinParticles.CheckEngine.Payout.Col.Adjustments")</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-adjustments></span>
+                    </article>
+                </div>
+                <p><strong>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Statements.NetPayout"):</strong> <span data-ce-payout-net></span></p>
+                <p><strong>@T("Plugins.TwinParticles.CheckEngine.Payout.ErpReference"):</strong> <span class="ce-code" data-ce-payout-erp></span></p>
+                <div class="ce-mp-toolbar">
+                    <button type="button" class="btn btn-secondary" data-ce-payout-finalize>@T("Plugins.TwinParticles.CheckEngine.Payout.Finalize")</button>
+                    <button type="button" class="btn btn-secondary" data-ce-payout-push>@T("Plugins.TwinParticles.CheckEngine.Payout.PushErp")</button>
+                    <button type="button" class="btn btn-primary" data-ce-payout-reconcile>@T("Plugins.TwinParticles.CheckEngine.Payout.Reconcile")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-payout-recon hidden>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Succeeded</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-succeeded></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Local net</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-local></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">ERP total</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-erp></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Variance</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-variance></span>
+                    </article>
+                    <article class="ce-mp-stat">
+                        <span class="ce-mp-stat__label">Within tolerance</span>
+                        <span class="ce-mp-stat__value" data-ce-payout-recon-ok></span>
+                    </article>
+                </div>
             </div>
         </div>
     </div>
 </section>
-
-<script>
-(function () {
-  var token = document.querySelector('input[name="__RequestVerificationToken"]');
-  function headers(json) {
-    var h = { 'Accept': 'application/json' };
-    if (json) h['Content-Type'] = 'application/json';
-    if (token && token.value) h['RequestVerificationToken'] = token.value;
-    return h;
-  }
-  function show(j) { document.getElementById('ce-payout-result').textContent = JSON.stringify(j, null, 2); }
-  document.getElementById('ce-payout-list').addEventListener('click', function () {
-    var vendorId = parseInt(document.getElementById('ce-payout-vendor').value, 10);
-    fetch('/Admin/CheckEngine/PayoutAdmin/List?vendorId=' + vendorId, { headers: headers(false) })
-      .then(function (r) { return r.json(); }).then(show);
-  });
-  document.getElementById('ce-payout-generate').addEventListener('click', function () {
-    var vendorId = parseInt(document.getElementById('ce-payout-vendor').value, 10);
-    var end = new Date();
-    var start = new Date(end.getTime() - 30 * 86400000);
-    fetch('/Admin/CheckEngine/PayoutAdmin/Generate', {
-      method: 'POST', headers: headers(true),
-      body: JSON.stringify({ vendorId: vendorId, periodStartUtc: start.toISOString(), periodEndUtc: end.toISOString() })
-    }).then(function (r) { return r.json(); }).then(show);
-  });
-  function action(path) {
-    var id = parseInt(document.getElementById('ce-payout-statement').value, 10);
-    fetch('/Admin/CheckEngine/PayoutAdmin/' + path, {
-      method: 'POST', headers: headers(true), body: JSON.stringify({ statementId: id })
-    }).then(function (r) { return r.json(); }).then(show);
-  }
-  document.getElementById('ce-payout-finalize').addEventListener('click', function () { action('Finalize'); });
-  document.getElementById('ce-payout-push').addEventListener('click', function () { action('PushErp'); });
-  document.getElementById('ce-payout-reconcile').addEventListener('click', function () { action('Reconcile'); });
-})();
-</script>

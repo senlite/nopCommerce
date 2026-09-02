@@ -1,39 +1,119 @@
 @{
     Layout = "_AdminLayout";
-    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.VendorScoreboard");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_MarketplaceAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard")</h1>
     <div class="float-right">
         <a class="btn btn-secondary" href="@Url.Action("ReviewBoard", "VendorAdmin")">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Review")</a>
+        <a class="btn btn-secondary" href="@Url.Action("Index", "CommissionAdmin")">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure")</a>
         <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
     </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin" data-ce-page="scoreboard">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            vendors = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Vendors").Text,
+            ordersSample = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.OrdersSample").Text,
+            empty = T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Empty").Text,
+            inspectFail = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Fail").Text,
+            inspectEmpty = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Empty").Text,
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text,
+            statOrder = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Stat.Order").Text,
+            statCheckoutGroup = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Stat.CheckoutGroup").Text,
+            statSplits = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Stat.Splits").Text,
+            statShipments = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Stat.Shipments").Text,
+            statSnapshots = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Stat.Snapshots").Text,
+            loaded = T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Loaded").Text
+        }))</script>
+
+        <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Hint")</p>
+
+        <div class="ce-mp-stat-grid" data-ce-scoreboard-summary></div>
+
         <div class="card card-default">
             <div class="card-header">
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard")</h3>
             </div>
             <div class="card-body">
-                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Hint")</p>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped" id="ce-vendor-scoreboard">
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table" id="ce-vendor-scoreboard">
                         <thead>
                             <tr>
-                                <th>Vendor</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Col.Vendor")</th>
                                 <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.FillRate")</th>
                                 <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.CancelRate")</th>
                                 <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.ClaimRejectRate")</th>
                                 <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scorecard.OnTimeShipment")</th>
-                                <th>Orders</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Col.Orders")</th>
                             </tr>
                         </thead>
-                        <tbody></tbody>
+                        <tbody data-ce-scoreboard-body></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default" id="ce-order-inspector">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector")</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Hint")</p>
+                <div class="ce-mp-alert ce-mp-alert--info" data-ce-order-alert hidden role="status"></div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.OrderId")</label>
+                        <input type="number" min="1" class="ce-mp-input ce-code" data-ce-order-id value="@ViewBag.OrderId" />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-order-inspect>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Inspect")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-order-stats></div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Splits")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Col.Vendor")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Subtotal")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Lines")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-order-splits></tbody>
+                    </table>
+                </div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Shipments")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Shipment")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Col.Vendor")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Created")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-order-shipments></tbody>
+                    </table>
+                </div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Commissions")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Item")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard.Col.Vendor")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Model")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Rate")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector.Col.Commission")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-order-commissions></tbody>
                     </table>
                 </div>
             </div>
@@ -41,25 +121,3 @@
     </div>
 </section>
 
-<script>
-(function () {
-  var token = document.querySelector('input[name="__RequestVerificationToken"]');
-  function pct(v) { return v == null ? '—' : (Math.round(v * 1000) / 10) + '%'; }
-  fetch('/Admin/CheckEngine/VendorAdmin/Scorecards', {
-    headers: { 'Accept': 'application/json', 'RequestVerificationToken': token ? token.value : '' }
-  }).then(function (r) { return r.json(); }).then(function (rows) {
-    var tbody = document.querySelector('#ce-vendor-scoreboard tbody');
-    tbody.innerHTML = '';
-    (rows || []).forEach(function (row) {
-      var tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + (row.vendorName || row.vendorId || '') + '</td>' +
-        '<td>' + pct(row.fillRate) + '</td>' +
-        '<td>' + pct(row.cancelRate) + '</td>' +
-        '<td>' + pct(row.claimRejectionRate) + '</td>' +
-        '<td>' + pct(row.onTimeShipmentRate) + '</td>' +
-        '<td>' + (row.orderSampleSize || 0) + '</td>';
-      tbody.appendChild(tr);
-    });
-  });
-})();
-</script>

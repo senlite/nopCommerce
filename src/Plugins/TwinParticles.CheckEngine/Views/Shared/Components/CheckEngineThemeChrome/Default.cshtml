@@ -12,9 +12,7 @@
 {
     NopHtml.AddCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-tokens.css");
     NopHtml.AddCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-theme.css");
-    NopHtml.AddHeadCustomParts("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">");
-    NopHtml.AddHeadCustomParts("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>");
-    NopHtml.AddHeadCustomParts("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap\">");
+    NopHtml.AddCssFileParts("~/Plugins/TwinParticles.CheckEngine/Content/checkengine-fonts.css");
 
     <script src="~/Plugins/TwinParticles.CheckEngine/Content/checkengine-storefront.js" asp-append-version="true"></script>
 }
@@ -92,7 +90,8 @@ else if (zone == "header_after")
                     data-ce-theme="garage-widget"
                     data-ce-state="empty"
                     aria-haspopup="dialog"
-                    aria-expanded="false">
+                    aria-expanded="false"
+                    aria-controls="ce-garage-sheet">
                 <svg class="ce-icon ce-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
                     <path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M4 13h16v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4z" stroke-linecap="round" stroke-linejoin="round" />
@@ -105,7 +104,7 @@ else if (zone == "header_after")
 
             @* Vehicle switcher. Kept as a native select so it is keyboard and screen-reader friendly. *@
             <label class="ce-visually-hidden" for="ce-vehicle-selector">@T("Plugins.TwinParticles.CheckEngine.Garage.VehicleSelector")</label>
-            <select id="ce-vehicle-selector" class="ce-select" name="vehicleSelector" data-ce-theme="vehicle-selector">
+            <select id="ce-vehicle-selector" class="ce-select ce-visually-hidden" name="vehicleSelector" data-ce-theme="vehicle-selector" tabindex="-1" aria-hidden="true">
                 <option value="">@T("Plugins.TwinParticles.CheckEngine.Garage.Empty")</option>
             </select>
 
@@ -128,10 +127,13 @@ else if (zone == "header_after")
                            aria-expanded="false" />
                 </div>
 
-                <label class="ce-toggle" for="ce-widen-fitment">
-                    <input type="checkbox" id="ce-widen-fitment" name="widenFitment" />
-                    <span>@T("Plugins.TwinParticles.CheckEngine.Search.Widen")</span>
-                </label>
+                <details class="ce-search__more">
+                    <summary>@T("Plugins.TwinParticles.CheckEngine.Search.MoreFilters")</summary>
+                    <label class="ce-toggle" for="ce-widen-fitment">
+                        <input type="checkbox" id="ce-widen-fitment" name="widenFitment" />
+                        <span>@T("Plugins.TwinParticles.CheckEngine.Search.Widen")</span>
+                    </label>
+                </details>
 
                 @if (Model.EnableSearchNaturalLanguage || Model.EnableSearchSemantic)
                 {
@@ -177,6 +179,39 @@ else if (zone == "header_after")
             </div>
         </div>
 
+        <div id="ce-garage-sheet"
+             class="ce-modal"
+             hidden
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="ce-garage-sheet-title">
+            <button type="button" class="ce-modal__backdrop" data-ce-garage-dismiss tabindex="-1" aria-hidden="true"></button>
+            <div class="ce-modal__panel" role="document">
+                <h2 id="ce-garage-sheet-title" class="ce-modal__title">@T("Plugins.TwinParticles.CheckEngine.Garage.Sheet.Title")</h2>
+                <p class="ce-modal__lead">@T("Plugins.TwinParticles.CheckEngine.Garage.Sheet.Lead")</p>
+                <ul id="ce-garage-sheet-list" class="ce-modal__options" role="listbox"></ul>
+                <form id="ce-garage-add-form" class="ce-garage-form">
+                    <label class="ce-garage-form__label" for="ce-garage-vin-input">@T("Plugins.TwinParticles.CheckEngine.Garage.VinLabel")</label>
+                    <input id="ce-garage-vin-input"
+                           class="ce-search__input ce-code"
+                           type="text"
+                           inputmode="text"
+                           autocomplete="off"
+                           spellcheck="false"
+                           maxlength="17"
+                           placeholder="@T("Plugins.TwinParticles.CheckEngine.Garage.VinPrompt")" />
+                    <p id="ce-garage-vin-preview" class="ce-garage-form__preview" hidden></p>
+                    <button type="submit" class="ce-btn ce-btn--primary">@T("Plugins.TwinParticles.CheckEngine.Garage.AddSubmit")</button>
+                </form>
+                <p id="ce-garage-sheet-status" class="ce-garage-form__status" role="status" hidden></p>
+                <div class="ce-modal__actions">
+                    <button type="button" class="ce-btn ce-btn--quiet" data-ce-garage-dismiss>@T("Plugins.TwinParticles.CheckEngine.Garage.Sheet.Close")</button>
+                    <button type="button" class="ce-btn ce-btn--quiet" id="ce-garage-remove" hidden>@T("Plugins.TwinParticles.CheckEngine.Garage.Remove")</button>
+                    <button type="button" class="ce-btn ce-btn--primary" id="ce-garage-remove-confirm" hidden>@T("Plugins.TwinParticles.CheckEngine.Garage.RemoveConfirm")</button>
+                </div>
+            </div>
+        </div>
+
         @* Localised copy for the client script, so no user-facing string is hardcoded in JS. *@
         <script type="application/json" id="ce-i18n">
             {
@@ -185,6 +220,14 @@ else if (zone == "header_after")
                 "garageEmpty": "@T("Plugins.TwinParticles.CheckEngine.Garage.Empty")",
                 "garageAdd": "@T("Plugins.TwinParticles.CheckEngine.Garage.AddVehicle")",
                 "garageVinPrompt": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinPrompt")",
+                "garageVinLabel": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinLabel")",
+                "garageVinPreview": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinPreview")",
+                "garageAddSubmit": "@T("Plugins.TwinParticles.CheckEngine.Garage.AddSubmit")",
+                "garageSheetTitle": "@T("Plugins.TwinParticles.CheckEngine.Garage.Sheet.Title")",
+                "garageSheetLead": "@T("Plugins.TwinParticles.CheckEngine.Garage.Sheet.Lead")",
+                "garageSheetClose": "@T("Plugins.TwinParticles.CheckEngine.Garage.Sheet.Close")",
+                "garageRemove": "@T("Plugins.TwinParticles.CheckEngine.Garage.Remove")",
+                "garageRemoveConfirm": "@T("Plugins.TwinParticles.CheckEngine.Garage.RemoveConfirm")",
                 "garageAddFailed": "@T("Plugins.TwinParticles.CheckEngine.Garage.AddFailed")",
                 "garageVinDisambiguationTitle": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Title")",
                 "garageVinDisambiguationLead": "@T("Plugins.TwinParticles.CheckEngine.Garage.VinDisambiguation.Lead")",
@@ -297,4 +340,8 @@ else if (zone == "home_page_top")
             </div>
         </div>
     </section>
+}
+else if (zone == "footer")
+{
+    <p class="ce-root ce-footer-disclaimer">@T("Plugins.TwinParticles.CheckEngine.Theme.Affiliation")</p>
 }

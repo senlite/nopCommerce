@@ -10,6 +10,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Domain.Marketplace;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -137,9 +138,17 @@ public sealed class VendorController : BasePublicController
         return snapshot is null ? NotFound() : Json(snapshot);
     }
 
+    private IActionResult? VendorPageOrJson(string tab)
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectPortal("vendor", "dashboard", "tab=" + tab);
+
     [HttpGet]
     public async Task<IActionResult> Statements(CancellationToken cancellationToken)
-        => Json(await _dashboardService.ListStatementsAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    {
+        if (VendorPageOrJson("statements") is { } page)
+            return page;
+
+        return Json(await _dashboardService.ListStatementsAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    }
 
     [HttpGet]
     public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
@@ -157,13 +166,21 @@ public sealed class VendorController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
     {
+        if (VendorPageOrJson("overview") is { } page)
+            return page;
+
         var snapshot = await _dashboardService.GetDashboardAsync(await ResolveActorAsync(cancellationToken), cancellationToken);
         return snapshot is null ? Denied(VendorErrorCodes.IsolationUnauthenticated, 403) : Json(snapshot);
     }
 
     [HttpGet]
     public async Task<IActionResult> Inventory(CancellationToken cancellationToken)
-        => Json(await _dashboardService.ListInventoryAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    {
+        if (VendorPageOrJson("inventory") is { } page)
+            return page;
+
+        return Json(await _dashboardService.ListInventoryAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    }
 
     [HttpPost]
     public async Task<IActionResult> UpdateInventory([FromBody] VendorInventoryUpdateModel model, CancellationToken cancellationToken)
@@ -178,13 +195,21 @@ public sealed class VendorController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> Scorecard(CancellationToken cancellationToken)
     {
+        if (VendorPageOrJson("overview") is { } page)
+            return page;
+
         var scorecard = await _dashboardService.GetScorecardAsync(await ResolveActorAsync(cancellationToken), cancellationToken);
         return scorecard is null ? Denied(VendorErrorCodes.IsolationUnauthenticated, 403) : Json(scorecard);
     }
 
     [HttpGet]
     public async Task<IActionResult> FitmentProposals(CancellationToken cancellationToken)
-        => Json(await _dashboardService.ListFitmentProposalsAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    {
+        if (VendorPageOrJson("fitment") is { } page)
+            return page;
+
+        return Json(await _dashboardService.ListFitmentProposalsAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    }
 
     [HttpPost]
     public async Task<IActionResult> SubmitFitmentProposal([FromBody] VendorFitmentProposalModel model, CancellationToken cancellationToken)
@@ -216,11 +241,19 @@ public sealed class VendorController : BasePublicController
 
     [HttpGet]
     public async Task<IActionResult> Catalog(CancellationToken cancellationToken)
-        => Json(await _isolationService.ListCatalogAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    {
+        if (VendorPageOrJson("catalog") is { } page)
+            return page;
+
+        return Json(await _isolationService.ListCatalogAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    }
 
     [HttpGet]
     public async Task<IActionResult> Product(int productId, CancellationToken cancellationToken)
     {
+        if (VendorPageOrJson("catalog") is { } page)
+            return page;
+
         var decision = await _isolationService.AuthorizeProductAsync(
             await ResolveActorAsync(cancellationToken), productId, write: false, cancellationToken);
         return decision.Allowed ? Json(new { productId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
@@ -238,11 +271,19 @@ public sealed class VendorController : BasePublicController
 
     [HttpGet]
     public async Task<IActionResult> Orders(CancellationToken cancellationToken)
-        => Json(await _isolationService.ListOrdersAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    {
+        if (VendorPageOrJson("orders") is { } page)
+            return page;
+
+        return Json(await _isolationService.ListOrdersAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    }
 
     [HttpGet]
     public async Task<IActionResult> Order(int orderId, CancellationToken cancellationToken)
     {
+        if (VendorPageOrJson("orders") is { } page)
+            return page;
+
         var decision = await _isolationService.AuthorizeOrderAsync(
             await ResolveActorAsync(cancellationToken), orderId, cancellationToken);
         return decision.Allowed ? Json(new { orderId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);
@@ -251,6 +292,9 @@ public sealed class VendorController : BasePublicController
     [HttpGet]
     public async Task<IActionResult> OrderSplits(int orderId, CancellationToken cancellationToken)
     {
+        if (VendorPageOrJson("orders") is { } page)
+            return page;
+
         var actor = await ResolveActorAsync(cancellationToken);
         var decision = await _isolationService.AuthorizeOrderAsync(actor, orderId, cancellationToken);
         if (!decision.Allowed)
@@ -281,11 +325,19 @@ public sealed class VendorController : BasePublicController
 
     [HttpGet]
     public async Task<IActionResult> Customers(CancellationToken cancellationToken)
-        => Json(await _isolationService.ListCustomersAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    {
+        if (VendorPageOrJson("overview") is { } page)
+            return page;
+
+        return Json(await _isolationService.ListCustomersAsync(await ResolveActorAsync(cancellationToken), cancellationToken));
+    }
 
     [HttpGet]
     public async Task<IActionResult> Customer(int customerId, CancellationToken cancellationToken)
     {
+        if (VendorPageOrJson("overview") is { } page)
+            return page;
+
         var decision = await _isolationService.AuthorizeCustomerAsync(
             await ResolveActorAsync(cancellationToken), customerId, cancellationToken);
         return decision.Allowed ? Json(new { customerId }) : Denied(decision.ReasonCode ?? VendorErrorCodes.IsolationDenied, 403);

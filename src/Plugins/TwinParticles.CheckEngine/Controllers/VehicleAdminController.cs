@@ -9,6 +9,7 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Vehicle.Admin;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -40,10 +41,21 @@ public sealed class VehicleAdminController : BasePluginController
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
+    private IActionResult? PageOrJsonApi()
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectAdmin("VehicleAdmin", "Index");
+
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/VehicleAdmin.cshtml");
+    }
+
     [HttpGet]
     public async Task<IActionResult> Makes(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetMakesAsync(cancellationToken));
     }
 
@@ -103,6 +115,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> Models(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetModelsAsync(cancellationToken));
     }
 
@@ -162,6 +175,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> Generations(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetGenerationsAsync(cancellationToken));
     }
 
@@ -221,6 +235,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> Bodies(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetBodiesAsync(cancellationToken));
     }
 
@@ -252,6 +267,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> Engines(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetEnginesAsync(cancellationToken));
     }
 
@@ -283,6 +299,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> Markets(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetMarketsAsync(cancellationToken));
     }
 
@@ -314,6 +331,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> Configurations(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetConfigurationsAsync(cancellationToken));
     }
 
@@ -345,6 +363,7 @@ public sealed class VehicleAdminController : BasePluginController
     public async Task<IActionResult> Aliases(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi() is { } page) return page;
         return Json(await _service.GetAliasesAsync(cancellationToken));
     }
 

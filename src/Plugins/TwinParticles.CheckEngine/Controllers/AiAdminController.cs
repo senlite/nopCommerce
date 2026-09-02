@@ -14,6 +14,7 @@ using TwinParticles.CheckEngine.Application.L10n;
 using TwinParticles.CheckEngine.Domain.Ai;
 using TwinParticles.CheckEngine.Domain.Security;
 using TwinParticles.CheckEngine.Ai;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.L10n;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
@@ -72,10 +73,21 @@ public sealed class AiAdminController : BasePluginController
     private async Task<bool> AuthorizedAsync() =>
         await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
+    private IActionResult? PageOrJsonApi(string action)
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectAdmin("AiAdmin", action);
+
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return CheckEnginePaths.RedirectAdmin("AiAdmin", "Dashboard");
+    }
+
     [HttpGet]
     public async Task<IActionResult> Disclosure(string featureKey, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(Dashboard)) is { } page) return page;
         return Json(_disclosureCatalog.GetItemsForFeature(featureKey));
     }
 
@@ -83,6 +95,7 @@ public sealed class AiAdminController : BasePluginController
     public async Task<IActionResult> Usage(string featureKey, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(Dashboard)) is { } page) return page;
 
         var summary = await _usageLedger.GetUsageSummaryAsync(featureKey, cancellationToken);
         var ceiling = _spendPolicy.ResolveDailyCeiling(featureKey);
@@ -104,6 +117,7 @@ public sealed class AiAdminController : BasePluginController
         CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(ReviewBoard)) is { } page) return page;
         return Json(await _contentCandidateService.GetPendingAsync(entityType, entityId, cancellationToken));
     }
 
@@ -125,6 +139,7 @@ public sealed class AiAdminController : BasePluginController
     public async Task<IActionResult> Queue(int take = 50, CancellationToken cancellationToken = default)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(ReviewBoard)) is { } page) return page;
         return Json(await _contentCandidateService.GetPendingQueueAsync(take, cancellationToken));
     }
 
@@ -163,6 +178,7 @@ public sealed class AiAdminController : BasePluginController
     public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(Dashboard)) is { } page) return page;
 
         var features = new[]
         {
@@ -223,6 +239,7 @@ public sealed class AiAdminController : BasePluginController
     public async Task<IActionResult> GlossaryData(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(GlossaryBoard)) is { } page) return page;
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         var overrides = AutomotiveGlossaryOverridesJson.Parse(settings.AutomotiveGlossaryOverridesJson);
@@ -281,6 +298,7 @@ public sealed class AiAdminController : BasePluginController
     public async Task<IActionResult> SpecKeysData(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (PageOrJsonApi(nameof(SpecKeysBoard)) is { } page) return page;
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         var overrides = SpecificationKeyOverridesJson.Parse(settings.SpecificationKeyOverridesJson);

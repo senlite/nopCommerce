@@ -2,16 +2,23 @@
 
 @{
     Layout = "_ConfigurePlugin";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.Configure");
 }
+
+@Html.AntiForgeryToken()
 
 <div class="cards-group">
     <div class="card card-default">
         <div class="card-body">
             <a class="btn btn-info" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
             <a class="btn btn-secondary ml-2" href="@Url.Action("ReviewBoard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a>
+            <a class="btn btn-secondary ml-2" href="/Admin/CheckEngine/PortalAdmin/Accounts">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</a>
         </div>
     </div>
 </div>
+
+@await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_LicencePanel.cshtml")
 
 @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
 

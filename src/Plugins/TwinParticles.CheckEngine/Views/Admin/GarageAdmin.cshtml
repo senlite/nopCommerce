@@ -1,0 +1,73 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.GarageAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Garage.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="garage-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            needCustomer = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.NeedCustomer").Text,
+            loaded = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Loaded").Text,
+            notFound = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.NotFound").Text,
+            emptyVehicles = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.EmptyVehicles").Text,
+            emptyOems = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.EmptyOems").Text,
+            statGarageId = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.GarageId").Text,
+            statCustomer = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.Customer").Text,
+            statVehicles = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Vehicles").Text,
+            statOems = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.Oems").Text,
+            statActiveVehicle = T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Stat.ActiveVehicle").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.CustomerId")</label>
+                        <input type="number" min="1" class="ce-mp-input ce-code" data-ce-garage-customer />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-garage-load>@T("Plugins.TwinParticles.CheckEngine.Common.View")</button>
+                </div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-garage-stats></div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Vehicles")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Vin")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Label")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Configuration")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Active")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-garage-vehicles></tbody>
+                    </table>
+                </div>
+                <h4 class="mt-3">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Oems")</h4>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Garage.Admin.Col.OemNumber")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-garage-oems></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -6,6 +6,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.ReferenceScale;
 using TwinParticles.CheckEngine.Domain.ReferenceScale;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -31,10 +32,21 @@ public sealed class ReferenceDataAdminController : BasePluginController
         => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
     [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync())
+            return AccessDeniedView();
+
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/ReferenceDataAdmin.cshtml");
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Status(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync())
             return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("ReferenceDataAdmin", "Index");
 
         var status = await _service.GetStatusAsync(cancellationToken);
         return Json(new

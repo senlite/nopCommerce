@@ -1,0 +1,271 @@
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
+using Nop.Services.Customers;
+using Nop.Services.Security;
+using Nop.Web.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
+using TwinParticles.CheckEngine.Application.Fleet;
+using TwinParticles.CheckEngine.Application.Licensing;
+using TwinParticles.CheckEngine.Application.Portals;
+using TwinParticles.CheckEngine.Domain.Fleet;
+using TwinParticles.CheckEngine.Infrastructure;
+using TwinParticles.CheckEngine.Security;
+
+namespace TwinParticles.CheckEngine.Controllers;
+
+[AutoValidateAntiforgeryToken]
+public sealed class FleetController : BasePublicController
+{
+    private readonly FleetPortalService _fleetService;
+    private readonly FleetPortalLicenceGate _licenceGate;
+    private readonly VerticalPortalAccessService _portalAccess;
+    private readonly IPermissionService _permissionService;
+    private readonly ICustomerService _customerService;
+    private readonly IWorkContext _workContext;
+
+    public FleetController(
+        FleetPortalService fleetService,
+        FleetPortalLicenceGate licenceGate,
+        VerticalPortalAccessService portalAccess,
+        IPermissionService permissionService,
+        ICustomerService customerService,
+        IWorkContext workContext)
+    {
+        _fleetService = fleetService;
+        _licenceGate = licenceGate;
+        _portalAccess = portalAccess;
+        _permissionService = permissionService;
+        _customerService = customerService;
+        _workContext = workContext;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
+            return NotFound();
+
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Fleet/Index.cshtml");
+    }
+
+    private IActionResult? PortalPageOrJson()
+        => Request.WantsJsonResponse() ? null : CheckEnginePaths.RedirectPortal("fleet", "Index");
+
+    [HttpGet]
+    public async Task<IActionResult> DashboardData(CancellationToken cancellationToken)
+    {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var snapshot = await _fleetService.GetDashboardAsync(customer.Id, cancellationToken);
+        return snapshot is null ? Denied(FleetErrorCodes.NotFound, 404) : Json(snapshot);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> MaintenanceForecast(CancellationToken cancellationToken)
+    {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var forecasts = await _fleetService.GetMaintenanceForecastAsync(customer.Id, cancellationToken);
+        return Json(forecasts);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ImportFleetVins([FromBody] ImportFleetVinsRequest request, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isOperator = await IsOperatorAsync();
+        if (!await _portalAccess.OwnsFleetAccountAsync(customer.Id, request.FleetAccountId, isOperator, cancellationToken))
+            return Denied(PortalErrorCodes.AccessDenied);
+
+        var result = await _fleetService.ImportFleetVinsAsync(request.FleetAccountId, request.Vins, cancellationToken);
+        return result.Success ? Json(result) : Denied(result.ErrorCode ?? FleetErrorCodes.NotFound, 400);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SubmitApprovalRequest([FromBody] SubmitApprovalRequestModel request, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isOperator = await IsOperatorAsync();
+        if (!await _portalAccess.OwnsFleetAccountAsync(customer.Id, request.FleetAccountId, isOperator, cancellationToken))
+            return Denied(PortalErrorCodes.AccessDenied);
+
+        var snapshot = await _fleetService.GetDashboardAsync(customer.Id, cancellationToken);
+        var budgetCentreId = request.BudgetCentreId;
+        if (budgetCentreId <= 0)
+        {
+            budgetCentreId = snapshot?.Account.DefaultBudgetCentreId
+                ?? snapshot?.BudgetCentres.FirstOrDefault()?.Id
+                ?? 0;
+        }
+
+        if (budgetCentreId <= 0)
+            return Denied(FleetErrorCodes.NotFound, 400);
+
+        var enriched = new SubmitApprovalRequest
+        {
+            FleetAccountId = request.FleetAccountId,
+            FleetVehicleId = request.FleetVehicleId,
+            ProductId = request.ProductId,
+            Quantity = request.Quantity,
+            BudgetCentreId = budgetCentreId,
+            RequesterCustomerId = customer.Id
+        };
+
+        var result = await _fleetService.SubmitApprovalRequestAsync(enriched, cancellationToken);
+        return result.Success ? Json(result) : Denied(result.ErrorCode ?? FleetErrorCodes.NotFound, 400);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ImportBatches(CancellationToken cancellationToken)
+    {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var batches = await _fleetService.ListImportBatchesAsync(customer.Id, cancellationToken);
+        return Json(batches);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ImportBatchDetail(int batchId, CancellationToken cancellationToken)
+    {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isOperator = await IsOperatorAsync();
+        var fleetAccountId = await _fleetService.ResolveFleetAccountIdForBatchAsync(batchId, cancellationToken);
+        if (!fleetAccountId.HasValue || !await _portalAccess.OwnsFleetAccountAsync(customer.Id, fleetAccountId.Value, isOperator, cancellationToken))
+            return Denied(PortalErrorCodes.AccessDenied);
+
+        var detail = await _fleetService.GetImportBatchDetailAsync(batchId, cancellationToken);
+        return detail is null ? Denied(FleetErrorCodes.NotFound, 404) : Json(detail);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> VehicleCostReport(CancellationToken cancellationToken)
+    {
+        if (PortalPageOrJson() is { } page)
+            return page;
+
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var report = await _fleetService.GetVehicleCostReportAsync(customer.Id, cancellationToken);
+        return Json(report);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DecideApprovalRequest([FromBody] DecideApprovalRequestModel request, CancellationToken cancellationToken)
+    {
+        var access = await ResolveAccessAsync(cancellationToken);
+        if (!access.Allowed)
+            return Denied(access.ErrorCode ?? PortalErrorCodes.AccessDenied, StatusFor(access.ErrorCode));
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var isOperator = await IsOperatorAsync();
+        var fleetAccountId = await _fleetService.ResolveFleetAccountIdForRequestAsync(request.RequestId, cancellationToken);
+        if (!fleetAccountId.HasValue || !await _portalAccess.OwnsFleetAccountAsync(customer.Id, fleetAccountId.Value, isOperator, cancellationToken))
+            return Denied(PortalErrorCodes.AccessDenied);
+
+        if (!await _portalAccess.CanApproveFleetAsync(customer.Id, fleetAccountId.Value, isOperator, cancellationToken))
+            return Denied(FleetErrorCodes.ApproverDenied);
+
+        var result = await _fleetService.DecideApprovalRequestAsync(
+            request.RequestId,
+            request.Approve,
+            request.RejectionReason,
+            cancellationToken);
+
+        return result.Success ? Json(result) : Denied(result.ErrorCode ?? FleetErrorCodes.InvalidDecision, 400);
+    }
+
+    private async Task<PortalAccessResult> ResolveAccessAsync(CancellationToken cancellationToken)
+    {
+        if (!await _licenceGate.AllowsFleetAsync(cancellationToken))
+            return PortalAccessResult.Denied(FleetErrorCodes.LicenceDenied);
+
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        if (await _customerService.IsGuestAsync(customer))
+            return PortalAccessResult.Denied(PortalErrorCodes.AccessUnauthenticated);
+
+        var isOperator = await IsOperatorAsync();
+        return await _portalAccess.ResolveFleetAsync(customer.Id, isOperator, cancellationToken);
+    }
+
+    private async Task<bool> IsOperatorAsync()
+    {
+        if (await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName))
+            return true;
+
+        return await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngineFleet.SystemName);
+    }
+
+    private static int StatusFor(string? errorCode)
+        => errorCode == PortalErrorCodes.AccessUnauthenticated ? 401 : 403;
+
+    private IActionResult Denied(string code, int statusCode = 403)
+        => new JsonResult(new { success = false, errorCode = code }) { StatusCode = statusCode };
+}
+
+public sealed class ImportFleetVinsRequest
+{
+    public int FleetAccountId { get; init; }
+
+    public string[] Vins { get; init; } = [];
+}
+
+public sealed class SubmitApprovalRequestModel
+{
+    public int FleetAccountId { get; init; }
+
+    public int FleetVehicleId { get; init; }
+
+    public int ProductId { get; init; }
+
+    public int Quantity { get; init; }
+
+    public int BudgetCentreId { get; init; }
+}
+
+public sealed class DecideApprovalRequestModel
+{
+    public int RequestId { get; init; }
+
+    public bool Approve { get; init; }
+
+    public string? RejectionReason { get; init; }
+}

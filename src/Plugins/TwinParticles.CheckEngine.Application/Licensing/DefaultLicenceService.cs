@@ -78,6 +78,9 @@ public sealed class DefaultLicenceService : ILicenceService
         var entitled = entitlements is { IsValid: true };
         var tier = entitled ? entitlements!.Tier : LicenceTier.Unknown;
         var marketplace = entitled && entitlements!.MarketplaceModuleEntitlement;
+        var workshop = entitled && entitlements!.WorkshopPortalEntitlement;
+        var fleet = entitled && entitlements!.FleetPortalEntitlement;
+        var dealer = entitled && entitlements!.DealerPortalEntitlement;
 
         if (!lastHeartbeatUtc.HasValue)
         {
@@ -88,7 +91,10 @@ public sealed class DefaultLicenceService : ILicenceService
                 AllowsAdminWrite = false,
                 ReasonCode = "licence.not_activated",
                 Tier = LicenceTier.Unknown,
-                MarketplaceModuleEntitlement = false
+                MarketplaceModuleEntitlement = false,
+                WorkshopPortalEntitlement = false,
+                FleetPortalEntitlement = false,
+                DealerPortalEntitlement = false
             };
         }
 
@@ -102,7 +108,10 @@ public sealed class DefaultLicenceService : ILicenceService
                 LastHeartbeatUtc = lastHeartbeatUtc,
                 AllowsAdminWrite = true,
                 Tier = tier,
-                MarketplaceModuleEntitlement = marketplace
+                MarketplaceModuleEntitlement = marketplace,
+                WorkshopPortalEntitlement = workshop,
+                FleetPortalEntitlement = fleet,
+                DealerPortalEntitlement = dealer
             };
         }
 
@@ -114,7 +123,10 @@ public sealed class DefaultLicenceService : ILicenceService
             AllowsAdminWrite = false,
             ReasonCode = "licence.grace_expired",
             Tier = tier,
-            MarketplaceModuleEntitlement = marketplace
+            MarketplaceModuleEntitlement = marketplace,
+            WorkshopPortalEntitlement = workshop,
+            FleetPortalEntitlement = fleet,
+            DealerPortalEntitlement = dealer
         };
     }
 

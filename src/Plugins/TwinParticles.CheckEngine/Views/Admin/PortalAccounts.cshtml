@@ -1,0 +1,237 @@
+@{
+    Layout = "_AdminLayout";
+    ViewBag.Title = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title").Text;
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.PortalAdmin");
+    await Html.RenderPartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_PortalAssets.cshtml");
+}
+
+@await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.LicenceReadOnlyBannerViewComponent))
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</h1>
+</div>
+
+<section class="content ce-marketplace" data-ce-page="portal-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            provisioned = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Provisioned").Text,
+            provisionFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionFailed").Text,
+            seededAllocation = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededAllocation").Text,
+            seedAllocationFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedAllocationFailed").Text,
+            seededQuota = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededQuota").Text,
+            seedQuotaFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedQuotaFailed").Text,
+            seededFranchise = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededFranchise").Text,
+            seedFranchiseFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedFranchiseFailed").Text,
+            seededPriceList = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededPriceList").Text,
+            seedPriceFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedPriceFailed").Text,
+            seededTechnician = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededTechnician").Text,
+            seedTechnicianFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedTechnicianFailed").Text,
+            seededLabourRate = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededLabourRate").Text,
+            seedLabourRateFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedLabourRateFailed").Text,
+            seededPriceTier = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededPriceTier").Text,
+            seedPriceTierFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedPriceTierFailed").Text,
+            seededAccountTier = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededAccountTier").Text,
+            seedAccountTierFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedAccountTierFailed").Text,
+            seededFleetApprover = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededFleetApprover").Text,
+            seedFleetApproverFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedFleetApproverFailed").Text,
+            seededTerritory = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeededTerritory").Text,
+            seedTerritoryFailed = T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedTerritoryFailed").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-portal-alert hidden role="status"></div>
+
+        <div class="card card-default">
+            <div class="card-body">
+                <p>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.CustomerId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-customer />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DisplayName")</label>
+                        <input class="ce-mp-input" data-ce-admin-name />
+                    </div>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-admin-workshop>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionWorkshop")</button>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-fleet>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionFleet")</button>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-dealer>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ProvisionDealer")</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DealerSeeding")</h3>
+            </div>
+            <div class="card-body">
+                <p>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DealerSeeding.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DealerAccountId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-dealer-account />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="0" data-ce-admin-product />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.CategoryId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="0" data-ce-admin-category />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.AllocationUnits")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" value="100" data-ce-admin-allocation-units />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SpendCeiling")</label>
+                        <input class="ce-mp-input" type="number" min="0" step="0.01" value="50000" data-ce-admin-spend-ceiling />
+                    </div>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-admin-seed-allocation>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedAllocation")</button>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-seed-quota>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedQuota")</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.FranchiseSeeding")</h3>
+            </div>
+            <div class="card-body">
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DealerAccountId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-franchise-account />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.MakeId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-make-id />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.FranchiseLabel")</label>
+                        <input class="ce-mp-input" data-ce-admin-franchise-label />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-admin-seed-franchise>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedFranchise")</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.TradePricing")</h3>
+            </div>
+            <div class="card-body">
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.PortalKind")</label>
+                        <select class="ce-mp-input" data-ce-admin-portal-kind>
+                            <option value="workshop">Workshop</option>
+                            <option value="dealer">Dealer</option>
+                        </select>
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.AccountId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-trade-account />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Dealer.ProductId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-trade-product />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Workshop.UnitPrice")</label>
+                        <input class="ce-mp-input" type="number" min="0" step="0.01" data-ce-admin-trade-price />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-admin-seed-price>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedPriceListItem")</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.RoleSeeding")</h3>
+            </div>
+            <div class="card-body">
+                <p>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.RoleSeeding.Hint")</p>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.WorkshopAccountId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-workshop-account />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.TechnicianCustomerId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-technician-customer />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label><input type="checkbox" data-ce-admin-technician-invoice checked /> @T("Plugins.TwinParticles.CheckEngine.Portal.Admin.CanRaiseInvoice")</label>
+                    </div>
+                    <div class="ce-mp-field">
+                        <label><input type="checkbox" data-ce-admin-technician-frontdesk /> @T("Plugins.TwinParticles.CheckEngine.Portal.Admin.IsFrontDesk")</label>
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--primary" data-ce-admin-seed-technician>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedTechnician")</button>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.OperationCode")</label>
+                        <input class="ce-mp-input ce-code" data-ce-admin-labour-code placeholder="OIL" />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.HourlyRate")</label>
+                        <input class="ce-mp-input" type="number" min="0" step="0.01" data-ce-admin-labour-rate />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-seed-labour-rate>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedLabourRate")</button>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.MinQuantity")</label>
+                        <input class="ce-mp-input" type="number" min="2" data-ce-admin-tier-qty value="10" />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DiscountPercent")</label>
+                        <input class="ce-mp-input" type="number" min="0" max="100" step="0.1" data-ce-admin-tier-discount value="5" />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-seed-price-tier>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedPriceTier")</button>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.TierCode")</label>
+                        <input class="ce-mp-input ce-code" data-ce-admin-account-tier-code placeholder="GOLD" />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DiscountPercent")</label>
+                        <input class="ce-mp-input" type="number" min="0" max="100" step="0.1" data-ce-admin-account-tier-discount value="10" />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-seed-account-tier>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedAccountTier")</button>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.FleetAccountId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-fleet-account />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.ApproverCustomerId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-fleet-approver-customer />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-seed-fleet-approver>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedFleetApprover")</button>
+                </div>
+                <div class="ce-mp-toolbar">
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.DealerAccountId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="1" data-ce-admin-territory-account />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.MarketId")</label>
+                        <input class="ce-mp-input ce-code" type="number" min="0" data-ce-admin-territory-market />
+                    </div>
+                    <div class="ce-mp-field">
+                        <label>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.RegionCode")</label>
+                        <input class="ce-mp-input ce-code" data-ce-admin-territory-region />
+                    </div>
+                    <button type="button" class="ce-btn ce-btn--ghost" data-ce-admin-seed-territory>@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.SeedTerritory")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

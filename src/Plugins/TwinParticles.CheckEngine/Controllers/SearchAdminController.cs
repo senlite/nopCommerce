@@ -11,6 +11,7 @@ using TwinParticles.CheckEngine.Application.Search;
 using TwinParticles.CheckEngine.Configuration;
 using TwinParticles.CheckEngine.Domain.Security;
 using TwinParticles.CheckEngine.Domain.Search;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -71,6 +72,8 @@ public sealed class SearchAdminController : BasePluginController
     public async Task<IActionResult> Status(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("SearchAdmin", "Index");
 
         var keywordState = await _indexStateReader.GetStateAsync(cancellationToken);
         var embeddings = new List<object>();
@@ -180,6 +183,8 @@ public sealed class SearchAdminController : BasePluginController
     public async Task<IActionResult> Analytics(int days = 30, CancellationToken cancellationToken = default)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("SearchAdmin", "Index");
         return Json(await _analyticsService.GetSummaryAsync(days, cancellationToken));
     }
 
@@ -195,6 +200,8 @@ public sealed class SearchAdminController : BasePluginController
     public async Task<IActionResult> SynonymsData(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("SearchAdmin", "Index");
 
         var settings = await _settingService.LoadSettingAsync<CheckEnginePluginSettings>();
         var overrides = SearchSynonymOverridesJson.Parse(settings.SearchSynonymOverridesJson);

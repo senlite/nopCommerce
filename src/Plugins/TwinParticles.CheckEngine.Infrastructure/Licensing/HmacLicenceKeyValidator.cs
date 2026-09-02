@@ -78,10 +78,22 @@ public sealed class HmacLicenceKeyValidator : ILicenceKeyValidator
                 tier = LicenceTierEntitlements.ParseTier(tierElement.GetString());
 
             var marketplace = LicenceTierEntitlements.GrantsMarketplace(tier);
-            if (TryReadMarketplaceFlag(document.RootElement, out var explicitMarketplace))
+            if (TryReadBoolFlag(document.RootElement, "marketplace", "MarketplaceModuleEntitlement", out var explicitMarketplace))
                 marketplace = explicitMarketplace;
 
-            return Valid(expiresUtc, tier, marketplace);
+            var workshop = LicenceTierEntitlements.GrantsWorkshopPortal(tier);
+            if (TryReadBoolFlag(document.RootElement, "workshop", "WorkshopPortalEntitlement", out var explicitWorkshop))
+                workshop = explicitWorkshop;
+
+            var fleet = LicenceTierEntitlements.GrantsFleetPortal(tier);
+            if (TryReadBoolFlag(document.RootElement, "fleet", "FleetPortalEntitlement", out var explicitFleet))
+                fleet = explicitFleet;
+
+            var dealer = LicenceTierEntitlements.GrantsDealerPortal(tier);
+            if (TryReadBoolFlag(document.RootElement, "dealer", "DealerPortalEntitlement", out var explicitDealer))
+                dealer = explicitDealer;
+
+            return Valid(expiresUtc, tier, marketplace, workshop, fleet, dealer);
         }
         catch
         {
@@ -89,42 +101,51 @@ public sealed class HmacLicenceKeyValidator : ILicenceKeyValidator
         }
     }
 
-    private static bool TryReadMarketplaceFlag(JsonElement root, out bool marketplace)
+    private static bool TryReadBoolFlag(JsonElement root, string shortName, string longName, out bool value)
     {
-        foreach (var name in new[] { "marketplace", "MarketplaceModuleEntitlement" })
+        foreach (var name in new[] { shortName, longName })
         {
             if (!root.TryGetProperty(name, out var element))
                 continue;
 
             if (element.ValueKind == JsonValueKind.True)
             {
-                marketplace = true;
+                value = true;
                 return true;
             }
 
             if (element.ValueKind == JsonValueKind.False)
             {
-                marketplace = false;
+                value = false;
                 return true;
             }
 
             if (element.ValueKind == JsonValueKind.String && bool.TryParse(element.GetString(), out var parsed))
             {
-                marketplace = parsed;
+                value = parsed;
                 return true;
             }
         }
 
-        marketplace = false;
+        value = false;
         return false;
     }
 
-    private static LicenceKeyValidationResult Valid(DateTimeOffset? expiresUtc, LicenceTier tier = LicenceTier.Unknown, bool marketplace = false) => new()
+    private static LicenceKeyValidationResult Valid(
+        DateTimeOffset? expiresUtc,
+        LicenceTier tier = LicenceTier.Unknown,
+        bool marketplace = false,
+        bool workshop = false,
+        bool fleet = false,
+        bool dealer = false) => new()
     {
         IsValid = true,
         ExpiresUtc = expiresUtc,
         Tier = tier,
-        MarketplaceModuleEntitlement = marketplace
+        MarketplaceModuleEntitlement = marketplace,
+        WorkshopPortalEntitlement = workshop,
+        FleetPortalEntitlement = fleet,
+        DealerPortalEntitlement = dealer
     };
 
     private static LicenceKeyValidationResult Invalid(string reasonCode) => new()

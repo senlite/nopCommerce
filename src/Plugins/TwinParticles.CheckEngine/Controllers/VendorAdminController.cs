@@ -7,6 +7,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Domain.Marketplace;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -65,6 +66,9 @@ public sealed class VendorAdminController : BasePluginController
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "ReviewBoard");
+
         return Json(await _onboardingService.GetReviewQueueAsync(cancellationToken));
     }
 
@@ -77,6 +81,9 @@ public sealed class VendorAdminController : BasePluginController
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
         var snapshot = await _onboardingService.GetSnapshotAsync(vendorId, cancellationToken);
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "ReviewBoard");
+
         return snapshot is null ? NotFound() : Json(snapshot);
     }
 
@@ -117,13 +124,14 @@ public sealed class VendorAdminController : BasePluginController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Scoreboard(CancellationToken cancellationToken)
+    public async Task<IActionResult> Scoreboard(int? orderId, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync())
             return AccessDeniedView();
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return AccessDeniedView();
 
+        ViewBag.OrderId = orderId;
         return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/VendorScoreboard.cshtml");
     }
 
@@ -135,6 +143,9 @@ public sealed class VendorAdminController : BasePluginController
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "Scoreboard");
+
         return Json(await _dashboardService.ListOperatorScorecardsAsync(VendorActor.OperatorAdmin, cancellationToken));
     }
 
@@ -145,6 +156,9 @@ public sealed class VendorAdminController : BasePluginController
             return AccessDeniedView();
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("VendorAdmin", "Scoreboard", $"orderId={orderId}");
 
         var group = await _splitService.GetCheckoutGroupAsync(orderId, cancellationToken);
         if (group is null)

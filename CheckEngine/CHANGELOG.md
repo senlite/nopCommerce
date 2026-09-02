@@ -42,6 +42,53 @@ Documentation work in progress. Phases are defined in [ROADMAP.md](ROADMAP.md#do
 
 ### Added
 
+- **Documentation — User Guide screenshots (`0.97.1`):** live captures of the Check
+  Engine theme home, mobile rail, search dropdown, garage sheet, category, login,
+  PDP fitment band, admin plugins/widgets/configure/dashboard, and health JSON in
+  [USER-GUIDE.md](USER-GUIDE.md). Guide metadata updated to nopCommerce 4.90.6 /
+  .NET 9 / plugin `0.97.0`.
+- **Software — plugin `0.97.1`:** theme `_ViewImports.cshtml` injects `INopUrlHelper`
+  so Check Engine Razor overrides compile with the host.
+- **Software — plugin `0.97.0` Check Engine theme finished (UX.9):** header has no
+  host search box; topic, register, password recovery, manufacturer/vendor lists, and
+  checkout completed use theme templates; vehicle/part landings use a first-viewport
+  hero and locale strings (`FR-430`, `FR-431`, `FR-930`); sticky rail settle and garage
+  chip switch motions ship with `prefers-reduced-motion`; display fonts are preloaded.
+  Lighthouse CWV stays on G6 (`AC-21.3`).
+- **Software — plugin `0.96.0` Check Engine theme complete (UX.9):** manufacturer,
+  vendor, wishlist, login, one-page checkout and confirm templates; product tiles
+  carry the aftermarket label; host main menu is removed so mega + rail are the
+  navigation; home hero is first-viewport only (`AC-21.5`). Lighthouse CWV stays
+  on G6 (`AC-21.3`).
+- **Software — plugin `0.95.0` self-hosted fonts (UX.9):** Outfit and IBM Plex
+  Sans / Sans Arabic / Mono ship as woff2 under `Content/fonts`. Storefront
+  chrome, theme head, portals, and marketplace no longer call
+  `fonts.googleapis.com`. Lighthouse CWV evidence still open.
+- **Software — plugin `0.94.0` / theme templates (UX.9):** Check Engine theme
+  overrides category, catalog search, simple and grouped PDP, and cart. Fitment
+  band renders inside the buy box; aftermarket label on PDP (`FR-904`). Storefront
+  chrome no longer loads Google Fonts CDN (LCP). CWV evidence still open.
+- **Software — plugin `0.93.0` / theme `CheckEngine` (UX.9 partial):** nopCommerce
+  theme package at `src/Presentation/Nop.Web/Themes/CheckEngine`. Dark graphite
+  shell over DefaultClean structure, Check Engine wordmark, homepage drops
+  Welcome-to-our-store / news / polls, plugin activates the theme when the store
+  is still on DefaultClean, footer affiliation disclaimer (`FR-901`). Category,
+  PDP buy-box, and cart still use DefaultClean layout under the overlay.
+- **Software — plugin `0.92.0` Figma UX.1–UX.8:** garage sheet replaces
+  `window.prompt` VIN add; chip opens the sheet with real `aria-controls` /
+  `aria-expanded`; rail masks VIN to last 4 (`FR-213`); in-sheet remove confirm
+  (`AC-23.3` / `FR-714`); plugin CSS hides host DefaultClean search when
+  `.ce-rail` is present; “Include unverified fit” moves under More filters;
+  admin Order Inspector deep-links to `#ce-order-inspector`; uninstall card
+  sits below portals; `--ce-radius-pill` token and mega `--ce-shadow-raised`.
+  Full theme package (UX.9) and host Arabic keys (UX.10) are not in this slice.
+- **Documentation — Figma-style UI/UX review:**
+  [08 Figma-style UI/UX review](docs/implementation/08-figma-ui-ux-review.md)
+  scores the in-tree plugin chrome and DefaultClean host against docs 21–23.
+  Top gaps at review time: no Check Engine theme package, dual search,
+  `window.prompt` VIN add, false `aria-haspopup="dialog"`, full VIN in the
+  selector, Arabic host raw keys. Figma MCP was unauthenticated in the review
+  environment. Review was of plugin `0.91.0`; UX.1–UX.8 ship in `0.92.0`.
 - **Software — EXECUTION-PLAN Tracks 0–7 complete (engineering):**
   - Deterministic build scripts (`CheckEngine/scripts/build-checkengine.sh|.ps1`) and CI wiring
   - SQL product search, storefront widgets (search/fitment/garage), admin dashboard

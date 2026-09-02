@@ -1,0 +1,39 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.DiagnosticsAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="diagnostics-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.Loading").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.LoadFailed").Text,
+            statDatabase = T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.Stat.Database").Text,
+            statSearch = T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.Stat.Search").Text,
+            statErp = T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.Stat.Erp").Text,
+            statLicence = T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.Stat.Licence").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.Health")</h3>
+                <button type="button" class="btn btn-sm btn-secondary float-right" data-ce-diagnostics-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.Refresh")</button>
+            </div>
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin.Hint")</p>
+                <div class="ce-mp-stat-grid" data-ce-diagnostics-stats></div>
+            </div>
+        </div>
+        @await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_LicencePanel.cshtml")
+    </div>
+</section>

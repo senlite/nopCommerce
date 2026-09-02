@@ -2,7 +2,7 @@
 
 **Purpose:** Single source of truth for implementation progress and remaining work.
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-09-02
 
 ## Status legend
 - `pending` = not started
@@ -130,7 +130,7 @@ and the code as of 2026-08-12.
 | 1 | `EP-02`–`EP-16` partial; `EP-17` pending |
 | 2 | `EP-18`–`EP-21` partial |
 | 3 | `EP-22`–`EP-24` pending |
-| 4 | `EP-25`–`EP-27` pending |
+| 4 | `EP-25`–`EP-27` partial |
 | 5 | `EP-28` pending |
 | **Total** | **1 done, 19 partial, 8 pending** |
 
@@ -266,9 +266,9 @@ These are deliberately future-horizon items, not current Horizon 1 defects.
 
 | ID | Task | Status |
 |---|---|---|
-| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | pending |
-| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | pending |
-| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | pending |
+| H4.1 | Workshop portal: jobs, labour, trade pricing and parts allocation | done | Export, credit statements, technician scoping, labour rates, quantity + account tiers (FR-1021), operator credit override; plugin 0.73.0 |
+| H4.2 | Fleet portal: bulk vehicles, maintenance forecast, approvals and cost reporting | done | Fleet member portal access, import batches; plugin 0.72.0 |
+| H4.3 | Dealer portal: franchise catalogs, quotas, dealer pricing and warranty claims | done | Order vehicle config for territory/fitment; portal-specific operator permissions; plugin 0.69.0 |
 
 ### Horizon 5 — Platform / v2.0 (`EP-28`)
 
@@ -310,6 +310,24 @@ The following are **not missing implementation** and must not be counted as defe
 | G11 | Commercial packaging and production licence authority | pending |
 | G12 | nopCommerce Marketplace submission | pending |
 
+## UX review implementation (2026-09-02)
+
+Source: [08 Figma-style UI/UX review](docs/implementation/08-figma-ui-ux-review.md). Plugin-only;
+do not edit the nopCommerce host. The Check Engine theme package is shipped (`0.93.0`–`0.97.0`).
+
+| ID | Task | Status | Notes |
+|---|---|---|---|
+| UX.1 | Replace `window.prompt` VIN add with a garage sheet | done | `0.92.0` modal: VIN field, last-4 preview, Cancel / Add |
+| UX.2 | One vehicle control: chip opens the sheet; hide the rail `<select>` | done | Real `aria-haspopup` / `aria-controls` / `aria-expanded` |
+| UX.3 | Mask VIN in chrome (last 4 or vehicle label, never 17 chars) | done | `FR-213` |
+| UX.4 | Confirm before clear/remove (`AC-23.3` / `FR-714`) | done | In-sheet confirm, not `window.confirm` |
+| UX.5 | Hide host DefaultClean search when CE rail is present | done | Plugin CSS `:has(.ce-rail)` — not a host edit |
+| UX.6 | Progressive disclosure for “Include unverified fit” | done | `details` / More filters |
+| UX.7 | Admin: Order Inspector deep-link; uninstall off the dashboard hero | done | `#ce-order-inspector` |
+| UX.8 | Token `--ce-radius-pill` + mega uses `--ce-shadow-raised` | done | Spec [22] |
+| UX.9 | Full Check Engine theme package (dark shell, not DefaultClean) | done | `0.97.0` header without host search, topic/register/recovery, manufacturer/vendor lists, checkout completed, vehicle landing hero, rail/chip motion, font preload. Lighthouse CWV remains G6 / `AC-21.3` |
+| UX.10 | Host Arabic header raw keys (`ACCOUNT.LOGIN`, `SEARCH.BUTTON`) | blocked | Host language pack; plugin must not patch `Nop.Web` |
+
 ## Immediate next actions
 
 Work follows dependency order rather than skipping to later roadmap features. Remaining Horizon 1
@@ -317,12 +335,14 @@ items fall into two classes:
 
 **Autonomously completable (code + local/live verification):**
 
-All H1 code items are now `done` except **H1.35** (external security assessment). Operator-run
-evidence (live SQL import rehearsal, Lighthouse CWV JSON, ERP field-mapping sign-off) is documented
-in the scripts above but does not block closing the implementation gap.
+UX.1–UX.9 shipped through plugin `0.97.0`. The Check Engine theme covers home, catalog,
+PDP, cart, wishlist, manufacturer, vendor, login, register, topic, checkout, and vehicle
+landing. Lighthouse CWV (`AC-21.3`, `NFR-054`) remains **G6**, not a UX.9 code gap.
+Remaining H1 code item is **H1.35**.
 
 **Blocked on external authorities (cannot be closed by code alone):**
 
 - H1.35 / G8 security assessment sign-off; G11 production licence vendor signing key; G7
   product-owner sign-off; G12 Marketplace submission.
 - H1.6 / H1.7 further BMW VDS→generation patterns beyond the curated NHTSA/Check Engine corpus (must not be fabricated for a safety-relevant decode).
+- UX.10 host Arabic locale pack.

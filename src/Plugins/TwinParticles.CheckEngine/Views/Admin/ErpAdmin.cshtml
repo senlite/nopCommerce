@@ -1,0 +1,70 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.ErpAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Erp.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Erp.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="erp-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            reconciling = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Reconciling").Text,
+            reconcileComplete = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.ReconcileComplete").Text,
+            reconcileFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.ReconcileFailed").Text,
+            processed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Processed").Text,
+            processFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.ProcessFailed").Text,
+            snapshotLoading = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.SnapshotLoading").Text,
+            snapshotLoaded = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.SnapshotLoaded").Text,
+            snapshotFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.SnapshotFailed").Text,
+            emptyVariances = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.EmptyVariances").Text,
+            emptyIssues = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.EmptyIssues").Text,
+            statTotalJobs = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.TotalJobs").Text,
+            statSuccessful = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Successful").Text,
+            statFailed = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Failed").Text,
+            statDiscrepancy = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Discrepancy").Text,
+            statGenerated = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Generated").Text,
+            statWarehouse = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Warehouse").Text,
+            statItems = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Items").Text,
+            statPayload = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Stat.Payload").Text,
+            payloadStructured = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Payload.Structured").Text,
+            issueLocalUnavailable = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Issue.LocalUnavailable").Text,
+            issueErpUnavailable = T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Issue.ErpUnavailable").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Hint")</p>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" data-ce-erp-reconcile>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Reconcile")</button>
+                    <button type="button" class="btn btn-secondary" data-ce-erp-process>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.ProcessQueue")</button>
+                    <button type="button" class="btn btn-secondary" data-ce-erp-snapshot>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.InventorySnapshot")</button>
+                </div>
+                <div class="ce-mp-stat-grid" data-ce-erp-stats></div>
+                <div class="ce-mp-stat-grid mt-3" data-ce-erp-snapshot-stats></div>
+                <div class="ce-mp-table-wrap mt-3">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Col.Metric")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Col.Local")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Col.Erp")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Col.Variance")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Erp.Admin.Col.Ok")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-erp-variances></tbody>
+                    </table>
+                </div>
+                <ul class="mt-3" data-ce-erp-issues></ul>
+            </div>
+        </div>
+    </div>
+</section>

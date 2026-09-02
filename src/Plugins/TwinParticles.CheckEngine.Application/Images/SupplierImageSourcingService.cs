@@ -39,10 +39,11 @@ public sealed class SupplierImageSourcingService
     public async Task<BatchImageReplacementResult> ReplaceFromUrlTemplateAsync(
         IReadOnlyList<string> skus,
         string actor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? urlTemplateOverride = null)
     {
-        var template = _settings.Images.SupplierImageUrlTemplate?.Trim();
-        if (string.IsNullOrWhiteSpace(template))
+        var template = ResolveUrlTemplate(urlTemplateOverride, _settings.Images.SupplierImageUrlTemplate);
+        if (template is null)
         {
             return new BatchImageReplacementResult
             {
@@ -58,18 +59,32 @@ public sealed class SupplierImageSourcingService
             };
         }
 
-        var items = skus
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Select(sku => new BatchImageReplacementItem
+        return await _batchService.ReplaceBySkuAsync(ExpandUrlTemplate(template, skus), actor, cancellationToken);
+    }
+
+    public static string? ResolveUrlTemplate(string? overrideTemplate, string? configuredTemplate)
+    {
+        if (!string.IsNullOrWhiteSpace(overrideTemplate))
+            return overrideTemplate.Trim();
+        if (!string.IsNullOrWhiteSpace(configuredTemplate))
+            return configuredTemplate.Trim();
+        return null;
+    }
+
+    public static IReadOnlyList<BatchImageReplacementItem> ExpandUrlTemplate(string template, IReadOnlyList<string> skus)
+        => skus
+            .Where(sku => !string.IsNullOrWhiteSpace(sku))
+            .Select(sku =>
             {
-                Sku = sku.Trim(),
-                SourceUrl = template.Replace("{sku}", sku.Trim(), StringComparison.OrdinalIgnoreCase),
-                SeoName = sku.Trim()
+                var trimmed = sku.Trim();
+                return new BatchImageReplacementItem
+                {
+                    Sku = trimmed,
+                    SourceUrl = template.Replace("{sku}", trimmed, StringComparison.OrdinalIgnoreCase),
+                    SeoName = trimmed
+                };
             })
             .ToList();
-
-        return await _batchService.ReplaceBySkuAsync(items, actor, cancellationToken);
-    }
 
     public static IReadOnlyList<BatchImageReplacementItem> ParseManifestCsv(string csvContent)
     {

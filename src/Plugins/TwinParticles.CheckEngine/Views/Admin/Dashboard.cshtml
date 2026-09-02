@@ -1,8 +1,9 @@
 @{
     Layout = "_AdminLayout";
-    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.Dashboard");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Dashboard").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">
@@ -16,36 +17,83 @@
 <section class="content">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
-        @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
 
-        <div class="card card-default">
-            <div class="card-header">
-                <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.AdminLinks")</h3>
+        <div class="row ce-marketplace-admin">
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Catalog")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/VehicleAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/OemAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Oem.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/FitmentAdmin/ClaimsReview">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview")</a></li>
+                            <li><a href="/Admin/CheckEngine/ImportAdmin/BatchBoard">@T("Plugins.TwinParticles.CheckEngine.Import.Batch")</a></li>
+                            <li><a href="/Admin/CheckEngine/ImageAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Image.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/ReferenceDataAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin")</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li><a href="/Admin/CheckEngine/VehicleAdmin/Makes">Vehicle Admin (JSON)</a></li>
-                    <li><a href="/Admin/CheckEngine/OemAdmin/Manufacturers">OEM Admin (JSON)</a></li>
-                    <li><a href="/Admin/CheckEngine/FitmentAdmin/Queue">Fitment Admin Queue (JSON)</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/Dashboard">AI usage dashboard</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/ReviewBoard">AI Content Review</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/GlossaryBoard">Automotive glossary</a></li>
-                    <li><a href="/Admin/CheckEngine/AiAdmin/SpecKeysBoard">Specification keys</a></li>
-                    <li><a href="/Admin/CheckEngine/FitmentAdmin/ReviewBoard">AI Fitment Review</a></li>
-                    <li><a href="/Admin/CheckEngine/ImportAdmin/Batch">Import Admin Batch (JSON)</a></li>
-                    <li><a href="/Admin/CheckEngine/SearchAdmin/Index">Search admin</a></li>
-                    <li><a href="/Admin/CheckEngine/GarageAdmin/CustomerGarage">Garage Admin</a></li>
-                    <li><a href="/Admin/CheckEngine/ErpAdmin/Reconcile">ERP Admin Reconcile</a></li>
-                    <li><a href="/Admin/CheckEngine/SeoAdmin/Sitemap">SEO Admin Sitemap</a></li>
-                    <li><a href="/Admin/CheckEngine/VendorAdmin/ReviewBoard">Vendor onboarding review</a></li>
-                    <li><a href="/Admin/CheckEngine/VendorAdmin/Scoreboard">Vendor scoreboard</a></li>
-                    <li><a href="/Admin/CheckEngine/CommissionAdmin/Configure?vendorId=1">Commission plan (vendor 1)</a></li>
-                    <li><a href="/Admin/CheckEngine/PayoutAdmin/Index">Payout statements</a></li>
-                    <li><a href="/check-engine/vendor/dashboard">Vendor dashboard</a></li>
-                    <li><a href="/check-engine/vendor/catalog">Vendor catalog (JSON)</a></li>
-                </ul>
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Intelligence")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/SearchAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Search.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/SeoAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Seo.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/Dashboard">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/ReviewBoard">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/GlossaryBoard">@T("Plugins.TwinParticles.CheckEngine.Glossary.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/AiAdmin/SpecKeysBoard">@T("Plugins.TwinParticles.CheckEngine.SpecKeys.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/FitmentAdmin/ReviewBoard">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment")</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Operations")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/GarageAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Garage.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/ErpAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Erp.Admin")</a></li>
+                            <li><a href="/Admin/CheckEngine/DiagnosticsAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Diagnostics.Admin")</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Marketplace")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/VendorAdmin/ReviewBoard">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Review")</a></li>
+                            <li><a href="/Admin/CheckEngine/VendorAdmin/Scoreboard">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Scoreboard")</a></li>
+                            <li><a href="/Admin/CheckEngine/VendorAdmin/Scoreboard#ce-order-inspector">@T("Plugins.TwinParticles.CheckEngine.Marketplace.OrderInspector")</a></li>
+                            <li><a href="/Admin/CheckEngine/CommissionAdmin/Configure?vendorId=1">@T("Plugins.TwinParticles.CheckEngine.Commission.Configure")</a></li>
+                            <li><a href="/Admin/CheckEngine/PayoutAdmin/Index">@T("Plugins.TwinParticles.CheckEngine.Payout.Admin")</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="card card-default">
+                    <div class="card-header"><h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Dashboard.Group.Portals")</h3></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="/Admin/CheckEngine/PortalAdmin/Accounts">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</a></li>
+                            <li><a href="/check-engine/vendor/dashboard">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Dashboard")</a></li>
+                            <li><a href="/check-engine/vendor/dashboard?tab=catalog">@T("Plugins.TwinParticles.CheckEngine.Marketplace.Inventory")</a></li>
+                            <li><a href="/check-engine/workshop">@T("Plugins.TwinParticles.CheckEngine.Workshop.Title")</a></li>
+                            <li><a href="/check-engine/fleet">@T("Plugins.TwinParticles.CheckEngine.Fleet.Title")</a></li>
+                            <li><a href="/check-engine/dealer">@T("Plugins.TwinParticles.CheckEngine.Dealer.Title")</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
+
+        @await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_LicencePanel.cshtml")
 
         <div class="card card-default">
             <div class="card-header">
@@ -54,26 +102,39 @@
             <div class="card-body">
                 <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Hint")</p>
                 <div class="form-group">
-                    <label for="ce-import-file">CSV / Excel / PDF file</label>
+                    <label for="ce-import-file">@T("Plugins.TwinParticles.CheckEngine.Import.Batch.File")</label>
                     <input id="ce-import-file" type="file" class="form-control" accept=".csv,.xlsx,.xls,.pdf,text/csv,application/pdf" />
                 </div>
                 <div class="form-group">
-                    <label for="ce-import-format">Format</label>
+                    <label for="ce-import-format">@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Format")</label>
                     <select id="ce-import-format" class="form-control">
-                        <option value="0">Csv</option>
-                        <option value="1">Excel</option>
-                        <option value="2">Pdf</option>
+                        <option value="1">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Csv")</option>
+                        <option value="2">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Excel")</option>
+                        <option value="3">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Format.Pdf")</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>
-                        <input id="ce-import-dry-run" type="checkbox" checked="checked" /> Dry run
+                        <input id="ce-import-dry-run" type="checkbox" checked="checked" /> @T("Plugins.TwinParticles.CheckEngine.Import.Batch.PublishDryRun")
                     </label>
                 </div>
-                <button id="ce-import-submit" type="button" class="btn btn-primary">Upload &amp; Run Import</button>
-                <pre id="ce-import-result" class="mt-3" style="white-space: pre-wrap;"></pre>
+                <button id="ce-import-submit" type="button" class="btn btn-primary">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Submit")</button>
+                <div id="ce-import-result" class="mt-3" hidden>
+                    <div class="alert alert-info mb-2" id="ce-import-result-msg" role="status"></div>
+                    <table class="table table-bordered table-sm" id="ce-import-result-table" hidden>
+                        <tbody>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Import.Batch.Id")</th><td id="ce-import-result-batch"></td></tr>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.Status")</th><td id="ce-import-result-status"></td></tr>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.TotalRows")</th><td id="ce-import-result-total"></td></tr>
+                            <tr><th>@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.ReviewRows")</th><td id="ce-import-result-review"></td></tr>
+                        </tbody>
+                    </table>
+                    <a id="ce-import-result-link" class="btn btn-secondary" hidden href="#">@T("Plugins.TwinParticles.CheckEngine.Dashboard.ImportUpload.OpenBatch")</a>
+                </div>
             </div>
         </div>
+
+        @await Component.InvokeAsync(typeof(TwinParticles.CheckEngine.Components.UninstallPreparationViewComponent))
     </div>
 </section>
 
@@ -84,7 +145,35 @@
   var formatSelect = document.getElementById('ce-import-format');
   var dryRun = document.getElementById('ce-import-dry-run');
   var result = document.getElementById('ce-import-result');
+  var msg = document.getElementById('ce-import-result-msg');
+  var table = document.getElementById('ce-import-result-table');
+  var link = document.getElementById('ce-import-result-link');
   var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+
+  function pick(obj, camel, pascal) {
+    if (!obj) return undefined;
+    if (obj[camel] !== undefined) return obj[camel];
+    if (obj[pascal] !== undefined) return obj[pascal];
+    return undefined;
+  }
+
+  function showImport(kind, message, data) {
+    result.hidden = false;
+    msg.className = 'alert alert-' + (kind === 'error' ? 'danger' : kind === 'success' ? 'success' : 'info') + ' mb-2';
+    msg.textContent = message;
+    var batchId = data ? pick(data, 'batchId', 'BatchId') : null;
+    table.hidden = !data;
+    link.hidden = !batchId;
+    if (data) {
+      document.getElementById('ce-import-result-batch').textContent = batchId || '—';
+      document.getElementById('ce-import-result-status').textContent = pick(data, 'status', 'Status') || '—';
+      document.getElementById('ce-import-result-total').textContent = String(pick(data, 'totalRows', 'TotalRows') ?? '—');
+      document.getElementById('ce-import-result-review').textContent = String(pick(data, 'reviewRows', 'ReviewRows') ?? '—');
+    }
+    if (batchId) {
+      link.href = '/Admin/CheckEngine/ImportAdmin/BatchBoard?batchId=' + encodeURIComponent(batchId);
+    }
+  }
 
   function toBase64(file) {
     return new Promise(function (resolve, reject) {
@@ -99,17 +188,25 @@
     });
   }
 
+  function importError(body, fallback) {
+    var code = body && (body.reasonCode || body.errorCode);
+    if (code === 'licence.read_only')
+      return 'Check Engine is in licence read-only mode. Activate a licence on the dashboard to make changes.';
+    return code || fallback;
+  }
+
   submit.addEventListener('click', function () {
     var file = fileInput.files && fileInput.files[0];
     if (!file) {
-      result.textContent = 'Choose a file first.';
+      showImport('error', 'Choose a file first.');
       return;
     }
-    result.textContent = 'Uploading…';
+    showImport('info', 'Uploading…');
     toBase64(file).then(function (base64) {
       var headers = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
       };
       if (tokenInput && tokenInput.value) {
         headers['RequestVerificationToken'] = tokenInput.value;
@@ -125,11 +222,17 @@
         })
       });
     }).then(function (response) {
-      return response.text().then(function (text) {
-        result.textContent = response.status + ' ' + response.statusText + '\n' + text;
+      return response.json().then(function (body) {
+        if (!response.ok) {
+          showImport('error', importError(body, response.status + ' ' + response.statusText));
+          return;
+        }
+        showImport('success', 'Import pipeline started.', body);
+      }).catch(function () {
+        showImport('error', response.status + ' ' + response.statusText);
       });
     }).catch(function (err) {
-      result.textContent = 'Import failed: ' + (err && err.message ? err.message : err);
+      showImport('error', 'Import failed: ' + (err && err.message ? err.message : err));
     });
   });
 })();

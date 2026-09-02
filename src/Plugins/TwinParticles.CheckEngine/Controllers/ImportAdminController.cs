@@ -6,6 +6,7 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.ImportPipeline.Orchestration;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -26,6 +27,21 @@ public sealed class ImportAdminController : BasePluginController
     }
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
+
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return CheckEnginePaths.RedirectAdmin("ImportAdmin", "BatchBoard");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> BatchBoard(Guid? batchId, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        ViewBag.BatchId = batchId;
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/ImportBatch.cshtml");
+    }
 
     [HttpPost]
     public async Task<IActionResult> Run([FromBody] ImportAdminRunRequestModel model, CancellationToken cancellationToken)
@@ -55,6 +71,8 @@ public sealed class ImportAdminController : BasePluginController
     public async Task<IActionResult> Batch(Guid batchId, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("ImportAdmin", "BatchBoard", $"batchId={batchId}");
 
         var batch = await _orchestrator.GetBatchAsync(batchId, cancellationToken);
         if (batch is null)

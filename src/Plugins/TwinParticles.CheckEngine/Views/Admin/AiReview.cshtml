@@ -1,8 +1,9 @@
 @{
     Layout = "_AdminLayout";
-    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine");
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.AiReview");
     ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Ai.Review").Text;
 }
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
 
 <div class="content-header clearfix">
     <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Ai.Review")</h1>
@@ -14,17 +15,35 @@
     </div>
 </div>
 
-<section class="content">
+<section class="content ce-marketplace-admin">
     <div class="container-fluid">
         @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            approve = T("Plugins.TwinParticles.CheckEngine.Common.Action.Approve").Text,
+            reject = T("Plugins.TwinParticles.CheckEngine.Common.Action.Reject").Text,
+            disclosureAck = T("Plugins.TwinParticles.CheckEngine.Ai.Review.DisclosureAck").Text,
+            disclosurePending = T("Plugins.TwinParticles.CheckEngine.Ai.Review.DisclosurePending").Text,
+            globalToday = T("Plugins.TwinParticles.CheckEngine.Ai.Review.GlobalToday").Text,
+            emptyFitment = T("Plugins.TwinParticles.CheckEngine.Ai.Review.EmptyFitment").Text,
+            approved = T("Plugins.TwinParticles.CheckEngine.Ai.Review.Approved").Text,
+            rejected = T("Plugins.TwinParticles.CheckEngine.Ai.Review.Rejected").Text,
+            blocked = T("Plugins.TwinParticles.CheckEngine.Ai.Review.Blocked").Text,
+            ackFailed = T("Plugins.TwinParticles.CheckEngine.Ai.Review.AckFailed").Text,
+            blockGlossary = T("Plugins.TwinParticles.CheckEngine.Ai.Review.Block.Glossary").Text,
+            blockSpecKeys = T("Plugins.TwinParticles.CheckEngine.Ai.Review.Block.SpecKeys").Text,
+            blockQuality = T("Plugins.TwinParticles.CheckEngine.Ai.Review.Block.Quality").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
 
         <div class="card card-default">
             <div class="card-header">
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</h3>
             </div>
             <div class="card-body">
-                <pre id="ce-ai-dashboard" style="white-space: pre-wrap;">Loading…</pre>
+                <p id="ce-ai-dashboard" class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Common.Loading")</p>
                 <button id="ce-ai-ack-disclosure" type="button" class="btn btn-warning">@T("Plugins.TwinParticles.CheckEngine.Ai.AcknowledgeDisclosure")</button>
+                <a class="btn btn-info" href="@Url.Action("Dashboard", "AiAdmin")">@T("Plugins.TwinParticles.CheckEngine.Ai.Dashboard")</a>
             </div>
         </div>
 
@@ -38,13 +57,13 @@
                     <table class="table table-bordered table-striped" id="ce-ai-table">
                         <thead>
                             <tr>
-                                <th>Id</th>
-                                <th>Type</th>
-                                <th>Entity</th>
-                                <th>Locale</th>
-                                <th>Feature</th>
-                                <th>Preview</th>
-                                <th>Score</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Type")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Entity")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Locale")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Feature")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Preview")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Score")</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -59,7 +78,20 @@
                 <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Ai.Review.Fitment")</h3>
             </div>
             <div class="card-body">
-                <pre id="ce-ai-fitment" style="white-space: pre-wrap;">Loading…</pre>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ce-ai-fitment-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview.Col.Claim")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Product")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Configuration")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Status")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Confidence")</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -68,11 +100,31 @@
 <script>
 (function () {
   var token = document.querySelector('input[name="__RequestVerificationToken"]');
+  var i18n = (window.CheckEngineAdmin && CheckEngineAdmin.readI18n)
+    ? CheckEngineAdmin.readI18n(document)
+    : {};
+  function fmt() {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.format)
+      ? CheckEngineAdmin.format.apply(null, arguments)
+      : String(arguments[0] || '');
+  }
   function headers(json) {
     var h = { 'Accept': 'application/json' };
     if (json) h['Content-Type'] = 'application/json';
     if (token && token.value) h['RequestVerificationToken'] = token.value;
     return h;
+  }
+  function errorMessage(err, fallback) {
+    return (window.CheckEngineAdmin && CheckEngineAdmin.errorMessage)
+      ? CheckEngineAdmin.errorMessage(err, fallback)
+      : (fallback || 'Request failed.');
+  }
+  function showAlert(kind, message) {
+    var el = document.querySelector('[data-ce-admin-alert]');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+    el.className = 'ce-mp-alert ce-mp-alert--' + (kind || 'info');
   }
   function preview(text) {
     if (!text) return '';
@@ -85,9 +137,9 @@
   }
   function approveBlockReason(item) {
     var t = item.entityType;
-    if (t === 'Translation' || t === 3) return 'Glossary validation failed (qualityScore < 1)';
-    if (t === 'Specification' || t === 2) return 'Unknown specification keys (qualityScore < 1)';
-    return 'Quality score below threshold';
+    if (t === 'Translation' || t === 3) return i18n.blockGlossary || 'Glossary validation failed (qualityScore < 1)';
+    if (t === 'Specification' || t === 2) return i18n.blockSpecKeys || 'Unknown specification keys (qualityScore < 1)';
+    return i18n.blockQuality || 'Quality score below threshold';
   }
   function renderCandidates(items) {
     var tbody = document.querySelector('#ce-ai-table tbody');
@@ -104,8 +156,8 @@
         '<td><code>' + preview(item.outputText) + '</code></td>' +
         '<td>' + (item.qualityScore == null ? '' : item.qualityScore) + '</td>' +
         '<td><button type="button" class="btn btn-sm btn-primary mr-1" data-id="' + item.id + '" data-approved="true"' +
-        (blocked ? ' disabled title="' + approveBlockReason(item) + '"' : '') + '>Approve</button>' +
-        '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-approved="false">Reject</button></td>';
+        (blocked ? ' disabled title="' + approveBlockReason(item) + '"' : '') + '>' + (i18n.approve || 'Approve') + '</button>' +
+        '<button type="button" class="btn btn-sm btn-danger" data-id="' + item.id + '" data-approved="false">' + (i18n.reject || 'Reject') + '</button></td>';
       tbody.appendChild(tr);
     });
     tbody.querySelectorAll('button[data-id]').forEach(function (btn) {
@@ -117,36 +169,82 @@
   function loadDashboard() {
     fetch('/Admin/CheckEngine/AiAdmin/DashboardData', { headers: headers(false) })
       .then(function (r) { return r.json(); })
-      .then(function (data) { document.getElementById('ce-ai-dashboard').textContent = JSON.stringify(data, null, 2); });
+      .then(function (data) {
+        var el = document.getElementById('ce-ai-dashboard');
+        var disclosure = data.disclosureAcknowledged
+          ? (i18n.disclosureAck || 'Disclosure acknowledged.')
+          : (i18n.disclosurePending || 'Disclosure not acknowledged — AI features remain gated.');
+        el.textContent = disclosure + ' ' + fmt(
+          i18n.globalToday || 'Global today: {0} / {1} tokens. Pending content: {2} · Pending fitment AI: {3}.',
+          data.globalDailyUsage || 0,
+          data.globalDailyCeiling || 0,
+          data.pendingContentCount || 0,
+          data.pendingFitmentAiCount || 0);
+      });
+  }
+  function renderFitment(items) {
+    var tbody = document.querySelector('#ce-ai-fitment-table tbody');
+    tbody.innerHTML = '';
+    if (!items || !items.length) {
+      tbody.innerHTML = '<tr><td colspan="5">' + (i18n.emptyFitment || 'No pending AI fitment claims.') + '</td></tr>';
+      return;
+    }
+    items.forEach(function (item) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (item.id || item.Id || '') + '</td>' +
+        '<td>' + (item.productId || item.ProductId || '') + '</td>' +
+        '<td>' + (item.vehicleConfigurationId || item.VehicleConfigurationId || '') + '</td>' +
+        '<td>' + (item.status || item.Status || '') + '</td>' +
+        '<td>' + (item.confidence != null ? item.confidence : (item.Confidence != null ? item.Confidence : '')) + '</td>';
+      tbody.appendChild(tr);
+    });
   }
   function load() {
     fetch('/Admin/CheckEngine/AiAdmin/Queue', { headers: headers(false) })
       .then(function (r) { return r.json(); })
       .then(renderCandidates);
     fetch('/Admin/CheckEngine/FitmentAdmin/AiQueue', { headers: headers(false) })
-      .then(function (r) { return r.text(); })
-      .then(function (text) { document.getElementById('ce-ai-fitment').textContent = text; });
+      .then(function (r) { return r.json(); })
+      .then(renderFitment);
     loadDashboard();
   }
   function review(id, approved) {
     fetch('/Admin/CheckEngine/AiAdmin/Review', {
       method: 'POST',
       headers: headers(true),
+      credentials: 'same-origin',
       body: JSON.stringify({ id: id, approved: approved })
     }).then(function (r) {
-      if (!r.ok) {
-        return r.json().catch(function () { return {}; }).then(function (body) {
-          alert('Review blocked: ' + (body.reasonCode || r.statusText));
-        });
+      return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
+    }).then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, i18n.blocked || 'Review blocked.'));
+        return;
       }
-      return load();
+      showAlert('success', approved ? (i18n.approved || 'Candidate approved.') : (i18n.rejected || 'Candidate rejected.'));
+      load();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, i18n.blocked || 'Review blocked.'));
     });
   }
   document.getElementById('ce-ai-ack-disclosure').addEventListener('click', function () {
     fetch('/Admin/CheckEngine/AiAdmin/AcknowledgeDisclosure', {
       method: 'POST',
-      headers: headers(false)
-    }).then(loadDashboard);
+      headers: headers(false),
+      credentials: 'same-origin'
+    }).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, body: body }; }).catch(function () { return { ok: r.ok, body: {} }; });
+    }).then(function (res) {
+      if (!res.ok) {
+        showAlert('error', errorMessage(res.body, i18n.ackFailed || 'Acknowledgement failed.'));
+        return;
+      }
+      showAlert('success', i18n.disclosureAck || 'Disclosure acknowledged.');
+      loadDashboard();
+    }).catch(function (err) {
+      showAlert('error', errorMessage(err, i18n.ackFailed || 'Acknowledgement failed.'));
+    });
   });
   load();
 })();

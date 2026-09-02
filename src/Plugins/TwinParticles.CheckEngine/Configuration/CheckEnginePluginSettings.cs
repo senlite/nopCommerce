@@ -56,4 +56,7 @@ public sealed class CheckEnginePluginSettings : ISettings
 
     /// <summary>Current operator terms version recorded on agreement acceptance (FR-851).</summary>
     public string MarketplaceAgreementVersion { get; set; } = Domain.Marketplace.VendorAgreementVersions.Default;
+
+    /// <summary>Supplier image URL template with a {sku} placeholder (H1.24).</summary>
+    public string? SupplierImageUrlTemplate { get; set; }
 }

@@ -5,6 +5,7 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Garage;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Security;
 
 namespace TwinParticles.CheckEngine.Controllers;
@@ -26,9 +27,19 @@ public sealed class GarageAdminController : BasePluginController
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
     [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/GarageAdmin.cshtml");
+    }
+
+    [HttpGet]
     public async Task<IActionResult> CustomerGarage(int customerId, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("GarageAdmin", "Index");
 
         var garage = await _garageService.AdminViewAsync(customerId, cancellationToken);
         if (garage is null)

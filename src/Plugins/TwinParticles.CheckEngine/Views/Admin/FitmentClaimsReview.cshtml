@@ -1,0 +1,49 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.FitmentAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("ReviewBoard", "FitmentAdmin")">@T("Plugins.TwinParticles.CheckEngine.Fitment.AiReview")</a>
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="fitment-claims">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview.LoadFailed").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsQueue")</h3>
+                <button type="button" class="btn btn-sm btn-secondary float-right" data-ce-fitment-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.Refresh")</button>
+            </div>
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview.Hint")</p>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Fitment.ClaimsReview.Col.Claim")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Product")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Configuration")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Status")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Common.Col.Source")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-fitment-body></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

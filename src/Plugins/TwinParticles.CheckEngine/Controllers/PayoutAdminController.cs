@@ -7,6 +7,7 @@ using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Licensing;
 using TwinParticles.CheckEngine.Application.Marketplace;
 using TwinParticles.CheckEngine.Domain.Marketplace;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -53,6 +54,9 @@ public sealed class PayoutAdminController : BasePluginController
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
 
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("PayoutAdmin", "Index", $"vendorId={vendorId}");
+
         return Json(await _payoutService.ListAsync(vendorId, cancellationToken));
     }
 
@@ -63,6 +67,9 @@ public sealed class PayoutAdminController : BasePluginController
             return AccessDeniedView();
         if (!await _marketplaceGate.AllowsMarketplaceAsync(cancellationToken))
             return Denied(VendorErrorCodes.LicenceDenied, 403);
+
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("PayoutAdmin", "Index");
 
         var statement = await _payoutService.GetAsync(statementId, cancellationToken);
         return statement is null ? NotFound() : Json(statement);

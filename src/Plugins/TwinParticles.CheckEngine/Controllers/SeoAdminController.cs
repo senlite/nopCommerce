@@ -5,6 +5,7 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using TwinParticles.CheckEngine.Application.Seo;
+using TwinParticles.CheckEngine.Infrastructure;
 using TwinParticles.CheckEngine.Models;
 using TwinParticles.CheckEngine.Security;
 
@@ -26,13 +27,31 @@ public sealed class SeoAdminController : BasePluginController
 
     private async Task<bool> AuthorizedAsync() => await _permissionService.AuthorizeAsync(CheckEnginePermissionProvider.ManageCheckEngine.SystemName);
 
+    [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        if (!await AuthorizedAsync()) return AccessDeniedView();
+        return View("~/Plugins/TwinParticles.CheckEngine/Views/Admin/SeoAdmin.cshtml");
+    }
+
     [HttpPost]
     public async Task<IActionResult> GenerateVehicle([FromBody] SeoVehicleLandingRequestModel model, CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var result = await _service.GenerateVehicleLandingAsync(model.VehicleConfigurationId, model.Locale, cancellationToken);
-        return Json(result);
+        try
+        {
+            var result = await _service.GenerateVehicleLandingAsync(model.VehicleConfigurationId, model.Locale, cancellationToken);
+            return Json(result);
+        }
+        catch (System.Exception)
+        {
+            return Json(new TwinParticles.CheckEngine.Domain.Seo.SeoLandingGenerationResult
+            {
+                Success = false,
+                ErrorCode = "seo.generate_failed"
+            });
+        }
     }
 
     [HttpPost]
@@ -40,8 +59,19 @@ public sealed class SeoAdminController : BasePluginController
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
 
-        var result = await _service.GeneratePartForVehicleLandingAsync(model.ProductId, model.VehicleConfigurationId, model.Locale, cancellationToken);
-        return Json(result);
+        try
+        {
+            var result = await _service.GeneratePartForVehicleLandingAsync(model.ProductId, model.VehicleConfigurationId, model.Locale, cancellationToken);
+            return Json(result);
+        }
+        catch (System.Exception)
+        {
+            return Json(new TwinParticles.CheckEngine.Domain.Seo.SeoLandingGenerationResult
+            {
+                Success = false,
+                ErrorCode = "seo.generate_failed"
+            });
+        }
     }
 
     [HttpPost]
@@ -57,6 +87,8 @@ public sealed class SeoAdminController : BasePluginController
     public async Task<IActionResult> Sitemap(CancellationToken cancellationToken)
     {
         if (!await AuthorizedAsync()) return AccessDeniedView();
+        if (!Request.WantsJsonResponse())
+            return CheckEnginePaths.RedirectAdmin("SeoAdmin", "Index");
 
         var urls = await _service.GetSitemapUrlsAsync(cancellationToken);
         return Json(urls);

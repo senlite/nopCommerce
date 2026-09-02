@@ -1,0 +1,36 @@
+@{
+    NopHtml.AddHeadCustomParts("<script src=\"/Plugins/TwinParticles.CheckEngine/Content/checkengine-licence-admin.js?v=0.83.0\" defer></script>");
+}
+
+<div class="card card-default" data-ce-licence-panel>
+    <div class="card-header">
+        <h3 class="card-title">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Title")</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Hint")</p>
+        <div class="alert alert-info" data-ce-licence-alert hidden role="status"></div>
+        <p class="font-weight-bold mb-1">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Status")</p>
+        <table class="table table-bordered table-sm">
+            <tbody>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Status")</th><td data-ce-licence-state>@T("Plugins.TwinParticles.CheckEngine.Common.Loading")</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Active")</th><td data-ce-licence-active>—</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Tier")</th><td data-ce-licence-tier>—</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Marketplace")</th><td data-ce-licence-marketplace>—</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Workshop")</th><td data-ce-licence-workshop>—</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Fleet")</th><td data-ce-licence-fleet>—</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Dealer")</th><td data-ce-licence-dealer>—</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.LastHeartbeat")</th><td data-ce-licence-heartbeat>—</td></tr>
+                <tr><th>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Reason")</th><td data-ce-licence-reason>—</td></tr>
+            </tbody>
+        </table>
+        <div class="form-group">
+            <label for="ce-licence-key-input">@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Key")</label>
+            <textarea id="ce-licence-key-input" data-ce-licence-key class="form-control" rows="3" placeholder="ce-lic-v1.…"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" data-ce-licence-activate>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Activate")</button>
+        <button type="button" class="btn btn-secondary ml-2" data-ce-licence-heartbeat>@T("Plugins.TwinParticles.CheckEngine.Licence.Panel.Heartbeat")</button>
+        <p class="form-text text-muted mt-3 mb-0">
+            <a href="/Admin/CheckEngine/PortalAdmin/Accounts">@T("Plugins.TwinParticles.CheckEngine.Portal.Admin.Title")</a>
+        </p>
+    </div>
+</div>

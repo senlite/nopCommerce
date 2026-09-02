@@ -1,0 +1,67 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.VehicleAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="vehicle-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            loading = T("Plugins.TwinParticles.CheckEngine.Common.Loading").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.LoadFailed").Text,
+            seeding = T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Seeding").Text,
+            seedFailed = T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.SeedFailed").Text,
+            seedComplete = T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.SeedComplete").Text,
+            noRows = T("Plugins.TwinParticles.CheckEngine.Import.Batch.NoRows").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Hierarchy")</h3>
+                <div class="float-right">
+                    <button type="button" class="btn btn-sm btn-primary" data-ce-vehicle-seed>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Seed")</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-ce-vehicle-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.Refresh")</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Hint")</p>
+                <p class="text-muted">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Seed.Hint")</p>
+                <div class="form-group col-md-4 pl-0">
+                    <label for="ce-vehicle-level">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level")</label>
+                    <select id="ce-vehicle-level" class="form-control" data-ce-vehicle-level>
+                        <option value="Makes">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Makes")</option>
+                        <option value="Models">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Models")</option>
+                        <option value="Generations">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Generations")</option>
+                        <option value="Bodies">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Bodies")</option>
+                        <option value="Engines">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Engines")</option>
+                        <option value="Markets">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Markets")</option>
+                        <option value="Configurations">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Configurations")</option>
+                        <option value="Aliases">@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Level.Aliases")</option>
+                    </select>
+                </div>
+                <div class="ce-mp-table-wrap">
+                    <table class="ce-mp-table">
+                        <thead>
+                            <tr>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Id")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Name")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Arabic")</th>
+                                <th>@T("Plugins.TwinParticles.CheckEngine.Vehicle.Admin.Col.Active")</th>
+                            </tr>
+                        </thead>
+                        <tbody data-ce-vehicle-body></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,60 @@
+@{
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("TwinParticles.CheckEngine.ReferenceDataAdmin");
+    ViewBag.PageTitle = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin").Text;
+}
+@await Html.PartialAsync("~/Plugins/TwinParticles.CheckEngine/Views/Shared/_CheckEngineAdminAssets.cshtml")
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin")</h1>
+    <div class="float-right">
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard", "CheckEngine")">@T("Plugins.TwinParticles.CheckEngine.Dashboard")</a>
+    </div>
+</div>
+
+<section class="content ce-marketplace-admin" data-ce-page="reference-admin">
+    <div class="container-fluid">
+        @Html.AntiForgeryToken()
+        <script type="application/json" data-ce-i18n>@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            statusFailed = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.StatusFailed").Text,
+            loading = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Loading").Text,
+            loadComplete = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.LoadComplete").Text,
+            loadFailed = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.LoadFailed").Text,
+            purgeConfirm = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.PurgeConfirm").Text,
+            purged = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Purged").Text,
+            purgeFailed = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.PurgeFailed").Text,
+            statProducts = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Products").Text,
+            statFitment = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Fitment").Text,
+            statConfigs = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Configs").Text,
+            statOem = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Oem").Text,
+            statAlreadyLoaded = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.AlreadyLoaded").Text,
+            statFitmentClaims = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.FitmentClaims").Text,
+            statConfigurations = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.Configurations").Text,
+            statOemEntries = T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Stat.OemEntries").Text
+        }))</script>
+        <div class="ce-mp-alert ce-mp-alert--info" data-ce-admin-alert hidden role="status"></div>
+        <div class="card card-default">
+            <div class="card-header clearfix">
+                <h3 class="card-title float-left">@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Status")</h3>
+                <button type="button" class="btn btn-sm btn-secondary float-right" data-ce-reference-refresh>@T("Plugins.TwinParticles.CheckEngine.Common.Refresh")</button>
+            </div>
+            <div class="card-body">
+                <p class="ce-mp-callout">@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Hint")</p>
+                <div class="ce-mp-stat-grid" data-ce-reference-stats></div>
+                <div class="form-group col-md-3 pl-0">
+                    <label>@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.ScaleFactor")</label>
+                    <input class="form-control" type="number" min="0.1" step="0.1" value="1" data-ce-reference-scale />
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" data-ce-reference-replace />
+                        @T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Replace")
+                    </label>
+                </div>
+                <button type="button" class="btn btn-primary" data-ce-reference-load>@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Load")</button>
+                <button type="button" class="btn btn-danger" data-ce-reference-purge>@T("Plugins.TwinParticles.CheckEngine.ReferenceData.Admin.Purge")</button>
+                <div class="ce-mp-stat-grid mt-3" data-ce-reference-result></div>
+            </div>
+        </div>
+    </div>
+</section>
