@@ -201,7 +201,9 @@ Warm-up URL hits home + search after deploy (`NFR-012`).
 
 ### Containerisation
 
-Supported pattern: containerise **nopCommerce host** with plugin folder mounted/copied; the current E2E verification stack uses PostgreSQL 16 as a separate service and local Chromium for browser playback. The helper scripts `e2e/start-manual-stack.ps1` and `e2e/run-regressions.ps1` start the host and verify install/home/search/sample PDP smoke flows. Official images may vary — pin versions; run the same install steps. Not required for v1.0 GA but documented for operators who containerise.
+Supported pattern: containerise **nopCommerce host** with plugin folder mounted/copied; the current E2E verification stack uses PostgreSQL 16 as a separate service and local Chromium for browser playback. The helper scripts `e2e/start-manual-stack.ps1` and `e2e/run-regressions.ps1` start the host and verify install/home/search/sample PDP smoke flows.
+
+Oracle Cloud **test** hosting uses an isolated Podman stack (`podman/`) on the Senlite staging VM: PostgreSQL 16 + production `Dockerfile` publish, loopback **`:8081`**, public host **`checkengine.senlite.net`**, no shared networks with Senlite or Twin Particles ERP. Install with nopCommerce sample data, then install the Check Engine plugin. Runbook: `podman/STAGING.md`.
 
 ### Backup and DR
 

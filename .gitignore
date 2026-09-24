@@ -205,3 +205,4 @@ src/packages/*
 src/Tests/Nop.Tests/Connections.resx
 # Playwright browser downloads (must not be committed; exceeds GitHub 100MB limit)
 e2e/.browser/
+podman/.env

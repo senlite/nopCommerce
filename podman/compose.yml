@@ -1,0 +1,55 @@
+# Check Engine demo store — isolated from Senlite and Twin Particles ERP.
+# From repo root: cd podman && cp env.example .env && ./bootstrap.sh
+#
+# Host Caddy: checkengine.senlite.net → 127.0.0.1:8081
+# Senlite stays on :8000 / :8080; Twin Particles ERP on :8001.
+
+services:
+  db:
+    image: docker.io/library/postgres:16
+    container_name: checkengine_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nopCommerce}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-nopCommerce}
+    volumes:
+      - checkengine_pgdata:/var/lib/postgresql/data
+    networks:
+      - checkengine_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nopCommerce} -d ${POSTGRES_DB:-nopCommerce}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: localhost/checkengine-web:local
+    container_name: checkengine_web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:80
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8081}:80"
+    volumes:
+      - checkengine_appdata:/app/App_Data
+      - checkengine_images:/app/wwwroot/images
+    networks:
+      - checkengine_net
+
+networks:
+  checkengine_net:
+    name: checkengine_net
+
+volumes:
+  checkengine_pgdata:
+  checkengine_appdata:
+  checkengine_images:
