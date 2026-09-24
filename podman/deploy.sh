@@ -10,11 +10,11 @@ export DOCKER_HOST="${DOCKER_HOST:-unix:///run/user/$(id -u)/podman/podman.sock}
 
 compose() {
   if command -v docker-compose >/dev/null 2>&1; then
-    docker-compose -f "$HERE/compose.yml" --env-file "$HERE/.env" "$@"
+    docker-compose --project-name checkengine -f "$HERE/compose.yml" --env-file "$HERE/.env" "$@"
   elif podman compose version >/dev/null 2>&1; then
-    podman compose -f "$HERE/compose.yml" --env-file "$HERE/.env" "$@"
+    podman compose --project-name checkengine -f "$HERE/compose.yml" --env-file "$HERE/.env" "$@"
   else
-    podman-compose -f "$HERE/compose.yml" --env-file "$HERE/.env" "$@"
+    podman-compose --project-name checkengine -f "$HERE/compose.yml" --env-file "$HERE/.env" "$@"
   fi
 }
 

@@ -1,4 +1,7 @@
 # Check Engine demo store — isolated from Senlite and Twin Particles ERP.
+# Compose project name MUST be unique: both stacks live in a folder named podman/.
+name: checkengine
+
 # From repo root: cd podman && cp env.example .env && ./bootstrap.sh
 #
 # Host Caddy: checkengine.senlite.net → 127.0.0.1:8081

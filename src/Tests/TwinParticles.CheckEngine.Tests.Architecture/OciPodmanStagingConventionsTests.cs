@@ -24,6 +24,7 @@ public class OciPodmanStagingConventionsTests
     public void Compose_Should_Use_CheckEngine_Names_And_Not_Share_Other_Stacks()
     {
         var compose = File.ReadAllText(Locate("podman", "compose.yml"));
+        compose.Should().Contain("name: checkengine");
         compose.Should().Contain($"container_name: {CheckEngineOciStagingPolicy.WebContainer}");
         compose.Should().Contain($"container_name: {CheckEngineOciStagingPolicy.DbContainer}");
         compose.Should().Contain($"name: {CheckEngineOciStagingPolicy.NetworkName}");
@@ -63,6 +64,7 @@ public class OciPodmanStagingConventionsTests
     {
         var env = File.ReadAllText(Locate("podman", "env.example"));
         var caddy = File.ReadAllText(Locate("podman", "Caddyfile.example"));
+        env.Should().Contain("COMPOSE_PROJECT_NAME=checkengine");
         env.Should().Contain($"PUBLIC_HOST={CheckEngineOciStagingPolicy.PublicHost}");
         env.Should().Contain($"WEB_PORT={CheckEngineOciStagingPolicy.LoopbackPort}");
         env.Should().Contain($"REPO_ROOT={CheckEngineOciStagingPolicy.RepoRootOnOci}");
@@ -82,6 +84,7 @@ public class OciPodmanStagingConventionsTests
         var caddyInstall = File.ReadAllText(Locate("podman", "install-caddy-checkengine.sh"));
         var staging = File.ReadAllText(Locate("podman", "STAGING.md"));
 
+        bootstrap.Should().Contain("--project-name checkengine");
         bootstrap.Should().Contain(".env");
         bootstrap.Should().Contain("compose.yml");
         bootstrap.Should().Contain("Install sample data");
